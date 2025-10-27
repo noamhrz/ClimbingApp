@@ -1,0 +1,145 @@
+@import "tailwindcss";
+
+/* 🎨 צבעים בסיסיים */
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+  --accent: #1e88e5;
+  --success: #4caf50;
+  --danger: #e53935;
+  --warning: #ff9800;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: "Heebo", "Assistant", sans-serif;
+}
+
+footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 50;
+  background-color: #ffffff;
+  border-top: 1px solid #e0e0e0;
+  box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.05);
+}
+
+/* ============================= */
+/* 🗓️ עיצוב לוח השנה (RTL) */
+/* ============================= */
+
+.rbc-calendar {
+  direction: rtl;
+  background-color: #ffffff;
+  border-radius: 10px;
+  overflow: hidden;
+  font-family: "Heebo", "Assistant", sans-serif;
+}
+
+.rbc-toolbar {
+  direction: rtl;
+  margin-bottom: 1rem;
+  padding: 0.5rem;
+  border-bottom: 1px solid #e0e0e0;
+  background-color: #f8faff;
+}
+
+.rbc-toolbar button {
+  background-color: #e3f2fd !important;
+  border: none !important;
+  color: #0d47a1 !important;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+}
+
+.rbc-toolbar button:hover {
+  background-color: #bbdefb !important;
+}
+
+.rbc-header {
+  text-align: center !important;
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #1a237e;
+  background-color: #f3f6ff;
+  border-bottom: 1px solid #e0e0e0;
+  padding: 8px 0;
+}
+
+.rbc-today {
+  background-color: #fffde7 !important;
+}
+
+.rbc-event {
+  transition: transform 0.15s ease-in-out, box-shadow 0.2s ease;
+  border-radius: 8px !important;
+  font-size: 0.85rem !important;
+  font-weight: 500;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.rbc-event:hover {
+  transform: scale(1.04);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* ============================= */
+/* 🗑️ עיצוב פח מחיקה אינטראקטיבי */
+/* ============================= */
+
+#delete-zone {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #e53935;
+  color: #ffffff;
+  font-size: 2rem;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  z-index: 50;
+  transition: all 0.3s ease;
+}
+
+#delete-zone:hover {
+  transform: translateX(-50%) scale(1.15);
+  background-color: #c62828 !important;
+}
+
+#delete-zone.delete-hover {
+  background-color: #b71c1c !important;
+  transform: translateX(-50%) scale(1.25);
+  box-shadow: 0 0 35px rgba(255, 0, 0, 0.55);
+  animation: glowPulse 0.6s infinite alternate;
+}
+
+@keyframes glowPulse {
+  from {
+    box-shadow: 0 0 10px rgba(255, 0, 0, 0.4);
+  }
+  to {
+    box-shadow: 0 0 35px rgba(255, 0, 0, 0.8);
+  }
+}
+
+/* 🍞 Toast מהיר ונעים */
+@keyframes toastFade {
+  0% { opacity: 0; transform: translateY(25px) scale(0.96); }
+  10% { opacity: 1; transform: translateY(0) scale(1); }
+  85% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(15px) scale(0.98); }
+}
+
+.animate-toast {
+  animation: toastFade 1.5s ease-in-out forwards;
+}
