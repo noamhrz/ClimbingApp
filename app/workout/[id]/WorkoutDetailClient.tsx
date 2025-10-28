@@ -48,6 +48,8 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
 
   // === שליפת אימון ===
   useEffect(() => {
+    let isMounted = true
+
     const load = async () => {
       if (!id) return
       try {
@@ -57,7 +59,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
             .select('*')
             .eq('CalendarID', calendarIdNum)
             .maybeSingle()
-          if (c) {
+          if (c && isMounted) {
             setCalendarRow(c)
             setClimberNotes(c.ClimberNotes || '')
           }
@@ -69,10 +71,14 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
           .eq('WorkoutID', id)
           .maybeSingle()
 
+        if (!isMounted) return
+
         setWorkout(w)
         setCoachNotes(w?.WorkoutNotes || null)
-        w.containExercise = w?.containExercise === true || w?.containExercise === 'true'
-        w.containClimbing = w?.containClimbing === true || w?.containClimbing === 'true'
+        if (w) {
+          w.containExercise = w?.containExercise === true || w?.containExercise === 'true'
+          w.containClimbing = w?.containClimbing === true || w?.containClimbing === 'true'
+        }
 
         const { data: rels } = await supabase
           .from('WorkoutsExercises')
@@ -97,6 +103,9 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
               Notes: '',
             }))
         }
+
+        if (!isMounted) return
+
         setExercises(mapped)
         setExerciseForms(mapped)
 
@@ -106,6 +115,9 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
           supabase.from('ClimbingLocations').select('*').order('LocationName'),
           supabase.from('BoardTypes').select('*').order('BoardID'),
         ])
+
+        if (!isMounted) return
+
         setLeadGrades(lg.data || [])
         setBoulderGrades(bg.data || [])
         setLocations(loc.data || [])
@@ -113,10 +125,16 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
       } catch (err) {
         console.error('❌ שגיאה בטעינה:', err)
       } finally {
-        setLoading(false)
+        if (isMounted) {
+          setLoading(false)
+        }
       }
     }
     load()
+
+    return () => {
+      isMounted = false
+    }
   }, [id, calendarIdNum])
 
   // === שינוי תרגיל ===

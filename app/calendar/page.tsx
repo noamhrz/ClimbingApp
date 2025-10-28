@@ -9,7 +9,7 @@ import { supabase } from '@/lib/supabaseClient'
 import { useUserContext } from '@/context/UserContext'
 import moment from 'moment-timezone'
 import { useRouter } from 'next/navigation'
-import { FaPlay, FaTimes } from 'react-icons/fa'
+import { FaPlay, FaTimes, FaEdit } from 'react-icons/fa'
 
 moment.locale('he')
 moment.tz.setDefault('Asia/Jerusalem')
@@ -27,6 +27,18 @@ export default function CalendarPage() {
   const [loading, setLoading] = useState(true)
   const [view, setView] = useState('week')
   const [date, setDate] = useState(new Date())
+  const [isMobile, setIsMobile] = useState(false)
+  const [editModalEvent, setEditModalEvent] = useState(null)
+
+  // 📱 Detect mobile device
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 1024)
+    }
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   useEffect(() => {
     if (!email) return
@@ -154,6 +166,8 @@ export default function CalendarPage() {
 
   // 🔄 גרירת אירוע (תיקון לגרירה ב־RTL)
   const handleEventDrop = async ({ event, start, end }) => {
+    console.log('🔄 Event dropped!', { event, start, end })
+    
     const newStart = moment(start).toDate()
     const newEnd = moment(end).toDate()
 
@@ -163,6 +177,8 @@ export default function CalendarPage() {
       end = tmp
     }
 
+    console.log('📝 Updating event in database:', { id: event.id, newStart, newEnd })
+
     const { error } = await supabase
       .from('Calendar')
       .update({ StartTime: newStart, EndTime: newEnd })
@@ -170,6 +186,7 @@ export default function CalendarPage() {
 
     if (error) console.error('❌ שגיאה בעדכון:', error)
     else {
+      console.log('✅ Event updated successfully')
       const updated = events.map((e) =>
         e.id === event.id ? { ...e, start: newStart, end: newEnd } : e
       )
@@ -186,6 +203,41 @@ export default function CalendarPage() {
     if (error) console.error('❌ שגיאה במחיקה:', error)
     else setEvents(events.filter((e) => e.id !== id))
   }
+
+  // 📱 Mobile: Handle event tap to open edit modal
+  const handleSelectEvent = (event: any) => {
+    if (isMobile) {
+      setEditModalEvent(event)
+    }
+  }
+
+  // 📱 Mobile: Update event time from modal
+  const handleMobileUpdateTime = async () => {
+    if (!editModalEvent) return
+
+    const newStart = moment(editModalEvent.start).toDate()
+    const newEnd = moment(editModalEvent.end).toDate()
+
+    const { error } = await supabase
+      .from('Calendar')
+      .update({ StartTime: newStart, EndTime: newEnd })
+      .eq('CalendarID', editModalEvent.id)
+
+    if (error) {
+      console.error('❌ שגיאה בעדכון:', error)
+      alert('שגיאה בעדכון')
+    } else {
+      await fetchCalendar()
+      setEditModalEvent(null)
+    }
+  }
+
+  // Choose calendar component based on device
+  const CalendarComponent = isMobile ? BigCalendar : DnDCalendar
+
+  // Debug logging
+  console.log('📱 isMobile:', isMobile)
+  console.log('📅 Using component:', isMobile ? 'BigCalendar' : 'DnDCalendar')
 
   if (loading) return <div className="p-6 text-center">⌛ טוען לוח שנה...</div>
 
@@ -223,13 +275,13 @@ export default function CalendarPage() {
       </div>
 
       {/* 📆 Calendar */}
-      <div className="flex-1">
-        <DnDCalendar
+      <div className="flex-1 relative">
+        <CalendarComponent
           localizer={localizer}
           rtl={true}
           events={events}
           selectable
-          resizable
+          resizable={!isMobile}
           views={['month', 'week', 'day']}
           view={view}
           date={date}
@@ -238,7 +290,8 @@ export default function CalendarPage() {
           startAccessor="start"
           endAccessor="end"
           onSelectSlot={handleSelectSlot}
-          onEventDrop={handleEventDrop}
+          onSelectEvent={handleSelectEvent}
+          onEventDrop={!isMobile ? handleEventDrop : undefined}
           style={{ height: '80vh', borderRadius: '10px' }}
           eventPropGetter={(event) => ({
             style: {
@@ -250,11 +303,11 @@ export default function CalendarPage() {
           })}
           components={{
             event: ({ event }) => (
-              <div className="flex justify-between items-center text-xs">
-                <span>{event.title}</span>
-                <div className="flex gap-1 ml-1">
+              <div className="flex justify-between items-center text-xs pointer-events-none">
+                <span className="flex-1">{event.title}</span>
+                <div className="flex gap-1 ml-1 pointer-events-auto">
                   <button
-                    className="bg-green-500 text-white rounded-full p-1"
+                    className="bg-green-500 text-white rounded-full p-1 hover:bg-green-600 transition-colors"
                     onClick={(e) => {
                       e.stopPropagation()
                       router.push(
@@ -267,7 +320,7 @@ export default function CalendarPage() {
                     <FaPlay size={10} />
                   </button>
                   <button
-                    className="bg-red-600 text-white rounded-full p-1"
+                    className="bg-red-600 text-white rounded-full p-1 hover:bg-red-700 transition-colors"
                     onClick={(e) => {
                       e.stopPropagation()
                       handleDeleteEvent(event.id)
@@ -281,6 +334,62 @@ export default function CalendarPage() {
           }}
         />
       </div>
+
+      {/* 📱 Mobile Edit Modal */}
+      {editModalEvent && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full">
+            <h3 className="text-lg font-bold mb-4">{editModalEvent.title}</h3>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">תאריך ושעת התחלה</label>
+                <input
+                  type="datetime-local"
+                  className="w-full border rounded p-2"
+                  value={moment(editModalEvent.start).format('YYYY-MM-DDTHH:mm')}
+                  onChange={(e) =>
+                    setEditModalEvent({
+                      ...editModalEvent,
+                      start: new Date(e.target.value),
+                    })
+                  }
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">תאריך ושעת סיום</label>
+                <input
+                  type="datetime-local"
+                  className="w-full border rounded p-2"
+                  value={moment(editModalEvent.end).format('YYYY-MM-DDTHH:mm')}
+                  onChange={(e) =>
+                    setEditModalEvent({
+                      ...editModalEvent,
+                      end: new Date(e.target.value),
+                    })
+                  }
+                />
+              </div>
+
+              <div className="flex gap-2 mt-6">
+                <button
+                  className="flex-1 bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
+                  onClick={handleMobileUpdateTime}
+                >
+                  שמור
+                </button>
+                <button
+                  className="flex-1 bg-gray-300 text-gray-700 py-2 rounded hover:bg-gray-400"
+                  onClick={() => setEditModalEvent(null)}
+                >
+                  ביטול
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
