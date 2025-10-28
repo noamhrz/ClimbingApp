@@ -21,7 +21,6 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
 
   const [workout, setWorkout] = useState<any>(null)
   const [loading, setLoading] = useState(true)
-  const [started, setStarted] = useState(false)
   const [calendarRow, setCalendarRow] = useState<any>(null)
 
   const [exercises, setExercises] = useState<any[]>([])
@@ -39,6 +38,8 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
 
   const [coachNotes, setCoachNotes] = useState<string | null>(null)
   const [climberNotes, setClimberNotes] = useState('')
+  const [deloading, setDeloading] = useState(false)
+  const [deloadingPercentage, setDeloadingPercentage] = useState<number | null>(null)
 
   const [toast, setToast] = useState<{ text: string; color: string } | null>(null)
   const showToast = (text: string, color: string) => {
@@ -62,6 +63,8 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
           if (c && isMounted) {
             setCalendarRow(c)
             setClimberNotes(c.ClimberNotes || '')
+            setDeloading(c.Deloading || false)
+            setDeloadingPercentage(c.DeloadingPercentage || null)
           }
         }
 
@@ -176,7 +179,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
             StartTime: now,
             TimeOfDay: 'Morning',
             Completed: true,
-            Color: 'Green',
+            Deloading: false,
             ClimberNotes: climberNotes,
             CreatedAt: now,
           })
@@ -265,19 +268,23 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
 
       <p className="text-gray-700">{workout.Description}</p>
 
-      {!started && (
-        <div className="mt-6 text-right">
-          <button
-            className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded"
-            onClick={() => setStarted(true)}
-          >
-            התחל אימון
-          </button>
+      {/* Deloading Banner */}
+      {deloading && deloadingPercentage && (
+        <div className="mt-4 bg-gradient-to-r from-blue-50 to-cyan-50 border-2 border-blue-300 rounded-lg p-4 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="text-3xl">🔵</div>
+            <div>
+              <h3 className="font-bold text-blue-800 text-lg">שבוע דילודינג</h3>
+              <p className="text-blue-700 text-sm mt-1">
+                בצע רק <span className="font-bold text-xl">{deloadingPercentage}%</span> מהסטים המתוכננים
+              </p>
+            </div>
+          </div>
         </div>
       )}
 
-      {started && (
-        <>
+      {/* Auto-start: Forms always visible */}
+      <>
           {workout.containExercise && exercises.length > 0 && (
             <section className="mt-6">
               <h2 className="font-semibold mb-2">תרגילים</h2>
@@ -372,8 +379,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
               סיום אימון ושמירה
             </button>
           </div>
-        </>
-      )}
+      </>
 
       <AnimatePresence>
         {toast && (

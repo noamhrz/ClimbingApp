@@ -1,4 +1,5 @@
 import React, { useRef } from 'react'
+import { getEventColor } from '@/lib/calendarUtils'
 
 interface EventComponentProps {
   event: {
@@ -7,8 +8,10 @@ interface EventComponentProps {
     start: Date
     end: Date
     completed: boolean
-    color: string
     WorkoutID?: number
+    Deloading?: boolean
+    DeloadingPercentage?: number | null
+    StartTime?: string | Date
   }
   onDelete: (id: number) => void
   onLongPress?: (event: any, position: { x: number; y: number }) => void
@@ -21,10 +24,18 @@ export default function EventComponent({
   onDelete, 
   onLongPress,
   isAdmin = false,
-  isMobile = false
+  isMobile = false,
 }: EventComponentProps) {
   const longPressTimer = useRef<NodeJS.Timeout | null>(null)
   const touchStartPos = useRef({ x: 0, y: 0 })
+
+  // Get colors based on event state
+  const colors = getEventColor({
+    StartTime: event.StartTime || event.start,
+    Completed: event.completed,
+    Deloading: event.Deloading,
+    DeloadingPercentage: event.DeloadingPercentage,
+  })
 
   const handleTouchStart = (e: React.TouchEvent) => {
     if (!isMobile || !onLongPress) return
@@ -73,30 +84,36 @@ export default function EventComponent({
 
   return (
     <div 
-      className="flex flex-col justify-center items-center h-full w-full cursor-pointer relative"
+      className="relative w-full h-full rounded p-1 text-xs font-semibold overflow-hidden"
+      style={{ backgroundColor: colors.bg, color: colors.text }}
+      onMouseDown={(e) => {
+        // Prevent react-big-calendar from thinking this is a slot selection
+        e.stopPropagation()
+      }}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
       onTouchMove={handleTouchMove}
     >
-      {/* Event Title */}
-      <span className="font-bold text-xs sm:text-sm text-center truncate w-full px-1 pointer-events-none">
+      <div className="truncate pointer-events-none">
         {event.title}
-      </span>
-      
-      {/* Optional: Category or time info */}
-      {/* <span className="text-[10px] text-gray-200 text-center">
-        {moment(event.start).format('HH:mm')}
-      </span> */}
+      </div>
 
-      {/* Delete Button - Admin Only - Desktop Only */}
-      {isAdmin && !isMobile && (
+      {/* Delete Button - Admin Only */}
+      {isAdmin && (
         <button
-          className="absolute bottom-1 right-1 text-xs hover:text-red-700 transition-colors z-10 bg-white bg-opacity-80 rounded px-1"
+          className="absolute bottom-1 right-1 text-[10px] text-red-700 bg-white/80 rounded px-1 py-[1px] pointer-events-auto"
           onClick={handleDelete}
           title="מחק אימון"
         >
           🗑
         </button>
+      )}
+
+      {/* Deloading Badge */}
+      {event.Deloading && event.DeloadingPercentage && (
+        <div className="absolute top-1 right-1 text-[9px] bg-white/70 text-black rounded px-1 py-[1px] pointer-events-none">
+          {event.DeloadingPercentage}% 
+        </div>
       )}
     </div>
   )

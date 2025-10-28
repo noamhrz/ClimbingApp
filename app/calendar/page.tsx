@@ -11,6 +11,7 @@ import moment from 'moment-timezone'
 import { useRouter } from 'next/navigation'
 import EventComponent from '@/components/EventComponent'
 import AddWorkoutModal from '@/components/AddWorkoutModal'
+import DeloadingModal from '@/components/DeloadingModal'
 import EventContextMenu from '@/components/EventContextMenu'
 import EditEventModal from '@/components/EditEventModal'
 
@@ -28,6 +29,9 @@ interface CalendarEvent {
   completed: boolean
   color: string
   WorkoutID: number
+  Deloading?: boolean
+  DeloadingPercentage?: number | null
+  StartTime?: string | Date
 }
 
 interface Workout {
@@ -56,6 +60,8 @@ export default function CalendarPage() {
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null)
   const [showEditModal, setShowEditModal] = useState(false)
   const [isSelectingDate, setIsSelectingDate] = useState(false)
+  const [showDeloadingModal, setShowDeloadingModal] = useState(false)
+  const [deloadingMode, setDeloadingMode] = useState<'apply' | 'remove'>('apply')
 
   // Mobile detection
   useEffect(() => {
@@ -117,7 +123,7 @@ export default function CalendarPage() {
 
     const { data, error } = await supabase
       .from('Calendar')
-      .select('CalendarID, WorkoutID, StartTime, EndTime, Completed, Color')
+      .select('CalendarID, WorkoutID, StartTime, EndTime, Completed, Deloading, DeloadingPercentage')
       .eq('Email', email)
 
     if (error) {
@@ -148,22 +154,18 @@ export default function CalendarPage() {
       const startDate = start.toDate()
       const endDate = end.toDate()
 
-      let color = item.Color
-      if (!color) {
-        if (item.Completed) color = '#10b981' // Green - Completed
-        else if (moment(item.StartTime).isAfter(moment())) color = '#3b82f6' // Blue - Upcoming
-        else if (moment(item.StartTime).isSame(moment(), 'day')) color = '#f97316' // Orange - Today
-        else color = '#ef4444' // Red - Missed/Past
-      }
-
+      // Color is now calculated dynamically by EventComponent
       return {
         id: item.CalendarID,
         title: workoutMap[item.WorkoutID] || `Workout #${item.WorkoutID}`,
         start: startDate,
         end: endDate,
         completed: item.Completed,
-        color,
+        color: '', // Not used anymore - EventComponent calculates it
         WorkoutID: item.WorkoutID,
+        Deloading: item.Deloading,
+        DeloadingPercentage: item.DeloadingPercentage,
+        StartTime: item.StartTime,
       }
     })
 
@@ -176,7 +178,7 @@ export default function CalendarPage() {
     if (!isSelectingDate) return
     if (!email) return
     
-    // Open modal with the selected date (even if no workouts - modal will show the message)
+    // Open modal with the selected date
     setModalInitialDate(slotInfo.start)
     setShowAddModal(true)
     setIsSelectingDate(false)
@@ -189,7 +191,7 @@ export default function CalendarPage() {
       return
     }
 
-    // Allow entering selection mode even if no workouts - they'll see the message in modal
+    // Enter selection mode
     setIsSelectingDate(true)
   }
 
@@ -233,20 +235,6 @@ export default function CalendarPage() {
     router.push(`/workout/${event.WorkoutID}`)
   }
 
-  // Delete event
-  const handleDeleteEvent = async (id: number) => {
-    const confirmDelete = confirm('האם למחוק את האימון?')
-    if (!confirmDelete) return
-
-    const { error } = await supabase.from('Calendar').delete().eq('CalendarID', id)
-    if (error) {
-      console.error('❌ Error deleting event:', error)
-      alert('שגיאה במחיקת אימון')
-    } else {
-      setEvents(events.filter((e) => e.id !== id))
-    }
-  }
-
   // Handle long press - show context menu
   const handleEventLongPress = (event: CalendarEvent, position: { x: number; y: number }) => {
     setSelectedEvent(event)
@@ -280,8 +268,37 @@ export default function CalendarPage() {
     }
   }
 
-  // Always use DnDCalendar for drag and drop on all devices
-  const CalendarComponent = DnDCalendar
+  // Delete event
+  const handleDeleteEvent = async (id: number) => {
+    const confirmDelete = confirm('האם למחוק את האימון?')
+    if (!confirmDelete) return
+
+    const { error } = await supabase.from('Calendar').delete().eq('CalendarID', id)
+    if (error) {
+      console.error('❌ Error deleting event:', error)
+      alert('שגיאה במחיקת אימון')
+    } else {
+      setEvents(events.filter((e) => e.id !== id))
+    }
+  }
+
+  // Handle deloading operations
+  const handleApplyDeloading = () => {
+    setDeloadingMode('apply')
+    setShowDeloadingModal(true)
+  }
+
+  const handleRemoveDeloading = () => {
+    setDeloadingMode('remove')
+    setShowDeloadingModal(true)
+  }
+
+  const handleDeloadingSuccess = async () => {
+    await fetchCalendar()
+  }
+
+  // Use appropriate calendar component
+  const ActiveCalendar = isMobile ? BigCalendar : DnDCalendar
 
   if (loading) {
     return (
@@ -316,7 +333,7 @@ export default function CalendarPage() {
         +
       </button>
 
-      {/* Date Selection Message - No overlay, just floating message */}
+      {/* Date Selection Message */}
       {isSelectingDate && (
         <div className="fixed top-20 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-orange-500 to-orange-600 text-white px-6 py-4 rounded-xl shadow-2xl z-50 animate-bounce pointer-events-none">
           <div className="text-center">
@@ -368,10 +385,41 @@ export default function CalendarPage() {
         />
       )}
 
+      {/* Deloading Modal */}
+      {email && (
+        <DeloadingModal
+          isOpen={showDeloadingModal}
+          onClose={() => setShowDeloadingModal(false)}
+          onSuccess={handleDeloadingSuccess}
+          email={email}
+          mode={deloadingMode}
+        />
+      )}
+
+      {/* Admin Actions - Deloading Controls */}
+      {isAdmin && (
+        <div className="fixed bottom-24 left-6 flex flex-col gap-2 z-40">
+          <button
+            onClick={handleApplyDeloading}
+            className="bg-cyan-600 hover:bg-cyan-700 text-white px-4 py-2 rounded-lg shadow-lg text-sm font-medium transition-all"
+            title="החל דילודינג על טווח תאריכים"
+          >
+            🔵 דילודינג
+          </button>
+          <button
+            onClick={handleRemoveDeloading}
+            className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg shadow-lg text-sm font-medium transition-all"
+            title="הסר דילודינג מטווח תאריכים"
+          >
+            ❌ הסר דילודינג
+          </button>
+        </div>
+      )}
+
       {/* Calendar - Full Width */}
       <div className="max-w-7xl mx-auto p-4">
         <div className="bg-white rounded-xl shadow-sm p-4 overflow-hidden">
-          <CalendarComponent
+          <ActiveCalendar
             localizer={localizer}
             rtl={true}
             events={events}
@@ -384,31 +432,19 @@ export default function CalendarPage() {
             onView={(newView: View) => setView(newView)}
             onNavigate={(newDate: Date) => setDate(newDate)}
             popup={true}
-            // Event click handler - works on both mobile and desktop
+            // Event click handler - Navigate to workout detail
             onSelectEvent={(event: any, e: any) => {
               e.preventDefault()
               e.stopPropagation()
               handleSelectEvent(event, e)
             }}
-            // Enable slot selection only when in date selection mode
+            // Slot selection - only when in date selection mode
             selectable={isSelectingDate}
             onSelectSlot={handleSelectSlot}
             // Drag & drop - disabled during date selection to avoid conflicts
             resizable={!isMobile && !isSelectingDate}
             draggableAccessor={() => !isMobile && !isSelectingDate}
             onEventDrop={!isSelectingDate ? handleEventDrop : undefined}
-            // Event styling
-            eventPropGetter={(event: any) => ({
-              style: {
-                backgroundColor: event.color,
-                borderRadius: '8px',
-                border: 'none',
-                color: 'white',
-                fontSize: '0.875rem',
-                padding: '4px',
-                cursor: 'pointer',
-              },
-            })}
             components={{
               event: (props: any) => (
                 <EventComponent
