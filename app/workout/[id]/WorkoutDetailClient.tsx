@@ -16,7 +16,6 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
   const calendarId = searchParams.get('calendar')
   const calendarIdNum = calendarId ? Number(calendarId) : null
 
-  // ✅ תיקון חשוב
   const email = emailFromQuery || selectedUser?.userEmail
 
   const [workout, setWorkout] = useState<any>(null)
@@ -45,6 +44,25 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
   const showToast = (text: string, color: string) => {
     setToast({ text, color })
     setTimeout(() => setToast(null), 1600)
+  }
+
+  // === חישוב סטטוס תאריך ===
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  let workoutDate: Date | null = null
+  if (calendarRow?.StartTime) {
+    workoutDate = new Date(calendarRow.StartTime)
+    workoutDate.setHours(0, 0, 0, 0)
+  }
+
+  const isFutureWorkout = workoutDate && workoutDate > today
+  const isPastWorkout = workoutDate && workoutDate < today
+  const isTodayWorkout = workoutDate && workoutDate.getTime() === today.getTime()
+
+  const formatDate = (dateStr: string) => {
+    const d = new Date(dateStr)
+    return d.toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit', year: 'numeric' })
   }
 
   // === שליפת אימון ===
@@ -160,6 +178,39 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
   const addClimbRoute = () => setClimbRoutes((p) => [...p, { RouteName: '', Attempts: 1, Successful: false }])
   const removeClimbRoute = (i: number) => setClimbRoutes((p) => p.filter((_, idx) => idx !== i))
 
+  // === מעבר לביצוע היום ===
+  const handleConvertToToday = async () => {
+    if (!calendarIdNum) {
+      showToast('❌ שגיאה: לא נמצא מזהה אימון', 'red')
+      return
+    }
+
+    const now = new Date().toISOString()
+
+    try {
+      // עדכן את תאריך האימון להיום
+      const { error } = await supabase
+        .from('Calendar')
+        .update({ 
+          StartTime: now,
+          EndTime: new Date(Date.now() + 3600000).toISOString() // +1 שעה
+        })
+        .eq('CalendarID', calendarIdNum)
+
+      if (error) throw error
+
+      showToast('✅ האימון עודכן להיום!', 'blue')
+      
+      // רענן את הדף כדי להסיר את ההודעה
+      setTimeout(() => {
+        window.location.reload()
+      }, 800)
+    } catch (err) {
+      console.error('❌ שגיאה בעדכון תאריך:', err)
+      showToast('❌ שגיאה בעדכון תאריך', 'red')
+    }
+  }
+
   // === שמירה ===
   const onComplete = async () => {
     if (!email || !workout) {
@@ -170,7 +221,9 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
 
     try {
       let activeCalendarId = calendarIdNum
+      
       if (!activeCalendarId) {
+        // אימון חדש (ללא קישור לקלנדר) → שמור להיום
         const { data: newCal, error: calErr } = await supabase
           .from('Calendar')
           .insert({
@@ -179,7 +232,8 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
             StartTime: now,
             TimeOfDay: 'Morning',
             Completed: true,
-            Deloading: false,
+            Deloading: deloading,
+            Color: deloading ? 'lightgreen' : 'green',
             ClimberNotes: climberNotes,
             CreatedAt: now,
           })
@@ -188,9 +242,14 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
         if (calErr) throw calErr
         activeCalendarId = newCal.CalendarID
       } else {
+        // אימון קיים → עדכן בלי לשנות את התאריך המקורי
         const { error: updErr } = await supabase
           .from('Calendar')
-          .update({ Completed: true, ClimberNotes: climberNotes })
+          .update({ 
+            Completed: true, 
+            Color: deloading ? 'lightgreen' : 'green',
+            ClimberNotes: climberNotes 
+          })
           .eq('CalendarID', activeCalendarId)
         if (updErr) throw updErr
       }
@@ -268,13 +327,53 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
 
       <p className="text-gray-700">{workout.Description}</p>
 
+      {/* אימון עתידי */}
+      {isFutureWorkout && (
+        <div className="mt-4 bg-amber-50 border-r-4 border-amber-500 rounded-lg p-4 shadow-sm">
+          <div className="flex items-start gap-3">
+            <div className="text-2xl">⏰</div>
+            <div className="flex-1">
+              <h3 className="font-bold text-amber-900">אימון עתידי</h3>
+              <p className="text-amber-800 text-sm mt-1">
+                האימון מתוכנן ל-{formatDate(calendarRow.StartTime)}.
+              </p>
+              <p className="text-amber-700 text-sm mt-2 font-medium">
+                💡 רוצה לבצע אותו היום? לחץ על הכפתור למטה כדי להעביר את האימון להיום.
+              </p>
+              <button 
+                onClick={handleConvertToToday}
+                className="mt-3 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm font-medium transition-colors shadow-sm"
+              >
+                📅 העבר אימון להיום וביצע עכשיו
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* אימון מהעבר */}
+      {isPastWorkout && (
+        <div className="mt-4 bg-gray-50 border-r-4 border-gray-400 rounded-lg p-4 shadow-sm">
+          <div className="flex items-start gap-3">
+            <div className="text-2xl">📌</div>
+            <div>
+              <h3 className="font-bold text-gray-900">אימון שעבר</h3>
+              <p className="text-gray-700 text-sm mt-1">
+                האימון היה מתוכנן ל-{formatDate(calendarRow.StartTime)}.
+                ניתן להשלים אותו עכשיו והוא יישמר לאותו תאריך.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Deloading Banner */}
       {deloading && deloadingPercentage && (
         <div className="mt-4 bg-gradient-to-r from-blue-50 to-cyan-50 border-2 border-blue-300 rounded-lg p-4 shadow-sm">
           <div className="flex items-center gap-3">
             <div className="text-3xl">🔵</div>
             <div>
-              <h3 className="font-bold text-blue-800 text-lg">שבוע דילודינג</h3>
+              <h3 className="font-bold text-blue-800 text-lg">שבוע הפחתת עומס</h3>
               <p className="text-blue-700 text-sm mt-1">
                 בצע רק <span className="font-bold text-xl">{deloadingPercentage}%</span> מהסטים המתוכננים
               </p>
@@ -283,7 +382,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
         </div>
       )}
 
-      {/* Auto-start: Forms always visible */}
+      {/* טפסים */}
       <>
           {workout.containExercise && exercises.length > 0 && (
             <section className="mt-6">

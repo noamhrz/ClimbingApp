@@ -225,27 +225,51 @@ export default function CalendarPage() {
     }
   }
 
-  // Handle event selection - Navigate directly to workout detail
+  // 🔧 FIX: Short click → Show context menu
   const handleSelectEvent = (event: CalendarEvent, e?: React.SyntheticEvent) => {
     // Prevent cell selection when clicking event
     if (e) {
       e.preventDefault()
       e.stopPropagation()
     }
-    router.push(`/workout/${event.WorkoutID}`)
-  }
-
-  // Handle long press - show context menu
-  const handleEventLongPress = (event: CalendarEvent, position: { x: number; y: number }) => {
+    
+    // Short click → Open context menu
     setSelectedEvent(event)
-    setContextMenuPosition(position)
+    const centerX = window.innerWidth / 2
+    const centerY = window.innerHeight / 2
+    setContextMenuPosition({ x: centerX, y: centerY })
     setShowContextMenu(true)
   }
 
-  // Handle edit event from context menu
-  const handleEditEvent = () => {
+  // 🔧 FIX: Long press → Start/Edit workout directly
+  const handleEventLongPress = (event: CalendarEvent, position: { x: number; y: number }) => {
+    // Long press → Start/Edit workout immediately
+    handleStartWorkout(event)
+  }
+
+  // Start/Edit workout function
+  const handleStartWorkout = (event: CalendarEvent) => {
+    if (event.completed) {
+      // If completed, go to calendar-edit
+      router.push(`/calendar-edit/${event.id}`)
+    } else {
+      // If not completed, go to workout
+      router.push(`/workout/${event.WorkoutID}?calendar=${event.id}`)
+    }
+  }
+
+  // Handle edit date from context menu
+  const handleEditDate = () => {
     if (selectedEvent) {
       setShowEditModal(true)
+    }
+  }
+
+  // Handle "Start/Edit Now" from context menu
+  const handleStartNow = () => {
+    if (selectedEvent) {
+      setShowContextMenu(false)
+      handleStartWorkout(selectedEvent)
     }
   }
 
@@ -279,6 +303,7 @@ export default function CalendarPage() {
       alert('שגיאה במחיקת אימון')
     } else {
       setEvents(events.filter((e) => e.id !== id))
+      setShowContextMenu(false)
     }
   }
 
@@ -362,15 +387,17 @@ export default function CalendarPage() {
         />
       )}
 
-      {/* Event Context Menu */}
+      {/* Event Context Menu - with "Start/Edit Now" option */}
       {selectedEvent && (
         <EventContextMenu
           isOpen={showContextMenu}
           position={contextMenuPosition}
-          onEdit={handleEditEvent}
+          onEdit={handleEditDate}
           onDelete={() => handleDeleteEvent(selectedEvent.id)}
+          onStartNow={handleStartNow}
           onClose={() => setShowContextMenu(false)}
           eventTitle={selectedEvent.title}
+          isCompleted={selectedEvent.completed}
         />
       )}
 
@@ -432,7 +459,7 @@ export default function CalendarPage() {
             onView={(newView: View) => setView(newView)}
             onNavigate={(newDate: Date) => setDate(newDate)}
             popup={true}
-            // Event click handler - Navigate to workout detail
+            // Event click handler - Show context menu
             onSelectEvent={(event: any, e: any) => {
               e.preventDefault()
               e.stopPropagation()

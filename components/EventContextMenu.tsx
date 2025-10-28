@@ -7,8 +7,10 @@ interface EventContextMenuProps {
   position: { x: number; y: number }
   onEdit: () => void
   onDelete: () => void
+  onStartNow?: () => void  // Start workout or edit completed workout
   onClose: () => void
   eventTitle: string
+  isCompleted?: boolean  // 🔧 NEW: To show different text
 }
 
 export default function EventContextMenu({
@@ -16,8 +18,10 @@ export default function EventContextMenu({
   position,
   onEdit,
   onDelete,
+  onStartNow,
   onClose,
   eventTitle,
+  isCompleted = false,
 }: EventContextMenuProps) {
   return (
     <AnimatePresence>
@@ -44,7 +48,7 @@ export default function EventContextMenu({
               top: `${position.y}px`,
               transform: 'translate(-50%, -50%)',
             }}
-            className="bg-white rounded-xl shadow-2xl z-50 overflow-hidden min-w-[200px]"
+            className="bg-white rounded-xl shadow-2xl z-50 overflow-hidden min-w-[220px]"
             dir="rtl"
           >
             {/* Header */}
@@ -56,6 +60,26 @@ export default function EventContextMenu({
 
             {/* Menu Items */}
             <div className="py-2">
+              {/* 🔧 Start/Edit Now Button - Different text based on completed status */}
+              {onStartNow && (
+                <button
+                  onClick={() => {
+                    onStartNow()
+                    onClose()
+                  }}
+                  className={`w-full px-4 py-3 text-right transition-colors flex items-center gap-3 ${
+                    isCompleted 
+                      ? 'hover:bg-blue-50 text-blue-700' 
+                      : 'hover:bg-green-50 text-green-700'
+                  }`}
+                >
+                  <span className="text-xl">{isCompleted ? '📝' : '▶️'}</span>
+                  <span className="font-medium">
+                    {isCompleted ? 'עריכת אימון' : 'התחל אימון'}
+                  </span>
+                </button>
+              )}
+
               <button
                 onClick={() => {
                   onEdit()
@@ -64,7 +88,7 @@ export default function EventContextMenu({
                 className="w-full px-4 py-3 text-right hover:bg-gray-100 transition-colors flex items-center gap-3"
               >
                 <span className="text-xl">📅</span>
-                <span className="font-medium">שנה תאריך וזמן</span>
+                <span className="font-medium">הזז תאריך</span>
               </button>
 
               <button
