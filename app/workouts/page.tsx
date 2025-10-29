@@ -2,9 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
-import { useUserContext } from '@/context/UserContext'
+import { useAuth } from '@/context/AuthContext'
 import UserHeader from '@/components/UserHeader'
-import AdminFooter from '@/components/AdminFooter'
 
 type Workout = {
   WorkoutID: number
@@ -15,101 +14,143 @@ type Workout = {
 }
 
 export default function WorkoutsPage() {
-  const { selectedUser } = useUserContext()
+  const { activeUser } = useAuth()
   const [workouts, setWorkouts] = useState<Workout[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const fetchWorkouts = async () => {
+      if (!activeUser) {
+        setWorkouts([])
+        setLoading(false)
+        return
+      }
+
       setLoading(true)
 
-      if (selectedUser) {
-        // ✅ אימונים לפי המשתמש
-        const { data, error } = await supabase
-          .from('WorkoutsForUser')
-          .select(`
-            WorkoutID,
-            Workouts (WorkoutID, Name, Category, Description, WhenToPractice)
-          `)
-          .eq('UserID', selectedUser.UserID)
+      // Fetch workouts assigned to the active user
+      const { data: assignments, error: assignError } = await supabase
+        .from('WorkoutsForUser')
+        .select('WorkoutID')
+        .eq('Email', activeUser.Email)
 
-        if (!error && data) {
-          const mapped = (data as any[])
-            .map((r) => r.Workouts)
-            .filter(Boolean) as Workout[]
-          setWorkouts(mapped)
-        } else {
-          console.error('❌ שגיאה בטעינת WorkoutsForUser:', error)
-          setWorkouts([])
-        }
+      if (assignError) {
+        console.error('❌ שגיאה בטעינת WorkoutsForUser:', assignError)
+        setWorkouts([])
+        setLoading(false)
+        return
+      }
+
+      const workoutIds = (assignments || []).map(a => a.WorkoutID)
+
+      if (workoutIds.length === 0) {
+        setWorkouts([])
+        setLoading(false)
+        return
+      }
+
+      // Fetch workout details
+      const { data: workoutData, error: workoutError } = await supabase
+        .from('Workouts')
+        .select('WorkoutID, Name, Category, Description, WhenToPractice')
+        .in('WorkoutID', workoutIds)
+        .order('Name')
+
+      if (workoutError) {
+        console.error('❌ שגיאה בטעינת Workouts:', workoutError)
+        setWorkouts([])
       } else {
-        // ✅ ללא משתמש נבחר – כל האימונים
-        const { data, error } = await supabase.from('Workouts').select('*')
-        if (!error && data) setWorkouts(data as Workout[])
-        else setWorkouts([])
+        setWorkouts(workoutData || [])
       }
 
       setLoading(false)
     }
-    fetchWorkouts()
-  }, [selectedUser])
 
-  if (loading)
+    fetchWorkouts()
+  }, [activeUser])
+
+  if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-50 pb-20">
         <UserHeader />
-        <p className="p-6 text-gray-600">⌛ טוען אימונים...</p>
-        <AdminFooter />
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">טוען אימונים...</p>
+          </div>
+        </div>
       </div>
     )
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-16">
+    <div dir="rtl" className="min-h-screen bg-gray-50 pb-20">
       <UserHeader />
 
-      <div className="p-6">
-        <h1 className="text-2xl font-bold mb-4 text-blue-600">רשימת אימונים</h1>
-
-        {!selectedUser && (
-          <p className="mb-3 text-sm text-gray-500">
-            💡 טיפ: בחר משתמש (מימין למעלה) כדי לראות אימונים שהוקצו לו.
-          </p>
-        )}
-
-        {workouts.length === 0 ? (
-          <p className="text-gray-500">לא נמצאו אימונים להצגה.</p>
-        ) : (
-          <table className="w-full border border-gray-300 rounded-md">
-            <thead className="bg-gray-100">
-              <tr>
-                <th className="p-2 border">שם אימון</th>
-                <th className="p-2 border">קטגוריה</th>
-                <th className="p-2 border">מתי לתרגל</th>
-                <th className="p-2 border">תיאור</th>
-              </tr>
-            </thead>
-            <tbody>
-              {workouts.map((w) => (
-                <tr
-                  key={w.WorkoutID}
-                  className="hover:bg-blue-50 cursor-pointer"
-                >
-                  <td className="p-2 border font-medium text-blue-700">
-                    {w.Name}
-                  </td>
-                  <td className="p-2 border">{w.Category}</td>
-                  <td className="p-2 border">{w.WhenToPractice}</td>
-                  <td className="p-2 border text-sm text-gray-700">
-                    {w.Description}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+      {/* Page Header */}
+      <div className="bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 py-4">
+          <h1 className="text-2xl font-bold text-blue-600">🏋️ האימונים שלי</h1>
+          {activeUser && (
+            <p className="text-sm text-gray-600 mt-1">
+              {workouts.length} אימונים מוקצים ל{activeUser.Name}
+            </p>
+          )}
+        </div>
       </div>
 
-      <AdminFooter />
+      {/* Content */}
+      <div className="max-w-7xl mx-auto p-4">
+        {workouts.length === 0 ? (
+          <div className="bg-white rounded-xl shadow-sm p-8 text-center">
+            <div className="text-6xl mb-4">📭</div>
+            <h2 className="text-xl font-bold text-gray-700 mb-2">
+              עדיין לא הוקצו לך אימונים
+            </h2>
+            <p className="text-gray-500">
+              המאמן שלך יוכל להקצות לך אימונים בקרוב
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {workouts.map((workout) => (
+              <div
+                key={workout.WorkoutID}
+                className="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow p-5"
+              >
+                {/* Category Badge */}
+                {workout.Category && (
+                  <div className="mb-3">
+                    <span className="inline-block px-3 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
+                      {workout.Category}
+                    </span>
+                  </div>
+                )}
+
+                {/* Workout Name */}
+                <h3 className="text-lg font-bold text-gray-900 mb-2">
+                  {workout.Name}
+                </h3>
+
+                {/* When to Practice */}
+                {workout.WhenToPractice && (
+                  <div className="flex items-center gap-2 text-sm text-gray-600 mb-3">
+                    <span className="text-lg">⏰</span>
+                    <span>{workout.WhenToPractice}</span>
+                  </div>
+                )}
+
+                {/* Description */}
+                {workout.Description && (
+                  <p className="text-sm text-gray-700 leading-relaxed">
+                    {workout.Description}
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   )
 }

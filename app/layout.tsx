@@ -1,4 +1,3 @@
-// app/layout.tsx
 import './globals.css'
 import { AuthProvider } from '@/context/AuthContext'
 import ClientLayoutWrapper from './ClientLayoutWrapper'
@@ -14,9 +13,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="he" dir="rtl">
       <body>
         <AuthProvider>
-          <ClientLayoutWrapper>
-            {children}
-          </ClientLayoutWrapper>
+          <ClientLayoutWrapper>{children}</ClientLayoutWrapper>
           <Footer />
         </AuthProvider>
       </body>

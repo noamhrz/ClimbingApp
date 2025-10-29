@@ -375,7 +375,7 @@ export default function CalendarPage() {
       {/* Floating Add Button */}
       <button
         onClick={handleAddButtonClick}
-        className={`fixed bottom-6 left-6 text-white text-3xl rounded-full w-16 h-16 shadow-lg hover:shadow-xl transition-all duration-200 z-40 flex items-center justify-center ${
+        className={`fixed bottom-28 left-6 text-white text-3xl rounded-full w-16 h-16 shadow-lg hover:shadow-xl transition-all duration-200 z-40 flex items-center justify-center ${
           isSelectingDate 
             ? 'bg-orange-600 hover:bg-orange-700 animate-pulse' 
             : 'bg-blue-600 hover:bg-blue-700'
@@ -452,7 +452,7 @@ export default function CalendarPage() {
 
       {/* Admin Actions - Deloading Controls */}
       {isAdmin && (
-        <div className="fixed bottom-28 left-6 flex flex-col gap-2 z-40">
+        <div className="fixed bottom-28 right-6 flex flex-col gap-2 z-40">
           <button
             onClick={handleApplyDeloading}
             className="bg-cyan-600 hover:bg-cyan-700 text-white px-4 py-2 rounded-lg shadow-lg text-sm font-medium transition-all"
