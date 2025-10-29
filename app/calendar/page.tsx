@@ -6,7 +6,7 @@ import withDragAndDrop from 'react-big-calendar/lib/addons/dragAndDrop'
 import 'react-big-calendar/lib/css/react-big-calendar.css'
 import 'react-big-calendar/lib/addons/dragAndDrop/styles.css'
 import { supabase } from '@/lib/supabaseClient'
-import { useUserContext } from '@/context/UserContext'
+import { useAuth, useActiveUserEmail } from '@/context/AuthContext'
 import moment from 'moment-timezone'
 import { useRouter } from 'next/navigation'
 import EventComponent from '@/components/EventComponent'
@@ -14,6 +14,7 @@ import AddWorkoutModal from '@/components/AddWorkoutModal'
 import DeloadingModal from '@/components/DeloadingModal'
 import EventContextMenu from '@/components/EventContextMenu'
 import EditEventModal from '@/components/EditEventModal'
+import UserHeader from '@/components/UserHeader'
 
 moment.locale('he')
 moment.tz.setDefault('Asia/Jerusalem')
@@ -41,9 +42,9 @@ interface Workout {
 }
 
 export default function CalendarPage() {
-  const { selectedUser } = useUserContext()
-  const email = selectedUser?.Email
-  const isAdmin = selectedUser?.Role === 'admin'
+  const { activeUser, currentUser, loading: authLoading } = useAuth()
+  const activeEmail = useActiveUserEmail()
+  const isAdmin = currentUser?.Role === 'admin' || currentUser?.Role === 'coach'
   const router = useRouter()
 
   // State
@@ -74,21 +75,21 @@ export default function CalendarPage() {
     return () => window.removeEventListener('resize', checkMobile)
   }, [])
 
-  // Fetch data on mount
+  // Fetch data when activeEmail changes
   useEffect(() => {
-    if (!email) return
+    if (!activeEmail) return
     fetchWorkouts()
     fetchCalendar()
-  }, [email])
+  }, [activeEmail])
 
   // Fetch workouts assigned to user
   const fetchWorkouts = async () => {
-    if (!email) return
+    if (!activeEmail) return
 
     const { data: userWorkouts, error: relError } = await supabase
       .from('WorkoutsForUser')
       .select('WorkoutID')
-      .eq('Email', email)
+      .eq('Email', activeEmail)
 
     if (relError) {
       console.error('❌ Error fetching WorkoutsForUser:', relError)
@@ -119,12 +120,12 @@ export default function CalendarPage() {
 
   // Fetch calendar events
   const fetchCalendar = async () => {
-    if (!email) return
+    if (!activeEmail) return
 
     const { data, error } = await supabase
       .from('Calendar')
       .select('CalendarID, WorkoutID, StartTime, EndTime, Completed, Deloading, DeloadingPercentage')
-      .eq('Email', email)
+      .eq('Email', activeEmail)
 
     if (error) {
       console.error('❌ Error loading calendar:', error)
@@ -176,7 +177,7 @@ export default function CalendarPage() {
   // Handle slot click - open add modal with selected date (only when in selection mode)
   const handleSelectSlot = (slotInfo: any) => {
     if (!isSelectingDate) return
-    if (!email) return
+    if (!activeEmail) return
     
     // Open modal with the selected date
     setModalInitialDate(slotInfo.start)
@@ -186,7 +187,7 @@ export default function CalendarPage() {
 
   // Start date selection mode
   const handleAddButtonClick = () => {
-    if (!email) {
+    if (!activeEmail) {
       alert('לא נמצא אימייל משתמש')
       return
     }
@@ -225,7 +226,7 @@ export default function CalendarPage() {
     }
   }
 
-  // 🔧 FIX: Short click → Show context menu
+  // Short click → Show context menu
   const handleSelectEvent = (event: CalendarEvent, e?: React.SyntheticEvent) => {
     // Prevent cell selection when clicking event
     if (e) {
@@ -241,7 +242,7 @@ export default function CalendarPage() {
     setShowContextMenu(true)
   }
 
-  // 🔧 FIX: Long press → Start/Edit workout directly
+  // Long press → Start/Edit workout directly
   const handleEventLongPress = (event: CalendarEvent, position: { x: number; y: number }) => {
     // Long press → Start/Edit workout immediately
     handleStartWorkout(event)
@@ -325,6 +326,29 @@ export default function CalendarPage() {
   // Use appropriate calendar component
   const ActiveCalendar = isMobile ? BigCalendar : DnDCalendar
 
+  // Loading state
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4 mx-auto"></div>
+          <p className="text-gray-600">טוען...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // No user
+  if (!activeUser) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <p className="text-gray-600">אנא בחר משתמש</p>
+        </div>
+      </div>
+    )
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -337,9 +361,12 @@ export default function CalendarPage() {
   }
 
   return (
-    <div dir="rtl" className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b sticky top-0 z-40">
+    <div dir="rtl" className="min-h-screen bg-gray-50 pb-20">
+      {/* User Header with Navigation */}
+      <UserHeader />
+
+      {/* Page Title - smaller now since UserHeader has navigation */}
+      <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 py-3">
           <h1 className="text-xl font-bold text-blue-600">📅 לוח אימונים</h1>
         </div>
@@ -376,18 +403,18 @@ export default function CalendarPage() {
       )}
 
       {/* Add Workout Modal */}
-      {email && (
+      {activeEmail && (
         <AddWorkoutModal
           isOpen={showAddModal}
           onClose={() => setShowAddModal(false)}
           onSuccess={handleModalSuccess}
-          email={email}
+          email={activeEmail}
           availableWorkouts={workouts}
           initialDate={modalInitialDate}
         />
       )}
 
-      {/* Event Context Menu - with "Start/Edit Now" option */}
+      {/* Event Context Menu */}
       {selectedEvent && (
         <EventContextMenu
           isOpen={showContextMenu}
@@ -413,19 +440,19 @@ export default function CalendarPage() {
       )}
 
       {/* Deloading Modal */}
-      {email && (
+      {activeEmail && (
         <DeloadingModal
           isOpen={showDeloadingModal}
           onClose={() => setShowDeloadingModal(false)}
           onSuccess={handleDeloadingSuccess}
-          email={email}
+          email={activeEmail}
           mode={deloadingMode}
         />
       )}
 
       {/* Admin Actions - Deloading Controls */}
       {isAdmin && (
-        <div className="fixed bottom-24 left-6 flex flex-col gap-2 z-40">
+        <div className="fixed bottom-28 left-6 flex flex-col gap-2 z-40">
           <button
             onClick={handleApplyDeloading}
             className="bg-cyan-600 hover:bg-cyan-700 text-white px-4 py-2 rounded-lg shadow-lg text-sm font-medium transition-all"
@@ -459,16 +486,13 @@ export default function CalendarPage() {
             onView={(newView: View) => setView(newView)}
             onNavigate={(newDate: Date) => setDate(newDate)}
             popup={true}
-            // Event click handler - Show context menu
             onSelectEvent={(event: any, e: any) => {
               e.preventDefault()
               e.stopPropagation()
               handleSelectEvent(event, e)
             }}
-            // Slot selection - only when in date selection mode
             selectable={isSelectingDate}
             onSelectSlot={handleSelectSlot}
-            // Drag & drop - disabled during date selection to avoid conflicts
             resizable={!isMobile && !isSelectingDate}
             draggableAccessor={() => !isMobile && !isSelectingDate}
             onEventDrop={!isSelectingDate ? handleEventDrop : undefined}

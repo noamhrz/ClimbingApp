@@ -73,15 +73,6 @@ export default function EventComponent({
     }
   }
 
-  const handleDelete = (e: React.MouseEvent) => {
-    e.stopPropagation()
-    e.preventDefault()
-    const confirmDelete = confirm('למחוק את האימון הזה?')
-    if (confirmDelete) {
-      onDelete(event.id)
-    }
-  }
-
   return (
     <div 
       className="relative w-full h-full rounded p-1 text-xs font-semibold overflow-hidden"
@@ -98,16 +89,8 @@ export default function EventComponent({
         {event.title}
       </div>
 
-      {/* Delete Button - Admin Only */}
-      {isAdmin && (
-        <button
-          className="absolute bottom-1 right-1 text-[10px] text-red-700 bg-white/80 rounded px-1 py-[1px] pointer-events-auto"
-          onClick={handleDelete}
-          title="מחק אימון"
-        >
-          🗑
-        </button>
-      )}
+      {/* ✅ הסרתי את כפתור המחיקה הישיר! */}
+      {/* המחיקה תהיה רק דרך Context Menu */}
 
       {/* Deloading Badge */}
       {event.Deloading && event.DeloadingPercentage && (

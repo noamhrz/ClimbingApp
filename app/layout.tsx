@@ -1,6 +1,8 @@
+// app/layout.tsx
 import './globals.css'
-import { UserProvider } from '@/context/UserContext'
+import { AuthProvider } from '@/context/AuthContext'
 import ClientLayoutWrapper from './ClientLayoutWrapper'
+import Footer from '@/components/Footer'
 
 export const metadata = {
   title: 'Climbing Training App',
@@ -11,9 +13,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="he" dir="rtl">
       <body>
-        <UserProvider>
-          <ClientLayoutWrapper>{children}</ClientLayoutWrapper>
-        </UserProvider>
+        <AuthProvider>
+          <ClientLayoutWrapper>
+            {children}
+          </ClientLayoutWrapper>
+          <Footer />
+        </AuthProvider>
       </body>
     </html>
   )

@@ -2,10 +2,9 @@
 
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
-import { useUserContext } from '@/context/UserContext'
+import { useAuth, useActiveUserEmail } from '@/context/AuthContext'
 import dayjs from 'dayjs'
 import UserHeader from '@/components/UserHeader'
-import AdminFooter from '@/components/AdminFooter' // ✅ חדש
 
 type CalendarRow = {
   CalendarID: number
@@ -20,25 +19,25 @@ type CalendarRow = {
 }
 
 export default function DashboardPage() {
-  const { selectedUser } = useUserContext()
+  const { activeUser, loading: authLoading } = useAuth()
+  const activeEmail = useActiveUserEmail()
   const [nextWorkout, setNextWorkout] = useState<CalendarRow | null>(null)
   const [completedWorkouts, setCompletedWorkouts] = useState<CalendarRow[]>([])
   const [avgRPE, setAvgRPE] = useState<number | null>(null)
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    if (!selectedUser?.userEmail) return
+    if (!activeEmail) return
 
     const fetchDashboardData = async () => {
       setLoading(true)
       const now = new Date().toISOString()
-      const email = selectedUser.userEmail
 
       // 🟩 1. אימון הבא
       const { data: nextData, error: nextErr } = await supabase
         .from('Calendar')
         .select('*')
-        .eq('Email', email)
+        .eq('Email', activeEmail)
         .gt('StartTime', now)
         .order('StartTime', { ascending: true })
         .limit(1)
@@ -50,7 +49,7 @@ export default function DashboardPage() {
       const { data: completedData, error: compErr } = await supabase
         .from('Calendar')
         .select('*')
-        .eq('Email', email)
+        .eq('Email', activeEmail)
         .eq('Completed', true)
 
       if (compErr) console.error('שגיאה באימונים שהושלמו:', compErr)
@@ -60,7 +59,7 @@ export default function DashboardPage() {
       const { data: rpeData, error: rpeErr } = await supabase
         .from('Calendar')
         .select('RPE')
-        .eq('Email', email)
+        .eq('Email', activeEmail)
         .not('RPE', 'is', null)
 
       if (rpeErr) console.error('שגיאה בחישוב RPE:', rpeErr)
@@ -77,26 +76,44 @@ export default function DashboardPage() {
     }
 
     fetchDashboardData()
-  }, [selectedUser])
+  }, [activeEmail])
 
-  if (!selectedUser)
+  // Loading state
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4 mx-auto"></div>
+          <p className="text-gray-600">טוען...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // No user
+  if (!activeUser) {
     return (
       <div className="text-center mt-10 text-gray-600">
         <p>אנא בחר משתמש כדי להציג את הנתונים</p>
       </div>
     )
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50 relative pb-10">
-      {/* 🔹 Header גלובלי */}
+    <div className="min-h-screen bg-gray-50 relative pb-20">
+      {/* Header */}
       <UserHeader />
 
-      <div className="p-6 text-center">
+      <div className="p-6 text-center max-w-5xl mx-auto">
         <h2 className="text-2xl font-bold mb-4 text-gray-800">
-          שלום {selectedUser.Name} 👋
+          שלום {activeUser.Name} 👋
         </h2>
 
-        {loading && <p>טוען נתונים...</p>}
+        {loading && (
+          <div className="flex justify-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          </div>
+        )}
 
         {!loading && (
           <>
@@ -141,9 +158,6 @@ export default function DashboardPage() {
           </>
         )}
       </div>
-
-      {/* ⚙️ פוטר לאדמין בלבד */}
-      <AdminFooter />
     </div>
   )
 }

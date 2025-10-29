@@ -2,13 +2,13 @@
 
 import { useEffect, useState } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
-import Link from 'next/link'
 import { supabase } from '@/lib/supabaseClient'
-import { useUserContext } from '@/context/UserContext'
+import { useAuth, useActiveUserEmail } from '@/context/AuthContext'
 import { motion, AnimatePresence } from 'framer-motion'
 
 export default function WorkoutDetailClient({ id }: { id: number }) {
-  const { selectedUser } = useUserContext()
+  const { activeUser, loading: authLoading } = useAuth()
+  const activeEmail = useActiveUserEmail()
   const searchParams = useSearchParams()
   const router = useRouter()
 
@@ -16,7 +16,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
   const calendarId = searchParams.get('calendar')
   const calendarIdNum = calendarId ? Number(calendarId) : null
 
-  const email = emailFromQuery || selectedUser?.userEmail
+  const email = emailFromQuery || activeEmail
 
   const [workout, setWorkout] = useState<any>(null)
   const [loading, setLoading] = useState(true)
@@ -188,12 +188,11 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
     const now = new Date().toISOString()
 
     try {
-      // עדכן את תאריך האימון להיום
       const { error } = await supabase
         .from('Calendar')
         .update({ 
           StartTime: now,
-          EndTime: new Date(Date.now() + 3600000).toISOString() // +1 שעה
+          EndTime: new Date(Date.now() + 3600000).toISOString()
         })
         .eq('CalendarID', calendarIdNum)
 
@@ -201,7 +200,6 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
 
       showToast('✅ האימון עודכן להיום!', 'blue')
       
-      // רענן את הדף כדי להסיר את ההודעה
       setTimeout(() => {
         window.location.reload()
       }, 800)
@@ -223,7 +221,6 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
       let activeCalendarId = calendarIdNum
       
       if (!activeCalendarId) {
-        // אימון חדש (ללא קישור לקלנדר) → שמור להיום
         const { data: newCal, error: calErr } = await supabase
           .from('Calendar')
           .insert({
@@ -242,7 +239,6 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
         if (calErr) throw calErr
         activeCalendarId = newCal.CalendarID
       } else {
-        // אימון קיים → עדכן בלי לשנות את התאריך המקורי
         const { error: updErr } = await supabase
           .from('Calendar')
           .update({ 
@@ -307,186 +303,276 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
     }
   }
 
-  // === UI ===
-  if (loading) return <p className="p-6">⌛ טוען...</p>
-  if (!workout) return <p className="p-6">האימון לא נמצא</p>
-
-  return (
-    <div className="max-w-4xl mx-auto px-4 py-6">
-      <div className="flex justify-between items-center mb-3">
-        <h1 className="text-2xl font-bold text-blue-600">{workout.Name}</h1>
-        <div className="flex gap-2">
-          <Link href="/dashboard" className="border rounded px-3 py-1 hover:bg-gray-100">
-            דשבורד
-          </Link>
-          <Link href="/calendar" className="border rounded px-3 py-1 hover:bg-gray-100">
-            קלנדר
-          </Link>
+  // === Loading & Error States ===
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4 mx-auto"></div>
+          <p className="text-gray-600">טוען...</p>
         </div>
       </div>
+    )
+  }
 
-      <p className="text-gray-700">{workout.Description}</p>
+  if (!activeUser) {
+    return (
+      <div className="text-center mt-10 text-gray-600">
+        <p>אנא בחר משתמש</p>
+      </div>
+    )
+  }
 
-      {/* אימון עתידי */}
-      {isFutureWorkout && (
-        <div className="mt-4 bg-amber-50 border-r-4 border-amber-500 rounded-lg p-4 shadow-sm">
-          <div className="flex items-start gap-3">
-            <div className="text-2xl">⏰</div>
-            <div className="flex-1">
-              <h3 className="font-bold text-amber-900">אימון עתידי</h3>
-              <p className="text-amber-800 text-sm mt-1">
-                האימון מתוכנן ל-{formatDate(calendarRow.StartTime)}.
-              </p>
-              <p className="text-amber-700 text-sm mt-2 font-medium">
-                💡 רוצה לבצע אותו היום? לחץ על הכפתור למטה כדי להעביר את האימון להיום.
-              </p>
-              <button 
-                onClick={handleConvertToToday}
-                className="mt-3 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm font-medium transition-colors shadow-sm"
-              >
-                📅 העבר אימון להיום וביצע עכשיו
-              </button>
+  if (loading) {
+    return (
+      <div className="p-6 text-center">
+        <div className="text-2xl mb-2">⌛</div>
+        <p>טוען אימון...</p>
+      </div>
+    )
+  }
+
+  if (!workout) {
+    return <p className="p-6 text-center">האימון לא נמצא</p>
+  }
+
+  // === UI ===
+  return (
+    <div className="max-w-4xl mx-auto">
+      <div className="bg-white rounded-lg shadow-sm p-6">
+        <h1 className="text-3xl font-bold text-blue-600 mb-2">{workout.Name}</h1>
+        <p className="text-gray-700 mb-4">{workout.Description}</p>
+
+        {/* אימון עתידי */}
+        {isFutureWorkout && (
+          <div className="mt-4 bg-amber-50 border-r-4 border-amber-500 rounded-lg p-4 shadow-sm">
+            <div className="flex items-start gap-3">
+              <div className="text-2xl">⏰</div>
+              <div className="flex-1">
+                <h3 className="font-bold text-amber-900">אימון עתידי</h3>
+                <p className="text-amber-800 text-sm mt-1">
+                  האימון מתוכנן ל-{formatDate(calendarRow.StartTime)}.
+                </p>
+                <p className="text-amber-700 text-sm mt-2 font-medium">
+                  💡 רוצה לבצע אותו היום? לחץ על הכפתור למטה כדי להעביר את האימון להיום.
+                </p>
+                <button 
+                  onClick={handleConvertToToday}
+                  className="mt-3 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm font-medium transition-colors shadow-sm"
+                >
+                  📅 העבר אימון להיום וביצע עכשיו
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* אימון מהעבר */}
-      {isPastWorkout && (
-        <div className="mt-4 bg-gray-50 border-r-4 border-gray-400 rounded-lg p-4 shadow-sm">
-          <div className="flex items-start gap-3">
-            <div className="text-2xl">📌</div>
-            <div>
-              <h3 className="font-bold text-gray-900">אימון שעבר</h3>
-              <p className="text-gray-700 text-sm mt-1">
-                האימון היה מתוכנן ל-{formatDate(calendarRow.StartTime)}.
-                ניתן להשלים אותו עכשיו והוא יישמר לאותו תאריך.
-              </p>
+        {/* אימון מהעבר */}
+        {isPastWorkout && (
+          <div className="mt-4 bg-gray-50 border-r-4 border-gray-400 rounded-lg p-4 shadow-sm">
+            <div className="flex items-start gap-3">
+              <div className="text-2xl">📌</div>
+              <div>
+                <h3 className="font-bold text-gray-900">אימון שעבר</h3>
+                <p className="text-gray-700 text-sm mt-1">
+                  האימון היה מתוכנן ל-{formatDate(calendarRow.StartTime)}.
+                  ניתן להשלים אותו עכשיו והוא יישמר לאותו תאריך.
+                </p>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Deloading Banner */}
-      {deloading && deloadingPercentage && (
-        <div className="mt-4 bg-gradient-to-r from-blue-50 to-cyan-50 border-2 border-blue-300 rounded-lg p-4 shadow-sm">
-          <div className="flex items-center gap-3">
-            <div className="text-3xl">🔵</div>
-            <div>
-              <h3 className="font-bold text-blue-800 text-lg">שבוע הפחתת עומס</h3>
-              <p className="text-blue-700 text-sm mt-1">
-                בצע רק <span className="font-bold text-xl">{deloadingPercentage}%</span> מהסטים המתוכננים
-              </p>
+        {/* Deloading Banner */}
+        {deloading && deloadingPercentage && (
+          <div className="mt-4 bg-gradient-to-r from-blue-50 to-cyan-50 border-2 border-blue-300 rounded-lg p-4 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="text-3xl">🔵</div>
+              <div>
+                <h3 className="font-bold text-blue-800 text-lg">שבוע הפחתת עומס</h3>
+                <p className="text-blue-700 text-sm mt-1">
+                  בצע רק <span className="font-bold text-xl">{deloadingPercentage}%</span> מהסטים המתוכננים
+                </p>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* טפסים */}
-      <>
-          {workout.containExercise && exercises.length > 0 && (
-            <section className="mt-6">
-              <h2 className="font-semibold mb-2">תרגילים</h2>
-              {exerciseForms.map((ex, i) => (
-                <div key={i} className="border p-3 rounded mb-3">
-                  <div className="font-medium">{ex.Name}</div>
-                  <div className="text-sm text-gray-500 mb-1">{ex.Description}</div>
-                  <div className="grid grid-cols-3 gap-2 mt-2">
-                    <input placeholder="חזרות" className="border p-2 rounded" onChange={(e) => handleExerciseChange(i, 'RepsDone', Number(e.target.value))} />
-                    <input placeholder="משקל (KG)" className="border p-2 rounded" onChange={(e) => handleExerciseChange(i, 'WeightKG', Number(e.target.value))} />
-                    <input placeholder="RPE" className="border p-2 rounded" onChange={(e) => handleExerciseChange(i, 'RPE', Number(e.target.value))} />
-                  </div>
+        {/* תרגילים */}
+        {workout.containExercise && exercises.length > 0 && (
+          <section className="mt-6">
+            <h2 className="font-semibold text-lg mb-3">תרגילים</h2>
+            {exerciseForms.map((ex, i) => (
+              <div key={i} className="border border-gray-200 p-4 rounded-lg mb-3 bg-gray-50">
+                <div className="font-medium text-lg mb-1">{ex.Name}</div>
+                <div className="text-sm text-gray-600 mb-3">{ex.Description}</div>
+                <div className="grid grid-cols-3 gap-2">
+                  <input 
+                    placeholder="חזרות" 
+                    type="number"
+                    className="border border-gray-300 p-2 rounded focus:border-blue-500 focus:outline-none" 
+                    onChange={(e) => handleExerciseChange(i, 'RepsDone', Number(e.target.value))} 
+                  />
+                  <input 
+                    placeholder="משקל (KG)" 
+                    type="number"
+                    className="border border-gray-300 p-2 rounded focus:border-blue-500 focus:outline-none" 
+                    onChange={(e) => handleExerciseChange(i, 'WeightKG', Number(e.target.value))} 
+                  />
+                  <input 
+                    placeholder="RPE (1-10)" 
+                    type="number"
+                    min="1"
+                    max="10"
+                    className="border border-gray-300 p-2 rounded focus:border-blue-500 focus:outline-none" 
+                    onChange={(e) => handleExerciseChange(i, 'RPE', Number(e.target.value))} 
+                  />
                 </div>
-              ))}
-            </section>
-          )}
+              </div>
+            ))}
+          </section>
+        )}
 
-          {/* טיפוס */}
-          {workout.containClimbing && (
-            <section className="mt-8">
-              <h2 className="font-semibold mb-2">רישום טיפוס</h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-4">
-                <select className="border p-2 rounded" value={climbType} onChange={(e) => setClimbType(e.target.value as any)}>
-                  <option value="Lead">Lead</option>
-                  <option value="Boulder">Boulder</option>
-                  <option value="Board">Board</option>
-                </select>
-                <select className="border p-2 rounded" value={locationID ?? ''} onChange={(e) => setLocationID(Number(e.target.value))}>
-                  <option value="">בחר מקום</option>
-                  {locations.map((loc) => (
-                    <option key={loc.LocationID} value={loc.LocationID}>
-                      {loc.LocationName} ({loc.LocationType})
+        {/* טיפוס */}
+        {workout.containClimbing && (
+          <section className="mt-8">
+            <h2 className="font-semibold text-lg mb-3">רישום טיפוס</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-4">
+              <select 
+                className="border border-gray-300 p-2 rounded focus:border-blue-500 focus:outline-none" 
+                value={climbType} 
+                onChange={(e) => setClimbType(e.target.value as any)}
+              >
+                <option value="Lead">Lead</option>
+                <option value="Boulder">Boulder</option>
+                <option value="Board">Board</option>
+              </select>
+              <select 
+                className="border border-gray-300 p-2 rounded focus:border-blue-500 focus:outline-none" 
+                value={locationID ?? ''} 
+                onChange={(e) => setLocationID(Number(e.target.value))}
+              >
+                <option value="">בחר מקום</option>
+                {locations.map((loc) => (
+                  <option key={loc.LocationID} value={loc.LocationID}>
+                    {loc.LocationName} ({loc.LocationType})
+                  </option>
+                ))}
+              </select>
+              {climbType === 'Board' && (
+                <select 
+                  className="border border-gray-300 p-2 rounded focus:border-blue-500 focus:outline-none" 
+                  value={boardTypeID ?? ''} 
+                  onChange={(e) => setBoardTypeID(Number(e.target.value))}
+                >
+                  <option value="">בחר בורד</option>
+                  {boards.map((b) => (
+                    <option key={b.BoardID} value={b.BoardID}>
+                      {b.BoardName}
                     </option>
                   ))}
                 </select>
-                {climbType === 'Board' && (
-                  <select className="border p-2 rounded" value={boardTypeID ?? ''} onChange={(e) => setBoardTypeID(Number(e.target.value))}>
-                    <option value="">בחר בורד</option>
-                    {boards.map((b) => (
-                      <option key={b.BoardID} value={b.BoardID}>
-                        {b.BoardName}
-                      </option>
-                    ))}
+              )}
+            </div>
+
+            {climbRoutes.map((r, i) => (
+              <div key={i} className="border border-gray-200 p-4 rounded-lg mb-3 bg-gray-50">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <input 
+                    placeholder="שם מסלול" 
+                    className="border border-gray-300 p-2 rounded focus:border-blue-500 focus:outline-none" 
+                    onChange={(e) => handleClimbChange(i, 'RouteName', e.target.value)} 
+                  />
+                  <select 
+                    className="border border-gray-300 p-2 rounded focus:border-blue-500 focus:outline-none" 
+                    onChange={(e) => handleClimbChange(i, 'GradeID', Number(e.target.value))}
+                  >
+                    <option value="">בחר דירוג</option>
+                    {climbType === 'Lead'
+                      ? leadGrades.map((g) => (
+                          <option key={g.LeadGradeID} value={g.LeadGradeID}>
+                            {g.FrenchGrade}
+                          </option>
+                        ))
+                      : boulderGrades.map((g) => (
+                          <option key={g.BoulderGradeID} value={g.BoulderGradeID}>
+                            {g.VGrade} ({g.FontGrade})
+                          </option>
+                        ))}
                   </select>
+                  <input 
+                    placeholder="ניסיונות" 
+                    type="number" 
+                    min="1"
+                    className="border border-gray-300 p-2 rounded focus:border-blue-500 focus:outline-none" 
+                    onChange={(e) => handleClimbChange(i, 'Attempts', Number(e.target.value))} 
+                  />
+                  <label className="flex items-center gap-2 p-2">
+                    <input 
+                      type="checkbox" 
+                      checked={r.Successful} 
+                      onChange={(e) => handleClimbChange(i, 'Successful', e.target.checked)}
+                      className="w-4 h-4"
+                    />
+                    <span>הצלחה</span>
+                  </label>
+                  <textarea 
+                    placeholder="הערות" 
+                    className="border border-gray-300 p-2 rounded md:col-span-2 focus:border-blue-500 focus:outline-none" 
+                    rows={2}
+                    onChange={(e) => handleClimbChange(i, 'Notes', e.target.value)} 
+                  />
+                </div>
+                {climbRoutes.length > 1 && (
+                  <button 
+                    onClick={() => removeClimbRoute(i)} 
+                    className="text-red-500 hover:text-red-700 text-sm mt-2 font-medium"
+                  >
+                    🗑️ הסר מסלול
+                  </button>
                 )}
               </div>
-
-              {climbRoutes.map((r, i) => (
-                <div key={i} className="border p-3 rounded mb-3">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                    <input placeholder="שם מסלול" className="border p-2 rounded" onChange={(e) => handleClimbChange(i, 'RouteName', e.target.value)} />
-                    <select className="border p-2 rounded" onChange={(e) => handleClimbChange(i, 'GradeID', Number(e.target.value))}>
-                      <option value="">בחר דירוג</option>
-                      {climbType === 'Lead'
-                        ? leadGrades.map((g) => (
-                            <option key={g.LeadGradeID} value={g.LeadGradeID}>
-                              {g.FrenchGrade}
-                            </option>
-                          ))
-                        : boulderGrades.map((g) => (
-                            <option key={g.BoulderGradeID} value={g.BoulderGradeID}>
-                              {g.VGrade} ({g.FontGrade})
-                            </option>
-                          ))}
-                    </select>
-                    <input placeholder="ניסיונות" type="number" className="border p-2 rounded" onChange={(e) => handleClimbChange(i, 'Attempts', Number(e.target.value))} />
-                    <label className="flex items-center gap-2">
-                      <input type="checkbox" checked={r.Successful} onChange={(e) => handleClimbChange(i, 'Successful', e.target.checked)} />
-                      הצלחה
-                    </label>
-                    <textarea placeholder="הערות" className="border p-2 rounded md:col-span-2" onChange={(e) => handleClimbChange(i, 'Notes', e.target.value)} />
-                  </div>
-                  {climbRoutes.length > 1 && (
-                    <button onClick={() => removeClimbRoute(i)} className="text-red-500 text-sm mt-2">
-                      הסר מסלול
-                    </button>
-                  )}
-                </div>
-              ))}
-              <button onClick={addClimbRoute} className="text-sm border px-2 py-1 rounded hover:bg-gray-100">
-                ➕ הוסף מסלול
-              </button>
-            </section>
-          )}
-
-          <div className="mt-6">
-            <textarea placeholder="הערות מטפס" className="border rounded w-full p-2" rows={2} value={climberNotes} onChange={(e) => setClimberNotes(e.target.value)} />
-          </div>
-
-          <div className="text-right mt-6">
-            <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded" onClick={onComplete}>
-              סיום אימון ושמירה
+            ))}
+            <button 
+              onClick={addClimbRoute} 
+              className="text-sm border border-blue-500 text-blue-600 px-4 py-2 rounded hover:bg-blue-50 transition-colors font-medium"
+            >
+              ➕ הוסף מסלול
             </button>
-          </div>
-      </>
+          </section>
+        )}
 
+        {/* הערות מטפס */}
+        <div className="mt-6">
+          <label className="block font-medium mb-2">הערות מטפס</label>
+          <textarea 
+            placeholder="הערות, תחושות, הישגים..." 
+            className="border border-gray-300 rounded w-full p-3 focus:border-blue-500 focus:outline-none" 
+            rows={3} 
+            value={climberNotes} 
+            onChange={(e) => setClimberNotes(e.target.value)} 
+          />
+        </div>
+
+        {/* כפתור שמירה */}
+        <div className="text-center mt-8">
+          <button 
+            className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-semibold text-lg shadow-md transition-colors"
+            onClick={onComplete}
+          >
+            ✅ סיום אימון ושמירה
+          </button>
+        </div>
+      </div>
+
+      {/* Toast Notifications */}
       <AnimatePresence>
         {toast && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 20 }}
-            className={`fixed bottom-20 left-1/2 -translate-x-1/2 px-4 py-2 rounded-lg shadow-md text-white text-sm z-[9999] ${
+            className={`fixed bottom-24 left-1/2 -translate-x-1/2 px-6 py-3 rounded-lg shadow-lg text-white text-sm z-[9999] ${
               toast.color === 'blue'
                 ? 'bg-blue-600'
                 : toast.color === 'red'
