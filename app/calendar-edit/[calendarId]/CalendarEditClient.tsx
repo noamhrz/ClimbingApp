@@ -34,6 +34,14 @@ export default function CalendarEditClient() {
   // Track which routes existed in DB (for UPDATE vs INSERT)
   const [existingLogIds, setExistingLogIds] = useState<Map<string, number>>(new Map())
 
+  // Toast notification state
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
+
+  const showToast = (message: string, type: 'success' | 'error' = 'success') => {
+    setToast({ message, type })
+    setTimeout(() => setToast(null), 3000)
+  }
+
   // טעינת נתונים
   useEffect(() => {
     const load = async () => {
@@ -122,9 +130,9 @@ export default function CalendarEditClient() {
             return {
               id: tempId,
               climbType: log.ClimbType,
-              gradeID: log.GradeID,
+              gradeID: log.GradeID ?? null,
               gradeDisplay: getGradeDisplay(
-                log.GradeID,
+                log.GradeID ?? null,
                 log.ClimbType,
                 bg.data || [],
                 lg.data || []
@@ -164,13 +172,16 @@ export default function CalendarEditClient() {
 
   const handleSave = async () => {
     if (!activeEmail) {
-      alert('❌ אין משתמש פעיל')
+      showToast('❌ אין משתמש פעיל', 'error')
       return
     }
 
     try {
       const now = new Date().toISOString()
       const email = calendarRow?.Email || activeEmail
+
+      let exerciseCount = 0
+      let climbingCount = 0
 
       // Save Exercises
       for (const ex of exerciseForms) {
@@ -180,6 +191,8 @@ export default function CalendarEditClient() {
           (ex.RPE && ex.RPE !== '') ||
           (ex.Notes && ex.Notes.trim() !== '')
         if (!hasData) continue
+
+        exerciseCount++
 
         const payload = {
           CalendarID: calendarId,
@@ -201,6 +214,8 @@ export default function CalendarEditClient() {
 
       // Save Climbing Routes - NEW FORMAT
       if (routes.length > 0) {
+        climbingCount = routes.length
+        
         for (const route of routes) {
           const existingLogId = existingLogIds.get(route.id)
           
@@ -259,11 +274,21 @@ export default function CalendarEditClient() {
         .update({ ClimberNotes: climberNotes, UpdatedAt: now })
         .eq('CalendarID', calendarId)
 
-      alert('✅ הנתונים נשמרו בהצלחה!')
-      router.push('/calendar')
+      // Show success message
+      const parts = []
+      if (exerciseCount > 0) parts.push(`${exerciseCount} תרגילים`)
+      if (climbingCount > 0) parts.push(`${climbingCount} מסלולים`)
+      
+      const message = parts.length > 0 
+        ? `✅ נשמר! ${parts.join(' + ')}`
+        : '✅ הנתונים נשמרו בהצלחה!'
+      
+      showToast(message, 'success')
+      
+      setTimeout(() => router.push('/calendar'), 1500)
     } catch (err) {
       console.error('❌ Error saving data:', err)
-      alert('שגיאה בשמירה — ראה Console')
+      showToast('❌ שגיאה בשמירה', 'error')
     }
   }
 
@@ -456,6 +481,15 @@ export default function CalendarEditClient() {
           </button>
         </div>
       </div>
+
+      {/* Toast Notification */}
+      {toast && (
+        <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 px-6 py-4 rounded-lg shadow-xl text-white font-medium z-50 animate-in ${
+          toast.type === 'success' ? 'bg-green-600' : 'bg-red-600'
+        }`}>
+          {toast.message}
+        </div>
+      )}
     </div>
   )
 }
