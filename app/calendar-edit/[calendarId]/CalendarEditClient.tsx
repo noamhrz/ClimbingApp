@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabaseClient'
 import { useAuth, useActiveUserEmail } from '@/context/AuthContext'
 import { ClimbingSummary } from '@/components/climbing/ClimbingSummary'
 import { RouteTypeBlock } from '@/components/climbing/RouteTypeBlock'
-import { ClimbingRoute, BoulderGrade, LeadGrade, ClimbingLocation, ClimbingLogEntry } from '@/types/climbing'
+import { ClimbingRoute, BoulderGrade, LeadGrade, ClimbingLocation, ClimbingLogEntry, BoardType } from '@/types/climbing'
 import { generateTempId, getGradeDisplay } from '@/lib/climbing-helpers'
 import dayjs from 'dayjs'
 
@@ -24,10 +24,12 @@ export default function CalendarEditClient() {
   // New climbing state
   const [routes, setRoutes] = useState<ClimbingRoute[]>([])
   const [selectedLocation, setSelectedLocation] = useState<number | null>(null)
+  const [selectedBoardType, setSelectedBoardType] = useState<number | null>(null)
   
   const [leadGrades, setLeadGrades] = useState<LeadGrade[]>([])
   const [boulderGrades, setBoulderGrades] = useState<BoulderGrade[]>([])
   const [locations, setLocations] = useState<ClimbingLocation[]>([])
+  const [boardTypes, setBoardTypes] = useState<BoardType[]>([])
   const [climberNotes, setClimberNotes] = useState('')
   const [loading, setLoading] = useState(true)
 
@@ -100,14 +102,16 @@ export default function CalendarEditClient() {
         setExerciseForms(mappedExercises)
 
         // Load Grades & Locations
-        const [lg, bg, loc] = await Promise.all([
+        const [lg, bg, loc, bt] = await Promise.all([
           supabase.from('LeadGrades').select('*').order('LeadGradeID'),
           supabase.from('BoulderGrades').select('*').order('BoulderGradeID'),
           supabase.from('ClimbingLocations').select('*').order('LocationName'),
+          supabase.from('BoardTypes').select('*').order('BoardName'),
         ])
         setLeadGrades(lg.data || [])
         setBoulderGrades(bg.data || [])
         setLocations(loc.data || [])
+        setBoardTypes(bt.data || [])
 
         // Load existing ClimbingLogs and convert to ClimbingRoute format
         const { data: climbLogs } = await supabase
@@ -119,6 +123,12 @@ export default function CalendarEditClient() {
           // Set location from first log (assuming same location for all)
           if (climbLogs[0].LocationID) {
             setSelectedLocation(climbLogs[0].LocationID)
+          }
+          
+          // Set board type from first Board route
+          const firstBoardRoute = climbLogs.find(log => log.ClimbType === 'Board')
+          if (firstBoardRoute && firstBoardRoute.BoardTypeID) {
+            setSelectedBoardType(firstBoardRoute.BoardTypeID)
           }
 
           // Convert DB logs to ClimbingRoute format
@@ -225,7 +235,7 @@ export default function CalendarEditClient() {
             Email: email,
             ClimbType: route.climbType,
             LocationID: selectedLocation,
-            BoardTypeID: null,  // TODO: add board selection if needed
+            BoardTypeID: route.climbType === 'Board' ? selectedBoardType : null,
             GradeID: route.gradeID,
             RouteName: route.routeName || null,
             Attempts: route.attempts,
@@ -420,6 +430,9 @@ export default function CalendarEditClient() {
             }}
             boulderGrades={boulderGrades}
             leadGrades={leadGrades}
+            boardTypes={boardTypes}
+            selectedBoardType={selectedBoardType}
+            onBoardTypeChange={setSelectedBoardType}
           />
 
           {/* Board Block */}
@@ -435,6 +448,9 @@ export default function CalendarEditClient() {
             }}
             boulderGrades={boulderGrades}
             leadGrades={leadGrades}
+            boardTypes={boardTypes}
+            selectedBoardType={selectedBoardType}
+            onBoardTypeChange={setSelectedBoardType}
           />
 
           {/* Lead Block */}
@@ -450,6 +466,9 @@ export default function CalendarEditClient() {
             }}
             boulderGrades={boulderGrades}
             leadGrades={leadGrades}
+            boardTypes={boardTypes}
+            selectedBoardType={selectedBoardType}
+            onBoardTypeChange={setSelectedBoardType}
           />
         </section>
 

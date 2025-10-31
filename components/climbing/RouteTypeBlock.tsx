@@ -3,7 +3,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { ClimbingRoute, BoulderGrade, LeadGrade } from '@/types/climbing'
+import { ClimbingRoute, BoulderGrade, LeadGrade, BoardType } from '@/types/climbing'
 import { RouteTable } from './RouteTable'
 import { generateTempId, getGradeDisplay } from '@/lib/climbing-helpers'
 
@@ -14,6 +14,9 @@ interface RouteTypeBlockProps {
   onRoutesChange: (routes: ClimbingRoute[]) => void
   boulderGrades: BoulderGrade[]
   leadGrades: LeadGrade[]
+  boardTypes: BoardType[]
+  selectedBoardType: number | null
+  onBoardTypeChange: (boardTypeId: number | null) => void
 }
 
 export function RouteTypeBlock({
@@ -22,7 +25,10 @@ export function RouteTypeBlock({
   routes,
   onRoutesChange,
   boulderGrades,
-  leadGrades
+  leadGrades,
+  boardTypes,
+  selectedBoardType,
+  onBoardTypeChange
 }: RouteTypeBlockProps) {
   const isLead = type === 'Lead'
   
@@ -91,6 +97,34 @@ export function RouteTypeBlock({
       {/* Collapsible Content */}
       {isOpen && (
         <>
+          {/* Board Type Selector - Only for Board */}
+          {type === 'Board' && (
+            <div className="p-4 bg-purple-50 border-b">
+              <label className="block text-sm font-medium mb-2">
+                🏋️ סוג Board:
+              </label>
+              <select
+                value={selectedBoardType || ''}
+                onChange={(e) => onBoardTypeChange(Number(e.target.value) || null)}
+                className="w-full px-3 py-2 border rounded focus:ring-2 focus:ring-purple-500"
+              >
+                <option value="">בחר סוג Board</option>
+                {(boardTypes || []).map(board => (
+                  <option key={board.BoardID} value={board.BoardID}>
+                    {board.BoardName} - {board.Manufacturer}
+                    {board.AppSupported && ' 📱'}
+                    {board.LEDSystem && ' 💡'}
+                  </option>
+                ))}
+              </select>
+              {selectedBoardType && (boardTypes || []).find(b => b.BoardID === selectedBoardType) && (
+                <p className="text-xs text-gray-600 mt-1">
+                  {(boardTypes || []).find(b => b.BoardID === selectedBoardType)?.Description}
+                </p>
+              )}
+            </div>
+          )}
+
           {/* Quick Add */}
           <div className="p-4 bg-blue-50 border-b">
             <div className="text-sm font-medium mb-2">🚀 הוספה מהירה:</div>

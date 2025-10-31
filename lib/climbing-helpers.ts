@@ -3,24 +3,23 @@
 import { BoulderGrade, LeadGrade } from '@/types/climbing'
 
 export function getGradeDisplay(
-  gradeID: number | null, 
+  gradeID: number | null,
   climbType: 'Boulder' | 'Board' | 'Lead',
   boulderGrades: BoulderGrade[],
   leadGrades: LeadGrade[]
 ): string {
-  if (!gradeID && gradeID !== 0) return '-'
+  if (!gradeID) return ''
   
-  if (climbType === 'Boulder' || climbType === 'Board') {
-    const grade = boulderGrades.find(g => g.BoulderGradeID === gradeID)
-    return grade 
-      ? `${grade.VGrade} (${grade.FontGrade})`
-      : `V${gradeID}`
-  } else {
+  if (climbType === 'Lead') {
     const grade = leadGrades.find(g => g.LeadGradeID === gradeID)
-    return grade?.FrenchGrade || `Grade ${gradeID}`
+    return grade ? `${grade.FrenchGrade} (${grade.YosemiteGrade})` : ''
+  } else {
+    // Boulder or Board
+    const grade = boulderGrades.find(g => g.BoulderGradeID === gradeID)
+    return grade ? `${grade.VGrade} (${grade.FontGrade})` : ''
   }
 }
 
 export function generateTempId(): string {
-  return `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+  return `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
 }

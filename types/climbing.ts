@@ -1,7 +1,7 @@
 // types/climbing.ts
 
 export interface ClimbingRoute {
-  id: string  // temp ID for UI
+  id: string
   climbType: 'Boulder' | 'Board' | 'Lead'
   gradeID: number | null
   gradeDisplay: string
@@ -15,25 +15,23 @@ export interface BoulderGrade {
   BoulderGradeID: number
   VGrade: string
   FontGrade: string
+  Description?: string
 }
 
 export interface LeadGrade {
   LeadGradeID: number
-  AussieGrade: number
   FrenchGrade: string
   YosemiteGrade: string
-  DifficultyLevel: string
+  Description?: string
 }
 
 export interface ClimbingLocation {
   LocationID: number
   LocationName: string
-  LocationType: string
   City: string
   Country: string
-  BoardTypeID?: number
-  Notes?: string
-  CreatedAt?: string
+  LocationType: string
+  Description?: string
 }
 
 export interface ClimbingLogEntry {
@@ -53,4 +51,15 @@ export interface ClimbingLogEntry {
   CreatedAt?: string
   UpdatedAt?: string
   CalendarID?: number | null
+}
+
+export interface BoardType {
+  BoardID: number
+  BoardName: string
+  Description: string
+  Manufacturer: string
+  AppSupported: boolean
+  AngleRange: string
+  LEDSystem: boolean
+  CreatedAt?: string
 }

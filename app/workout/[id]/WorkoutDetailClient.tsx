@@ -7,7 +7,7 @@ import { useAuth, useActiveUserEmail } from '@/context/AuthContext'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ClimbingSummary } from '@/components/climbing/ClimbingSummary'
 import { RouteTypeBlock } from '@/components/climbing/RouteTypeBlock'
-import { ClimbingRoute, BoulderGrade, LeadGrade, ClimbingLocation } from '@/types/climbing'
+import { ClimbingRoute, BoulderGrade, LeadGrade, ClimbingLocation, BoardType } from '@/types/climbing'
 
 export default function WorkoutDetailClient({ id }: { id: number }) {
   const { activeUser, loading: authLoading } = useAuth()
@@ -31,10 +31,12 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
   // New climbing state - using ClimbingRoute[]
   const [routes, setRoutes] = useState<ClimbingRoute[]>([])
   const [selectedLocation, setSelectedLocation] = useState<number | null>(null)
+  const [selectedBoardType, setSelectedBoardType] = useState<number | null>(null)
 
   const [leadGrades, setLeadGrades] = useState<LeadGrade[]>([])
   const [boulderGrades, setBoulderGrades] = useState<BoulderGrade[]>([])
   const [locations, setLocations] = useState<ClimbingLocation[]>([])
+  const [boardTypes, setBoardTypes] = useState<BoardType[]>([])
 
   const [coachNotes, setCoachNotes] = useState<string | null>(null)
   const [climberNotes, setClimberNotes] = useState('')
@@ -131,10 +133,11 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
         setExercises(mapped)
         setExerciseForms(mapped)
 
-        const [lg, bg, loc] = await Promise.all([
+        const [lg, bg, loc, bt] = await Promise.all([
           supabase.from('LeadGrades').select('*').order('LeadGradeID'),
           supabase.from('BoulderGrades').select('*').order('BoulderGradeID'),
           supabase.from('ClimbingLocations').select('*').order('LocationName'),
+          supabase.from('BoardTypes').select('*').order('BoardName'),
         ])
 
         if (!isMounted) return
@@ -142,6 +145,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
         setLeadGrades(lg.data || [])
         setBoulderGrades(bg.data || [])
         setLocations(loc.data || [])
+        setBoardTypes(bt.data || [])
       } catch (err) {
         console.error('❌ שגיאה בטעינה:', err)
       } finally {
@@ -211,12 +215,8 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
       return
     }
 
-    if (workout.containClimbing && routes.length === 0) {
-      showToast('❌ נא להוסיף לפחות מסלול אחד', 'red')
-      return
-    }
-
-    if (workout.containClimbing && !selectedLocation) {
+    // Validation for climbing
+    if (workout.containClimbing && routes.length > 0 && !selectedLocation) {
       showToast('❌ נא לבחור מיקום', 'red')
       return
     }
@@ -290,7 +290,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
           CalendarID: activeCalendarId,
           LocationID: selectedLocation,
           ClimbType: route.climbType,
-          BoardTypeID: null,  // TODO: add board selection if needed
+          BoardTypeID: route.climbType === 'Board' ? selectedBoardType : null,
           GradeID: route.gradeID,
           RouteName: route.routeName || null,
           Attempts: route.attempts,
@@ -303,7 +303,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
         await supabase.from('ClimbingLog').insert(payload)
       }
 
-      showToast(`✅ האימון נשמר בהצלחה! (${routes.length} מסלולים)`, 'blue')
+      showToast(`✅ האימון נשמר בהצלחה!${routes.length > 0 ? ` (${routes.length} מסלולים)` : ''}`, 'blue')
       setTimeout(() => router.push(`/calendar?highlight=${activeCalendarId}`), 1000)
     } catch (err) {
       console.error('❌ שגיאה בשמירה:', err)
@@ -446,13 +446,19 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
           <section className="mt-8">
             <h2 className="font-semibold text-xl mb-4">🧗 רישום טיפוס</h2>
             
-            {/* Location Selector */}
+            {/* Location Selector with Required Indicator */}
             <div className="mb-6">
-              <label className="block font-medium mb-2">📍 מיקום:</label>
+              <label className="block font-medium mb-2">
+                📍 מיקום {routes.length > 0 && <span className="text-red-500">*</span>}
+              </label>
               <select
                 value={selectedLocation || ''}
                 onChange={(e) => setSelectedLocation(Number(e.target.value) || null)}
-                className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
+                  routes.length > 0 && !selectedLocation 
+                    ? 'border-red-300 bg-red-50' 
+                    : 'border-gray-300'
+                }`}
               >
                 <option value="">בחר מיקום</option>
                 {locations.map(loc => (
@@ -461,6 +467,11 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
                   </option>
                 ))}
               </select>
+              {routes.length > 0 && !selectedLocation && (
+                <p className="text-red-600 text-sm mt-1">
+                  ⚠️ חובה לבחור מיקום כאשר יש מסלולים
+                </p>
+              )}
             </div>
 
             {/* Summary */}
@@ -479,6 +490,9 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
               }}
               boulderGrades={boulderGrades}
               leadGrades={leadGrades}
+              boardTypes={boardTypes}
+              selectedBoardType={selectedBoardType}
+              onBoardTypeChange={setSelectedBoardType}
             />
 
             {/* Board Block */}
@@ -494,6 +508,9 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
               }}
               boulderGrades={boulderGrades}
               leadGrades={leadGrades}
+              boardTypes={boardTypes}
+              selectedBoardType={selectedBoardType}
+              onBoardTypeChange={setSelectedBoardType}
             />
 
             {/* Lead Block */}
@@ -509,6 +526,9 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
               }}
               boulderGrades={boulderGrades}
               leadGrades={leadGrades}
+              boardTypes={boardTypes}
+              selectedBoardType={selectedBoardType}
+              onBoardTypeChange={setSelectedBoardType}
             />
           </section>
         )}
@@ -530,11 +550,16 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
           <button 
             className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-semibold text-lg shadow-md transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
             onClick={onComplete}
-            disabled={workout.containClimbing && (routes.length === 0 || !selectedLocation)}
+            disabled={workout.containClimbing && routes.length > 0 && !selectedLocation}
           >
             ✅ סיום אימון ושמירה
             {workout.containClimbing && routes.length > 0 && ` (${routes.length} מסלולים)`}
           </button>
+          {workout.containClimbing && routes.length > 0 && !selectedLocation && (
+            <p className="text-red-600 text-sm mt-2">
+              ⚠️ נא לבחור מיקום לפני שמירה
+            </p>
+          )}
         </div>
       </div>
 
