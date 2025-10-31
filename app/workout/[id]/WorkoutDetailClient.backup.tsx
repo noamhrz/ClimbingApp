@@ -1,13 +1,10 @@
 'use client'
 
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { useAuth, useActiveUserEmail } from '@/context/AuthContext'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ClimbingSummary } from '@/components/climbing/ClimbingSummary'
-import { RouteTypeBlock } from '@/components/climbing/RouteTypeBlock'
-import { ClimbingRoute, BoulderGrade, LeadGrade, ClimbingLocation } from '@/types/climbing'
 
 export default function WorkoutDetailClient({ id }: { id: number }) {
   const { activeUser, loading: authLoading } = useAuth()
@@ -27,14 +24,16 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
 
   const [exercises, setExercises] = useState<any[]>([])
   const [exerciseForms, setExerciseForms] = useState<any[]>([])
+  const [climbRoutes, setClimbRoutes] = useState<any[]>([{ RouteName: '', Attempts: 1, Successful: false }])
 
-  // New climbing state - using ClimbingRoute[]
-  const [routes, setRoutes] = useState<ClimbingRoute[]>([])
-  const [selectedLocation, setSelectedLocation] = useState<number | null>(null)
+  const [leadGrades, setLeadGrades] = useState<any[]>([])
+  const [boulderGrades, setBoulderGrades] = useState<any[]>([])
+  const [locations, setLocations] = useState<any[]>([])
+  const [boards, setBoards] = useState<any[]>([])
 
-  const [leadGrades, setLeadGrades] = useState<LeadGrade[]>([])
-  const [boulderGrades, setBoulderGrades] = useState<BoulderGrade[]>([])
-  const [locations, setLocations] = useState<ClimbingLocation[]>([])
+  const [climbType, setClimbType] = useState<'Lead' | 'Boulder' | 'Board'>('Lead')
+  const [locationID, setLocationID] = useState<number | null>(null)
+  const [boardTypeID, setBoardTypeID] = useState<number | null>(null)
 
   const [coachNotes, setCoachNotes] = useState<string | null>(null)
   const [climberNotes, setClimberNotes] = useState('')
@@ -131,10 +130,11 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
         setExercises(mapped)
         setExerciseForms(mapped)
 
-        const [lg, bg, loc] = await Promise.all([
+        const [lg, bg, loc, bd] = await Promise.all([
           supabase.from('LeadGrades').select('*').order('LeadGradeID'),
           supabase.from('BoulderGrades').select('*').order('BoulderGradeID'),
           supabase.from('ClimbingLocations').select('*').order('LocationName'),
+          supabase.from('BoardTypes').select('*').order('BoardID'),
         ])
 
         if (!isMounted) return
@@ -142,6 +142,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
         setLeadGrades(lg.data || [])
         setBoulderGrades(bg.data || [])
         setLocations(loc.data || [])
+        setBoards(bd.data || [])
       } catch (err) {
         console.error('❌ שגיאה בטעינה:', err)
       } finally {
@@ -166,12 +167,16 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
     })
   }
 
-  // === Group routes by type ===
-  const routesByType = useMemo(() => ({
-    Boulder: routes.filter(r => r.climbType === 'Boulder'),
-    Board: routes.filter(r => r.climbType === 'Board'),
-    Lead: routes.filter(r => r.climbType === 'Lead')
-  }), [routes])
+  const handleClimbChange = (i: number, field: string, val: any) => {
+    setClimbRoutes((prev) => {
+      const next = [...prev]
+      next[i][field] = val
+      return next
+    })
+  }
+
+  const addClimbRoute = () => setClimbRoutes((p) => [...p, { RouteName: '', Attempts: 1, Successful: false }])
+  const removeClimbRoute = (i: number) => setClimbRoutes((p) => p.filter((_, idx) => idx !== i))
 
   // === מעבר לביצוע היום ===
   const handleConvertToToday = async () => {
@@ -210,17 +215,6 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
       showToast('❌ אין אימייל פעיל', 'red')
       return
     }
-
-    if (workout.containClimbing && routes.length === 0) {
-      showToast('❌ נא להוסיף לפחות מסלול אחד', 'red')
-      return
-    }
-
-    if (workout.containClimbing && !selectedLocation) {
-      showToast('❌ נא לבחור מיקום', 'red')
-      return
-    }
-
     const now = new Date().toISOString()
 
     try {
@@ -282,28 +276,26 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
         }
       }
 
-      // === טיפוס - NEW FORMAT ===
-      if (workout.containClimbing && routes.length > 0) {
-        const payload = routes.map((route) => ({
+      // === טיפוס ===
+      if (workout.containClimbing && climbRoutes.length > 0) {
+        const payload = climbRoutes.map((r) => ({
           Email: email,
           WorkoutID: id,
           CalendarID: activeCalendarId,
-          LocationID: selectedLocation,
-          ClimbType: route.climbType,
-          BoardTypeID: null,  // TODO: add board selection if needed
-          GradeID: route.gradeID,
-          RouteName: route.routeName || null,
-          Attempts: route.attempts,
-          Successful: route.successful,
-          Notes: route.notes || null,
-          LogDateTime: now,
+          LocationID: locationID,
+          ClimbType: climbType,
+          BoardTypeID: climbType === 'Board' ? boardTypeID : null,
+          RouteName: r.RouteName,
+          GradeID: r.GradeID ?? null,
+          Attempts: r.Attempts ?? 1,
+          Successful: !!r.Successful,
+          Notes: r.Notes ?? null,
           CreatedAt: now,
-          UpdatedAt: now
         }))
         await supabase.from('ClimbingLog').insert(payload)
       }
 
-      showToast(`✅ האימון נשמר בהצלחה! (${routes.length} מסלולים)`, 'blue')
+      showToast('✅ האימון נשמר בהצלחה!', 'blue')
       setTimeout(() => router.push(`/calendar?highlight=${activeCalendarId}`), 1000)
     } catch (err) {
       console.error('❌ שגיאה בשמירה:', err)
@@ -441,75 +433,112 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
           </section>
         )}
 
-        {/* טיפוס - NEW DESIGN */}
+        {/* טיפוס */}
         {workout.containClimbing && (
           <section className="mt-8">
-            <h2 className="font-semibold text-xl mb-4">🧗 רישום טיפוס</h2>
-            
-            {/* Location Selector */}
-            <div className="mb-6">
-              <label className="block font-medium mb-2">📍 מיקום:</label>
-              <select
-                value={selectedLocation || ''}
-                onChange={(e) => setSelectedLocation(Number(e.target.value) || null)}
-                className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
+            <h2 className="font-semibold text-lg mb-3">רישום טיפוס</h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-4">
+              <select 
+                className="border border-gray-300 p-2 rounded focus:border-blue-500 focus:outline-none" 
+                value={climbType} 
+                onChange={(e) => setClimbType(e.target.value as any)}
               >
-                <option value="">בחר מיקום</option>
-                {locations.map(loc => (
+                <option value="Lead">Lead</option>
+                <option value="Boulder">Boulder</option>
+                <option value="Board">Board</option>
+              </select>
+              <select 
+                className="border border-gray-300 p-2 rounded focus:border-blue-500 focus:outline-none" 
+                value={locationID ?? ''} 
+                onChange={(e) => setLocationID(Number(e.target.value))}
+              >
+                <option value="">בחר מקום</option>
+                {locations.map((loc) => (
                   <option key={loc.LocationID} value={loc.LocationID}>
-                    {loc.LocationName} - {loc.City} ({loc.LocationType})
+                    {loc.LocationName} ({loc.LocationType})
                   </option>
                 ))}
               </select>
+              {climbType === 'Board' && (
+                <select 
+                  className="border border-gray-300 p-2 rounded focus:border-blue-500 focus:outline-none" 
+                  value={boardTypeID ?? ''} 
+                  onChange={(e) => setBoardTypeID(Number(e.target.value))}
+                >
+                  <option value="">בחר בורד</option>
+                  {boards.map((b) => (
+                    <option key={b.BoardID} value={b.BoardID}>
+                      {b.BoardName}
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
 
-            {/* Summary */}
-            <ClimbingSummary routes={routes} />
-
-            {/* Boulder Block */}
-            <RouteTypeBlock
-              type="Boulder"
-              icon="🪨"
-              routes={routesByType.Boulder}
-              onRoutesChange={(newRoutes) => {
-                setRoutes([
-                  ...routes.filter(r => r.climbType !== 'Boulder'),
-                  ...newRoutes
-                ])
-              }}
-              boulderGrades={boulderGrades}
-              leadGrades={leadGrades}
-            />
-
-            {/* Board Block */}
-            <RouteTypeBlock
-              type="Board"
-              icon="🏋️"
-              routes={routesByType.Board}
-              onRoutesChange={(newRoutes) => {
-                setRoutes([
-                  ...routes.filter(r => r.climbType !== 'Board'),
-                  ...newRoutes
-                ])
-              }}
-              boulderGrades={boulderGrades}
-              leadGrades={leadGrades}
-            />
-
-            {/* Lead Block */}
-            <RouteTypeBlock
-              type="Lead"
-              icon="🧗"
-              routes={routesByType.Lead}
-              onRoutesChange={(newRoutes) => {
-                setRoutes([
-                  ...routes.filter(r => r.climbType !== 'Lead'),
-                  ...newRoutes
-                ])
-              }}
-              boulderGrades={boulderGrades}
-              leadGrades={leadGrades}
-            />
+            {climbRoutes.map((r, i) => (
+              <div key={i} className="border border-gray-200 p-4 rounded-lg mb-3 bg-gray-50">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <input 
+                    placeholder="שם מסלול" 
+                    className="border border-gray-300 p-2 rounded focus:border-blue-500 focus:outline-none" 
+                    onChange={(e) => handleClimbChange(i, 'RouteName', e.target.value)} 
+                  />
+                  <select 
+                    className="border border-gray-300 p-2 rounded focus:border-blue-500 focus:outline-none" 
+                    onChange={(e) => handleClimbChange(i, 'GradeID', Number(e.target.value))}
+                  >
+                    <option value="">בחר דירוג</option>
+                    {climbType === 'Lead'
+                      ? leadGrades.map((g) => (
+                          <option key={g.LeadGradeID} value={g.LeadGradeID}>
+                            {g.FrenchGrade}
+                          </option>
+                        ))
+                      : boulderGrades.map((g) => (
+                          <option key={g.BoulderGradeID} value={g.BoulderGradeID}>
+                            {g.VGrade} ({g.FontGrade})
+                          </option>
+                        ))}
+                  </select>
+                  <input 
+                    placeholder="ניסיונות" 
+                    type="number" 
+                    min="1"
+                    className="border border-gray-300 p-2 rounded focus:border-blue-500 focus:outline-none" 
+                    onChange={(e) => handleClimbChange(i, 'Attempts', Number(e.target.value))} 
+                  />
+                  <label className="flex items-center gap-2 p-2">
+                    <input 
+                      type="checkbox" 
+                      checked={r.Successful} 
+                      onChange={(e) => handleClimbChange(i, 'Successful', e.target.checked)}
+                      className="w-4 h-4"
+                    />
+                    <span>הצלחה</span>
+                  </label>
+                  <textarea 
+                    placeholder="הערות" 
+                    className="border border-gray-300 p-2 rounded md:col-span-2 focus:border-blue-500 focus:outline-none" 
+                    rows={2}
+                    onChange={(e) => handleClimbChange(i, 'Notes', e.target.value)} 
+                  />
+                </div>
+                {climbRoutes.length > 1 && (
+                  <button 
+                    onClick={() => removeClimbRoute(i)} 
+                    className="text-red-500 hover:text-red-700 text-sm mt-2 font-medium"
+                  >
+                    🗑️ הסר מסלול
+                  </button>
+                )}
+              </div>
+            ))}
+            <button 
+              onClick={addClimbRoute} 
+              className="text-sm border border-blue-500 text-blue-600 px-4 py-2 rounded hover:bg-blue-50 transition-colors font-medium"
+            >
+              ➕ הוסף מסלול
+            </button>
           </section>
         )}
 
@@ -528,12 +557,10 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
         {/* כפתור שמירה */}
         <div className="text-center mt-8">
           <button 
-            className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-semibold text-lg shadow-md transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-semibold text-lg shadow-md transition-colors"
             onClick={onComplete}
-            disabled={workout.containClimbing && (routes.length === 0 || !selectedLocation)}
           >
             ✅ סיום אימון ושמירה
-            {workout.containClimbing && routes.length > 0 && ` (${routes.length} מסלולים)`}
           </button>
         </div>
       </div>
