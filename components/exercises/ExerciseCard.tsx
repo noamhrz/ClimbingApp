@@ -1,4 +1,5 @@
 // components/exercises/ExerciseCard.tsx
+// UPDATED WITH isDuration INDICATOR
 
 'use client'
 
@@ -29,6 +30,10 @@ export default function ExerciseCard({ exercise, canEdit, onEdit, onDelete }: Pr
         return '🧗'
       case 'Hangboard':
         return '🤚'
+      case 'Grip / Hangboard':
+        return '🤚'
+      case 'Shoulder':
+        return '💪'
       case 'Other':
         return '💪'
       default:
@@ -55,6 +60,12 @@ export default function ExerciseCard({ exercise, canEdit, onEdit, onDelete }: Pr
             <span className="inline-block px-2 py-0.5 text-xs rounded-full bg-blue-100 text-blue-800">
               {exercise.Category}
             </span>
+            {/* ✨ NEW: isDuration indicator */}
+            {exercise.isDuration && (
+              <span className="inline-block px-2 py-0.5 text-xs rounded-full bg-purple-100 text-purple-800">
+                ⏱️ זמן
+              </span>
+            )}
             {exercise.Status === 'Inactive' && (
               <span className="inline-block px-2 py-0.5 text-xs rounded-full bg-red-100 text-red-800">
                 לא פעיל
@@ -63,9 +74,15 @@ export default function ExerciseCard({ exercise, canEdit, onEdit, onDelete }: Pr
           </div>
         </div>
 
-        {exercise.IsSingleHand && (
-          <span className="text-xl ml-2" title="תרגיל יד אחת">🖐️</span>
-        )}
+        <div className="flex items-center gap-1">
+          {exercise.IsSingleHand && (
+            <span className="text-xl ml-2" title="תרגיל יד אחת">🖐️</span>
+          )}
+          {/* ✨ NEW: Duration icon if applicable */}
+          {exercise.isDuration && (
+            <span className="text-xl" title="תרגיל מבוסס זמן">⏱️</span>
+          )}
+        </div>
       </div>
 
       {/* Description */}

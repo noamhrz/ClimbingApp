@@ -1,5 +1,5 @@
 // components/exercises/ExerciseModal.tsx
-// VERSION WITH DYNAMIC CATEGORIES + FREE TEXT INPUT
+// VERSION WITH DYNAMIC CATEGORIES + isDuration SUPPORT
 
 'use client'
 
@@ -22,6 +22,7 @@ export default function ExerciseModal({ exercise, onSave, onClose }: Props) {
     VideoURL: '',
     ImageURL: '',
     IsSingleHand: false,
+    isDuration: false,  // ✨ NEW
   })
 
   const isEditing = !!exercise
@@ -40,6 +41,7 @@ export default function ExerciseModal({ exercise, onSave, onClose }: Props) {
         VideoURL: exercise.VideoURL || '',
         ImageURL: exercise.ImageURL || '',
         IsSingleHand: exercise.IsSingleHand,
+        isDuration: exercise.isDuration || false,  // ✨ NEW
       })
     }
   }, [exercise])
@@ -208,31 +210,58 @@ export default function ExerciseModal({ exercise, onSave, onClose }: Props) {
             />
           </div>
 
-          {/* Single Hand */}
+          {/* ✨ NEW: isDuration Checkbox */}
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={formData.isDuration}
+                onChange={(e) => setFormData({ ...formData, isDuration: e.target.checked })}
+                className="w-5 h-5 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+              />
+              <div>
+                <span className="text-sm font-medium text-gray-900">
+                  ⏱️ תרגיל מבוסס זמן
+                </span>
+                <p className="text-xs text-gray-600 mt-0.5">
+                  סמן אם התרגיל נמדד בשניות (למשל: פלאנק, הנג, מתיחה) במקום חזרות
+                </p>
+              </div>
+            </label>
+          </div>
+
+          {/* Single Hand Checkbox */}
           <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
             <label className="flex items-center gap-3 cursor-pointer">
               <input
                 type="checkbox"
                 checked={formData.IsSingleHand}
                 onChange={(e) => setFormData({ ...formData, IsSingleHand: e.target.checked })}
-                className="w-5 h-5 text-orange-600 rounded"
+                className="w-5 h-5 text-orange-600 rounded focus:ring-2 focus:ring-orange-500"
               />
-              <span className="text-sm font-medium">🖐️ תרגיל יד אחת</span>
+              <div>
+                <span className="text-sm font-medium text-gray-900">
+                  🖐️ תרגיל יד אחת
+                </span>
+                <p className="text-xs text-gray-600 mt-0.5">
+                  סמן אם התרגיל מיועד לביצוע ביד אחת בלבד (לדוגמה: One-Arm Hang)
+                </p>
+              </div>
             </label>
           </div>
 
-          {/* Buttons */}
+          {/* Form Actions */}
           <div className="flex gap-3 pt-4 border-t">
             <button
               type="submit"
-              className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
+              className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium shadow-sm"
             >
-              {isEditing ? '💾 שמור' : '➕ צור'}
+              {isEditing ? '💾 שמור שינויים' : '➕ צור תרגיל'}
             </button>
             <button
               type="button"
               onClick={onClose}
-              className="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+              className="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition font-medium"
             >
               ביטול
             </button>

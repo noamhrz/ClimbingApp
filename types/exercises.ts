@@ -1,14 +1,16 @@
 // types/exercises.ts
+// UPDATED WITH isDuration SUPPORT
 
 export interface Exercise {
   ExerciseID: number
   Name: string
   Description: string
-  Category: string  // Dynamic from DB
+  Category: string
   VideoURL?: string | null
   ImageURL?: string | null
   Status: 'Active' | 'Inactive'
   IsSingleHand: boolean
+  isDuration: boolean  // ✨ NEW: If true, measured in seconds instead of reps
   CreatedBy?: string
   CreatedAt?: string
   UpdatedAt?: string
@@ -17,13 +19,13 @@ export interface Exercise {
 export interface ExerciseFormData {
   Name: string
   Description: string
-  Category: string  // Free text
+  Category: string
   VideoURL?: string
   ImageURL?: string
   IsSingleHand: boolean
+  isDuration: boolean  // ✨ NEW
 }
 
-// For backward compatibility - extend existing ExerciseLog if needed
 export interface ExerciseLog {
   ExerciseLogID?: number
   Email: string
@@ -32,9 +34,9 @@ export interface ExerciseLog {
   ExerciseID: number
   SetNumber?: number
   RepsPlanned?: number
-  RepsDone?: number
+  RepsDone?: number       // Used when isDuration = false
+  DurationSec?: number    // Used when isDuration = true
   WeightKG?: number
-  DurationSec?: number
   RPE?: number
   IsSingleHand?: boolean
   HandSide?: 'Right' | 'Left' | 'Both' | null
