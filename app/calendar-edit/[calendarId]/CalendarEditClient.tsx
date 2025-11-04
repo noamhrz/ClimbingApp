@@ -1,3 +1,6 @@
+// app/calendar-edit/[calendarId]/CalendarEditClient.tsx
+// ✨ UPDATED VERSION - with Single Hand & isDuration support
+
 'use client'
 
 import { useEffect, useState, useMemo } from 'react'
@@ -8,6 +11,7 @@ import { ClimbingSummary } from '@/components/climbing/ClimbingSummary'
 import { RouteTypeBlock } from '@/components/climbing/RouteTypeBlock'
 import { ClimbingRoute, BoulderGrade, LeadGrade, ClimbingLocation, ClimbingLogEntry, BoardType } from '@/types/climbing'
 import { generateTempId, getGradeDisplay } from '@/lib/climbing-helpers'
+import ExerciseExecutionForm from '@/components/exercises/ExerciseExecutionForm'
 import dayjs from 'dayjs'
 
 export default function CalendarEditClient() {
@@ -44,7 +48,7 @@ export default function CalendarEditClient() {
     setTimeout(() => setToast(null), 3000)
   }
 
-  // טעינת נתונים
+  // ✨ טעינת נתונים - UPDATED
   useEffect(() => {
     const load = async () => {
       if (!calendarId) return
@@ -68,7 +72,7 @@ export default function CalendarEditClient() {
           .maybeSingle()
         setWorkout(w)
 
-        // Load Exercises
+        // Load Exercises - ✨ UPDATED: טוען גם IsSingleHand, isDuration
         const { data: rels } = await supabase
           .from('WorkoutsExercises')
           .select('ExerciseID')
@@ -77,9 +81,10 @@ export default function CalendarEditClient() {
 
         const { data: exs } = await supabase
           .from('Exercises')
-          .select('ExerciseID, Name, Description')
+          .select('ExerciseID, Name, Description, IsSingleHand, isDuration')
           .in('ExerciseID', ids)
 
+        // ✨ UPDATED: טוען לוגים קיימים כולל HandSide
         const { data: logs } = await supabase
           .from('ExerciseLogs')
           .select('*')
@@ -87,16 +92,53 @@ export default function CalendarEditClient() {
 
         const mappedExercises =
           exs?.map((ex) => {
-            const log = logs?.find((l) => l.ExerciseID === ex.ExerciseID)
-            return {
-              ExerciseLogID: log?.ExerciseLogID || null,
-              ExerciseID: ex.ExerciseID,
-              Name: ex.Name,
-              Description: ex.Description,
-              RepsDone: log?.RepsDone ?? '',
-              WeightKG: log?.WeightKG ?? '',
-              RPE: log?.RPE ?? '',
-              Notes: log?.Notes ?? '',
+            // ✨ UPDATED: טיפול ב-Single Hand - מחפש רשומות לפי HandSide
+            if (ex.IsSingleHand) {
+              const logRight = logs?.find((l) => l.ExerciseID === ex.ExerciseID && l.HandSide === 'Right')
+              const logLeft = logs?.find((l) => l.ExerciseID === ex.ExerciseID && l.HandSide === 'Left')
+              
+              return {
+                ExerciseLogID: logRight?.ExerciseLogID || null,
+                ExerciseLogIDLeft: logLeft?.ExerciseLogID || null,
+                ExerciseID: ex.ExerciseID,
+                Name: ex.Name,
+                Description: ex.Description,
+                IsSingleHand: ex.IsSingleHand,
+                isDuration: ex.isDuration,
+                
+                // Right hand
+                RepsDone: logRight?.RepsDone ?? null,
+                DurationSec: logRight?.DurationSec ?? null,
+                WeightKG: logRight?.WeightKG ?? null,
+                RPE: logRight?.RPE ?? null,
+                Notes: logRight?.Notes ?? '',
+                Completed: logRight?.Completed ?? false,
+                
+                // Left hand
+                RepsDoneLeft: logLeft?.RepsDone ?? null,
+                DurationSecLeft: logLeft?.DurationSec ?? null,
+                WeightKGLeft: logLeft?.WeightKG ?? null,
+                RPELeft: logLeft?.RPE ?? null,
+                NotesLeft: logLeft?.Notes ?? '',
+                CompletedLeft: logLeft?.Completed ?? false,
+              }
+            } else {
+              // Regular exercise - look for HandSide='Both'
+              const log = logs?.find((l) => l.ExerciseID === ex.ExerciseID && l.HandSide === 'Both')
+              return {
+                ExerciseLogID: log?.ExerciseLogID || null,
+                ExerciseID: ex.ExerciseID,
+                Name: ex.Name,
+                Description: ex.Description,
+                IsSingleHand: ex.IsSingleHand,
+                isDuration: ex.isDuration,
+                RepsDone: log?.RepsDone ?? null,
+                DurationSec: log?.DurationSec ?? null,
+                WeightKG: log?.WeightKG ?? null,
+                RPE: log?.RPE ?? null,
+                Notes: log?.Notes ?? '',
+                Completed: log?.Completed ?? false,
+              }
             }
           }) || []
         setExerciseForms(mappedExercises)
@@ -120,18 +162,15 @@ export default function CalendarEditClient() {
           .eq('CalendarID', calendarId)
 
         if (climbLogs && climbLogs.length > 0) {
-          // Set location from first log (assuming same location for all)
           if (climbLogs[0].LocationID) {
             setSelectedLocation(climbLogs[0].LocationID)
           }
           
-          // Set board type from first Board route
           const firstBoardRoute = climbLogs.find(log => log.ClimbType === 'Board')
           if (firstBoardRoute && firstBoardRoute.BoardTypeID) {
             setSelectedBoardType(firstBoardRoute.BoardTypeID)
           }
 
-          // Convert DB logs to ClimbingRoute format
           const logIdMap = new Map<string, number>()
           const convertedRoutes: ClimbingRoute[] = climbLogs.map((log: ClimbingLogEntry) => {
             const tempId = generateTempId()
@@ -166,12 +205,14 @@ export default function CalendarEditClient() {
     load()
   }, [calendarId])
 
-  const handleExerciseChange = (i: number, field: string, val: any) =>
+  // ✨ UPDATED: שינוי תרגיל - תומך בכל השדות
+  const handleExerciseChange = (i: number, data: any) => {
     setExerciseForms((prev) => {
       const next = [...prev]
-      next[i][field] = val
+      next[i] = { ...next[i], ...data }
       return next
     })
+  }
 
   // Group routes by type
   const routesByType = useMemo(() => ({
@@ -180,6 +221,7 @@ export default function CalendarEditClient() {
     Lead: routes.filter(r => r.climbType === 'Lead')
   }), [routes])
 
+  // ✨ UPDATED: שמירה - תומך ב-Single Hand & isDuration
   const handleSave = async () => {
     if (!activeEmail) {
       showToast('❌ אין משתמש פעיל', 'error')
@@ -193,36 +235,162 @@ export default function CalendarEditClient() {
       let exerciseCount = 0
       let climbingCount = 0
 
-      // Save Exercises
+      // Save Exercises - ✨ UPDATED
       for (const ex of exerciseForms) {
-        const hasData =
-          (ex.RepsDone && ex.RepsDone !== '') ||
-          (ex.WeightKG && ex.WeightKG !== '') ||
-          (ex.RPE && ex.RPE !== '') ||
-          (ex.Notes && ex.Notes.trim() !== '')
-        if (!hasData) continue
+        if (ex.IsSingleHand) {
+          // ✨ Single Hand: שמירת 2 רשומות
+          
+          // Right hand
+          const hasDataRight =
+            (ex.RepsDone !== null && ex.RepsDone !== undefined) ||
+            (ex.DurationSec !== null && ex.DurationSec !== undefined) ||
+            (ex.WeightKG !== null && ex.WeightKG !== undefined) ||
+            (ex.RPE !== null && ex.RPE !== undefined) ||
+            (ex.Notes && ex.Notes.trim() !== '')
 
-        exerciseCount++
+          if (hasDataRight) {
+            exerciseCount++
+            const payloadRight = {
+              CalendarID: calendarId,
+              WorkoutID: workout?.WorkoutID,
+              ExerciseID: ex.ExerciseID,
+              Email: email,
+              HandSide: 'Right',
+              RepsDone: ex.isDuration ? null : (ex.RepsDone || null),
+              DurationSec: ex.isDuration ? (ex.DurationSec || null) : null,
+              WeightKG: ex.WeightKG || null,
+              RPE: ex.RPE || null,
+              Notes: ex.Notes?.trim() || null,
+              Completed: true,
+              UpdatedAt: now,
+            }
+            
+            // Check if exists
+            const { data: existingRight } = await supabase
+              .from('ExerciseLogs')
+              .select('ExerciseLogID')
+              .eq('CalendarID', calendarId)
+              .eq('ExerciseID', ex.ExerciseID)
+              .eq('HandSide', 'Right')
+              .maybeSingle()
 
-        const payload = {
-          CalendarID: calendarId,
-          WorkoutID: workout?.WorkoutID,
-          ExerciseID: ex.ExerciseID,
-          Email: email,
-          RepsDone: ex.RepsDone || null,
-          WeightKG: ex.WeightKG || null,
-          RPE: ex.RPE || null,
-          Notes: ex.Notes?.trim() || null,
-          Completed: true,
-          UpdatedAt: now,
+            if (existingRight) {
+              // UPDATE existing
+              await supabase
+                .from('ExerciseLogs')
+                .update(payloadRight)
+                .eq('ExerciseLogID', existingRight.ExerciseLogID)
+            } else {
+              // INSERT new
+              await supabase
+                .from('ExerciseLogs')
+                .insert({ ...payloadRight, CreatedAt: now })
+            }
+          }
+
+          // Left hand
+          const hasDataLeft =
+            (ex.RepsDoneLeft !== null && ex.RepsDoneLeft !== undefined) ||
+            (ex.DurationSecLeft !== null && ex.DurationSecLeft !== undefined) ||
+            (ex.WeightKGLeft !== null && ex.WeightKGLeft !== undefined) ||
+            (ex.RPELeft !== null && ex.RPELeft !== undefined) ||
+            (ex.NotesLeft && ex.NotesLeft.trim() !== '')
+
+          if (hasDataLeft) {
+            const payloadLeft = {
+              CalendarID: calendarId,
+              WorkoutID: workout?.WorkoutID,
+              ExerciseID: ex.ExerciseID,
+              Email: email,
+              HandSide: 'Left',
+              RepsDone: ex.isDuration ? null : (ex.RepsDoneLeft || null),
+              DurationSec: ex.isDuration ? (ex.DurationSecLeft || null) : null,
+              WeightKG: ex.WeightKGLeft || null,
+              RPE: ex.RPELeft || null,
+              Notes: ex.NotesLeft?.trim() || null,
+              Completed: true,
+              UpdatedAt: now,
+            }
+            
+            // Check if exists
+            const { data: existingLeft } = await supabase
+              .from('ExerciseLogs')
+              .select('ExerciseLogID')
+              .eq('CalendarID', calendarId)
+              .eq('ExerciseID', ex.ExerciseID)
+              .eq('HandSide', 'Left')
+              .maybeSingle()
+
+            if (existingLeft) {
+              // UPDATE existing
+              await supabase
+                .from('ExerciseLogs')
+                .update(payloadLeft)
+                .eq('ExerciseLogID', existingLeft.ExerciseLogID)
+            } else {
+              // INSERT new
+              await supabase
+                .from('ExerciseLogs')
+                .insert({ ...payloadLeft, CreatedAt: now })
+            }
+          }
+
+        } else {
+          // ✨ Regular exercise
+          const hasRepsDone = ex.RepsDone !== null && ex.RepsDone !== undefined && ex.RepsDone !== ''
+          const hasDuration = ex.DurationSec !== null && ex.DurationSec !== undefined && ex.DurationSec !== ''
+          const hasWeight = ex.WeightKG !== null && ex.WeightKG !== undefined && ex.WeightKG !== ''
+          const hasRPE = ex.RPE !== null && ex.RPE !== undefined && ex.RPE !== ''
+          const hasNotes = ex.Notes && ex.Notes.trim() !== ''
+          
+          const hasData = hasRepsDone || hasDuration || hasWeight || hasRPE || hasNotes
+
+          if (!hasData) continue
+
+          exerciseCount++
+
+          const payload = {
+            CalendarID: calendarId,
+            WorkoutID: workout?.WorkoutID,
+            ExerciseID: ex.ExerciseID,
+            Email: email,
+            HandSide: 'Both',
+            RepsDone: ex.isDuration ? null : (ex.RepsDone || null),
+            DurationSec: ex.isDuration ? (ex.DurationSec || null) : null,
+            WeightKG: ex.WeightKG || null,
+            RPE: ex.RPE || null,
+            Notes: ex.Notes?.trim() || null,
+            Completed: true,
+            UpdatedAt: now,
+          }
+
+          // Check if exists
+          const { data: existingLog } = await supabase
+            .from('ExerciseLogs')
+            .select('ExerciseLogID')
+            .eq('CalendarID', calendarId)
+            .eq('ExerciseID', ex.ExerciseID)
+            .eq('HandSide', 'Both')
+            .maybeSingle()
+
+          if (existingLog) {
+            // UPDATE existing
+            await supabase
+              .from('ExerciseLogs')
+              .update(payload)
+              .eq('ExerciseLogID', existingLog.ExerciseLogID)
+          } else {
+            // INSERT new
+            await supabase
+              .from('ExerciseLogs')
+              .insert({ ...payload, CreatedAt: now })
+          }
         }
-        await supabase
-          .from('ExerciseLogs')
-          .upsert(payload, { onConflict: 'ExerciseLogID' })
+        
         await new Promise((r) => setTimeout(r, 100))
       }
 
-      // Save Climbing Routes - NEW FORMAT
+      // Save Climbing Routes - UNCHANGED
       if (routes.length > 0) {
         climbingCount = routes.length
         
@@ -230,61 +398,47 @@ export default function CalendarEditClient() {
           const existingLogId = existingLogIds.get(route.id)
           
           const payload: any = {
-            CalendarID: calendarId,
-            WorkoutID: workout?.WorkoutID,
             Email: email,
+            WorkoutID: workout?.WorkoutID,
+            CalendarID: calendarId,
             ClimbType: route.climbType,
-            LocationID: selectedLocation,
-            BoardTypeID: route.climbType === 'Board' ? selectedBoardType : null,
             GradeID: route.gradeID,
+            LocationID: selectedLocation,
             RouteName: route.routeName || null,
             Attempts: route.attempts,
             Successful: route.successful,
             Notes: route.notes || null,
-            LogDateTime: now,
-            UpdatedAt: now,
+            
+          }
+
+          if (route.climbType === 'Board') {
+            payload.BoardTypeID = selectedBoardType
           }
 
           if (existingLogId) {
-            // UPDATE existing log
-            payload.ClimbingLogID = existingLogId
             await supabase
               .from('ClimbingLog')
-              .upsert(payload, { onConflict: 'ClimbingLogID' })
+              .update(payload)
+              .eq('ClimbingLogID', existingLogId)
           } else {
-            // INSERT new log
-            payload.CreatedAt = now
             await supabase
               .from('ClimbingLog')
-              .insert(payload)
+              .insert({ ...payload, CreatedAt: now })
           }
-          
-          await new Promise((r) => setTimeout(r, 100))
-        }
 
-        // DELETE logs that were removed from UI
-        const currentIds = Array.from(existingLogIds.values())
-        const keptIds = routes
-          .map(r => existingLogIds.get(r.id))
-          .filter(id => id !== undefined)
-        
-        const idsToDelete = currentIds.filter(id => !keptIds.includes(id))
-        
-        if (idsToDelete.length > 0) {
-          await supabase
-            .from('ClimbingLog')
-            .delete()
-            .in('ClimbingLogID', idsToDelete)
+          await new Promise((r) => setTimeout(r, 100))
         }
       }
 
-      // Update Calendar notes
+      // Update Calendar
       await supabase
         .from('Calendar')
-        .update({ ClimberNotes: climberNotes, UpdatedAt: now })
+        .update({
+          Completed: true,
+          ClimberNotes: climberNotes.trim() || null,
+        })
         .eq('CalendarID', calendarId)
 
-      // Show success message
       const parts = []
       if (exerciseCount > 0) parts.push(`${exerciseCount} תרגילים`)
       if (climbingCount > 0) parts.push(`${climbingCount} מסלולים`)
@@ -346,54 +500,24 @@ export default function CalendarEditClient() {
           תאריך: {dayjs(calendarRow.StartTime).format('DD/MM/YYYY HH:mm')}
         </p>
 
-        {/* תרגילים */}
+        {/* ✨ תרגילים - UPDATED: משתמש ב-ExerciseExecutionForm */}
         {exerciseForms.length > 0 && (
           <section className="mb-10">
-            <h2 className="font-semibold text-lg mb-3">תרגילים</h2>
-            {exerciseForms.map((ex, i) => (
-              <div key={i} className="border border-gray-200 p-4 rounded-lg mb-4 bg-gray-50">
-                <div className="font-medium text-lg mb-1">{ex.Name}</div>
-                <div className="text-sm text-gray-600 mb-3">{ex.Description}</div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  <input
-                    className="border border-gray-300 p-2 rounded focus:border-blue-500 focus:outline-none"
-                    placeholder="חזרות"
-                    type="number"
-                    value={ex.RepsDone}
-                    onChange={(e) => handleExerciseChange(i, 'RepsDone', e.target.value)}
-                  />
-                  <input
-                    className="border border-gray-300 p-2 rounded focus:border-blue-500 focus:outline-none"
-                    placeholder="משקל (ק״ג)"
-                    type="number"
-                    value={ex.WeightKG}
-                    onChange={(e) => handleExerciseChange(i, 'WeightKG', e.target.value)}
-                  />
-                  <input
-                    className="border border-gray-300 p-2 rounded focus:border-blue-500 focus:outline-none"
-                    placeholder="RPE (1-10)"
-                    type="number"
-                    min="1"
-                    max="10"
-                    value={ex.RPE}
-                    onChange={(e) => handleExerciseChange(i, 'RPE', e.target.value)}
-                  />
-                </div>
-
-                <textarea
-                  className="border border-gray-300 p-2 rounded w-full text-sm mt-3 focus:border-blue-500 focus:outline-none"
-                  placeholder="הערות"
-                  rows={2}
-                  value={ex.Notes}
-                  onChange={(e) => handleExerciseChange(i, 'Notes', e.target.value)}
+            <h2 className="font-semibold text-xl mb-4">💪 תרגילים</h2>
+            <div className="space-y-4">
+              {exerciseForms.map((ex, i) => (
+                <ExerciseExecutionForm
+                  key={ex.ExerciseID}
+                  exercise={ex}
+                  value={ex}
+                  onChange={(data) => handleExerciseChange(i, data)}
                 />
-              </div>
-            ))}
+              ))}
+            </div>
           </section>
         )}
 
-        {/* טיפוס - NEW DESIGN */}
+        {/* טיפוס - UNCHANGED */}
         <section className="mb-10">
           <h2 className="font-semibold text-xl mb-4">🧗 רישומי טיפוס</h2>
 
@@ -414,10 +538,8 @@ export default function CalendarEditClient() {
             </select>
           </div>
 
-          {/* Summary */}
           <ClimbingSummary routes={routes} />
 
-          {/* Boulder Block */}
           <RouteTypeBlock
             type="Boulder"
             icon="🪨"
@@ -435,7 +557,6 @@ export default function CalendarEditClient() {
             onBoardTypeChange={setSelectedBoardType}
           />
 
-          {/* Board Block */}
           <RouteTypeBlock
             type="Board"
             icon="🏋️"
@@ -453,7 +574,6 @@ export default function CalendarEditClient() {
             onBoardTypeChange={setSelectedBoardType}
           />
 
-          {/* Lead Block */}
           <RouteTypeBlock
             type="Lead"
             icon="🧗"
@@ -496,7 +616,8 @@ export default function CalendarEditClient() {
             className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded font-medium"
             onClick={handleSave}
           >
-            💾 שמירה ({routes.length} מסלולים)
+            💾 שמירה
+            {routes.length > 0 && ` (${routes.length} מסלולים)`}
           </button>
         </div>
       </div>

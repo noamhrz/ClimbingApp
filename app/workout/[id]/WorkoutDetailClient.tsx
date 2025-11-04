@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { ClimbingSummary } from '@/components/climbing/ClimbingSummary'
 import { RouteTypeBlock } from '@/components/climbing/RouteTypeBlock'
 import { ClimbingRoute, BoulderGrade, LeadGrade, ClimbingLocation, BoardType } from '@/types/climbing'
+import ExerciseExecutionForm from '@/components/exercises/ExerciseExecutionForm'
 
 export default function WorkoutDetailClient({ id }: { id: number }) {
   const { activeUser, loading: authLoading } = useAuth()
@@ -114,17 +115,27 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
           const ids = rels.map((r: any) => r.ExerciseID)
           const { data: exs } = await supabase
             .from('Exercises')
-            .select('ExerciseID, Name, Description')
+            .select('ExerciseID, Name, Description, IsSingleHand, isDuration')
             .in('ExerciseID', ids)
           if (exs?.length)
             mapped = exs.map((x) => ({
               ExerciseID: x.ExerciseID,
               Name: x.Name,
               Description: x.Description,
+              IsSingleHand: x.IsSingleHand,
+              isDuration: x.isDuration,
               RepsDone: null,
+              DurationSec: null,
               WeightKG: null,
               RPE: null,
               Notes: '',
+              Completed: false,
+              RepsDoneLeft: null,
+              DurationSecLeft: null,
+              WeightKGLeft: null,
+              RPELeft: null,
+              NotesLeft: '',
+              CompletedLeft: false,
             }))
         }
 
@@ -162,10 +173,10 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
   }, [id, calendarIdNum])
 
   // === שינוי תרגיל ===
-  const handleExerciseChange = (i: number, field: string, val: any) => {
+  const handleExerciseChange = (i: number, data: any) => {
     setExerciseForms((prev) => {
       const next = [...prev]
-      next[i][field] = val
+      next[i] = { ...next[i], ...data }
       return next
     })
   }
@@ -256,29 +267,156 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
         if (updErr) throw updErr
       }
 
-      // === תרגילים ===
+      // === תרגילים - with Single Hand & isDuration support ===
       if (workout.containExercise && exerciseForms.length > 0) {
-        const filtered = exerciseForms.filter(
-          (ex) =>
-            (ex.RepsDone && ex.RepsDone > 0) ||
-            (ex.WeightKG && ex.WeightKG > 0) ||
-            (ex.RPE && ex.RPE > 0)
-        )
+        for (const ex of exerciseForms) {
+          if (ex.IsSingleHand) {
+            // Single Hand: save 2 records
+            
+            // Right hand
+            const hasDataRight =
+              (ex.RepsDone !== null && ex.RepsDone !== undefined) ||
+              (ex.DurationSec !== null && ex.DurationSec !== undefined) ||
+              (ex.WeightKG !== null && ex.WeightKG !== undefined) ||
+              (ex.RPE !== null && ex.RPE !== undefined) ||
+              (ex.Notes && ex.Notes.trim() !== '')
 
-        if (filtered.length > 0) {
-          const payload = filtered.map((e) => ({
-            Email: email,
-            WorkoutID: id,
-            CalendarID: activeCalendarId,
-            ExerciseID: e.ExerciseID,
-            RepsDone: e.RepsDone ?? null,
-            WeightKG: e.WeightKG ?? null,
-            RPE: e.RPE ?? null,
-            Notes: e.Notes ?? null,
-            Completed: true,
-            CreatedAt: now,
-          }))
-          await supabase.from('ExerciseLogs').insert(payload)
+            if (hasDataRight) {
+              // Check if exists
+              const { data: existingRight } = await supabase
+                .from('ExerciseLogs')
+                .select('ExerciseLogID')
+                .eq('CalendarID', activeCalendarId)
+                .eq('ExerciseID', ex.ExerciseID)
+                .eq('HandSide', 'Right')
+                .maybeSingle()
+
+              const rightPayload = {
+                Email: email,
+                WorkoutID: id,
+                CalendarID: activeCalendarId,
+                ExerciseID: ex.ExerciseID,
+                HandSide: 'Right',
+                RepsDone: ex.isDuration ? null : (ex.RepsDone || null),
+                DurationSec: ex.isDuration ? (ex.DurationSec || null) : null,
+                WeightKG: ex.WeightKG || null,
+                RPE: ex.RPE || null,
+                Notes: ex.Notes?.trim() || null,
+                Completed: true,
+                UpdatedAt: now,
+              }
+
+              if (existingRight) {
+                // UPDATE
+                await supabase
+                  .from('ExerciseLogs')
+                  .update(rightPayload)
+                  .eq('ExerciseLogID', existingRight.ExerciseLogID)
+              } else {
+                // INSERT
+                await supabase
+                  .from('ExerciseLogs')
+                  .insert({ ...rightPayload, CreatedAt: now })
+              }
+            }
+
+            // Left hand
+            const hasDataLeft =
+              (ex.RepsDoneLeft !== null && ex.RepsDoneLeft !== undefined) ||
+              (ex.DurationSecLeft !== null && ex.DurationSecLeft !== undefined) ||
+              (ex.WeightKGLeft !== null && ex.WeightKGLeft !== undefined) ||
+              (ex.RPELeft !== null && ex.RPELeft !== undefined) ||
+              (ex.NotesLeft && ex.NotesLeft.trim() !== '')
+
+            if (hasDataLeft) {
+              // Check if exists
+              const { data: existingLeft } = await supabase
+                .from('ExerciseLogs')
+                .select('ExerciseLogID')
+                .eq('CalendarID', activeCalendarId)
+                .eq('ExerciseID', ex.ExerciseID)
+                .eq('HandSide', 'Left')
+                .maybeSingle()
+
+              const leftPayload = {
+                Email: email,
+                WorkoutID: id,
+                CalendarID: activeCalendarId,
+                ExerciseID: ex.ExerciseID,
+                HandSide: 'Left',
+                RepsDone: ex.isDuration ? null : (ex.RepsDoneLeft || null),
+                DurationSec: ex.isDuration ? (ex.DurationSecLeft || null) : null,
+                WeightKG: ex.WeightKGLeft || null,
+                RPE: ex.RPELeft || null,
+                Notes: ex.NotesLeft?.trim() || null,
+                Completed: true,
+                UpdatedAt: now,
+              }
+
+              if (existingLeft) {
+                // UPDATE
+                await supabase
+                  .from('ExerciseLogs')
+                  .update(leftPayload)
+                  .eq('ExerciseLogID', existingLeft.ExerciseLogID)
+              } else {
+                // INSERT
+                await supabase
+                  .from('ExerciseLogs')
+                  .insert({ ...leftPayload, CreatedAt: now })
+              }
+            }
+
+          } else {
+            // Regular exercise
+            const hasData =
+              (ex.RepsDone !== null && ex.RepsDone !== undefined) ||
+              (ex.DurationSec !== null && ex.DurationSec !== undefined) ||
+              (ex.WeightKG !== null && ex.WeightKG !== undefined) ||
+              (ex.RPE !== null && ex.RPE !== undefined) ||
+              (ex.Notes && ex.Notes.trim() !== '')
+
+            if (!hasData) continue
+
+            // Check if exists
+            const { data: existingLog } = await supabase
+              .from('ExerciseLogs')
+              .select('ExerciseLogID')
+              .eq('CalendarID', activeCalendarId)
+              .eq('ExerciseID', ex.ExerciseID)
+              .eq('HandSide', 'Both')
+              .maybeSingle()
+
+            const regularPayload = {
+              Email: email,
+              WorkoutID: id,
+              CalendarID: activeCalendarId,
+              ExerciseID: ex.ExerciseID,
+              HandSide: 'Both',
+              RepsDone: ex.isDuration ? null : (ex.RepsDone || null),
+              DurationSec: ex.isDuration ? (ex.DurationSec || null) : null,
+              WeightKG: ex.WeightKG || null,
+              RPE: ex.RPE || null,
+              Notes: ex.Notes?.trim() || null,
+              Completed: true,
+              UpdatedAt: now,
+            }
+
+            if (existingLog) {
+              // UPDATE
+              await supabase
+                .from('ExerciseLogs')
+                .update(regularPayload)
+                .eq('ExerciseLogID', existingLog.ExerciseLogID)
+            } else {
+              // INSERT
+              await supabase
+                .from('ExerciseLogs')
+                .insert({ ...regularPayload, CreatedAt: now })
+            }
+          }
+          
+          await new Promise((r) => setTimeout(r, 100))
         }
       }
 
@@ -409,35 +547,17 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
         {/* תרגילים */}
         {workout.containExercise && exercises.length > 0 && (
           <section className="mt-6">
-            <h2 className="font-semibold text-lg mb-3">תרגילים</h2>
-            {exerciseForms.map((ex, i) => (
-              <div key={i} className="border border-gray-200 p-4 rounded-lg mb-3 bg-gray-50">
-                <div className="font-medium text-lg mb-1">{ex.Name}</div>
-                <div className="text-sm text-gray-600 mb-3">{ex.Description}</div>
-                <div className="grid grid-cols-3 gap-2">
-                  <input 
-                    placeholder="חזרות" 
-                    type="number"
-                    className="border border-gray-300 p-2 rounded focus:border-blue-500 focus:outline-none" 
-                    onChange={(e) => handleExerciseChange(i, 'RepsDone', Number(e.target.value))} 
-                  />
-                  <input 
-                    placeholder="משקל (KG)" 
-                    type="number"
-                    className="border border-gray-300 p-2 rounded focus:border-blue-500 focus:outline-none" 
-                    onChange={(e) => handleExerciseChange(i, 'WeightKG', Number(e.target.value))} 
-                  />
-                  <input 
-                    placeholder="RPE (1-10)" 
-                    type="number"
-                    min="1"
-                    max="10"
-                    className="border border-gray-300 p-2 rounded focus:border-blue-500 focus:outline-none" 
-                    onChange={(e) => handleExerciseChange(i, 'RPE', Number(e.target.value))} 
-                  />
-                </div>
-              </div>
-            ))}
+            <h2 className="font-semibold text-xl mb-4">💪 תרגילים</h2>
+            <div className="space-y-4">
+              {exerciseForms.map((ex, i) => (
+                <ExerciseExecutionForm
+                  key={ex.ExerciseID}
+                  exercise={ex}
+                  value={ex}
+                  onChange={(data) => handleExerciseChange(i, data)}
+                />
+              ))}
+            </div>
           </section>
         )}
 
