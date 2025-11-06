@@ -51,7 +51,7 @@ export default function UserHeader() {
               </button>
             )}
 
-            {/* Logout - always visible */}
+            {/* Logout Button */}
             <button
               onClick={handleLogout}
               className="bg-red-500 hover:bg-red-600 text-white font-semibold px-4 py-2 rounded-lg transition-all shadow-md flex items-center gap-2"
@@ -99,24 +99,30 @@ export default function UserHeader() {
               >
                 👥 המתאמנים שלי
               </Link>
+              <Link
+                href="/exercises"
+                className="bg-white/10 hover:bg-white/20 backdrop-blur-sm px-4 py-2 rounded-lg transition-all whitespace-nowrap font-medium border border-white/20 hover:border-white/40"
+              >
+                💪 תרגילים
+              </Link>
+              <Link
+                href="/workouts-editor"
+                className="bg-white/10 hover:bg-white/20 backdrop-blur-sm px-4 py-2 rounded-lg transition-all whitespace-nowrap font-medium border border-white/20 hover:border-white/40"
+              >
+                🏋️ ניהול אימונים
+              </Link>
+              <Link
+                href="/admin/assign-workouts"
+                className="bg-white/10 hover:bg-white/20 backdrop-blur-sm px-4 py-2 rounded-lg transition-all whitespace-nowrap font-medium border border-white/20 hover:border-white/40"
+              >
+                📋 הקצאת אימונים
+              </Link>
             </>
           )}
 
           {/* Admin only links */}
           {currentUser?.Role === 'admin' && (
             <>
-              <Link
-                href="/admin/exercises"
-                className="bg-white/10 hover:bg-white/20 backdrop-blur-sm px-4 py-2 rounded-lg transition-all whitespace-nowrap font-medium border border-white/20 hover:border-white/40"
-              >
-                💪 תרגילים
-              </Link>
-              <Link
-                href="/admin/workouts"
-                className="bg-white/10 hover:bg-white/20 backdrop-blur-sm px-4 py-2 rounded-lg transition-all whitespace-nowrap font-medium border border-white/20 hover:border-white/40"
-              >
-                🏋️ ניהול אימונים
-              </Link>
               <Link
                 href="/admin/users"
                 className="bg-white/10 hover:bg-white/20 backdrop-blur-sm px-4 py-2 rounded-lg transition-all whitespace-nowrap font-medium border border-white/20 hover:border-white/40"
@@ -140,7 +146,7 @@ export default function UserHeader() {
               </div>
               <button
                 onClick={switchToSelf}
-                className="text-xs underline hover:text-yellow-200"
+                className="text-yellow-200 hover:text-white underline font-medium"
               >
                 חזור לעצמי
               </button>
@@ -148,16 +154,6 @@ export default function UserHeader() {
           </div>
         )}
       </div>
-
-      <style jsx>{`
-        .scrollbar-hide::-webkit-scrollbar {
-          display: none;
-        }
-        .scrollbar-hide {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
-      `}</style>
     </header>
   )
 }

@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { useAuth, useActiveUserEmail } from '@/context/AuthContext'
 import dayjs from 'dayjs'
-import UserHeader from '@/components/UserHeader'
 
 type CalendarRow = {
   CalendarID: number
@@ -101,9 +100,6 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 relative pb-20">
-      {/* Header */}
-      <UserHeader />
-
       <div className="p-6 text-center max-w-5xl mx-auto">
         <h2 className="text-2xl font-bold mb-4 text-gray-800">
           שלום {activeUser.Name} 👋

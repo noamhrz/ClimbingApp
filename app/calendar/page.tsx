@@ -14,7 +14,6 @@ import AddWorkoutModal from '@/components/AddWorkoutModal'
 import DeloadingModal from '@/components/DeloadingModal'
 import EventContextMenu from '@/components/EventContextMenu'
 import EditEventModal from '@/components/EditEventModal'
-import UserHeader from '@/components/UserHeader'
 
 moment.locale('he')
 moment.tz.setDefault('Asia/Jerusalem')
@@ -362,10 +361,7 @@ export default function CalendarPage() {
 
   return (
     <div dir="rtl" className="min-h-screen bg-gray-50 pb-20">
-      {/* User Header with Navigation */}
-      <UserHeader />
-
-      {/* Page Title - smaller now since UserHeader has navigation */}
+      {/* Page Title */}
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 py-3">
           <h1 className="text-xl font-bold text-blue-600">📅 לוח אימונים</h1>

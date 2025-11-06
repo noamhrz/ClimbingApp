@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { useAuth } from '@/context/AuthContext'
-import UserHeader from '@/components/UserHeader'
 
 type Workout = {
   WorkoutID: number
@@ -72,7 +71,6 @@ export default function WorkoutsPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 pb-20">
-        <UserHeader />
         <div className="flex items-center justify-center py-12">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
@@ -85,7 +83,6 @@ export default function WorkoutsPage() {
 
   return (
     <div dir="rtl" className="min-h-screen bg-gray-50 pb-20">
-      <UserHeader />
 
       {/* Page Header */}
       <div className="bg-white shadow-sm border-b">

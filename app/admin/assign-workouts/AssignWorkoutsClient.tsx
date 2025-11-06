@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { useAuth } from '@/context/AuthContext'
-import UserHeader from '@/components/UserHeader'
 
 // Types
 interface User {
@@ -248,8 +247,6 @@ export default function AssignWorkoutsClient() {
 
   return (
     <div dir="rtl" className="min-h-screen bg-gray-50 pb-20">
-      <UserHeader />
-
       {/* Header */}
       <div className="bg-white shadow-sm border-b sticky top-0 z-30">
         <div className="max-w-7xl mx-auto px-4 py-4">
