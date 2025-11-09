@@ -221,6 +221,9 @@ export default function CalendarEditClient() {
     Lead: routes.filter(r => r.climbType === 'Lead')
   }), [routes])
 
+  // Check if workout contains climbing routes
+  const containsClimbing = routes.length > 0
+
   // ✨ UPDATED: שמירה - תומך ב-Single Hand & isDuration
   const handleSave = async () => {
     if (!activeEmail) {
@@ -517,8 +520,9 @@ export default function CalendarEditClient() {
           </section>
         )}
 
-        {/* טיפוס - UNCHANGED */}
-        <section className="mb-10">
+        {/* טיפוס - Show only if containsClimbing */}
+        {containsClimbing && (
+          <section className="mb-10">
           <h2 className="font-semibold text-xl mb-4">🧗 רישומי טיפוס</h2>
 
           {/* Location Selector */}
@@ -590,8 +594,8 @@ export default function CalendarEditClient() {
             selectedBoardType={selectedBoardType}
             onBoardTypeChange={setSelectedBoardType}
           />
-        </section>
-
+          </section>
+        )}
         {/* הערות מטפס */}
         <section className="mb-8">
           <h2 className="font-semibold text-lg mb-2">הערות מטפס</h2>
