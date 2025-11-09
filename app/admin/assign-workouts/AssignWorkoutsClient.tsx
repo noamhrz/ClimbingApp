@@ -16,10 +16,14 @@ interface Workout {
   name: string
   description?: string
   category?: string
+  IsKeyWorkout?: boolean  // 🆕
+  Notes?: string          // 🆕
 }
 
 interface WorkoutForUser {
   WorkoutID: number
+  IsKeyWorkout?: boolean  // 🆕
+  Notes?: string          // 🆕
 }
 
 export default function AssignWorkoutsClient() {
@@ -98,10 +102,10 @@ export default function AssignWorkoutsClient() {
   const fetchUserWorkouts = async (email: string) => {
     setLoading(true)
 
-    // Get workout IDs for user
+    // Get workout IDs for user - 🆕 כולל IsKeyWorkout ו-Notes
     const { data: assignments, error: assignError } = await supabase
       .from('WorkoutsForUser')
-      .select('WorkoutID')
+      .select('WorkoutID, IsKeyWorkout, Notes')
       .eq('Email', email)
 
     if (assignError) {
@@ -128,13 +132,18 @@ export default function AssignWorkoutsClient() {
     if (workoutError) {
       console.error('Error fetching workout details:', workoutError)
     } else {
-      // Map to lowercase for consistency
-      const workoutsWithId = (workouts || []).map(w => ({
-        id: w.WorkoutID,
-        name: w.Name,
-        description: w.Description,
-        category: w.Category
-      }))
+      // Map to lowercase for consistency - 🆕 כולל IsKeyWorkout ו-Notes
+      const workoutsWithId = (workouts || []).map(w => {
+        const assignment = assignments?.find(a => a.WorkoutID === w.WorkoutID)
+        return {
+          id: w.WorkoutID,
+          name: w.Name,
+          description: w.Description,
+          category: w.Category,
+          IsKeyWorkout: assignment?.IsKeyWorkout || false,  // 🆕
+          Notes: assignment?.Notes || ''                    // 🆕
+        }
+      })
       setUserWorkouts(workoutsWithId)
     }
 
@@ -176,7 +185,9 @@ export default function AssignWorkoutsClient() {
       .from('WorkoutsForUser')
       .insert({
         Email: selectedUserEmail,
-        WorkoutID: workout.id
+        WorkoutID: workout.id,
+        IsKeyWorkout: false,  // 🆕 ברירת מחדל
+        Notes: ''            // 🆕 ברירת מחדל
       })
 
     if (error) {
@@ -186,7 +197,7 @@ export default function AssignWorkoutsClient() {
     }
 
     // Update UI
-    setUserWorkouts(prev => [...prev, workout].sort((a, b) => a.name.localeCompare(b.name)))
+    setUserWorkouts(prev => [...prev, { ...workout, IsKeyWorkout: false, Notes: '' }].sort((a, b) => a.name.localeCompare(b.name)))
   }
 
   /**
@@ -209,6 +220,58 @@ export default function AssignWorkoutsClient() {
 
     // Update UI
     setUserWorkouts(prev => prev.filter(w => w.id !== workout.id))
+  }
+
+  // 🆕 Toggle אימון מפתח
+  const handleKeyWorkoutToggle = async (workout: Workout, isKey: boolean) => {
+    if (!selectedUserEmail) return
+
+    const { error } = await supabase
+      .from('WorkoutsForUser')
+      .update({ IsKeyWorkout: isKey })
+      .eq('Email', selectedUserEmail)
+      .eq('WorkoutID', workout.id)
+
+    if (error) {
+      console.error('Error updating key workout:', error)
+      alert('שגיאה בעדכון אימון מפתח')
+      return
+    }
+
+    // Update UI
+    setUserWorkouts(prev =>
+      prev.map(w =>
+        w.id === workout.id ? { ...w, IsKeyWorkout: isKey } : w
+      )
+    )
+  }
+
+  // 🆕 עדכון הערה
+  const handleNotesChange = async (workout: Workout, notes: string) => {
+    if (!selectedUserEmail) return
+
+    // עדכון מיידי ב-UI
+    setUserWorkouts(prev =>
+      prev.map(w =>
+        w.id === workout.id ? { ...w, Notes: notes } : w
+      )
+    )
+  }
+
+  // 🆕 שמירת הערה (debounced)
+  const handleNotesSave = async (workout: Workout, notes: string) => {
+    if (!selectedUserEmail) return
+
+    const { error } = await supabase
+      .from('WorkoutsForUser')
+      .update({ Notes: notes })
+      .eq('Email', selectedUserEmail)
+      .eq('WorkoutID', workout.id)
+
+    if (error) {
+      console.error('Error updating notes:', error)
+      alert('שגיאה בשמירת הערה')
+    }
   }
 
   // Get emoji for category
@@ -359,6 +422,11 @@ export default function AssignWorkoutsClient() {
                 </h2>
                 <p className="text-sm text-green-700 mt-1">
                   {userWorkouts.length} אימונים מוקצים
+                  {userWorkouts.filter(w => w.IsKeyWorkout).length > 0 && (
+                    <span className="mr-2">
+                      • {userWorkouts.filter(w => w.IsKeyWorkout).length} ⭐ מפתח
+                    </span>
+                  )}
                 </p>
               </div>
 
@@ -378,13 +446,14 @@ export default function AssignWorkoutsClient() {
                   userWorkouts.map(workout => (
                     <div
                       key={workout.id}
-                      className="border border-gray-200 rounded-lg p-4 hover:border-red-300 hover:bg-red-50 transition-all"
+                      className="border border-gray-200 rounded-lg p-4 hover:border-red-300 transition-all"
                     >
-                      <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-start justify-between gap-3 mb-3">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
                             <span className="text-2xl">{getCategoryEmoji(workout.category)}</span>
                             <h3 className="font-bold text-gray-900">{workout.name}</h3>
+                            {workout.IsKeyWorkout && <span className="text-xl">⭐</span>}
                           </div>
                           {workout.description && (
                             <p className="text-sm text-gray-600 line-clamp-2">{workout.description}</p>
@@ -401,6 +470,38 @@ export default function AssignWorkoutsClient() {
                         >
                           ❌ הסר
                         </button>
+                      </div>
+
+                      {/* 🆕 אימון מפתח + הערה */}
+                      <div className="border-t border-gray-200 pt-3 space-y-2">
+                        {/* Checkbox אימון מפתח */}
+                        <label className="flex items-center gap-2 cursor-pointer group">
+                          <input
+                            type="checkbox"
+                            checked={workout.IsKeyWorkout || false}
+                            onChange={(e) => handleKeyWorkoutToggle(workout, e.target.checked)}
+                            className="w-4 h-4 cursor-pointer"
+                          />
+                          <span className="text-sm font-medium text-gray-700 group-hover:text-blue-600">
+                            ⭐ אימון מפתח
+                          </span>
+                        </label>
+
+                        {/* הערה */}
+                        <div>
+                          <label className="block text-xs font-medium text-gray-600 mb-1">
+                            💬 הערה למתאמן:
+                          </label>
+                          <textarea
+                            value={workout.Notes || ''}
+                            onChange={(e) => handleNotesChange(workout, e.target.value)}
+                            onBlur={(e) => handleNotesSave(workout, e.target.value)}
+                            placeholder="הוסף הערה..."
+                            className="w-full px-2 py-1 border border-gray-300 rounded text-sm 
+                                     focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            rows={2}
+                          />
+                        </div>
                       </div>
                     </div>
                   ))
