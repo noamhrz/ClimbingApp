@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
+import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
 
 type Workout = {
@@ -14,6 +15,7 @@ type Workout = {
 
 export default function WorkoutsPage() {
   const { activeUser } = useAuth()
+  const router = useRouter()
   const [workouts, setWorkouts] = useState<Workout[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -113,7 +115,8 @@ export default function WorkoutsPage() {
             {workouts.map((workout) => (
               <div
                 key={workout.WorkoutID}
-                className="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow p-5"
+                onClick={() => router.push(`/workout/${workout.WorkoutID}`)}
+                className="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-lg hover:border-blue-300 transition-all cursor-pointer p-5"
               >
                 {/* Category Badge */}
                 {workout.Category && (
@@ -139,10 +142,24 @@ export default function WorkoutsPage() {
 
                 {/* Description */}
                 {workout.Description && (
-                  <p className="text-sm text-gray-700 leading-relaxed">
+                  <p className="text-sm text-gray-700 leading-relaxed mb-4">
                     {workout.Description}
                   </p>
                 )}
+
+                {/* Action Button */}
+                <div className="mt-4 pt-4 border-t border-gray-100">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      router.push(`/workout/${workout.WorkoutID}`)
+                    }}
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
+                  >
+                    <span>▶️</span>
+                    <span>התחל אימון</span>
+                  </button>
+                </div>
               </div>
             ))}
           </div>
