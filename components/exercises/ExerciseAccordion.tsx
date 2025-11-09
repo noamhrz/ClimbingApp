@@ -1,8 +1,3 @@
-// components/exercises/ExerciseAccordion.tsx
-// ✨ Accordion wrapper for ExerciseExecutionForm with media display
-
-'use client'
-
 import { useState } from 'react'
 import ExerciseExecutionForm from './ExerciseExecutionForm'
 
@@ -30,40 +25,35 @@ interface ExerciseFormData {
 }
 
 interface Props {
-  exercise: Exercise
-  value: ExerciseFormData
-  onChange: (data: ExerciseFormData) => void
+  exercise: Exercise & ExerciseFormData
   index: number
-  disabled?: boolean
+  onChange: (data: any) => void
 }
 
-export default function ExerciseAccordion({ exercise, value, onChange, index, disabled = false }: Props) {
-  const [isExpanded, setIsExpanded] = useState(false) // Start collapsed by default
+export default function ExerciseAccordion({ exercise, index, onChange }: Props) {
+  const [isExpanded, setIsExpanded] = useState(false)
 
-  // Calculate summary text
   const getSummary = () => {
     const parts: string[] = []
     
     if (exercise.IsSingleHand) {
-      // Single hand exercise
+      // Single Hand exercise
       if (exercise.isDuration) {
-        if (value.DurationSec) parts.push(`ימין: ${value.DurationSec}s`)
-        if (value.DurationSecLeft) parts.push(`שמאל: ${value.DurationSecLeft}s`)
+        if (exercise.DurationSec) parts.push(`ימין: ${exercise.DurationSec}שנ`)
+        if (exercise.DurationSecLeft) parts.push(`שמאל: ${exercise.DurationSecLeft}שנ`)
       } else {
-        if (value.RepsDone) parts.push(`ימין: ${value.RepsDone} חזרות`)
-        if (value.RepsDoneLeft) parts.push(`שמאל: ${value.RepsDoneLeft} חזרות`)
+        if (exercise.RepsDone) parts.push(`ימין: ${exercise.RepsDone} חזרות`)
+        if (exercise.RepsDoneLeft) parts.push(`שמאל: ${exercise.RepsDoneLeft} חזרות`)
       }
+      if (exercise.WeightKG) parts.push(`${exercise.WeightKG}ק"ג`)
     } else {
       // Regular exercise
-      if (exercise.isDuration && value.DurationSec) {
-        parts.push(`${value.DurationSec}s`)
-      } else if (value.RepsDone) {
-        parts.push(`${value.RepsDone} חזרות`)
+      if (exercise.isDuration) {
+        if (exercise.DurationSec) parts.push(`${exercise.DurationSec}שנ`)
+      } else {
+        if (exercise.RepsDone) parts.push(`${exercise.RepsDone} חזרות`)
       }
-      
-      if (value.WeightKG) {
-        parts.push(`${value.WeightKG}kg`)
-      }
+      if (exercise.WeightKG) parts.push(`${exercise.WeightKG}ק"ג`)
     }
     
     return parts.length > 0 ? parts.join(' • ') : 'לא הושלם'
@@ -120,17 +110,30 @@ export default function ExerciseAccordion({ exercise, value, onChange, index, di
           {/* Media Section */}
           {(exercise.ImageURL || exercise.VideoURL) && (
             <div className="mb-4 space-y-3">
-              {/* Image */}
+              {/* Image - clickable! */}
               {exercise.ImageURL && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     🖼️ תמונה להדגמה:
                   </label>
-                  <img 
-                    src={exercise.ImageURL} 
-                    alt={exercise.Name}
-                    className="w-full max-w-md rounded-lg shadow-md border border-gray-200"
-                  />
+                  <a
+                    href={exercise.ImageURL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block relative group cursor-pointer"
+                  >
+                    <img 
+                      src={exercise.ImageURL} 
+                      alt={exercise.Name}
+                      className="w-full max-w-md rounded-lg shadow-md border border-gray-200 group-hover:opacity-90 transition-opacity"
+                    />
+                    {/* Hover overlay */}
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-all rounded-lg flex items-center justify-center">
+                      <span className="opacity-0 group-hover:opacity-100 text-white font-bold text-lg bg-blue-600 px-4 py-2 rounded-lg shadow-lg">
+                        🔍 לחץ להגדלה
+                      </span>
+                    </div>
+                  </a>
                 </div>
               )}
 
@@ -154,12 +157,11 @@ export default function ExerciseAccordion({ exercise, value, onChange, index, di
             </div>
           )}
 
-          {/* Exercise Form */}
+          {/* Exercise Form - ✅ עם value */}
           <ExerciseExecutionForm
             exercise={exercise}
-            value={value}
+            value={exercise}
             onChange={onChange}
-            disabled={disabled}
           />
         </div>
       )}
