@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { ClimbingSummary } from '@/components/climbing/ClimbingSummary'
 import { RouteTypeBlock } from '@/components/climbing/RouteTypeBlock'
 import { ClimbingRoute, BoulderGrade, LeadGrade, ClimbingLocation, BoardType } from '@/types/climbing'
-import ExerciseExecutionForm from '@/components/exercises/ExerciseExecutionForm'
+import ExerciseAccordion from "@/components/exercises/ExerciseAccordion"
 
 export default function WorkoutDetailClient({ id }: { id: number }) {
   const { activeUser, loading: authLoading } = useAuth()
@@ -115,7 +115,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
           const ids = rels.map((r: any) => r.ExerciseID)
           const { data: exs } = await supabase
             .from('Exercises')
-            .select('ExerciseID, Name, Description, IsSingleHand, isDuration')
+            .select('ExerciseID, Name, Description, IsSingleHand, isDuration, ImageURL, VideoURL')
             .in('ExerciseID', ids)
           if (exs?.length)
             mapped = exs.map((x) => ({
@@ -124,6 +124,8 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
               Description: x.Description,
               IsSingleHand: x.IsSingleHand,
               isDuration: x.isDuration,
+              ImageURL: x.ImageURL,
+              VideoURL: x.VideoURL,
               RepsDone: null,
               DurationSec: null,
               WeightKG: null,
@@ -187,6 +189,10 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
     Board: routes.filter(r => r.climbType === 'Board'),
     Lead: routes.filter(r => r.climbType === 'Lead')
   }), [routes])
+
+  // Check what workout contains
+  const containsExercises = workout?.containExercise && exercises.length > 0
+  const containsClimbing = workout?.containClimbing
 
   // === מעבר לביצוע היום ===
   const handleConvertToToday = async () => {
@@ -489,6 +495,24 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
         <h1 className="text-3xl font-bold text-blue-600 mb-2">{workout.Name}</h1>
         <p className="text-gray-700 mb-4">{workout.Description}</p>
 
+        {/* Workout Video */}
+        {workout.VideoURL && (
+          <div className="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              🎥 וידאו הסבר לאימון:
+            </label>
+            <a
+              href={workout.VideoURL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors shadow-sm"
+            >
+              <span>▶️</span>
+              <span>צפה בוידאו</span>
+            </a>
+          </div>
+        )}
+
         {/* אימון עתידי */}
         {isFutureWorkout && (
           <div className="mt-4 bg-amber-50 border-r-4 border-amber-500 rounded-lg p-4 shadow-sm">
@@ -545,16 +569,17 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
         )}
 
         {/* תרגילים */}
-        {workout.containExercise && exercises.length > 0 && (
+        {containsExercises && (
           <section className="mt-6">
             <h2 className="font-semibold text-xl mb-4">💪 תרגילים</h2>
             <div className="space-y-4">
               {exerciseForms.map((ex, i) => (
-                <ExerciseExecutionForm
+                <ExerciseAccordion
                   key={ex.ExerciseID}
                   exercise={ex}
                   value={ex}
                   onChange={(data) => handleExerciseChange(i, data)}
+                  index={i}
                 />
               ))}
             </div>
@@ -562,7 +587,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
         )}
 
         {/* טיפוס - NEW DESIGN */}
-        {workout.containClimbing && (
+        {containsClimbing && (
           <section className="mt-8">
             <h2 className="font-semibold text-xl mb-4">🧗 רישום טיפוס</h2>
             

@@ -11,7 +11,7 @@ import { ClimbingSummary } from '@/components/climbing/ClimbingSummary'
 import { RouteTypeBlock } from '@/components/climbing/RouteTypeBlock'
 import { ClimbingRoute, BoulderGrade, LeadGrade, ClimbingLocation, ClimbingLogEntry, BoardType } from '@/types/climbing'
 import { generateTempId, getGradeDisplay } from '@/lib/climbing-helpers'
-import ExerciseExecutionForm from '@/components/exercises/ExerciseExecutionForm'
+import ExerciseAccordion from "@/components/exercises/ExerciseAccordion"
 import dayjs from 'dayjs'
 
 export default function CalendarEditClient() {
@@ -81,7 +81,7 @@ export default function CalendarEditClient() {
 
         const { data: exs } = await supabase
           .from('Exercises')
-          .select('ExerciseID, Name, Description, IsSingleHand, isDuration')
+          .select('ExerciseID, Name, Description, IsSingleHand, isDuration, ImageURL, VideoURL')
           .in('ExerciseID', ids)
 
         // ✨ UPDATED: טוען לוגים קיימים כולל HandSide
@@ -105,6 +105,8 @@ export default function CalendarEditClient() {
                 Description: ex.Description,
                 IsSingleHand: ex.IsSingleHand,
                 isDuration: ex.isDuration,
+                ImageURL: ex.ImageURL,
+                VideoURL: ex.VideoURL,
                 
                 // Right hand
                 RepsDone: logRight?.RepsDone ?? null,
@@ -132,6 +134,8 @@ export default function CalendarEditClient() {
                 Description: ex.Description,
                 IsSingleHand: ex.IsSingleHand,
                 isDuration: ex.isDuration,
+                ImageURL: ex.ImageURL,
+                VideoURL: ex.VideoURL,
                 RepsDone: log?.RepsDone ?? null,
                 DurationSec: log?.DurationSec ?? null,
                 WeightKG: log?.WeightKG ?? null,
@@ -502,6 +506,24 @@ export default function CalendarEditClient() {
         <p className="text-gray-600 mb-6">
           תאריך: {dayjs(calendarRow.StartTime).format('DD/MM/YYYY HH:mm')}
         </p>
+        {/* Workout Video */}
+        {workout?.VideoURL && (
+          <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              🎥 וידאו הסבר לאימון:
+            </label>
+            <a
+              href={workout.VideoURL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors shadow-sm"
+            >
+              <span>▶️</span>
+              <span>צפה בוידאו</span>
+            </a>
+          </div>
+        )}
+
 
         {/* ✨ תרגילים - UPDATED: משתמש ב-ExerciseExecutionForm */}
         {exerciseForms.length > 0 && (
@@ -509,11 +531,12 @@ export default function CalendarEditClient() {
             <h2 className="font-semibold text-xl mb-4">💪 תרגילים</h2>
             <div className="space-y-4">
               {exerciseForms.map((ex, i) => (
-                <ExerciseExecutionForm
+                <ExerciseAccordion
                   key={ex.ExerciseID}
                   exercise={ex}
                   value={ex}
                   onChange={(data) => handleExerciseChange(i, data)}
+                  index={i}
                 />
               ))}
             </div>
