@@ -1,4 +1,4 @@
-// app/dashboard/page.tsx - SINGLE COLUMN LAYOUT
+// app/dashboard/page.tsx - FIXED DATE RANGE FOR WEEK VIEW
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -11,7 +11,10 @@ import ClimbingVolumeChart from '@/components/dashboard/ClimbingVolumeChart'
 import ExerciseAmountChart from '@/components/dashboard/ExerciseAmountChart'
 import MotivationalQuote from '@/components/dashboard/MotivationalQuote'
 import WellnessModal from '@/components/dashboard/WellnessModal'
-import { subDays, format, startOfWeek, differenceInWeeks, eachDayOfInterval, eachWeekOfInterval } from 'date-fns'
+import { subDays, format, startOfWeek, endOfWeek, differenceInWeeks, eachDayOfInterval, eachWeekOfInterval, setHours, setMinutes, setSeconds, isBefore } from 'date-fns'
+
+// WEEK CONFIGURATION - SUNDAY TO SATURDAY
+const WEEK_STARTS_ON = 0 // 0 = Sunday, 6 = Saturday
 
 export default function DashboardPage() {
   const { currentUser } = useAuth()
@@ -21,11 +24,9 @@ export default function DashboardPage() {
   const [climbingData, setClimbingData] = useState<any[]>([])
   const [exerciseData, setExerciseData] = useState<any[]>([])
   const [stats, setStats] = useState({
-    planned: 0,
-    thisWeek: 0,
-    completed: 0,
-    keyWorkouts: 0,
-    assigned: 0
+    completedThisWeek: 0,
+    pendingThisWeek: 0,
+    missedThisWeek: 0
   })
   const [loading, setLoading] = useState(true)
   
@@ -42,7 +43,7 @@ export default function DashboardPage() {
   const checkTodayWellness = async () => {
     try {
       const today = format(new Date(), 'yyyy-MM-dd')
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('WellnessLog')
         .select('WellnessID')
         .eq('Email', currentUser?.Email)
@@ -62,9 +63,18 @@ export default function DashboardPage() {
 
   const getDateRange = () => {
     const now = new Date()
-    const days = timeRange === 'week' ? 7 : timeRange === '6weeks' ? 42 : 84
-    const start = subDays(now, days - 1)
-    return { start, end: now }
+    
+    if (timeRange === 'week') {
+      // For week view: use current week (Sunday-Saturday)
+      const start = startOfWeek(now, { weekStartsOn: WEEK_STARTS_ON })
+      const end = endOfWeek(now, { weekStartsOn: WEEK_STARTS_ON })
+      return { start, end }
+    } else {
+      // For 6weeks/12weeks: go back N days from today
+      const days = timeRange === '6weeks' ? 42 : 84
+      const start = subDays(now, days - 1)
+      return { start, end: now }
+    }
   }
 
   const getWeekLabel = (weekStart: Date, now: Date) => {
@@ -81,10 +91,61 @@ export default function DashboardPage() {
       loadWellnessData(dateRange),
       loadClimbingData(dateRange),
       loadExerciseData(dateRange),
-      loadStats()
+      loadCalendarStats()
     ])
     
     setLoading(false)
+  }
+
+  const loadCalendarStats = async () => {
+    try {
+      const now = new Date()
+      
+      // ראשון-שבת בזמן מקומי (ישראל)
+      let weekStart = startOfWeek(now, { weekStartsOn: WEEK_STARTS_ON })
+      let weekEnd = endOfWeek(now, { weekStartsOn: WEEK_STARTS_ON })
+      
+      weekStart = setHours(setMinutes(setSeconds(weekStart, 0), 0), 0)
+      weekEnd = setHours(setMinutes(setSeconds(weekEnd, 59), 59), 23)
+
+      const { data: workouts, error } = await supabase
+        .from('Calendar')
+        .select('*')
+        .eq('Email', currentUser?.Email)
+        .gte('StartTime', weekStart.toISOString())
+        .lte('StartTime', weekEnd.toISOString())
+
+      if (error) {
+        console.error('Calendar error:', error)
+        return
+      }
+
+      const completed: typeof workouts = []
+      const pending: typeof workouts = []
+      const missed: typeof workouts = []
+
+      workouts?.forEach(w => {
+        const workoutTime = new Date(w.StartTime)
+        
+        if (w.Completed === true) {
+          completed.push(w)
+        } else {
+          if (isBefore(workoutTime, now)) {
+            missed.push(w)
+          } else {
+            pending.push(w)
+          }
+        }
+      })
+
+      setStats({
+        completedThisWeek: completed.length,
+        pendingThisWeek: pending.length,
+        missedThisWeek: missed.length
+      })
+    } catch (error) {
+      console.error('Error loading calendar stats:', error)
+    }
   }
 
   const loadWellnessData = async ({ start, end }: { start: Date, end: Date }) => {
@@ -145,6 +206,7 @@ export default function DashboardPage() {
       const now = new Date()
       
       if (groupByDays) {
+        // Weekly view - group by days
         const volumeMap = new Map<string, { lead: number, board: number, boulder: number }>()
         
         data?.forEach(log => {
@@ -171,11 +233,12 @@ export default function DashboardPage() {
         
         setClimbingData(chartData)
       } else {
+        // Multi-week view - group by weeks (SUNDAY-SATURDAY)
         const volumeMap = new Map<string, { lead: number, board: number, boulder: number, weekStart: Date }>()
         
         data?.forEach(log => {
           const logDate = new Date(log.LogDateTime)
-          const weekStart = startOfWeek(logDate, { weekStartsOn: 1 })
+          const weekStart = startOfWeek(logDate, { weekStartsOn: WEEK_STARTS_ON })
           const weekKey = format(weekStart, 'yyyy-MM-dd')
           
           if (!volumeMap.has(weekKey)) {
@@ -191,7 +254,7 @@ export default function DashboardPage() {
           else if (climbType === 'boulder') volumes.boulder += volume
         })
         
-        const allWeeks = eachWeekOfInterval({ start, end }, { weekStartsOn: 1 })
+        const allWeeks = eachWeekOfInterval({ start, end }, { weekStartsOn: WEEK_STARTS_ON })
         const chartData = allWeeks.map(weekStart => {
           const weekKey = format(weekStart, 'yyyy-MM-dd')
           const volumes = volumeMap.get(weekKey) || { lead: 0, board: 0, boulder: 0, weekStart }
@@ -227,6 +290,7 @@ export default function DashboardPage() {
       const now = new Date()
       
       if (groupByDays) {
+        // Weekly view - group by days
         const volumeMap = new Map<string, number>()
         
         data?.forEach(log => {
@@ -255,11 +319,12 @@ export default function DashboardPage() {
         
         setExerciseData(chartData)
       } else {
+        // Multi-week view - group by weeks (SUNDAY-SATURDAY)
         const volumeMap = new Map<string, { volume: number, weekStart: Date }>()
         
         data?.forEach(log => {
           const logDate = new Date(log.CreatedAt)
-          const weekStart = startOfWeek(logDate, { weekStartsOn: 1 })
+          const weekStart = startOfWeek(logDate, { weekStartsOn: WEEK_STARTS_ON })
           const weekKey = format(weekStart, 'yyyy-MM-dd')
           
           let volume = 0
@@ -277,7 +342,7 @@ export default function DashboardPage() {
           volumeMap.get(weekKey)!.volume += volume
         })
         
-        const allWeeks = eachWeekOfInterval({ start, end }, { weekStartsOn: 1 })
+        const allWeeks = eachWeekOfInterval({ start, end }, { weekStartsOn: WEEK_STARTS_ON })
         const chartData = allWeeks.map(weekStart => {
           const weekKey = format(weekStart, 'yyyy-MM-dd')
           const data = volumeMap.get(weekKey)
@@ -292,35 +357,6 @@ export default function DashboardPage() {
     } catch (error) {
       console.error('Error loading exercise data:', error)
       setExerciseData([])
-    }
-  }
-
-  const loadStats = async () => {
-    try {
-      const { data: workouts } = await supabase
-        .from('WorkoutsForUser')
-        .select('*')
-        .eq('Email', currentUser?.Email)
-      
-      const now = new Date()
-      const weekStart = subDays(now, 7)
-      
-      const newStats = {
-        planned: workouts?.filter(w => 
-          w.Status === 'Pending' && new Date(w.DueDate) > now
-        ).length || 0,
-        thisWeek: workouts?.filter(w => {
-          const dueDate = new Date(w.DueDate)
-          return dueDate >= weekStart && dueDate <= now
-        }).length || 0,
-        completed: workouts?.filter(w => w.Status === 'Completed').length || 0,
-        keyWorkouts: workouts?.filter(w => w.IsKeyWorkout === true).length || 0,
-        assigned: workouts?.length || 0
-      }
-      
-      setStats(newStats)
-    } catch (error) {
-      console.error('Error loading stats:', error)
     }
   }
 
@@ -372,7 +408,6 @@ export default function DashboardPage() {
       <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
         <StatsCards stats={stats} />
 
-        {/* Climbing Volume - TOP */}
         <div className="bg-white rounded-xl shadow-sm border p-6">
           <h2 className="text-xl font-bold text-gray-800 mb-2">
             🧗 Climbing Volume
@@ -383,7 +418,6 @@ export default function DashboardPage() {
           <ClimbingVolumeChart data={climbingData} />
         </div>
 
-        {/* Wellness - MIDDLE */}
         <div className="bg-white rounded-xl shadow-sm border p-6">
           <h2 className="text-xl font-bold text-gray-800 mb-2">
             💚 Wellness
@@ -394,7 +428,6 @@ export default function DashboardPage() {
           <WellnessChart data={wellnessData} />
         </div>
 
-        {/* Exercise Volume - BOTTOM */}
         <div className="bg-white rounded-xl shadow-sm border p-6">
           <h2 className="text-xl font-bold text-gray-800 mb-4">
             🏋️ Exercise Volume
