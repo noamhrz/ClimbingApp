@@ -245,11 +245,6 @@ export default function CalendarEditClient() {
         ? moment.tz(calendarRow.StartTime, 'Asia/Jerusalem').toISOString()
         : now
 
-      console.log('📅 [CalendarEdit] DateTime Context:')
-      console.log('  Calendar StartTime:', calendarRow?.StartTime)
-      console.log('  LogDateTime:', logDateTime)
-      console.log('  CreatedAt:', now)
-
       let exerciseCount = 0
       let climbingCount = 0
 

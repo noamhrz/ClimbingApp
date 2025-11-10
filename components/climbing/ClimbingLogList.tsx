@@ -16,10 +16,6 @@ export default function ClimbingLogList({ logs, boulderGrades, leadGrades, onDel
   const leadLogs = logs.filter((log) => log.ClimbType === 'Lead')
   const boulderBoardLogs = logs.filter((log) => log.ClimbType === 'Boulder' || log.ClimbType === 'Board')
 
-  console.log('📋 ClimbingLogList received:', logs.length, 'logs')
-  console.log('📋 Lead logs:', leadLogs.length, leadLogs)
-  console.log('📋 Boulder+Board logs:', boulderBoardLogs.length, boulderBoardLogs)
-
   const formatDate = (dateString?: string) => {
     if (!dateString) return ''
     const date = new Date(dateString)

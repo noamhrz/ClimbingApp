@@ -20,9 +20,7 @@ interface Props {
 
 export default function ClimbingLogFilters({ filters, onChange, boulderGrades, leadGrades }: Props) {
   const handleChange = (key: keyof ClimbingLogFilters, value: any) => {
-    console.log('🔧 handleChange called:', key, '=', value)
     const newFilters = { ...filters, [key]: value }
-    console.log('🔧 New filters:', newFilters)
     onChange(newFilters)
   }
 
@@ -66,7 +64,6 @@ export default function ClimbingLogFilters({ filters, onChange, boulderGrades, l
             value={filters.climbType}
             onChange={(e) => {
               const newType = e.target.value as 'Lead' | 'BoulderBoard'
-              console.log('🔄 Filter changed from', filters.climbType, 'to', newType)
               // Update all at once to avoid race condition
               onChange({
                 ...filters,

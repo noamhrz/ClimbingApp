@@ -79,9 +79,6 @@ export default function ClimbingLogPage() {
   const loadLogs = async () => {
     if (!email) return
 
-    console.log('🔍 Loading logs for email:', email)
-    console.log('🔍 Filters:', filters)
-
     setLoading(true)
     try {
       // Fetch all logs with date/grade filters only
@@ -92,10 +89,9 @@ export default function ClimbingLogPage() {
         maxGradeId: filters.maxGradeId,
       })
 
-      console.log('✅ Loaded logs:', logsData.length, logsData)
       setAllLogs(logsData)
     } catch (error) {
-      console.error('❌ Error loading logs:', error)
+      console.error('Error loading logs:', error)
       alert('שגיאה בטעינת נתונים')
     } finally {
       setLoading(false)
@@ -103,17 +99,12 @@ export default function ClimbingLogPage() {
   }
 
   const applyClientSideFilter = () => {
-    console.log('🔍 Applying client-side filter:', filters.climbType)
-    console.log('🔍 All logs:', allLogs.length, allLogs)
-    
     if (filters.climbType === 'Lead') {
       const leadLogs = allLogs.filter((log) => log.ClimbType === 'Lead')
-      console.log('✅ Filtered Lead logs:', leadLogs.length, leadLogs)
       setFilteredLogs(leadLogs)
     } else {
       // BoulderBoard
       const bbLogs = allLogs.filter((log) => log.ClimbType === 'Boulder' || log.ClimbType === 'Board')
-      console.log('✅ Filtered BoulderBoard logs:', bbLogs.length, bbLogs)
       setFilteredLogs(bbLogs)
     }
   }

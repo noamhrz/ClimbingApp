@@ -248,12 +248,6 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
       ? moment.tz(calendarRow.StartTime, 'Asia/Jerusalem').toISOString()
       : now
 
-    console.log('📅 [WorkoutDetail] DateTime Context:')
-    console.log('  Has Calendar:', !!calendarRow)
-    console.log('  Calendar StartTime:', calendarRow?.StartTime || 'N/A')
-    console.log('  LogDateTime:', logDateTime)
-    console.log('  CreatedAt:', now)
-
     try {
       let activeCalendarId = calendarIdNum
       
