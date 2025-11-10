@@ -36,13 +36,27 @@ export default function EditEventModal({
   const handleSave = () => {
     if (!selectedDate) return
 
-    const baseDate = moment.tz(selectedDate, 'Asia/Jerusalem')
-    let hour = 9
-    if (selectedTime === 'afternoon') hour = 14
-    else if (selectedTime === 'evening') hour = 18
+    const originalDate = moment(currentDate)
+    const newDate = moment.tz(selectedDate, 'Asia/Jerusalem')
+    
+    const getTimeOfDay = (date: Date): 'morning' | 'afternoon' | 'evening' => {
+      const hour = moment(date).hour()
+      if (hour >= 6 && hour < 12) return 'morning'
+      if (hour >= 12 && hour < 18) return 'afternoon'
+      return 'evening'
+    }
 
-    const newDate = baseDate.hour(hour).minute(0).second(0).toDate()
-    onSave(newDate, selectedTime)
+    let finalDate
+    if (selectedTime !== getTimeOfDay(currentDate)) {
+      let hour = 9
+      if (selectedTime === 'afternoon') hour = 14
+      else if (selectedTime === 'evening') hour = 18
+      finalDate = newDate.hour(hour).minute(0).second(0).toDate()
+    } else {
+      finalDate = newDate.hour(originalDate.hour()).minute(originalDate.minute()).second(0).toDate()
+    }
+
+    onSave(finalDate, selectedTime)
     onClose()
   }
 

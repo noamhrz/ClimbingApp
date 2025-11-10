@@ -9,6 +9,7 @@ import { ClimbingSummary } from '@/components/climbing/ClimbingSummary'
 import { RouteTypeBlock } from '@/components/climbing/RouteTypeBlock'
 import { ClimbingRoute, BoulderGrade, LeadGrade, ClimbingLocation, BoardType } from '@/types/climbing'
 import ExerciseAccordion from "@/components/exercises/ExerciseAccordion"
+import moment from 'moment-timezone'
 
 export default function WorkoutDetailClient({ id }: { id: number }) {
   const { activeUser, loading: authLoading } = useAuth()
@@ -238,7 +239,20 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
       return
     }
 
-    const now = new Date().toISOString()
+    const now = moment.tz('Asia/Jerusalem').toISOString()
+
+    // ✅ FIX: Determine correct LogDateTime for climbing logs
+    // If workout is from calendar, use calendar's StartTime (workout scheduled time)
+    // Otherwise use current time (for spontaneous "Start Workout")
+    const logDateTime = calendarRow?.StartTime 
+      ? moment.tz(calendarRow.StartTime, 'Asia/Jerusalem').toISOString()
+      : now
+
+    console.log('📅 [WorkoutDetail] DateTime Context:')
+    console.log('  Has Calendar:', !!calendarRow)
+    console.log('  Calendar StartTime:', calendarRow?.StartTime || 'N/A')
+    console.log('  LogDateTime:', logDateTime)
+    console.log('  CreatedAt:', now)
 
     try {
       let activeCalendarId = calendarIdNum
@@ -440,7 +454,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
           Attempts: route.attempts,
           Successful: route.successful,
           Notes: route.notes || null,
-          LogDateTime: now,
+          LogDateTime: logDateTime,  // ✅ Use workout scheduled time
           CreatedAt: now,
           UpdatedAt: now
         }))
@@ -577,7 +591,6 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
                 <ExerciseAccordion
                   key={ex.ExerciseID}
                   exercise={ex}
-                  value={ex}
                   onChange={(data) => handleExerciseChange(i, data)}
                   index={i}
                 />

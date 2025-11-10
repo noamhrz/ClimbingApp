@@ -13,6 +13,7 @@ import { ClimbingRoute, BoulderGrade, LeadGrade, ClimbingLocation, ClimbingLogEn
 import { generateTempId, getGradeDisplay } from '@/lib/climbing-helpers'
 import ExerciseAccordion from "@/components/exercises/ExerciseAccordion"
 import dayjs from 'dayjs'
+import moment from 'moment-timezone'
 
 export default function CalendarEditClient() {
   const { activeUser, loading: authLoading } = useAuth()
@@ -236,8 +237,18 @@ export default function CalendarEditClient() {
     }
 
     try {
-      const now = new Date().toISOString()
+      const now = moment.tz('Asia/Jerusalem').toISOString()
       const email = calendarRow?.Email || activeEmail
+
+      // ✅ FIX: Use calendar's StartTime for LogDateTime
+      const logDateTime = calendarRow?.StartTime 
+        ? moment.tz(calendarRow.StartTime, 'Asia/Jerusalem').toISOString()
+        : now
+
+      console.log('📅 [CalendarEdit] DateTime Context:')
+      console.log('  Calendar StartTime:', calendarRow?.StartTime)
+      console.log('  LogDateTime:', logDateTime)
+      console.log('  CreatedAt:', now)
 
       let exerciseCount = 0
       let climbingCount = 0
@@ -415,7 +426,8 @@ export default function CalendarEditClient() {
             Attempts: route.attempts,
             Successful: route.successful,
             Notes: route.notes || null,
-            
+            LogDateTime: logDateTime,  // ✅ ADD THIS
+            UpdatedAt: now,           // ✅ ADD THIS
           }
 
           if (route.climbType === 'Board') {
@@ -534,7 +546,6 @@ export default function CalendarEditClient() {
                 <ExerciseAccordion
                   key={ex.ExerciseID}
                   exercise={ex}
-                  value={ex}
                   onChange={(data) => handleExerciseChange(i, data)}
                   index={i}
                 />

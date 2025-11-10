@@ -207,21 +207,39 @@ export default function CalendarPage() {
 
   // Handle drag & drop (desktop only)
   const handleEventDrop = async ({ event, start, end }: any) => {
-    const newStart = moment(start).toDate()
-    const newEnd = moment(end).toDate()
+    const originalStart = moment(event.start)
+    const newDate = moment(start)
+    const newStart = newDate.hour(originalStart.hour()).minute(originalStart.minute()).second(0).toDate()
+    const newEnd = moment(newStart).add(1, 'hour').toDate()
 
-    const { error } = await supabase
-      .from('Calendar')
-      .update({ StartTime: newStart, EndTime: newEnd })
-      .eq('CalendarID', event.id)
+    try {
+      const { error: calendarError } = await supabase
+        .from('Calendar')
+        .update({ StartTime: newStart, EndTime: newEnd })
+        .eq('CalendarID', event.id)
 
-    if (error) {
-      console.error('❌ Error updating event:', error)
-    } else {
+      if (calendarError) throw calendarError
+
+      const { error: climbingError } = await supabase
+        .from('ClimbingLog')
+        .update({ 
+          LogDateTime: newStart.toISOString(),
+          UpdatedAt: new Date().toISOString()
+        })
+        .eq('CalendarID', event.id)
+
+      if (climbingError) {
+        console.error('⚠️ Error updating climbing logs:', climbingError)
+      }
+
+      console.log('✅ Event date updated (drag & drop)')
+
       const updated = events.map((e) =>
         e.id === event.id ? { ...e, start: newStart, end: newEnd } : e
       )
       setEvents(updated)
+    } catch (error) {
+      console.error('❌ Error updating event:', error)
     }
   }
 
@@ -279,16 +297,32 @@ export default function CalendarPage() {
 
     const newEnd = moment(newDate).add(1, 'hour').toDate()
 
-    const { error } = await supabase
-      .from('Calendar')
-      .update({ StartTime: newDate, EndTime: newEnd })
-      .eq('CalendarID', selectedEvent.id)
+    try {
+      const { error: calendarError } = await supabase
+        .from('Calendar')
+        .update({ StartTime: newDate, EndTime: newEnd })
+        .eq('CalendarID', selectedEvent.id)
 
-    if (error) {
+      if (calendarError) throw calendarError
+
+      const { error: climbingError } = await supabase
+        .from('ClimbingLog')
+        .update({ 
+          LogDateTime: newDate.toISOString(),
+          UpdatedAt: new Date().toISOString()
+        })
+        .eq('CalendarID', selectedEvent.id)
+
+      if (climbingError) {
+        console.error('⚠️ Error updating climbing logs:', climbingError)
+      }
+
+      console.log('✅ Event date updated (edit modal)')
+
+      await fetchCalendar()
+    } catch (error) {
       console.error('❌ Error updating event:', error)
       alert('שגיאה בעדכון אימון')
-    } else {
-      await fetchCalendar()
     }
   }
 
