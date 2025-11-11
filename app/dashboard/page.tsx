@@ -1,4 +1,4 @@
-// app/dashboard/page.tsx - FIXED DATE RANGE FOR WEEK VIEW
+// app/dashboard/page.tsx - WITH ACTIVE USER SUPPORT
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -17,7 +17,10 @@ import { subDays, format, startOfWeek, endOfWeek, differenceInWeeks, eachDayOfIn
 const WEEK_STARTS_ON = 0 // 0 = Sunday, 6 = Saturday
 
 export default function DashboardPage() {
-  const { currentUser } = useAuth()
+  const { currentUser, activeUser } = useAuth()  // ← FIX: Added activeUser
+  
+  // Use activeUser if available, otherwise currentUser
+  const userToShow = activeUser || currentUser  // ← FIX: Define userToShow
   
   const [timeRange, setTimeRange] = useState<'week' | '6weeks' | '12weeks'>('week')
   const [wellnessData, setWellnessData] = useState<any[]>([])
@@ -34,11 +37,11 @@ export default function DashboardPage() {
   const [hasFilledToday, setHasFilledToday] = useState(true)
 
   useEffect(() => {
-    if (currentUser?.Email) {
+    if (userToShow?.Email) {  // ← FIX: Use userToShow
       checkTodayWellness()
       loadAllData()
     }
-  }, [currentUser, timeRange])
+  }, [userToShow?.Email, timeRange])  // ← FIX: Depend on userToShow.Email
 
   const checkTodayWellness = async () => {
     try {
@@ -46,18 +49,21 @@ export default function DashboardPage() {
       const { data } = await supabase
         .from('WellnessLog')
         .select('WellnessID')
-        .eq('Email', currentUser?.Email)
+        .eq('Email', userToShow?.Email)  // ← FIX: Use userToShow
         .eq('Date', today)
         .maybeSingle()
 
       if (!data) {
         setHasFilledToday(false)
-        setIsWellnessModalOpen(true)
+        // Only show modal for own user, not when impersonating
+        if (!activeUser) {
+          setIsWellnessModalOpen(true)
+        }
       } else {
         setHasFilledToday(true)
       }
     } catch (error) {
-      console.error('Error checking today wellness:', error)
+      // Error handled silently
     }
   }
 
@@ -65,12 +71,10 @@ export default function DashboardPage() {
     const now = new Date()
     
     if (timeRange === 'week') {
-      // For week view: use current week (Sunday-Saturday)
       const start = startOfWeek(now, { weekStartsOn: WEEK_STARTS_ON })
       const end = endOfWeek(now, { weekStartsOn: WEEK_STARTS_ON })
       return { start, end }
     } else {
-      // For 6weeks/12weeks: go back N days from today
       const days = timeRange === '6weeks' ? 42 : 84
       const start = subDays(now, days - 1)
       return { start, end: now }
@@ -101,7 +105,6 @@ export default function DashboardPage() {
     try {
       const now = new Date()
       
-      // ראשון-שבת בזמן מקומי (ישראל)
       let weekStart = startOfWeek(now, { weekStartsOn: WEEK_STARTS_ON })
       let weekEnd = endOfWeek(now, { weekStartsOn: WEEK_STARTS_ON })
       
@@ -111,14 +114,11 @@ export default function DashboardPage() {
       const { data: workouts, error } = await supabase
         .from('Calendar')
         .select('*')
-        .eq('Email', currentUser?.Email)
+        .eq('Email', userToShow?.Email)  // ← FIX: Use userToShow
         .gte('StartTime', weekStart.toISOString())
         .lte('StartTime', weekEnd.toISOString())
 
-      if (error) {
-        console.error('Calendar error:', error)
-        return
-      }
+      if (error) return
 
       const completed: typeof workouts = []
       const pending: typeof workouts = []
@@ -144,7 +144,7 @@ export default function DashboardPage() {
         missedThisWeek: missed.length
       })
     } catch (error) {
-      console.error('Error loading calendar stats:', error)
+      // Error handled silently
     }
   }
 
@@ -153,12 +153,12 @@ export default function DashboardPage() {
       const { data, error } = await supabase
         .from('WellnessLog')
         .select('*')
-        .eq('Email', currentUser?.Email)
+        .eq('Email', userToShow?.Email)  // ← FIX: Use userToShow
         .gte('Date', format(start, 'yyyy-MM-dd'))
         .lte('Date', format(end, 'yyyy-MM-dd'))
         .order('Date')
       
-      if (error) console.error('Wellness error:', error)
+      if (error) return
       
       const dataMap = new Map()
       data?.forEach(log => {
@@ -185,7 +185,6 @@ export default function DashboardPage() {
       
       setWellnessData(chartData)
     } catch (error) {
-      console.error('Error loading wellness data:', error)
       setWellnessData([])
     }
   }
@@ -195,18 +194,17 @@ export default function DashboardPage() {
       const { data, error } = await supabase
         .from('ClimbingLog')
         .select('LogDateTime, ClimbType, VolumeScore')
-        .eq('Email', currentUser?.Email)
+        .eq('Email', userToShow?.Email)  // ← FIX: Use userToShow
         .gte('LogDateTime', start.toISOString())
         .lte('LogDateTime', end.toISOString())
         .order('LogDateTime')
       
-      if (error) console.error('Climbing error:', error)
+      if (error) return
       
       const groupByDays = timeRange === 'week'
       const now = new Date()
       
       if (groupByDays) {
-        // Weekly view - group by days
         const volumeMap = new Map<string, { lead: number, board: number, boulder: number }>()
         
         data?.forEach(log => {
@@ -233,7 +231,6 @@ export default function DashboardPage() {
         
         setClimbingData(chartData)
       } else {
-        // Multi-week view - group by weeks (SUNDAY-SATURDAY)
         const volumeMap = new Map<string, { lead: number, board: number, boulder: number, weekStart: Date }>()
         
         data?.forEach(log => {
@@ -269,7 +266,6 @@ export default function DashboardPage() {
         setClimbingData(chartData)
       }
     } catch (error) {
-      console.error('Error loading climbing data:', error)
       setClimbingData([])
     }
   }
@@ -279,18 +275,17 @@ export default function DashboardPage() {
       const { data, error } = await supabase
         .from('ExerciseLogs')
         .select('CreatedAt, RepsDone, WeightKG, DurationSec')
-        .eq('Email', currentUser?.Email)
+        .eq('Email', userToShow?.Email)  // ← FIX: Use userToShow
         .gte('CreatedAt', start.toISOString())
         .lte('CreatedAt', end.toISOString())
         .order('CreatedAt')
       
-      if (error) console.error('Exercise error:', error)
+      if (error) return
       
       const groupByDays = timeRange === 'week'
       const now = new Date()
       
       if (groupByDays) {
-        // Weekly view - group by days
         const volumeMap = new Map<string, number>()
         
         data?.forEach(log => {
@@ -319,7 +314,6 @@ export default function DashboardPage() {
         
         setExerciseData(chartData)
       } else {
-        // Multi-week view - group by weeks (SUNDAY-SATURDAY)
         const volumeMap = new Map<string, { volume: number, weekStart: Date }>()
         
         data?.forEach(log => {
@@ -355,7 +349,6 @@ export default function DashboardPage() {
         setExerciseData(chartData)
       }
     } catch (error) {
-      console.error('Error loading exercise data:', error)
       setExerciseData([])
     }
   }
@@ -382,16 +375,19 @@ export default function DashboardPage() {
         <div className="max-w-4xl mx-auto px-4 py-6">
           <div className="flex justify-between items-center mb-4">
             <h1 className="text-3xl font-bold text-blue-600">
-              📊 Dashboard
+              📊 Dashboard - {userToShow?.Name}
             </h1>
             
-            <button
-              onClick={() => setIsWellnessModalOpen(true)}
-              className="flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-medium transition-colors"
-            >
-              <span className="text-xl">+</span>
-              <span>Wellness</span>
-            </button>
+            {/* Only show wellness button for own user */}
+            {!activeUser && (
+              <button
+                onClick={() => setIsWellnessModalOpen(true)}
+                className="flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+              >
+                <span className="text-xl">+</span>
+                <span>Wellness</span>
+              </button>
+            )}
           </div>
           
           <TimeRangeSelector 
@@ -438,12 +434,15 @@ export default function DashboardPage() {
         <MotivationalQuote />
       </div>
 
-      <WellnessModal
-        isOpen={isWellnessModalOpen}
-        onClose={() => setIsWellnessModalOpen(false)}
-        currentUser={currentUser}
-        onSave={handleWellnessSave}
-      />
+      {/* Only show wellness modal for own user */}
+      {!activeUser && (
+        <WellnessModal
+          isOpen={isWellnessModalOpen}
+          onClose={() => setIsWellnessModalOpen(false)}
+          currentUser={currentUser}
+          onSave={handleWellnessSave}
+        />
+      )}
     </div>
   )
 }
