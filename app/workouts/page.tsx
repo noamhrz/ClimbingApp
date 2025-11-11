@@ -15,30 +15,33 @@ interface Workout {
 }
 
 export default function WorkoutsPage() {
-  const { currentUser } = useAuth()
+  const { currentUser, activeUser, isImpersonating } = useAuth()
   const [workouts, setWorkouts] = useState<Workout[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
   const [searchQuery, setSearchQuery] = useState<string>('')
   const [categories, setCategories] = useState<string[]>([])
 
+  // השתמש ב-activeUser אם קיים, אחרת currentUser
+  const userToShow = activeUser || currentUser
+
   useEffect(() => {
-    if (currentUser?.Email) {
+    if (userToShow?.Email) {
       fetchWorkouts()
     }
-  }, [currentUser])
+  }, [userToShow?.Email])
 
   const fetchWorkouts = async () => {
-    if (!currentUser?.Email) return
+    if (!userToShow?.Email) return
 
     try {
       setLoading(true)
 
-      // שלב 1: קבל את ה-WorkoutIDs + IsKeyWorkout + Notes של המשתמש
+      // שלב 1: קבל את ה-WorkoutIDs של המשתמש
       const { data: userWorkouts, error: userError } = await supabase
         .from('WorkoutsForUser')
         .select('WorkoutID, IsKeyWorkout, Notes')
-        .eq('Email', currentUser.Email)
+        .eq('Email', userToShow.Email)
 
       if (userError) throw userError
 
@@ -75,7 +78,6 @@ export default function WorkoutsPage() {
       setCategories(uniqueCategories)
 
     } catch (error) {
-      console.error('Error fetching workouts:', error)
       alert('שגיאה בטעינת אימונים')
     } finally {
       setLoading(false)
@@ -84,12 +86,10 @@ export default function WorkoutsPage() {
 
   // סינון אימונים
   const filteredWorkouts = workouts.filter(workout => {
-    // סינון לפי קטגוריה
     if (selectedCategory !== 'all' && workout.Category !== selectedCategory) {
       return false
     }
 
-    // סינון לפי חיפוש
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase()
       return (
@@ -136,7 +136,9 @@ export default function WorkoutsPage() {
       {/* Header */}
       <div className="bg-white shadow-sm border-b sticky top-0 z-30">
         <div className="max-w-7xl mx-auto px-4 py-4">
-          <h1 className="text-2xl font-bold text-blue-600 mb-4">🏋️ האימונים שלי</h1>
+          <h1 className="text-2xl font-bold text-blue-600 mb-4">
+            🏋️ האימונים של {userToShow?.Name || 'המשתמש'}
+          </h1>
           
           {/* Filters */}
           <div className="flex gap-2">
@@ -175,8 +177,8 @@ export default function WorkoutsPage() {
         {workouts.length === 0 ? (
           <div className="text-center py-12">
             <div className="text-6xl mb-4">📭</div>
-            <p className="text-xl text-gray-600 mb-2">עדיין לא הוקצו לך אימונים</p>
-            <p className="text-gray-500">פנה למאמן שלך להקצאת אימונים</p>
+            <p className="text-xl text-gray-600 mb-2">עדיין לא הוקצו אימונים ל-{userToShow?.Name}</p>
+            <p className="text-gray-500">פנה למאמן להקצאת אימונים</p>
           </div>
         ) : filteredWorkouts.length === 0 ? (
           <div className="text-center py-12">
@@ -202,7 +204,6 @@ export default function WorkoutsPage() {
                       className="block"
                     >
                       <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 border-2 border-yellow-400 rounded-xl p-5 hover:shadow-xl transition-all hover:scale-105">
-                        {/* תג אימון מפתח */}
                         <div className="flex items-start justify-between mb-3">
                           <div className="flex items-center gap-2">
                             <span className="text-3xl">{getCategoryEmoji(workout.Category)}</span>
@@ -225,7 +226,6 @@ export default function WorkoutsPage() {
                           </p>
                         )}
 
-                        {/* הערת המאמן */}
                         {workout.Notes && (
                           <div className="mt-3 p-3 bg-white/80 rounded-lg border border-yellow-300">
                             <p className="text-xs font-semibold text-yellow-700 mb-1">
@@ -287,7 +287,6 @@ export default function WorkoutsPage() {
                           </p>
                         )}
 
-                        {/* הערת המאמן */}
                         {workout.Notes && (
                           <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
                             <p className="text-xs font-semibold text-blue-700 mb-1">
