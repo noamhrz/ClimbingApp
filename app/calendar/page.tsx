@@ -223,16 +223,14 @@ export default function CalendarPage() {
       const { error: climbingError } = await supabase
         .from('ClimbingLog')
         .update({ 
-          LogDateTime: newStart.toISOString(),
-          UpdatedAt: new Date().toISOString()
+          LogDateTime: moment(newStart).format('YYYY-MM-DD HH:mm:ss'),
+          UpdatedAt: moment().format('YYYY-MM-DD HH:mm:ss')
         })
         .eq('CalendarID', event.id)
 
       if (climbingError) {
         console.error('⚠️ Error updating climbing logs:', climbingError)
       }
-
-      console.log('✅ Event date updated (drag & drop)')
 
       const updated = events.map((e) =>
         e.id === event.id ? { ...e, start: newStart, end: newEnd } : e
@@ -308,16 +306,14 @@ export default function CalendarPage() {
       const { error: climbingError } = await supabase
         .from('ClimbingLog')
         .update({ 
-          LogDateTime: newDate.toISOString(),
-          UpdatedAt: new Date().toISOString()
+          LogDateTime: moment(newDate).format('YYYY-MM-DD HH:mm:ss'),
+          UpdatedAt: moment().format('YYYY-MM-DD HH:mm:ss')
         })
         .eq('CalendarID', selectedEvent.id)
 
       if (climbingError) {
         console.error('⚠️ Error updating climbing logs:', climbingError)
       }
-
-      console.log('✅ Event date updated (edit modal)')
 
       await fetchCalendar()
     } catch (error) {

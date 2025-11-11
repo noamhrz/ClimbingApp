@@ -202,14 +202,14 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
       return
     }
 
-    const now = new Date().toISOString()
+    const now = moment().format('YYYY-MM-DD HH:mm:ss')
 
     try {
       const { error } = await supabase
         .from('Calendar')
         .update({ 
           StartTime: now,
-          EndTime: new Date(Date.now() + 3600000).toISOString()
+          EndTime: moment().add(1, 'hour').format('YYYY-MM-DD HH:mm:ss')
         })
         .eq('CalendarID', calendarIdNum)
 
@@ -239,13 +239,13 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
       return
     }
 
-    const now = moment.tz('Asia/Jerusalem').toISOString()
+    const now = moment().format('YYYY-MM-DD HH:mm:ss')
 
     // ✅ FIX: Determine correct LogDateTime for climbing logs
     // If workout is from calendar, use calendar's StartTime (workout scheduled time)
     // Otherwise use current time (for spontaneous "Start Workout")
     const logDateTime = calendarRow?.StartTime 
-      ? moment.tz(calendarRow.StartTime, 'Asia/Jerusalem').toISOString()
+      ? moment(calendarRow.StartTime).format('YYYY-MM-DD HH:mm:ss')
       : now
 
     try {

@@ -237,12 +237,12 @@ export default function CalendarEditClient() {
     }
 
     try {
-      const now = moment.tz('Asia/Jerusalem').toISOString()
+      const now = moment().format('YYYY-MM-DD HH:mm:ss')
       const email = calendarRow?.Email || activeEmail
 
       // ✅ FIX: Use calendar's StartTime for LogDateTime
       const logDateTime = calendarRow?.StartTime 
-        ? moment.tz(calendarRow.StartTime, 'Asia/Jerusalem').toISOString()
+        ? moment(calendarRow.StartTime).format('YYYY-MM-DD HH:mm:ss')
         : now
 
       let exerciseCount = 0
