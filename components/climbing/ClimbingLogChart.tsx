@@ -1,4 +1,4 @@
-// components/climbing/ClimbingLogChart.tsx - V2 Stacked
+// components/climbing/ClimbingLogChart.tsx - V2 Stacked (FIXED)
 'use client'
 
 import { useEffect, useRef } from 'react'
@@ -71,7 +71,7 @@ export default function ClimbingLogChart({ data }: Props) {
             tooltip: {
               callbacks: {
                 label: function (context) {
-                  return `${context.parsed.y} מסלולים`
+                  return `${context.parsed.y ?? 0} מסלולים`
                 },
               },
             },
@@ -140,10 +140,11 @@ export default function ClimbingLogChart({ data }: Props) {
             tooltip: {
               callbacks: {
                 label: function (context) {
-                  return `${context.dataset.label}: ${context.parsed.y} מסלולים`
+                  return `${context.dataset.label}: ${context.parsed.y ?? 0} מסלולים`
                 },
                 footer: function (items) {
-                  const total = items.reduce((sum, item) => sum + item.parsed.y, 0)
+                  // FIX: Handle null values with nullish coalescing
+                  const total = items.reduce((sum, item) => sum + (item.parsed.y ?? 0), 0)
                   return `סה"כ: ${total} מסלולים`
                 },
               },
