@@ -1,150 +1,220 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabaseClient'
 import { useAuth } from '@/context/AuthContext'
-import { getRoleConfig } from '@/lib/permissions'
 
-type User = {
-  UserID: number
-  Name: string
-  Email: string
-  Role: string
-}
+// רשימת אימיילים לcopy/paste
+const QUICK_EMAILS = [
+  'noam.hrz@gmail.com',
+  'omer@example.com',
+  'dana@example.com',
+  'tamarlabin@gmail.com',
+  'yael@example.com',
+]
 
-export default function HomePage() {
+export default function LoginPage() {
   const router = useRouter()
-  const { login, currentUser, logout } = useAuth()
-  const [users, setUsers] = useState<User[]>([])
-  const [loading, setLoading] = useState(true)
+  const { login, currentUser, logout, loading: authLoading } = useAuth()
+  
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [copiedEmail, setCopiedEmail] = useState<string | null>(null)
 
+  // Redirect if already logged in
   useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('Users')
-          .select('UserID, Name, Email, Role')
-          .order('Name', { ascending: true })
+    if (!authLoading && currentUser) {
+      router.push('/dashboard')
+    }
+  }, [authLoading, currentUser, router])
 
-        if (error) throw error
-        setUsers(data || [])
-      } catch (err: any) {
-        console.error('❌ שגיאה בשליפת משתמשים:', err)
-        setError('שגיאה בטעינת המשתמשים')
-      } finally {
-        setLoading(false)
-      }
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    if (!email || !password) {
+      setError('נא למלא אימייל וסיסמה')
+      return
     }
 
-    fetchUsers()
-  }, [])
+    setError(null)
+    setIsLoading(true)
 
-  const handleSelectUser = async (user: User) => {
     try {
-      await login(user.Email)
-      router.push('/dashboard')
-    } catch (error) {
-      console.error('Login error:', error)
-      alert('שגיאה בהתחברות')
+      console.log('🔐 Login attempt:', email)
+      const result = await login(email, password)
+
+      if (result.success) {
+        console.log('✅ Login successful')
+        router.push('/dashboard')
+      } else {
+        console.error('❌ Login failed:', result.error)
+        setError(result.error || 'שגיאה בהתחברות')
+      }
+    } catch (err: any) {
+      console.error('❌ Unexpected error:', err)
+      setError('שגיאה בהתחברות')
+    } finally {
+      setIsLoading(false)
     }
   }
 
-  const handleLogout = () => {
-    logout()
+  const handleLogout = async () => {
+    await logout()
     router.refresh()
   }
 
-  if (loading) {
+  const copyEmail = (emailToCopy: string) => {
+    setEmail(emailToCopy)
+    setCopiedEmail(emailToCopy)
+    setTimeout(() => setCopiedEmail(null), 2000)
+  }
+
+  if (authLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
-        <p className="text-gray-600">טוען משתמשים...</p>
-      </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
-        <p className="text-red-500 font-semibold">{error}</p>
+        <p className="text-gray-600">טוען...</p>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
-      <div className="mb-8 text-center">
-        <div className="text-6xl mb-4">🧗</div>
-        <h1 className="text-4xl font-bold text-gray-900 mb-2">
-          Climbing Training
-        </h1>
-        <p className="text-gray-600">בחר משתמש להתחברות</p>
-        
-        {currentUser && (
-          <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-            <p className="text-sm text-blue-800">
-              מחובר כ: <strong>{currentUser.Name}</strong>
-            </p>
-            <button
-              onClick={handleLogout}
-              className="mt-2 text-sm text-blue-600 hover:text-blue-800 underline"
-            >
-              התנתק והחלף משתמש
-            </button>
-          </div>
-        )}
-      </div>
-
-      <div className="w-full max-w-md bg-white shadow-2xl rounded-2xl p-6">
-        {users.length === 0 ? (
-          <p className="text-center text-gray-500">לא נמצאו משתמשים.</p>
-        ) : (
-          <ul className="space-y-3">
-            {users.map((u) => {
-              const config = getRoleConfig(u.Role as any)
-              const isCurrentUser = currentUser?.Email === u.Email
-              
-              return (
-                <li
-                  key={u.UserID}
-                  onClick={() => handleSelectUser(u)}
-                  className={`cursor-pointer border-2 p-4 rounded-xl transition-all group ${
-                    isCurrentUser
-                      ? 'border-blue-500 bg-blue-50'
-                      : 'border-gray-200 hover:bg-blue-50 hover:border-blue-500'
-                  }`}
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
+      <div className="flex gap-6 max-w-5xl w-full">
+        {/* Login Form */}
+        <div className="flex-1 bg-white shadow-2xl rounded-2xl p-8">
+          {/* Header */}
+          <div className="text-center mb-8">
+            <div className="text-6xl mb-4">🧗</div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              Climbing Training
+            </h1>
+            <p className="text-gray-600">התחבר כדי להמשיך</p>
+            
+            {currentUser && (
+              <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-sm text-blue-800">
+                  מחובר כ: <strong>{currentUser.Name}</strong>
+                </p>
+                <button
+                  onClick={handleLogout}
+                  className="mt-2 text-sm text-blue-600 hover:text-blue-800 underline"
                 >
-                  <div className="flex items-center gap-3">
-                    <span className="text-3xl">{config.icon}</span>
-                    
-                    <div className="flex-1">
-                      <div className="font-semibold text-gray-900 group-hover:text-blue-700">
-                        {u.Name}
-                      </div>
-                      <div className="text-sm text-gray-500">{u.Email}</div>
-                    </div>
-                    
-                    <div className={`px-2 py-1 rounded text-xs font-medium ${config.color}`}>
-                      {config.label}
-                    </div>
-                    
-                    {isCurrentUser && (
-                      <span className="text-xs bg-blue-600 text-white px-2 py-1 rounded">
-                        מחובר
-                      </span>
-                    )}
-                  </div>
-                </li>
-              )
-            })}
-          </ul>
-        )}
-      </div>
+                  התנתק
+                </button>
+              </div>
+            )}
+          </div>
 
-      <div className="mt-6 max-w-md w-full p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-xs text-yellow-800">
-        💡 <strong>למפתחים:</strong> זהו login פשוט ללא סיסמה. בפרודקשן צריך אימות אמיתי!
+          {/* Form */}
+          <form onSubmit={handleLogin} className="space-y-6">
+            {error && (
+              <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+                <p className="font-semibold">❌ שגיאה</p>
+                <p className="text-sm mt-1">{error}</p>
+              </div>
+            )}
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                אימייל
+              </label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                placeholder="your@email.com"
+                required
+                disabled={isLoading}
+                autoComplete="email"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                סיסמה
+              </label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                placeholder="••••••••"
+                required
+                disabled={isLoading}
+                autoComplete="current-password"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={isLoading || !email || !password}
+              className="w-full px-6 py-4 bg-blue-600 text-white font-bold text-lg rounded-lg hover:bg-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
+            >
+              {isLoading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                  מתחבר...
+                </span>
+              ) : (
+                '🔐 התחבר'
+              )}
+            </button>
+          </form>
+        </div>
+
+        {/* Quick Emails Sidebar */}
+        <div className="w-80 bg-white shadow-xl rounded-2xl p-6">
+          <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+            <span>📋</span>
+            <span>אימיילים מהירים</span>
+          </h2>
+          
+          <p className="text-sm text-gray-600 mb-4">
+            לחץ כדי להעתיק לשדה האימייל
+          </p>
+
+          <div className="space-y-2">
+            {QUICK_EMAILS.map((quickEmail) => (
+              <button
+                key={quickEmail}
+                type="button"
+                onClick={() => copyEmail(quickEmail)}
+                className={`w-full text-left px-4 py-3 rounded-lg border-2 transition-all ${
+                  email === quickEmail
+                    ? 'border-blue-500 bg-blue-50 text-blue-700'
+                    : 'border-gray-200 hover:border-blue-300 hover:bg-gray-50'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-mono break-all">
+                    {quickEmail}
+                  </span>
+                  {copiedEmail === quickEmail && (
+                    <span className="text-xs bg-green-500 text-white px-2 py-1 rounded">
+                      ✓
+                    </span>
+                  )}
+                </div>
+              </button>
+            ))}
+          </div>
+
+          <div className="mt-6 pt-6 border-t border-gray-200">
+            <p className="text-xs text-gray-500 leading-relaxed">
+              💡 <strong>טיפ:</strong> לחץ על אימייל כדי להעתיק אותו אוטומטית לשדה, ואז הקלד את הסיסמה שלך
+            </p>
+          </div>
+
+          <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <p className="text-xs text-yellow-800">
+              🔒 <strong>זכור:</strong> השתמש בסיסמה האמיתית שהגדרת ב-Supabase
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   )

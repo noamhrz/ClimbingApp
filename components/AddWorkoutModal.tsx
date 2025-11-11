@@ -76,7 +76,7 @@ export default function AddWorkoutModal({
 
       if (error) {
         console.error('❌ Error adding workout:', error)
-        alert('שגיאה בהוספת אימון')
+        alert(`שגיאה בהוספת אימון: ${error.message}`)
       } else {
         onSuccess()
         onClose()
