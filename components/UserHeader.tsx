@@ -69,7 +69,7 @@ export default function UserHeader() {
             href="/dashboard"
             className="bg-white/10 hover:bg-white/20 backdrop-blur-sm px-4 py-2 rounded-lg transition-all whitespace-nowrap font-medium border border-white/20 hover:border-white/40"
           >
-            📊 דשבורד
+            📊 השבורד
           </Link>
           <Link
             href="/calendar"
@@ -93,12 +93,6 @@ export default function UserHeader() {
           {/* Coach/Admin only links */}
           {(currentUser?.Role === 'coach' || currentUser?.Role === 'admin') && (
             <>
-              <Link
-                href="/my-trainees"
-                className="bg-white/10 hover:bg-white/20 backdrop-blur-sm px-4 py-2 rounded-lg transition-all whitespace-nowrap font-medium border border-white/20 hover:border-white/40"
-              >
-                👥 המתאמנים שלי
-              </Link>
               <Link
                 href="/exercises"
                 className="bg-white/10 hover:bg-white/20 backdrop-blur-sm px-4 py-2 rounded-lg transition-all whitespace-nowrap font-medium border border-white/20 hover:border-white/40"
@@ -125,9 +119,9 @@ export default function UserHeader() {
             <>
               <Link
                 href="/admin/users"
-                className="bg-white/10 hover:bg-white/20 backdrop-blur-sm px-4 py-2 rounded-lg transition-all whitespace-nowrap font-medium border border-white/20 hover:border-white/40"
+                className="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 backdrop-blur-sm px-4 py-2 rounded-lg transition-all whitespace-nowrap font-medium border-2 border-purple-400 hover:border-purple-300 shadow-lg"
               >
-                👥 משתמשים
+                👥 ניהול משתמשים
               </Link>
             </>
           )}
