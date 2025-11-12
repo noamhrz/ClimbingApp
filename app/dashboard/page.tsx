@@ -1,4 +1,4 @@
-// app/dashboard/page.tsx - WITH ACTIVE USER SUPPORT
+// app/dashboard/page.tsx - FIXED WELLNESS MODAL
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -17,10 +17,10 @@ import { subDays, format, startOfWeek, endOfWeek, differenceInWeeks, eachDayOfIn
 const WEEK_STARTS_ON = 0 // 0 = Sunday, 6 = Saturday
 
 export default function DashboardPage() {
-  const { currentUser, activeUser } = useAuth()  // ← FIX: Added activeUser
+  const { currentUser, activeUser } = useAuth()
   
   // Use activeUser if available, otherwise currentUser
-  const userToShow = activeUser || currentUser  // ← FIX: Define userToShow
+  const userToShow = activeUser || currentUser
   
   const [timeRange, setTimeRange] = useState<'week' | '6weeks' | '12weeks'>('week')
   const [wellnessData, setWellnessData] = useState<any[]>([])
@@ -37,11 +37,11 @@ export default function DashboardPage() {
   const [hasFilledToday, setHasFilledToday] = useState(true)
 
   useEffect(() => {
-    if (userToShow?.Email) {  // ← FIX: Use userToShow
+    if (userToShow?.Email) {
       checkTodayWellness()
       loadAllData()
     }
-  }, [userToShow?.Email, timeRange])  // ← FIX: Depend on userToShow.Email
+  }, [userToShow?.Email, timeRange])
 
   const checkTodayWellness = async () => {
     try {
@@ -49,14 +49,14 @@ export default function DashboardPage() {
       const { data } = await supabase
         .from('WellnessLog')
         .select('WellnessID')
-        .eq('Email', userToShow?.Email)  // ← FIX: Use userToShow
+        .eq('Email', userToShow?.Email)
         .eq('Date', today)
         .maybeSingle()
 
       if (!data) {
         setHasFilledToday(false)
-        // Only show modal for own user, not when impersonating
-        if (!activeUser) {
+        // Show modal only when viewing own data (not when impersonating)
+        if (userToShow?.Email === currentUser?.Email) {
           setIsWellnessModalOpen(true)
         }
       } else {
@@ -114,7 +114,7 @@ export default function DashboardPage() {
       const { data: workouts, error } = await supabase
         .from('Calendar')
         .select('*')
-        .eq('Email', userToShow?.Email)  // ← FIX: Use userToShow
+        .eq('Email', userToShow?.Email)
         .gte('StartTime', weekStart.toISOString())
         .lte('StartTime', weekEnd.toISOString())
 
@@ -153,7 +153,7 @@ export default function DashboardPage() {
       const { data, error } = await supabase
         .from('WellnessLog')
         .select('*')
-        .eq('Email', userToShow?.Email)  // ← FIX: Use userToShow
+        .eq('Email', userToShow?.Email)
         .gte('Date', format(start, 'yyyy-MM-dd'))
         .lte('Date', format(end, 'yyyy-MM-dd'))
         .order('Date')
@@ -194,7 +194,7 @@ export default function DashboardPage() {
       const { data, error } = await supabase
         .from('ClimbingLog')
         .select('LogDateTime, ClimbType, VolumeScore')
-        .eq('Email', userToShow?.Email)  // ← FIX: Use userToShow
+        .eq('Email', userToShow?.Email)
         .gte('LogDateTime', start.toISOString())
         .lte('LogDateTime', end.toISOString())
         .order('LogDateTime')
@@ -275,7 +275,7 @@ export default function DashboardPage() {
       const { data, error } = await supabase
         .from('ExerciseLogs')
         .select('CreatedAt, RepsDone, WeightKG, DurationSec')
-        .eq('Email', userToShow?.Email)  // ← FIX: Use userToShow
+        .eq('Email', userToShow?.Email)
         .gte('CreatedAt', start.toISOString())
         .lte('CreatedAt', end.toISOString())
         .order('CreatedAt')
@@ -378,8 +378,8 @@ export default function DashboardPage() {
               📊 Dashboard - {userToShow?.Name}
             </h1>
             
-            {/* Only show wellness button for own user */}
-            {!activeUser && (
+            {/* Show wellness button only when viewing own data */}
+            {userToShow?.Email === currentUser?.Email && (
               <button
                 onClick={() => setIsWellnessModalOpen(true)}
                 className="flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-medium transition-colors"
@@ -434,8 +434,8 @@ export default function DashboardPage() {
         <MotivationalQuote />
       </div>
 
-      {/* Only show wellness modal for own user */}
-      {!activeUser && (
+      {/* Show wellness modal only when viewing own data */}
+      {userToShow?.Email === currentUser?.Email && (
         <WellnessModal
           isOpen={isWellnessModalOpen}
           onClose={() => setIsWellnessModalOpen(false)}
