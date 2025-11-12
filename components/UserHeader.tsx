@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
 import { getRoleConfig } from '@/lib/permissions'
@@ -22,18 +23,35 @@ export default function UserHeader() {
   return (
     <header className="bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 py-3">
-        {/* Top Row - User Info */}
+        {/* Top Row - Logo + User Info */}
         <div className="flex justify-between items-center mb-3">
           <div className="flex items-center gap-3">
             <span className="text-3xl">{activeConfig.icon}</span>
             <div>
               <p className="text-xs text-blue-200">משתמש פעיל:</p>
-              <p className="font-bold text-lg">
-                {activeUser.Name}
-              </p>
+              {/* Profile link */}
+              <Link 
+                href="/profile"
+                className="font-bold text-lg hover:text-blue-100 transition-colors inline-flex items-center gap-1 group"
+              >
+                <span>{activeUser.Name}</span>
+                <span className="opacity-0 group-hover:opacity-100 transition-opacity text-sm">👤</span>
+              </Link>
               <p className="text-xs text-blue-200">
                 {activeUser.Email}
               </p>
+            </div>
+          </div>
+
+          {/* Logo in center */}
+          <div className="absolute left-1/2 -translate-x-1/2">
+            <div className="relative w-12 h-12 bg-white rounded-full p-1.5 shadow-lg">
+              <Image
+                src="/noam-herz-logo.png"
+                alt="Logo"
+                fill
+                className="object-contain"
+              />
             </div>
           </div>
 
@@ -69,7 +87,7 @@ export default function UserHeader() {
             href="/dashboard"
             className="bg-white/10 hover:bg-white/20 backdrop-blur-sm px-4 py-2 rounded-lg transition-all whitespace-nowrap font-medium border border-white/20 hover:border-white/40"
           >
-            📊 השבורד
+            📊 Dashboard
           </Link>
           <Link
             href="/calendar"
