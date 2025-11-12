@@ -1,7 +1,6 @@
 'use client'
 
 import Link from 'next/link'
-import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
 import { getRoleConfig } from '@/lib/permissions'
@@ -15,6 +14,13 @@ export default function UserHeader() {
   const activeConfig = getRoleConfig(activeUser.Role)
   const currentConfig = currentUser ? getRoleConfig(currentUser.Role) : null
 
+  // Get role image
+  const getRoleImage = (role: string) => {
+    if (role === 'admin') return '/admin.png'
+    if (role === 'coach') return '/coach.png'
+    return '/climber.png'
+  }
+
   const handleLogout = () => {
     logout()
     router.push('/')
@@ -23,10 +29,17 @@ export default function UserHeader() {
   return (
     <header className="bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 py-3">
-        {/* Top Row - Logo + User Info */}
+        {/* Top Row - User Info */}
         <div className="flex justify-between items-center mb-3">
           <div className="flex items-center gap-3">
-            <span className="text-3xl">{activeConfig.icon}</span>
+            {/* Role Image - Large and prominent */}
+            <div className="w-16 h-16 bg-white rounded-full p-2 shadow-lg flex items-center justify-center">
+              <img 
+                src={getRoleImage(activeUser.Role)}
+                alt={activeUser.Role}
+                className="w-full h-full object-contain"
+              />
+            </div>
             <div>
               <p className="text-xs text-blue-200">משתמש פעיל:</p>
               {/* Profile link */}
@@ -40,18 +53,6 @@ export default function UserHeader() {
               <p className="text-xs text-blue-200">
                 {activeUser.Email}
               </p>
-            </div>
-          </div>
-
-          {/* Logo in center */}
-          <div className="absolute left-1/2 -translate-x-1/2">
-            <div className="relative w-12 h-12 bg-white rounded-full p-1.5 shadow-lg">
-              <Image
-                src="/noam-herz-logo.png"
-                alt="Logo"
-                fill
-                className="object-contain"
-              />
             </div>
           </div>
 
