@@ -1,5 +1,5 @@
 // components/exercises/ExerciseModal.tsx
-// VERSION WITH DYNAMIC CATEGORIES + isDuration SUPPORT
+// FINAL VERSION - WITH localStorage PERSISTENCE
 
 'use client'
 
@@ -11,40 +11,90 @@ interface Props {
   exercise: Exercise | null
   onSave: (data: ExerciseFormData) => void
   onClose: () => void
+  isDuplicate?: boolean
 }
 
-export default function ExerciseModal({ exercise, onSave, onClose }: Props) {
+export default function ExerciseModal({ exercise, onSave, onClose, isDuplicate = false }: Props) {
   const [categories, setCategories] = useState<string[]>([])
-  const [formData, setFormData] = useState<ExerciseFormData>({
-    Name: '',
-    Description: '',
-    Category: '',
-    VideoURL: '',
-    ImageURL: '',
-    IsSingleHand: false,
-    isDuration: false,  // ✨ NEW
+  const STORAGE_KEY = 'exercise-modal-draft'
+  
+  // ✨ Load from localStorage if creating new exercise
+  const [formData, setFormData] = useState<ExerciseFormData>(() => {
+    // Don't load draft if editing existing exercise
+    if (exercise && !isDuplicate) {
+      return {
+        Name: '',
+        Description: '',
+        Category: '',
+        VideoURL: '',
+        ImageURL: '',
+        IsSingleHand: false,
+        isDuration: false,
+      }
+    }
+    
+    // Load draft for new exercises
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem(STORAGE_KEY)
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved)
+          console.log('📥 Loaded draft from localStorage:', parsed.Name)
+          return parsed
+        } catch {
+          // Ignore parse errors
+        }
+      }
+    }
+    return {
+      Name: '',
+      Description: '',
+      Category: '',
+      VideoURL: '',
+      ImageURL: '',
+      IsSingleHand: false,
+      isDuration: false,
+    }
   })
 
-  const isEditing = !!exercise
+  const isEditing = !!exercise && !isDuplicate
+
+  // ✨ Save to localStorage on every change (only for new exercises)
+  useEffect(() => {
+    // Only save draft for new exercises (not editing)
+    if (!exercise && (formData.Name || formData.Description || formData.Category)) {
+      console.log('💾 Saving draft to localStorage:', formData.Name)
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(formData))
+    }
+  }, [formData, exercise])
+
+  // ✨ Clear both localStorage and sessionStorage
+  const clearDraft = () => {
+    console.log('🗑️ Clearing draft from localStorage')
+    localStorage.removeItem(STORAGE_KEY)
+    sessionStorage.removeItem('exercise-modal-open')
+  }
 
   // Load categories from DB
   useEffect(() => {
     loadCategories()
   }, [])
 
+  // Load exercise data when editing or duplicating
   useEffect(() => {
     if (exercise) {
+      clearDraft()  // Clear any saved draft when editing
       setFormData({
-        Name: exercise.Name,
+        Name: isDuplicate ? `${exercise.Name} (עותק)` : exercise.Name,
         Description: exercise.Description || '',
         Category: exercise.Category,
         VideoURL: exercise.VideoURL || '',
         ImageURL: exercise.ImageURL || '',
         IsSingleHand: exercise.IsSingleHand,
-        isDuration: exercise.isDuration || false,  // ✨ NEW
+        isDuration: exercise.isDuration || false,
       })
     }
-  }, [exercise])
+  }, [exercise, isDuplicate])
 
   const loadCategories = async () => {
     try {
@@ -55,7 +105,6 @@ export default function ExerciseModal({ exercise, onSave, onClose }: Props) {
 
       if (error) throw error
 
-      // Get unique categories and sort
       const uniqueCategories = [...new Set(data?.map(ex => ex.Category) || [])]
         .filter(Boolean)
         .sort()
@@ -69,7 +118,6 @@ export default function ExerciseModal({ exercise, onSave, onClose }: Props) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     
-    // Validation
     if (!formData.Name.trim()) {
       alert('⚠️ שם התרגיל הוא שדה חובה')
       return
@@ -85,20 +133,51 @@ export default function ExerciseModal({ exercise, onSave, onClose }: Props) {
       return
     }
 
+    clearDraft()
     onSave(formData)
   }
 
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) {
+      const hasContent = formData.Name || formData.Description || formData.Category
+      if (hasContent && !exercise) {
+        const confirm = window.confirm('יש לך טיוטה לא שמורה. לסגור בלי לשמור?')
+        if (!confirm) return
+      }
+      clearDraft()
+      onClose()
+    }
+  }
+
+  const handleClose = () => {
+    const hasContent = formData.Name || formData.Description || formData.Category
+    if (hasContent && !exercise) {
+      const confirm = window.confirm('יש לך טיוטה לא שמורה. לסגור בלי לשמור?')
+      if (!confirm) return
+    }
+    clearDraft()
+    onClose()
+  }
+
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+    <div 
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+      onClick={handleBackdropClick}
+    >
+      <div 
+        className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="sticky top-0 bg-white border-b px-6 py-4 z-10">
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-bold text-gray-900">
-              {isEditing ? '✏️ עריכת תרגיל' : '➕ תרגיל חדש'}
+              {isEditing ? '✏️ עריכת תרגיל' : 
+               isDuplicate ? '📋 שכפול תרגיל' : 
+               '➕ תרגיל חדש'}
             </h2>
             <button
-              onClick={onClose}
+              onClick={handleClose}
               className="text-gray-400 hover:text-gray-600 text-2xl leading-none"
               type="button"
             >
@@ -125,7 +204,7 @@ export default function ExerciseModal({ exercise, onSave, onClose }: Props) {
             />
           </div>
 
-          {/* Category - Free text with suggestions */}
+          {/* Category */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               קטגוריה <span className="text-red-500">*</span>
@@ -147,7 +226,6 @@ export default function ExerciseModal({ exercise, onSave, onClose }: Props) {
               ))}
             </datalist>
 
-            {/* Quick select buttons */}
             {categories.length > 0 && (
               <div className="mt-2 flex flex-wrap gap-2">
                 {categories.slice(0, 8).map((cat) => (
@@ -210,7 +288,7 @@ export default function ExerciseModal({ exercise, onSave, onClose }: Props) {
             />
           </div>
 
-          {/* ✨ NEW: isDuration Checkbox */}
+          {/* isDuration Checkbox */}
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <label className="flex items-center gap-3 cursor-pointer">
               <input
@@ -260,7 +338,7 @@ export default function ExerciseModal({ exercise, onSave, onClose }: Props) {
             </button>
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleClose}
               className="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition font-medium"
             >
               ביטול

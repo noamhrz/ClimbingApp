@@ -1,5 +1,5 @@
 // components/exercises/ExerciseCard.tsx
-// UPDATED WITH isDuration INDICATOR
+// MINIMAL CHANGE: Only add duplicate button
 
 'use client'
 
@@ -10,9 +10,10 @@ interface Props {
   canEdit: boolean
   onEdit: () => void
   onDelete: () => void
+  onDuplicate: () => void  // ✨ NEW
 }
 
-export default function ExerciseCard({ exercise, canEdit, onEdit, onDelete }: Props) {
+export default function ExerciseCard({ exercise, canEdit, onEdit, onDelete, onDuplicate }: Props) {
   // Helper function to get emoji by category
   const getCategoryEmoji = (category: string): string => {
     switch (category) {
@@ -60,7 +61,6 @@ export default function ExerciseCard({ exercise, canEdit, onEdit, onDelete }: Pr
             <span className="inline-block px-2 py-0.5 text-xs rounded-full bg-blue-100 text-blue-800">
               {exercise.Category}
             </span>
-            {/* ✨ NEW: isDuration indicator */}
             {exercise.isDuration && (
               <span className="inline-block px-2 py-0.5 text-xs rounded-full bg-purple-100 text-purple-800">
                 ⏱️ זמן
@@ -78,7 +78,6 @@ export default function ExerciseCard({ exercise, canEdit, onEdit, onDelete }: Pr
           {exercise.IsSingleHand && (
             <span className="text-xl ml-2" title="תרגיל יד אחת">🖐️</span>
           )}
-          {/* ✨ NEW: Duration icon if applicable */}
           {exercise.isDuration && (
             <span className="text-xl" title="תרגיל מבוסס זמן">⏱️</span>
           )}
@@ -141,6 +140,14 @@ export default function ExerciseCard({ exercise, canEdit, onEdit, onDelete }: Pr
               className="text-xs px-3 py-1 bg-blue-50 text-blue-600 rounded hover:bg-blue-100 transition font-medium"
             >
               ✏️ ערוך
+            </button>
+            {/* ✨ NEW: Duplicate button */}
+            <button
+              onClick={onDuplicate}
+              className="text-xs px-3 py-1 bg-green-50 text-green-600 rounded hover:bg-green-100 transition font-medium"
+              title="שכפל תרגיל"
+            >
+              📋
             </button>
             <button
               onClick={onDelete}
