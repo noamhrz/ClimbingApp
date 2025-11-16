@@ -15,6 +15,17 @@ interface User {
   CreatedAt?: string
 }
 
+// ========================================
+// HELPER: Get Auth Headers
+// ========================================
+const getAuthHeaders = async () => {
+  const { data: { session } } = await supabase.auth.getSession()
+  return {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${session?.access_token}`
+  }
+}
+
 export default function UserManagementPage() {
   const { currentUser } = useAuth()
   const router = useRouter()
@@ -66,6 +77,9 @@ export default function UserManagementPage() {
     return emailRegex.test(email)
   }
 
+  // ========================================
+  // ADD USER - WITH AUTO-CONFIRMATION
+  // ========================================
   const handleAddUser = async () => {
     // Validation
     if (!newUser.email || !newUser.name || !newUser.password) {
@@ -86,36 +100,102 @@ export default function UserManagementPage() {
     try {
       setLoading(true)
 
-      // Create user in Supabase Auth
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: newUser.email,
-        password: newUser.password,
-        options: {
-          data: {
-            name: newUser.name
-          }
-        }
+      // Get auth headers with token
+      const headers = await getAuthHeaders()
+
+      // Call API Route with auth
+      const response = await fetch('/api/admin/create-confirmed-user', {
+        method: 'POST',
+        headers: headers,
+        body: JSON.stringify({
+          email: newUser.email.toLowerCase(),
+          password: newUser.password,
+          name: newUser.name,
+          role: newUser.role
+        })
       })
 
-      if (authError) throw authError
+      const result = await response.json()
 
-      // The trigger will automatically add to Users table
-      // Wait a bit and refresh
-      setTimeout(() => {
-        fetchUsers()
-        setShowAddUser(false)
-        setNewUser({ email: '', name: '', password: '', role: 'user' })
-        alert(`✅ המשתמש ${newUser.name} נוסף בהצלחה!`)
-      }, 1000)
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to create user')
+      }
+
+      // Success!
+      alert(`✅ משתמש ${result.user.email} נוסף בהצלחה!\n` +
+            `התפקיד: ${result.user.role}\n` +
+            `האימייל מאושר אוטומטית - המשתמש יכול להתחבר מיד!`)
+
+      // Reset form
+      setNewUser({ email: '', name: '', password: '', role: 'user' })
+      setShowAddUser(false)
+
+      // Reload users
+      fetchUsers()
 
     } catch (error: any) {
       console.error('Error adding user:', error)
-      alert(`❌ שגיאה: ${error.message}`)
+      alert(`❌ שגיאה בהוספת משתמש: ${error.message}`)
     } finally {
       setLoading(false)
     }
   }
 
+  // ========================================
+  // UPDATE USER - WITH API ROUTE
+  // ========================================
+  const handleUpdateUser = async () => {
+    if (!editingUser) return
+
+    if (!validateEmail(editingUser.Email)) {
+      alert('⚠️ כתובת המייל לא תקינה')
+      return
+    }
+
+    if (!editingUser.Name || !editingUser.Role) {
+      alert('⚠️ יש למלא את כל השדות')
+      return
+    }
+
+    try {
+      setLoading(true)
+
+      // Get auth headers with token
+      const headers = await getAuthHeaders()
+
+      // Call API Route with auth
+      const response = await fetch('/api/admin/update-user', {
+        method: 'PUT',
+        headers: headers,
+        body: JSON.stringify({
+          email: editingUser.Email,
+          name: editingUser.Name,
+          role: editingUser.Role
+        })
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to update user')
+      }
+
+      // Success!
+      alert(`✅ המשתמש ${editingUser.Name} עודכן בהצלחה!`)
+      setEditingUser(null)
+      fetchUsers()
+
+    } catch (error: any) {
+      console.error('Error updating user:', error)
+      alert(`❌ שגיאה בעדכון משתמש: ${error.message}`)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // ========================================
+  // TOGGLE ACTIVE/INACTIVE
+  // ========================================
   const handleToggleActive = async (user: User) => {
     const newStatus = !user.IsActive
 
@@ -135,6 +215,9 @@ export default function UserManagementPage() {
     }
   }
 
+  // ========================================
+  // DELETE USER
+  // ========================================
   const handleDeleteUser = async (user: User) => {
     if (user.Email === currentUser?.Email) {
       alert('❌ לא ניתן למחוק את עצמך!')
@@ -180,36 +263,9 @@ export default function UserManagementPage() {
     }
   }
 
-  const handleUpdateUser = async () => {
-    if (!editingUser) return
-
-    if (!validateEmail(editingUser.Email)) {
-      alert('⚠️ כתובת המייל לא תקינה')
-      return
-    }
-
-    try {
-      const { error } = await supabase
-        .from('Users')
-        .update({
-          Name: editingUser.Name,
-          Role: editingUser.Role,
-          Email: editingUser.Email
-        })
-        .eq('UserID', editingUser.UserID)
-
-      if (error) throw error
-
-      alert(`✅ המשתמש ${editingUser.Name} עודכן בהצלחה`)
-      setEditingUser(null)
-      fetchUsers()
-    } catch (error: any) {
-      console.error('Error updating user:', error)
-      alert(`❌ שגיאה: ${error.message}`)
-    }
-  }
-
-  // Filter users
+  // ========================================
+  // FILTER USERS
+  // ========================================
   const filteredUsers = users.filter(user => {
     const matchesSearch = 
       user.Name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -224,6 +280,9 @@ export default function UserManagementPage() {
     return matchesSearch && matchesRole && matchesStatus
   })
 
+  // ========================================
+  // HELPER FUNCTIONS
+  // ========================================
   const getRoleIcon = (role: string) => {
     const icons: Record<string, string> = {
       admin: '👑',
@@ -242,6 +301,9 @@ export default function UserManagementPage() {
     return names[role] || role
   }
 
+  // ========================================
+  // LOADING STATE
+  // ========================================
   if (loading && users.length === 0) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -253,6 +315,9 @@ export default function UserManagementPage() {
     )
   }
 
+  // ========================================
+  // RENDER
+  // ========================================
   return (
     <div dir="rtl" className="min-h-screen bg-gray-50 pb-20">
       {/* Header */}
@@ -488,9 +553,10 @@ export default function UserManagementPage() {
                 <input
                   type="email"
                   value={editingUser.Email}
-                  onChange={(e) => setEditingUser({...editingUser, Email: e.target.value})}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  disabled
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-600"
                 />
+                <p className="text-xs text-gray-500 mt-1">לא ניתן לשנות אימייל</p>
               </div>
 
               <div>
@@ -519,9 +585,10 @@ export default function UserManagementPage() {
               <div className="flex gap-2 pt-4">
                 <button
                   onClick={handleUpdateUser}
-                  className="flex-1 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
+                  disabled={loading}
+                  className="flex-1 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 font-medium"
                 >
-                  💾 שמור שינויים
+                  {loading ? '⏳ שומר...' : '💾 שמור שינויים'}
                 </button>
                 <button
                   onClick={() => setEditingUser(null)}
