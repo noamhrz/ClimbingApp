@@ -1,4 +1,5 @@
 // context/AuthContext.tsx - WITH REAL SUPABASE AUTH
+// CLEANED: Debug logs hidden by default
 'use client'
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
@@ -14,6 +15,14 @@ import {
   getRoleConfig
 } from '@/lib/permissions'
 
+// Debug mode - set to true to see debug logs
+const DEBUG = false
+
+// Helper functions for logging
+const debugLog = (...args: any[]) => {
+  if (DEBUG) console.log(...args)
+}
+
 interface User {
   Email: string
   Name: string
@@ -25,7 +34,7 @@ interface AuthContextType {
   currentUser: User | null
   activeUser: User | null
   isImpersonating: boolean
-  session: Session | null  // ✅ NEW: Supabase session
+  session: Session | null
   
   // Available users
   availableUsers: User[]
@@ -57,11 +66,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
 
-  // ✅ Listen to auth state changes
+  // Listen to auth state changes
   useEffect(() => {
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log('🔐 Initial session:', session?.user?.email)
+      debugLog('🔐 Initial session:', session?.user?.email)
       setSession(session)
       if (session?.user?.email) {
         loadUser(session.user.email)
@@ -72,7 +81,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      console.log('🔐 Auth state changed:', _event, session?.user?.email)
+      debugLog('🔐 Auth state changed:', _event, session?.user?.email)
       setSession(session)
       
       if (session?.user?.email) {
@@ -106,13 +115,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       if (userError || !userData) {
         console.error('❌ Error loading user from Users table:', userError)
-        console.log('⚠️ User authenticated but not in Users table:', email)
+        debugLog('⚠️ User authenticated but not in Users table:', email)
         // User exists in auth but not in Users table - this is a problem!
         await logout()
         return
       }
       
-      console.log('✅ User loaded:', userData)
+      debugLog('✅ User loaded:', userData)
       setCurrentUser(userData)
       
       // Load available users based on role
@@ -196,7 +205,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
    */
   const login = async (email: string, password: string) => {
     try {
-      console.log('🔐 Attempting login:', email)
+      debugLog('🔐 Attempting login:', email)
       
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -213,7 +222,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { success: false, error: 'No session created' }
       }
 
-      console.log('✅ Login successful:', data.session.user.email)
+      debugLog('✅ Login successful:', data.session.user.email)
       
       // Session is set automatically by onAuthStateChange
       // loadUser will be called automatically
@@ -230,12 +239,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
    */
   const logout = async () => {
     try {
-      console.log('🔐 Logging out...')
+      debugLog('🔐 Logging out...')
       await supabase.auth.signOut()
       localStorage.removeItem('activeUserEmail')
       
       // State is cleared automatically by onAuthStateChange
-      console.log('✅ Logged out')
+      debugLog('✅ Logged out')
     } catch (error) {
       console.error('❌ Logout error:', error)
     }
@@ -253,11 +262,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       setActiveUser(user)
       localStorage.setItem('activeUserEmail', user.Email)
-      console.log('🔄 Switched to user:', user.Email)
+      debugLog('🔄 Switched to user:', user.Email)
     } else {
       setActiveUser(emailOrUser)
       localStorage.setItem('activeUserEmail', emailOrUser.Email)
-      console.log('🔄 Switched to user:', emailOrUser.Email)
+      debugLog('🔄 Switched to user:', emailOrUser.Email)
     }
   }
 
@@ -268,7 +277,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (currentUser) {
       setActiveUser(currentUser)
       localStorage.removeItem('activeUserEmail')
-      console.log('🔄 Switched back to self:', currentUser.Email)
+      debugLog('🔄 Switched back to self:', currentUser.Email)
     }
   }
 
