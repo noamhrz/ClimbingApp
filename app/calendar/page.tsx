@@ -15,6 +15,7 @@ import DeloadingModal from '@/components/DeloadingModal'
 import EventContextMenu from '@/components/EventContextMenu'
 import EditEventModal from '@/components/EditEventModal'
 import WeekDuplicateModal from '@/components/WeekDuplicateModal'
+import DayListView from '@/components/calendar/DayListView'
 
 moment.locale('he')
 moment.tz.setDefault('Asia/Jerusalem')
@@ -148,7 +149,6 @@ export default function CalendarPage() {
         ? moment.utc(item.EndTime).local()
         : moment.utc(item.StartTime).add(1, 'hours').local()
 
-      // Fix events that cross midnight
       if (end.isAfter(start, 'day')) {
         end = moment(start).add(59, 'minutes')
       }
@@ -156,14 +156,13 @@ export default function CalendarPage() {
       const startDate = start.toDate()
       const endDate = end.toDate()
 
-      // Color is now calculated dynamically by EventComponent
       return {
         id: item.CalendarID,
         title: workoutMap[item.WorkoutID] || `Workout #${item.WorkoutID}`,
         start: startDate,
         end: endDate,
         completed: item.Completed,
-        color: '', // Not used anymore - EventComponent calculates it
+        color: '',
         WorkoutID: item.WorkoutID,
         Deloading: item.Deloading,
         DeloadingPercentage: item.DeloadingPercentage,
@@ -175,39 +174,31 @@ export default function CalendarPage() {
     setLoading(false)
   }
 
-  // Handle slot click - open add modal with selected date (only when in selection mode)
   const handleSelectSlot = (slotInfo: any) => {
     if (!isSelectingDate) return
     if (!activeEmail) return
     
-    // Open modal with the selected date
     setModalInitialDate(slotInfo.start)
     setShowAddModal(true)
     setIsSelectingDate(false)
   }
 
-  // Start date selection mode
   const handleAddButtonClick = () => {
     if (!activeEmail) {
       alert('לא נמצא אימייל משתמש')
       return
     }
-
-    // Enter selection mode
     setIsSelectingDate(true)
   }
 
-  // Cancel date selection mode
   const handleCancelSelection = () => {
     setIsSelectingDate(false)
   }
 
-  // Handle successful workout addition
   const handleModalSuccess = async () => {
     await fetchCalendar()
   }
 
-  // Handle drag & drop (desktop only)
   const handleEventDrop = async ({ event, start, end }: any) => {
     const originalStart = moment(event.start)
     const newDate = moment(start)
@@ -243,15 +234,12 @@ export default function CalendarPage() {
     }
   }
 
-  // Short click → Show context menu
   const handleSelectEvent = (event: CalendarEvent, e?: React.SyntheticEvent) => {
-    // Prevent cell selection when clicking event
     if (e) {
       e.preventDefault()
       e.stopPropagation()
     }
     
-    // Short click → Open context menu
     setSelectedEvent(event)
     const centerX = window.innerWidth / 2
     const centerY = window.innerHeight / 2
@@ -259,31 +247,24 @@ export default function CalendarPage() {
     setShowContextMenu(true)
   }
 
-  // Long press → Start/Edit workout directly
   const handleEventLongPress = (event: CalendarEvent, position: { x: number; y: number }) => {
-    // Long press → Start/Edit workout immediately
     handleStartWorkout(event)
   }
 
-  // Start/Edit workout function
   const handleStartWorkout = (event: CalendarEvent) => {
     if (event.completed) {
-      // If completed, go to calendar-edit
       router.push(`/calendar-edit/${event.id}`)
     } else {
-      // If not completed, go to workout
       router.push(`/workout/${event.WorkoutID}?calendar=${event.id}`)
     }
   }
 
-  // Handle edit date from context menu
   const handleEditDate = () => {
     if (selectedEvent) {
       setShowEditModal(true)
     }
   }
 
-  // Handle "Start/Edit Now" from context menu
   const handleStartNow = () => {
     if (selectedEvent) {
       setShowContextMenu(false)
@@ -291,7 +272,6 @@ export default function CalendarPage() {
     }
   }
 
-  // Handle save edited event
   const handleSaveEditedEvent = async (newDate: Date, newTime: 'morning' | 'afternoon' | 'evening') => {
     if (!selectedEvent) return
 
@@ -324,7 +304,6 @@ export default function CalendarPage() {
     }
   }
 
-  // Delete event
   const handleDeleteEvent = async (id: number) => {
     const confirmDelete = confirm('האם למחוק את האימון?')
     if (!confirmDelete) return
@@ -339,7 +318,6 @@ export default function CalendarPage() {
     }
   }
 
-  // Handle deloading operations
   const handleApplyDeloading = () => {
     setDeloadingMode('apply')
     setShowDeloadingModal(true)
@@ -354,10 +332,18 @@ export default function CalendarPage() {
     await fetchCalendar()
   }
 
-  // Use appropriate calendar component
+  // Navigation handler for day view
+  const handleNavigate = (newDate: Date) => {
+    setDate(newDate)
+  }
+
+  // Back to month view
+  const handleBackToMonth = () => {
+    setView('month')
+  }
+
   const ActiveCalendar = isMobile ? BigCalendar : DnDCalendar
 
-  // Loading state
   if (authLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -369,7 +355,6 @@ export default function CalendarPage() {
     )
   }
 
-  // No user
   if (!activeUser) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -393,10 +378,36 @@ export default function CalendarPage() {
 
   return (
     <div dir="rtl" className="min-h-screen bg-gray-50 pb-20">
-      {/* Page Title */}
+      {/* Page Title with View Selector */}
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 py-3">
-          <h1 className="text-xl font-bold text-blue-600">📅 לוח אימונים</h1>
+          <div className="flex items-center justify-between">
+            <h1 className="text-xl font-bold text-blue-600">📅 לוח אימונים</h1>
+            
+            {/* Simple View Selector - Only Month + Day */}
+            <div className="flex gap-2">
+              <button
+                onClick={() => setView('month')}
+                className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                  view === 'month'
+                    ? 'bg-blue-600 text-white shadow-md'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                📅 חודש
+              </button>
+              <button
+                onClick={() => setView('day')}
+                className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                  view === 'day'
+                    ? 'bg-blue-600 text-white shadow-md'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                📋 יום
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -430,65 +441,59 @@ export default function CalendarPage() {
         </div>
       )}
 
-      {/* Add Workout Modal */}
+      {/* Modals */}
       {activeEmail && (
-        <AddWorkoutModal
-          isOpen={showAddModal}
-          onClose={() => setShowAddModal(false)}
-          onSuccess={handleModalSuccess}
-          email={activeEmail}
-          availableWorkouts={workouts}
-          initialDate={modalInitialDate}
-        />
+        <>
+          <AddWorkoutModal
+            isOpen={showAddModal}
+            onClose={() => setShowAddModal(false)}
+            onSuccess={handleModalSuccess}
+            email={activeEmail}
+            availableWorkouts={workouts}
+            initialDate={modalInitialDate}
+          />
+          
+          <DeloadingModal
+            isOpen={showDeloadingModal}
+            onClose={() => setShowDeloadingModal(false)}
+            onSuccess={handleDeloadingSuccess}
+            email={activeEmail}
+            mode={deloadingMode}
+          />
+          
+          <WeekDuplicateModal
+            isOpen={showDuplicateModal}
+            onClose={() => setShowDuplicateModal(false)}
+            onSuccess={handleModalSuccess}
+            email={activeEmail}
+          />
+        </>
       )}
 
-      {/* Event Context Menu */}
       {selectedEvent && (
-        <EventContextMenu
-          isOpen={showContextMenu}
-          position={contextMenuPosition}
-          onEdit={handleEditDate}
-          onDelete={() => handleDeleteEvent(selectedEvent.id)}
-          onStartNow={handleStartNow}
-          onClose={() => setShowContextMenu(false)}
-          eventTitle={selectedEvent.title}
-          isCompleted={selectedEvent.completed}
-        />
+        <>
+          <EventContextMenu
+            isOpen={showContextMenu}
+            position={contextMenuPosition}
+            onEdit={handleEditDate}
+            onDelete={() => handleDeleteEvent(selectedEvent.id)}
+            onStartNow={handleStartNow}
+            onClose={() => setShowContextMenu(false)}
+            eventTitle={selectedEvent.title}
+            isCompleted={selectedEvent.completed}
+          />
+          
+          <EditEventModal
+            isOpen={showEditModal}
+            onClose={() => setShowEditModal(false)}
+            onSave={handleSaveEditedEvent}
+            eventTitle={selectedEvent.title}
+            currentDate={selectedEvent.start}
+          />
+        </>
       )}
 
-      {/* Edit Event Modal */}
-      {selectedEvent && (
-        <EditEventModal
-          isOpen={showEditModal}
-          onClose={() => setShowEditModal(false)}
-          onSave={handleSaveEditedEvent}
-          eventTitle={selectedEvent.title}
-          currentDate={selectedEvent.start}
-        />
-      )}
-
-      {/* Deloading Modal */}
-      {activeEmail && (
-        <DeloadingModal
-          isOpen={showDeloadingModal}
-          onClose={() => setShowDeloadingModal(false)}
-          onSuccess={handleDeloadingSuccess}
-          email={activeEmail}
-          mode={deloadingMode}
-        />
-      )}
-
-      {/* Week Duplicate Modal */}
-      {activeEmail && (
-        <WeekDuplicateModal
-          isOpen={showDuplicateModal}
-          onClose={() => setShowDuplicateModal(false)}
-          onSuccess={handleModalSuccess}
-          email={activeEmail}
-        />
-      )}
-
-      {/* Admin Actions - Deloading & Duplicate Controls */}
+      {/* Admin Actions */}
       {isAdmin && (
         <div className="fixed bottom-28 right-6 flex flex-col gap-2 z-40">
           <button
@@ -501,58 +506,70 @@ export default function CalendarPage() {
           <button
             onClick={handleApplyDeloading}
             className="bg-cyan-600 hover:bg-cyan-700 text-white px-4 py-2 rounded-lg shadow-lg text-sm font-medium transition-all"
-            title="החל דילודינג על טווח תאריכים"
+            title="החל דילודינג"
           >
             🔵 דילודינג
           </button>
           <button
             onClick={handleRemoveDeloading}
             className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg shadow-lg text-sm font-medium transition-all"
-            title="הסר דילודינג מטווח תאריכים"
+            title="הסר דילודינג"
           >
             ❌ הסר דילודינג
           </button>
         </div>
       )}
 
-      {/* Calendar - Full Width */}
+      {/* Calendar Content */}
       <div className="max-w-7xl mx-auto p-4">
         <div className="bg-white rounded-xl shadow-sm p-4 overflow-hidden">
-          <ActiveCalendar
-            localizer={localizer}
-            rtl={true}
-            events={events}
-            startAccessor={"start" as any}
-            endAccessor={"end" as any}
-            style={{ height: 'calc(100vh - 150px)', minHeight: '600px' }}
-            views={['month', 'week', 'day']}
-            view={view}
-            date={date}
-            onView={(newView: View) => setView(newView)}
-            onNavigate={(newDate: Date) => setDate(newDate)}
-            popup={true}
-            onSelectEvent={(event: any, e: any) => {
-              e.preventDefault()
-              e.stopPropagation()
-              handleSelectEvent(event, e)
-            }}
-            selectable={isSelectingDate}
-            onSelectSlot={handleSelectSlot}
-            resizable={!isMobile && !isSelectingDate}
-            draggableAccessor={() => !isMobile && !isSelectingDate}
-            onEventDrop={!isSelectingDate ? handleEventDrop : undefined}
-            components={{
-              event: (props: any) => (
-                <EventComponent
-                  event={props.event as CalendarEvent}
-                  onDelete={handleDeleteEvent}
-                  onLongPress={handleEventLongPress}
-                  isAdmin={isAdmin}
-                  isMobile={isMobile}
-                />
-              ),
-            }}
-          />
+          {/* Simple: Day view or Month view */}
+          {view === 'day' ? (
+            <DayListView
+              events={events}
+              date={date}
+              onEventClick={handleSelectEvent}
+              onNavigate={handleNavigate}
+              onBackToMonth={handleBackToMonth}
+            />
+          ) : (
+            <ActiveCalendar
+              localizer={localizer}
+              rtl={true}
+              events={events}
+              startAccessor={"start" as any}
+              endAccessor={"end" as any}
+              style={{ height: 'calc(100vh - 150px)', minHeight: '600px' }}
+              views={['month', 'week', 'day']}
+              view={'month'}
+              date={date}
+              onView={() => {}}
+              onNavigate={(newDate: Date) => setDate(newDate)}
+              popup={true}
+              toolbar={false}
+              onSelectEvent={(event: any, e: any) => {
+                e.preventDefault()
+                e.stopPropagation()
+                handleSelectEvent(event, e)
+              }}
+              selectable={isSelectingDate}
+              onSelectSlot={handleSelectSlot}
+              resizable={!isMobile && !isSelectingDate}
+              draggableAccessor={() => !isMobile && !isSelectingDate}
+              onEventDrop={!isSelectingDate ? handleEventDrop : undefined}
+              components={{
+                event: (props: any) => (
+                  <EventComponent
+                    event={props.event as CalendarEvent}
+                    onDelete={handleDeleteEvent}
+                    onLongPress={handleEventLongPress}
+                    isAdmin={isAdmin}
+                    isMobile={isMobile}
+                  />
+                ),
+              }}
+            />
+          )}
         </div>
       </div>
     </div>
