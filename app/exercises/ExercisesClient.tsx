@@ -1,5 +1,5 @@
 // app/exercises/ExercisesClient.tsx
-// VERSION WITH DYNAMIC CATEGORIES
+// FINAL VERSION - WITH sessionStorage FOR MODAL STATE
 
 'use client'
 
@@ -18,13 +18,32 @@ export default function ExercisesClient() {
   
   const [userRole, setUserRole] = useState<'admin' | 'coach' | null>(null)
   const [exercises, setExercises] = useState<Exercise[]>([])
-  const [categories, setCategories] = useState<string[]>([]) // ✨ NEW: Dynamic categories
+  const [categories, setCategories] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [filterCategory, setFilterCategory] = useState<string>('all')
   const [filterStatus, setFilterStatus] = useState<string>('Active')
-  const [showModal, setShowModal] = useState(false)
+  
+  // ✨ PERSIST modal state across page refreshes
+  const [showModal, setShowModal] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = sessionStorage.getItem('exercise-modal-open')
+      console.log('📂 Modal state on load:', saved)
+      return saved === 'true'
+    }
+    return false
+  })
+  
   const [editingExercise, setEditingExercise] = useState<Exercise | null>(null)
+  const [isDuplicating, setIsDuplicating] = useState(false)
+
+  // ✨ Save modal state whenever it changes
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      console.log('💾 Saving modal state:', showModal)
+      sessionStorage.setItem('exercise-modal-open', showModal.toString())
+    }
+  }, [showModal])
 
   // Check auth and role
   useEffect(() => {
@@ -36,7 +55,6 @@ export default function ExercisesClient() {
 
       if (!activeEmail) return
 
-      // Get user role
       const { data: user } = await supabase
         .from('Users')
         .select('Role')
@@ -54,17 +72,17 @@ export default function ExercisesClient() {
     checkAuth()
   }, [authLoading, activeUser, activeEmail, router])
 
-  // Load exercises and categories when role is set
+  // ✨ Load only once when component mounts
   useEffect(() => {
-    if (userRole) {
+    if (userRole && exercises.length === 0) {
+      console.log('📥 Loading exercises...')
       loadExercises()
-      loadCategories() // ✨ NEW
+      loadCategories()
     }
   }, [userRole])
 
   const isAdmin = userRole === 'admin'
 
-  // ✨ NEW: Load unique categories from DB
   const loadCategories = async () => {
     try {
       const { data, error } = await supabase
@@ -74,9 +92,8 @@ export default function ExercisesClient() {
 
       if (error) throw error
 
-      // Get unique categories and sort
       const uniqueCategories = [...new Set(data?.map(ex => ex.Category) || [])]
-        .filter(Boolean) // Remove null/undefined
+        .filter(Boolean)
         .sort()
 
       setCategories(uniqueCategories)
@@ -95,12 +112,10 @@ export default function ExercisesClient() {
         .select('*')
         .order('Name')
 
-      // Filter by status
       if (filterStatus !== 'all') {
         query = query.eq('Status', filterStatus)
       }
 
-      // Coach sees only their own exercises + system exercises
       if (!isAdmin) {
         query = query.or(`CreatedBy.eq.${activeEmail},CreatedBy.eq.admin@example.com`)
       }
@@ -117,7 +132,6 @@ export default function ExercisesClient() {
     }
   }
 
-  // Filter exercises by search and category
   const filteredExercises = exercises.filter(ex => {
     const matchesSearch = ex.Name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          ex.Description?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -125,7 +139,6 @@ export default function ExercisesClient() {
     return matchesSearch && matchesCategory
   })
 
-  // Handle create new exercise
   const handleCreate = async (formData: ExerciseFormData) => {
     if (!activeEmail) return
     
@@ -142,8 +155,13 @@ export default function ExercisesClient() {
       if (error) throw error
 
       await loadExercises()
-      await loadCategories() // ✨ Refresh categories
+      await loadCategories()
+      
+      // ✨ Clear state
       setShowModal(false)
+      setIsDuplicating(false)
+      sessionStorage.removeItem('exercise-modal-open')
+      
       alert('✅ התרגיל נוצר בהצלחה!')
     } catch (err) {
       console.error('Error creating exercise:', err)
@@ -151,7 +169,6 @@ export default function ExercisesClient() {
     }
   }
 
-  // Handle update existing exercise
   const handleUpdate = async (id: number, formData: ExerciseFormData) => {
     try {
       const { error } = await supabase
@@ -164,9 +181,14 @@ export default function ExercisesClient() {
       if (error) throw error
 
       await loadExercises()
-      await loadCategories() // ✨ Refresh categories
+      await loadCategories()
+      
+      // ✨ Clear state
       setShowModal(false)
       setEditingExercise(null)
+      setIsDuplicating(false)
+      sessionStorage.removeItem('exercise-modal-open')
+      
       alert('✅ התרגיל עודכן בהצלחה!')
     } catch (err) {
       console.error('Error updating exercise:', err)
@@ -174,7 +196,6 @@ export default function ExercisesClient() {
     }
   }
 
-  // Handle soft delete (set Status to Inactive)
   const handleDelete = async (id: number, name: string) => {
     if (!confirm(`האם למחוק את התרגיל "${name}"?`)) return
 
@@ -195,12 +216,16 @@ export default function ExercisesClient() {
     }
   }
 
-  // Check if user can edit this exercise
+  const handleDuplicate = (exercise: Exercise) => {
+    setEditingExercise(exercise)
+    setIsDuplicating(true)
+    setShowModal(true)
+  }
+
   const canEdit = (exercise: Exercise) => {
     return isAdmin || exercise.CreatedBy === activeEmail
   }
 
-  // Loading states
   if (authLoading || !userRole) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -238,6 +263,7 @@ export default function ExercisesClient() {
         <button
           onClick={() => {
             setEditingExercise(null)
+            setIsDuplicating(false)
             setShowModal(true)
           }}
           className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center gap-2 shadow-sm"
@@ -264,7 +290,7 @@ export default function ExercisesClient() {
             />
           </div>
 
-          {/* Category filter - ✨ DYNAMIC */}
+          {/* Category filter */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               📂 קטגוריה
@@ -338,9 +364,11 @@ export default function ExercisesClient() {
               canEdit={canEdit(exercise)}
               onEdit={() => {
                 setEditingExercise(exercise)
+                setIsDuplicating(false)
                 setShowModal(true)
               }}
               onDelete={() => handleDelete(exercise.ExerciseID, exercise.Name)}
+              onDuplicate={() => handleDuplicate(exercise)}
             />
           ))}
         </div>
@@ -350,8 +378,9 @@ export default function ExercisesClient() {
       {showModal && (
         <ExerciseModal
           exercise={editingExercise}
+          isDuplicate={isDuplicating}
           onSave={(formData) => {
-            if (editingExercise) {
+            if (editingExercise && !isDuplicating) {
               handleUpdate(editingExercise.ExerciseID, formData)
             } else {
               handleCreate(formData)
@@ -360,6 +389,8 @@ export default function ExercisesClient() {
           onClose={() => {
             setShowModal(false)
             setEditingExercise(null)
+            setIsDuplicating(false)
+            sessionStorage.removeItem('exercise-modal-open')
           }}
         />
       )}
