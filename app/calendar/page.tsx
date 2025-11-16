@@ -14,6 +14,7 @@ import AddWorkoutModal from '@/components/AddWorkoutModal'
 import DeloadingModal from '@/components/DeloadingModal'
 import EventContextMenu from '@/components/EventContextMenu'
 import EditEventModal from '@/components/EditEventModal'
+import WeekDuplicateModal from '@/components/WeekDuplicateModal'
 
 moment.locale('he')
 moment.tz.setDefault('Asia/Jerusalem')
@@ -62,6 +63,7 @@ export default function CalendarPage() {
   const [isSelectingDate, setIsSelectingDate] = useState(false)
   const [showDeloadingModal, setShowDeloadingModal] = useState(false)
   const [deloadingMode, setDeloadingMode] = useState<'apply' | 'remove'>('apply')
+  const [showDuplicateModal, setShowDuplicateModal] = useState(false)
 
   // Mobile detection
   useEffect(() => {
@@ -476,9 +478,26 @@ export default function CalendarPage() {
         />
       )}
 
-      {/* Admin Actions - Deloading Controls */}
+      {/* Week Duplicate Modal */}
+      {activeEmail && (
+        <WeekDuplicateModal
+          isOpen={showDuplicateModal}
+          onClose={() => setShowDuplicateModal(false)}
+          onSuccess={handleModalSuccess}
+          email={activeEmail}
+        />
+      )}
+
+      {/* Admin Actions - Deloading & Duplicate Controls */}
       {isAdmin && (
         <div className="fixed bottom-28 right-6 flex flex-col gap-2 z-40">
+          <button
+            onClick={() => setShowDuplicateModal(true)}
+            className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg shadow-lg text-sm font-medium transition-all"
+            title="שכפול שבוע"
+          >
+            📋 שכפול שבוע
+          </button>
           <button
             onClick={handleApplyDeloading}
             className="bg-cyan-600 hover:bg-cyan-700 text-white px-4 py-2 rounded-lg shadow-lg text-sm font-medium transition-all"
