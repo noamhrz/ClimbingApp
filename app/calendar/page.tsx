@@ -16,7 +16,6 @@ import EventContextMenu from '@/components/EventContextMenu'
 import EditEventModal from '@/components/EditEventModal'
 import WeekDuplicateModal from '@/components/WeekDuplicateModal'
 import DayListView from '@/components/calendar/DayListView'
-import WeekListView from '@/components/calendar/WeekListView'
 
 moment.locale('he')
 moment.tz.setDefault('Asia/Jerusalem')
@@ -54,7 +53,6 @@ export default function CalendarPage() {
   const [workouts, setWorkouts] = useState<Workout[]>([])
   const [loading, setLoading] = useState(true)
   const [view, setView] = useState<View>('month')
-  const [viewMode, setViewMode] = useState<'calendar' | 'list'>('list')  // ✨ Changed default to 'list'
   const [date, setDate] = useState(new Date())
   const [isMobile, setIsMobile] = useState(false)
   const [showAddModal, setShowAddModal] = useState(false)
@@ -151,7 +149,6 @@ export default function CalendarPage() {
         ? moment.utc(item.EndTime).local()
         : moment.utc(item.StartTime).add(1, 'hours').local()
 
-      // Fix events that cross midnight
       if (end.isAfter(start, 'day')) {
         end = moment(start).add(59, 'minutes')
       }
@@ -177,7 +174,6 @@ export default function CalendarPage() {
     setLoading(false)
   }
 
-  // Handle slot click
   const handleSelectSlot = (slotInfo: any) => {
     if (!isSelectingDate) return
     if (!activeEmail) return
@@ -336,6 +332,16 @@ export default function CalendarPage() {
     await fetchCalendar()
   }
 
+  // Navigation handler for day view
+  const handleNavigate = (newDate: Date) => {
+    setDate(newDate)
+  }
+
+  // Back to month view
+  const handleBackToMonth = () => {
+    setView('month')
+  }
+
   const ActiveCalendar = isMobile ? BigCalendar : DnDCalendar
 
   if (authLoading) {
@@ -372,10 +378,36 @@ export default function CalendarPage() {
 
   return (
     <div dir="rtl" className="min-h-screen bg-gray-50 pb-20">
-      {/* Page Title */}
+      {/* Page Title with View Selector */}
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 py-3">
-          <h1 className="text-xl font-bold text-blue-600">📅 לוח אימונים</h1>
+          <div className="flex items-center justify-between">
+            <h1 className="text-xl font-bold text-blue-600">📅 לוח אימונים</h1>
+            
+            {/* Simple View Selector - Only Month + Day */}
+            <div className="flex gap-2">
+              <button
+                onClick={() => setView('month')}
+                className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                  view === 'month'
+                    ? 'bg-blue-600 text-white shadow-md'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                📅 חודש
+              </button>
+              <button
+                onClick={() => setView('day')}
+                className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                  view === 'day'
+                    ? 'bg-blue-600 text-white shadow-md'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                📋 יום
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -490,49 +522,15 @@ export default function CalendarPage() {
 
       {/* Calendar Content */}
       <div className="max-w-7xl mx-auto p-4">
-        {/* View Mode Toggle - Only show for Day/Week views */}
-        {(view === 'day' || view === 'week') && (
-          <div className="mb-4 flex gap-2 justify-center">
-            <button
-              onClick={() => setViewMode('calendar')}
-              className={`px-4 py-2 rounded-lg font-medium transition-all ${
-                viewMode === 'calendar'
-                  ? 'bg-blue-600 text-white shadow-md'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-              }`}
-            >
-              📅 לוח שנה
-            </button>
-            <button
-              onClick={() => setViewMode('list')}
-              className={`px-4 py-2 rounded-lg font-medium transition-all ${
-                viewMode === 'list'
-                  ? 'bg-blue-600 text-white shadow-md'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-              }`}
-            >
-              📋 רשימה
-            </button>
-          </div>
-        )}
-
         <div className="bg-white rounded-xl shadow-sm p-4 overflow-hidden">
-          {/* Show list view for day/week, calendar for month */}
-          {viewMode === 'list' && view === 'day' ? (
+          {/* Simple: Day view or Month view */}
+          {view === 'day' ? (
             <DayListView
               events={events}
               date={date}
               onEventClick={handleSelectEvent}
-              onEventDelete={handleDeleteEvent}
-              onEventLongPress={handleEventLongPress}
-            />
-          ) : viewMode === 'list' && view === 'week' ? (
-            <WeekListView
-              events={events}
-              date={date}
-              onEventClick={handleSelectEvent}
-              onEventDelete={handleDeleteEvent}
-              onEventLongPress={handleEventLongPress}
+              onNavigate={handleNavigate}
+              onBackToMonth={handleBackToMonth}
             />
           ) : (
             <ActiveCalendar
@@ -543,11 +541,12 @@ export default function CalendarPage() {
               endAccessor={"end" as any}
               style={{ height: 'calc(100vh - 150px)', minHeight: '600px' }}
               views={['month', 'week', 'day']}
-              view={view}
+              view={'month'}
               date={date}
-              onView={(newView: View) => setView(newView)}
+              onView={() => {}}
               onNavigate={(newDate: Date) => setDate(newDate)}
               popup={true}
+              toolbar={false}
               onSelectEvent={(event: any, e: any) => {
                 e.preventDefault()
                 e.stopPropagation()
