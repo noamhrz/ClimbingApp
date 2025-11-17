@@ -1,5 +1,5 @@
 // app/calendar-edit/[calendarId]/CalendarEditClient.tsx
-// ✨ UPDATED VERSION - with Single Hand & isDuration support
+// ✨ UPDATED VERSION - with Single Hand & isDuration support & ADD LOCATION
 
 'use client'
 
@@ -41,12 +41,68 @@ export default function CalendarEditClient() {
   // Track which routes existed in DB (for UPDATE vs INSERT)
   const [existingLogIds, setExistingLogIds] = useState<Map<string, number>>(new Map())
 
+  // NEW: Add location modal state
+  const [showAddLocationModal, setShowAddLocationModal] = useState(false)
+  const [newLocationName, setNewLocationName] = useState('')
+  const [savingLocation, setSavingLocation] = useState(false)
+
   // Toast notification state
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
 
   const showToast = (message: string, type: 'success' | 'error' = 'success') => {
     setToast({ message, type })
     setTimeout(() => setToast(null), 3000)
+  }
+
+  // NEW: Load locations function
+  const loadLocations = async () => {
+    const { data } = await supabase
+      .from('ClimbingLocations')
+      .select('*')
+      .order('LocationName')
+    
+    setLocations(data || [])
+  }
+
+  // NEW: Add new location
+  const handleAddLocation = async () => {
+    if (!newLocationName.trim()) {
+      showToast('⚠️ יש להזין שם מיקום', 'error')
+      return
+    }
+
+    setSavingLocation(true)
+    try {
+      const { data, error } = await supabase
+        .from('ClimbingLocations')
+        .insert({
+          LocationName: newLocationName.trim(),
+          LocationType: 'Indoor', // Default
+          City: '', // Can be filled later
+          Country: 'Israel' // Default
+        })
+        .select()
+        .single()
+
+      if (error) throw error
+
+      // Refresh locations list
+      await loadLocations()
+
+      // Auto-select new location
+      setSelectedLocation(data.LocationID)
+
+      // Close modal and reset
+      setShowAddLocationModal(false)
+      setNewLocationName('')
+
+      showToast('✅ מיקום נוסף בהצלחה!', 'success')
+    } catch (error) {
+      console.error('Error adding location:', error)
+      showToast('❌ שגיאה בהוספת מיקום', 'error')
+    } finally {
+      setSavingLocation(false)
+    }
   }
 
   // ✨ טעינת נתונים - UPDATED
@@ -504,165 +560,246 @@ export default function CalendarEditClient() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto p-6">
-      <div className="bg-white rounded-lg shadow-sm p-6">
-        <h1 className="text-3xl font-bold text-blue-600 mb-2">
-          עריכת אימון — {workout?.Name || ''}
-        </h1>
+    <>
+      <div className="max-w-5xl mx-auto p-6">
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          <h1 className="text-3xl font-bold text-blue-600 mb-2">
+            עריכת אימון — {workout?.Name || ''}
+          </h1>
 
-        <p className="text-gray-600 mb-6">
-          תאריך: {dayjs(calendarRow.StartTime).format('DD/MM/YYYY HH:mm')}
-        </p>
-        {/* Workout Video */}
-        {workout?.VideoURL && (
-          <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              🎥 וידאו הסבר לאימון:
-            </label>
-            <a
-              href={workout.VideoURL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors shadow-sm"
-            >
-              <span>▶️</span>
-              <span>צפה בוידאו</span>
-            </a>
-          </div>
-        )}
-
-
-        {/* ✨ תרגילים - UPDATED: משתמש ב-ExerciseExecutionForm */}
-        {exerciseForms.length > 0 && (
-          <section className="mb-10">
-            <h2 className="font-semibold text-xl mb-4">💪 תרגילים</h2>
-            <div className="space-y-4">
-              {exerciseForms.map((ex, i) => (
-                <ExerciseAccordion
-                  key={ex.ExerciseID}
-                  exercise={ex}
-                  onChange={(data) => handleExerciseChange(i, data)}
-                  index={i}
-                />
-              ))}
+          <p className="text-gray-600 mb-6">
+            תאריך: {dayjs(calendarRow.StartTime).format('DD/MM/YYYY HH:mm')}
+          </p>
+          {/* Workout Video */}
+          {workout?.VideoURL && (
+            <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                🎥 וידאו הסבר לאימון:
+              </label>
+              <a
+                href={workout.VideoURL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors shadow-sm"
+              >
+                <span>▶️</span>
+                <span>צפה בוידאו</span>
+              </a>
             </div>
+          )}
+
+
+          {/* ✨ תרגילים - UPDATED: משתמש ב-ExerciseExecutionForm */}
+          {exerciseForms.length > 0 && (
+            <section className="mb-10">
+              <h2 className="font-semibold text-xl mb-4">💪 תרגילים</h2>
+              <div className="space-y-4">
+                {exerciseForms.map((ex, i) => (
+                  <ExerciseAccordion
+                    key={ex.ExerciseID}
+                    exercise={ex}
+                    onChange={(data) => handleExerciseChange(i, data)}
+                    index={i}
+                  />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* טיפוס - Show only if containsClimbing WITH ADD LOCATION */}
+          {containsClimbing && (
+            <section className="mb-10">
+            <h2 className="font-semibold text-xl mb-4">🧗 רישומי טיפוס</h2>
+
+            {/* Location Selector WITH ADD NEW */}
+            <div className="mb-6">
+              <label className="block font-medium mb-2">📍 מיקום:</label>
+              <div className="space-y-2">
+                <select
+                  value={selectedLocation || ''}
+                  onChange={(e) => setSelectedLocation(Number(e.target.value) || null)}
+                  className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">בחר מיקום</option>
+                  {locations.map(loc => (
+                    <option key={loc.LocationID} value={loc.LocationID}>
+                      {loc.LocationName}
+                    </option>
+                  ))}
+                </select>
+                
+                {/* Add New Location Button */}
+                <button
+                  type="button"
+                  onClick={() => setShowAddLocationModal(true)}
+                  className="w-full py-2 px-4 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 transition-all font-medium"
+                >
+                  ➕ הוסף מיקום חדש
+                </button>
+              </div>
+            </div>
+
+            <ClimbingSummary routes={routes} />
+
+            <RouteTypeBlock
+              type="Boulder"
+              icon="🪨"
+              routes={routesByType.Boulder}
+              onRoutesChange={(newRoutes) => {
+                setRoutes([
+                  ...routes.filter(r => r.climbType !== 'Boulder'),
+                  ...newRoutes
+                ])
+              }}
+              boulderGrades={boulderGrades}
+              leadGrades={leadGrades}
+              boardTypes={boardTypes}
+              selectedBoardType={selectedBoardType}
+              onBoardTypeChange={setSelectedBoardType}
+            />
+
+            <RouteTypeBlock
+              type="Board"
+              icon="🏋️"
+              routes={routesByType.Board}
+              onRoutesChange={(newRoutes) => {
+                setRoutes([
+                  ...routes.filter(r => r.climbType !== 'Board'),
+                  ...newRoutes
+                ])
+              }}
+              boulderGrades={boulderGrades}
+              leadGrades={leadGrades}
+              boardTypes={boardTypes}
+              selectedBoardType={selectedBoardType}
+              onBoardTypeChange={setSelectedBoardType}
+            />
+
+            <RouteTypeBlock
+              type="Lead"
+              icon="🧗"
+              routes={routesByType.Lead}
+              onRoutesChange={(newRoutes) => {
+                setRoutes([
+                  ...routes.filter(r => r.climbType !== 'Lead'),
+                  ...newRoutes
+                ])
+              }}
+              boulderGrades={boulderGrades}
+              leadGrades={leadGrades}
+              boardTypes={boardTypes}
+              selectedBoardType={selectedBoardType}
+              onBoardTypeChange={setSelectedBoardType}
+            />
+            </section>
+          )}
+          {/* הערות מטפס */}
+          <section className="mb-8">
+            <h2 className="font-semibold text-lg mb-2">הערות מטפס</h2>
+            <textarea
+              className="border border-gray-300 rounded w-full p-3 focus:border-blue-500 focus:outline-none"
+              rows={3}
+              placeholder="הערות כלליות על האימון..."
+              value={climberNotes}
+              onChange={(e) => setClimberNotes(e.target.value)}
+            />
           </section>
-        )}
 
-        {/* טיפוס - Show only if containsClimbing */}
-        {containsClimbing && (
-          <section className="mb-10">
-          <h2 className="font-semibold text-xl mb-4">🧗 רישומי טיפוס</h2>
-
-          {/* Location Selector */}
-          <div className="mb-6">
-            <label className="block font-medium mb-2">📍 מיקום:</label>
-            <select
-              value={selectedLocation || ''}
-              onChange={(e) => setSelectedLocation(Number(e.target.value) || null)}
-              className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
+          {/* כפתורים */}
+          <div className="flex justify-end gap-3">
+            <button
+              className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-6 py-2 rounded font-medium"
+              onClick={() => router.push('/calendar')}
             >
-              <option value="">בחר מיקום</option>
-              {locations.map(loc => (
-                <option key={loc.LocationID} value={loc.LocationID}>
-                  {loc.LocationName} - {loc.City} ({loc.LocationType})
-                </option>
-              ))}
-            </select>
+              ביטול
+            </button>
+            <button
+              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded font-medium"
+              onClick={handleSave}
+            >
+              💾 שמירה
+              {routes.length > 0 && ` (${routes.length} מסלולים)`}
+            </button>
           </div>
-
-          <ClimbingSummary routes={routes} />
-
-          <RouteTypeBlock
-            type="Boulder"
-            icon="🪨"
-            routes={routesByType.Boulder}
-            onRoutesChange={(newRoutes) => {
-              setRoutes([
-                ...routes.filter(r => r.climbType !== 'Boulder'),
-                ...newRoutes
-              ])
-            }}
-            boulderGrades={boulderGrades}
-            leadGrades={leadGrades}
-            boardTypes={boardTypes}
-            selectedBoardType={selectedBoardType}
-            onBoardTypeChange={setSelectedBoardType}
-          />
-
-          <RouteTypeBlock
-            type="Board"
-            icon="🏋️"
-            routes={routesByType.Board}
-            onRoutesChange={(newRoutes) => {
-              setRoutes([
-                ...routes.filter(r => r.climbType !== 'Board'),
-                ...newRoutes
-              ])
-            }}
-            boulderGrades={boulderGrades}
-            leadGrades={leadGrades}
-            boardTypes={boardTypes}
-            selectedBoardType={selectedBoardType}
-            onBoardTypeChange={setSelectedBoardType}
-          />
-
-          <RouteTypeBlock
-            type="Lead"
-            icon="🧗"
-            routes={routesByType.Lead}
-            onRoutesChange={(newRoutes) => {
-              setRoutes([
-                ...routes.filter(r => r.climbType !== 'Lead'),
-                ...newRoutes
-              ])
-            }}
-            boulderGrades={boulderGrades}
-            leadGrades={leadGrades}
-            boardTypes={boardTypes}
-            selectedBoardType={selectedBoardType}
-            onBoardTypeChange={setSelectedBoardType}
-          />
-          </section>
-        )}
-        {/* הערות מטפס */}
-        <section className="mb-8">
-          <h2 className="font-semibold text-lg mb-2">הערות מטפס</h2>
-          <textarea
-            className="border border-gray-300 rounded w-full p-3 focus:border-blue-500 focus:outline-none"
-            rows={3}
-            placeholder="הערות כלליות על האימון..."
-            value={climberNotes}
-            onChange={(e) => setClimberNotes(e.target.value)}
-          />
-        </section>
-
-        {/* כפתורים */}
-        <div className="flex justify-end gap-3">
-          <button
-            className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-6 py-2 rounded font-medium"
-            onClick={() => router.push('/calendar')}
-          >
-            ביטול
-          </button>
-          <button
-            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded font-medium"
-            onClick={handleSave}
-          >
-            💾 שמירה
-            {routes.length > 0 && ` (${routes.length} מסלולים)`}
-          </button>
         </div>
+
+        {/* Toast Notification */}
+        {toast && (
+          <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 px-6 py-4 rounded-lg shadow-xl text-white font-medium z-50 animate-in ${
+            toast.type === 'success' ? 'bg-green-600' : 'bg-red-600'
+          }`}>
+            {toast.message}
+          </div>
+        )}
       </div>
 
-      {/* Toast Notification */}
-      {toast && (
-        <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 px-6 py-4 rounded-lg shadow-xl text-white font-medium z-50 animate-in ${
-          toast.type === 'success' ? 'bg-green-600' : 'bg-red-600'
-        }`}>
-          {toast.message}
+      {/* Add New Location Modal */}
+      {showAddLocationModal && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[60] p-4">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6" dir="rtl">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold text-gray-900">
+                📍 הוספת מיקום חדש
+              </h3>
+              <button
+                onClick={() => setShowAddLocationModal(false)}
+                disabled={savingLocation}
+                className="text-gray-400 hover:text-gray-600 text-2xl"
+              >
+                ×
+              </button>
+            </div>
+
+            {/* Info */}
+            <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-sm text-blue-900">
+                💡 הוסף מיקום חדש לרשימה. המיקום יהיה זמין לכולם.
+              </p>
+            </div>
+
+            {/* Name Input */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                שם המיקום *
+              </label>
+              <input
+                type="text"
+                value={newLocationName}
+                onChange={(e) => setNewLocationName(e.target.value)}
+                placeholder="למשל: קיר ספיידרמן"
+                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                disabled={savingLocation}
+                autoFocus
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault()
+                    handleAddLocation()
+                  }
+                }}
+              />
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-3">
+              <button
+                onClick={handleAddLocation}
+                disabled={savingLocation || !newLocationName.trim()}
+                className="flex-1 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition"
+              >
+                {savingLocation ? '⏳ שומר...' : '✅ הוסף מיקום'}
+              </button>
+              <button
+                onClick={() => setShowAddLocationModal(false)}
+                disabled={savingLocation}
+                className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition disabled:opacity-50"
+              >
+                ביטול
+              </button>
+            </div>
+          </div>
         </div>
       )}
-    </div>
+    </>
   )
 }
