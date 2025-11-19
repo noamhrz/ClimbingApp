@@ -16,6 +16,7 @@ import EventContextMenu from '@/components/EventContextMenu'
 import EditEventModal from '@/components/EditEventModal'
 import WeekDuplicateModal from '@/components/WeekDuplicateModal'
 import DayListView from '@/components/calendar/DayListView'
+import CalendarToolbar from '@/components/calendar/CalendarToolbar'
 
 moment.locale('he')
 moment.tz.setDefault('Asia/Jerusalem')
@@ -546,7 +547,6 @@ export default function CalendarPage() {
               onView={() => {}}
               onNavigate={(newDate: Date) => setDate(newDate)}
               popup={true}
-              toolbar={false}
               onSelectEvent={(event: any, e: any) => {
                 e.preventDefault()
                 e.stopPropagation()
@@ -558,6 +558,7 @@ export default function CalendarPage() {
               draggableAccessor={() => !isMobile && !isSelectingDate}
               onEventDrop={!isSelectingDate ? handleEventDrop : undefined}
               components={{
+                toolbar: CalendarToolbar,
                 event: (props: any) => (
                   <EventComponent
                     event={props.event as CalendarEvent}
