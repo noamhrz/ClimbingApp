@@ -428,3 +428,179 @@ export async function fetchCategories(): Promise<string[]> {
   const categories = [...new Set(data.map((d) => d.Category).filter(Boolean))]
   return categories.sort()
 }
+
+// ========================================
+// 🆕 NEW: Move Exercise & Block Functions
+// ========================================
+
+/**
+ * Move exercise up within block (swap Order with exercise above)
+ */
+export async function moveExerciseUp(
+  workoutExerciseId: number
+): Promise<void> {
+  // Get current exercise
+  const { data: current, error: currentError } = await supabase
+    .from('WorkoutsExercises')
+    .select('*')
+    .eq('WorkoutExerciseID', workoutExerciseId)
+    .single()
+
+  if (currentError || !current) throw currentError || new Error('Exercise not found')
+
+  // Find exercise above (same block, Order - 1)
+  const { data: above, error: aboveError } = await supabase
+    .from('WorkoutsExercises')
+    .select('*')
+    .eq('WorkoutID', current.WorkoutID)
+    .eq('Block', current.Block)
+    .eq('Order', current.Order - 1)
+    .maybeSingle()
+
+  if (aboveError) throw aboveError
+  if (!above) return // Already at top
+
+  // Swap Orders
+  const { error: updateError1 } = await supabase
+    .from('WorkoutsExercises')
+    .update({ Order: above.Order })
+    .eq('WorkoutExerciseID', current.WorkoutExerciseID)
+
+  const { error: updateError2 } = await supabase
+    .from('WorkoutsExercises')
+    .update({ Order: current.Order })
+    .eq('WorkoutExerciseID', above.WorkoutExerciseID)
+
+  if (updateError1 || updateError2) {
+    throw updateError1 || updateError2
+  }
+}
+
+/**
+ * Move exercise down within block (swap Order with exercise below)
+ */
+export async function moveExerciseDown(
+  workoutExerciseId: number
+): Promise<void> {
+  // Get current exercise
+  const { data: current, error: currentError } = await supabase
+    .from('WorkoutsExercises')
+    .select('*')
+    .eq('WorkoutExerciseID', workoutExerciseId)
+    .single()
+
+  if (currentError || !current) throw currentError || new Error('Exercise not found')
+
+  // Find exercise below (same block, Order + 1)
+  const { data: below, error: belowError } = await supabase
+    .from('WorkoutsExercises')
+    .select('*')
+    .eq('WorkoutID', current.WorkoutID)
+    .eq('Block', current.Block)
+    .eq('Order', current.Order + 1)
+    .maybeSingle()
+
+  if (belowError) throw belowError
+  if (!below) return // Already at bottom
+
+  // Swap Orders
+  const { error: updateError1 } = await supabase
+    .from('WorkoutsExercises')
+    .update({ Order: below.Order })
+    .eq('WorkoutExerciseID', current.WorkoutExerciseID)
+
+  const { error: updateError2 } = await supabase
+    .from('WorkoutsExercises')
+    .update({ Order: current.Order })
+    .eq('WorkoutExerciseID', below.WorkoutExerciseID)
+
+  if (updateError1 || updateError2) {
+    throw updateError1 || updateError2
+  }
+}
+
+/**
+ * Move block up (swap Block numbers with block above)
+ */
+export async function moveBlockUp(
+  workoutId: number,
+  blockNumber: number
+): Promise<void> {
+  const blockAbove = blockNumber - 1
+  
+  if (blockAbove < 1) return // Already at top
+
+  // Check if block above exists
+  const { data: aboveExists } = await supabase
+    .from('WorkoutsExercises')
+    .select('WorkoutExerciseID')
+    .eq('WorkoutID', workoutId)
+    .eq('Block', blockAbove)
+    .limit(1)
+
+  if (!aboveExists || aboveExists.length === 0) return
+
+  // Swap block numbers using temp number (999)
+  // 1. Move current block to temp
+  await supabase
+    .from('WorkoutsExercises')
+    .update({ Block: 999 })
+    .eq('WorkoutID', workoutId)
+    .eq('Block', blockNumber)
+
+  // 2. Move block above to current position
+  await supabase
+    .from('WorkoutsExercises')
+    .update({ Block: blockNumber })
+    .eq('WorkoutID', workoutId)
+    .eq('Block', blockAbove)
+
+  // 3. Move temp block to above position
+  await supabase
+    .from('WorkoutsExercises')
+    .update({ Block: blockAbove })
+    .eq('WorkoutID', workoutId)
+    .eq('Block', 999)
+}
+
+/**
+ * Move block down (swap Block numbers with block below)
+ */
+export async function moveBlockDown(
+  workoutId: number,
+  blockNumber: number
+): Promise<void> {
+  const blockBelow = blockNumber + 1
+
+  // Check if block below exists
+  const { data: belowExists } = await supabase
+    .from('WorkoutsExercises')
+    .select('WorkoutExerciseID')
+    .eq('WorkoutID', workoutId)
+    .eq('Block', blockBelow)
+    .limit(1)
+
+  if (!belowExists || belowExists.length === 0) return // Already at bottom
+
+  // Swap block numbers using temp number (999)
+  // 1. Move current block to temp
+  await supabase
+    .from('WorkoutsExercises')
+    .update({ Block: 999 })
+    .eq('WorkoutID', workoutId)
+    .eq('Block', blockNumber)
+
+  // 2. Move block below to current position
+  await supabase
+    .from('WorkoutsExercises')
+    .update({ Block: blockNumber })
+    .eq('WorkoutID', workoutId)
+    .eq('Block', blockBelow)
+
+  // 3. Move temp block to below position
+  await supabase
+    .from('WorkoutsExercises')
+    .update({ Block: blockBelow })
+    .eq('WorkoutID', workoutId)
+    .eq('Block', 999)
+}

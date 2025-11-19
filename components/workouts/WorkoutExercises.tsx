@@ -8,6 +8,10 @@ import {
   updateWorkoutExercise,
   removeExerciseFromWorkout,
   deleteBlock,
+  moveExerciseUp,      // NEW
+  moveExerciseDown,    // NEW
+  moveBlockUp,         // NEW
+  moveBlockDown,       // NEW
 } from '@/lib/workout-api'
 import BlockContainer from './BlockContainer'
 import ExerciseSidebar from './ExerciseSidebar'
@@ -118,6 +122,62 @@ export default function WorkoutExercises({ workoutId, exercises, onUpdate }: Pro
     }
   }
 
+  // NEW: Move Exercise Up
+  const handleMoveExerciseUp = async (exerciseId: number) => {
+    setLoading(true)
+    try {
+      await moveExerciseUp(exerciseId)
+      onUpdate()
+    } catch (error) {
+      console.error('Error moving exercise up:', error)
+      alert('שגיאה בהזזת תרגיל')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // NEW: Move Exercise Down
+  const handleMoveExerciseDown = async (exerciseId: number) => {
+    setLoading(true)
+    try {
+      await moveExerciseDown(exerciseId)
+      onUpdate()
+    } catch (error) {
+      console.error('Error moving exercise down:', error)
+      alert('שגיאה בהזזת תרגיל')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // NEW: Move Block Up
+  const handleMoveBlockUp = async (blockNumber: number) => {
+    setLoading(true)
+    try {
+      await moveBlockUp(workoutId, blockNumber)
+      onUpdate()
+    } catch (error) {
+      console.error('Error moving block up:', error)
+      alert('שגיאה בהזזת בלוק')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // NEW: Move Block Down
+  const handleMoveBlockDown = async (blockNumber: number) => {
+    setLoading(true)
+    try {
+      await moveBlockDown(workoutId, blockNumber)
+      onUpdate()
+    } catch (error) {
+      console.error('Error moving block down:', error)
+      alert('שגיאה בהזזת בלוק')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const handleAddNewBlock = () => {
     const newBlockNumber = blockNumbers.length > 0 ? Math.max(...blockNumbers) + 1 : 1
     setSelectedBlockForAdd(newBlockNumber)
@@ -158,7 +218,7 @@ export default function WorkoutExercises({ workoutId, exercises, onUpdate }: Pro
           </div>
         ) : (
           <div className="space-y-6">
-            {blockNumbers.map((blockNum) => (
+            {blockNumbers.map((blockNum, index) => (
               <BlockContainer
                 key={blockNum}
                 blockNumber={blockNum}
@@ -170,6 +230,12 @@ export default function WorkoutExercises({ workoutId, exercises, onUpdate }: Pro
                   setSelectedBlockForAdd(blockNum)
                   alert(`לחץ על תרגיל מהסיידבר כדי להוסיף לבלוק ${blockNum} 👉`)
                 }}
+                onMoveBlockUp={() => handleMoveBlockUp(blockNum)}
+                onMoveBlockDown={() => handleMoveBlockDown(blockNum)}
+                onMoveExerciseUp={handleMoveExerciseUp}
+                onMoveExerciseDown={handleMoveExerciseDown}
+                isFirstBlock={index === 0}
+                isLastBlock={index === blockNumbers.length - 1}
               />
             ))}
 
