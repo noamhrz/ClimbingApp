@@ -1,17 +1,26 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { useRouter } from 'next/navigation'
+import { useAuth } from '@/context/AuthContext'
 import Link from 'next/link'
 import Image from 'next/image'
 
 export default function LoginPage() {
   const router = useRouter()
+  const { currentUser, loading: authLoading } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+
+  // ✅ NEW: Redirect if already logged in
+  useEffect(() => {
+    if (!authLoading && currentUser) {
+      router.push('/dashboard')
+    }
+  }, [currentUser, authLoading, router])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -45,6 +54,24 @@ export default function LoginPage() {
     }
   }
 
+  // ✅ NEW: Show loading while checking auth status
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600 font-medium">בודק התחברות...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // ✅ If user is logged in, show nothing (will redirect)
+  if (currentUser) {
+    return null
+  }
+
+  // ✅ User is not logged in - show login form
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50 px-4">
       <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full">

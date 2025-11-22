@@ -21,8 +21,9 @@ export default function UserHeader() {
     return '/climber.png'
   }
 
-  const handleLogout = () => {
-    logout()
+  // ✅ FIXED: Redirect to / (home/login page)
+  const handleLogout = async () => {
+    await logout()
     router.push('/')
   }
 
