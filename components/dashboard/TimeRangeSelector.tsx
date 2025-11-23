@@ -1,23 +1,23 @@
-// components/dashboard/TimeRangeSelector.tsx
+// components/dashboard/TimeRangeSelector.tsx - UPDATED
 'use client'
 
 interface Props {
-  selected: 'week' | '6weeks' | '12weeks'
-  onChange: (range: 'week' | '6weeks' | '12weeks') => void
+  selected: '10days' | '6weeks' | '12weeks'
+  onChange: (range: '10days' | '6weeks' | '12weeks') => void
 }
 
 export default function TimeRangeSelector({ selected, onChange }: Props) {
   return (
     <div className="flex gap-2 justify-center mb-6">
       <button
-        onClick={() => onChange('week')}
+        onClick={() => onChange('10days')}
         className={`px-6 py-3 rounded-lg font-medium transition-all ${
-          selected === 'week'
+          selected === '10days'
             ? 'bg-blue-600 text-white shadow-lg scale-105'
             : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
         }`}
       >
-        📅 שבוע
+        📅 10 ימים
       </button>
       
       <button

@@ -1,4 +1,4 @@
-// app/dashboard/page.tsx - FIXED WELLNESS MODAL
+// app/dashboard/page.tsx - UPDATED: Days back instead of calendar weeks
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -13,7 +13,7 @@ import MotivationalQuote from '@/components/dashboard/MotivationalQuote'
 import WellnessModal from '@/components/dashboard/WellnessModal'
 import { subDays, format, startOfWeek, endOfWeek, differenceInWeeks, eachDayOfInterval, eachWeekOfInterval, setHours, setMinutes, setSeconds, isBefore } from 'date-fns'
 
-// WEEK CONFIGURATION - SUNDAY TO SATURDAY
+// WEEK CONFIGURATION - SUNDAY TO SATURDAY (for stats cards only)
 const WEEK_STARTS_ON = 0 // 0 = Sunday, 6 = Saturday
 
 export default function DashboardPage() {
@@ -22,7 +22,7 @@ export default function DashboardPage() {
   // Use activeUser if available, otherwise currentUser
   const userToShow = activeUser || currentUser
   
-  const [timeRange, setTimeRange] = useState<'week' | '6weeks' | '12weeks'>('week')
+  const [timeRange, setTimeRange] = useState<'10days' | '6weeks' | '12weeks'>('10days') // ✅ CHANGED
   const [wellnessData, setWellnessData] = useState<any[]>([])
   const [climbingData, setClimbingData] = useState<any[]>([])
   const [exerciseData, setExerciseData] = useState<any[]>([])
@@ -67,18 +67,21 @@ export default function DashboardPage() {
     }
   }
 
+  // ✅ CHANGED: Days back from now instead of calendar weeks
   const getDateRange = () => {
     const now = new Date()
     
-    if (timeRange === 'week') {
-      const start = startOfWeek(now, { weekStartsOn: WEEK_STARTS_ON })
-      const end = endOfWeek(now, { weekStartsOn: WEEK_STARTS_ON })
-      return { start, end }
+    let daysBack: number
+    if (timeRange === '10days') {
+      daysBack = 10
+    } else if (timeRange === '6weeks') {
+      daysBack = 42 // 6 weeks = 42 days
     } else {
-      const days = timeRange === '6weeks' ? 42 : 84
-      const start = subDays(now, days - 1)
-      return { start, end: now }
+      daysBack = 84 // 12 weeks = 84 days
     }
+    
+    const start = subDays(now, daysBack)
+    return { start, end: now }
   }
 
   const getWeekLabel = (weekStart: Date, now: Date) => {
@@ -101,6 +104,7 @@ export default function DashboardPage() {
     setLoading(false)
   }
 
+  // ✅ Stats cards still use calendar week (Sunday-Saturday)
   const loadCalendarStats = async () => {
     try {
       const now = new Date()
@@ -201,7 +205,8 @@ export default function DashboardPage() {
       
       if (error) return
       
-      const groupByDays = timeRange === 'week'
+      // ✅ CHANGED: Always group by days for 10 days, by weeks for longer periods
+      const groupByDays = timeRange === '10days'
       const now = new Date()
       
       if (groupByDays) {
@@ -282,7 +287,8 @@ export default function DashboardPage() {
       
       if (error) return
       
-      const groupByDays = timeRange === 'week'
+      // ✅ CHANGED: Always group by days for 10 days, by weeks for longer periods
+      const groupByDays = timeRange === '10days'
       const now = new Date()
       
       if (groupByDays) {
@@ -396,7 +402,7 @@ export default function DashboardPage() {
           />
           
           <p className="text-sm text-gray-600 mt-2 text-center">
-            {timeRange === 'week' ? '📅 תצוגה לפי ימים' : '📅 תצוגה לפי שבועות'}
+            {timeRange === '10days' ? '📅 תצוגה לפי ימים' : '📅 תצוגה לפי שבועות'}
           </p>
         </div>
       </div>
