@@ -15,13 +15,14 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  // ✅ NEW: Redirect if already logged in
+  // ✅ Redirect if already logged in
   useEffect(() => {
     if (!authLoading && currentUser) {
       router.push('/dashboard')
     }
   }, [currentUser, authLoading, router])
 
+  // ✅ FIXED: Simpler login - let AuthContext handle the Users table
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
@@ -34,27 +35,25 @@ export default function LoginPage() {
         password,
       })
 
-      if (authError) throw authError
+      if (authError) {
+        console.error('❌ Auth error:', authError)
+        throw authError
+      }
 
-      // Fetch user details from Users table
-      const { data: userData, error: userError } = await supabase
-        .from('Users')
-        .select('*')
-        .eq('Email', email)
-        .single()
-
-      if (userError) throw userError
-
-      // Redirect to dashboard
+      console.log('✅ Login successful!')
+      
+      // AuthContext will automatically load the user from Users table
+      // Just redirect to dashboard
       router.push('/dashboard')
     } catch (err: any) {
+      console.error('❌ Login error:', err)
       setError(err.message || 'שגיאה בהתחברות')
     } finally {
       setLoading(false)
     }
   }
 
-  // ✅ NEW: Show loading while checking auth status
+  // Show loading while checking auth status
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50">
@@ -66,12 +65,12 @@ export default function LoginPage() {
     )
   }
 
-  // ✅ If user is logged in, show nothing (will redirect)
+  // If user is logged in, show nothing (will redirect)
   if (currentUser) {
     return null
   }
 
-  // ✅ User is not logged in - show login form
+  // User is not logged in - show login form
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50 px-4">
       <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full">
@@ -83,6 +82,7 @@ export default function LoginPage() {
                 src="/noam-herz-logo.png"
                 alt="Noam Herz Climbing"
                 fill
+                sizes="128px"
                 className="object-contain"
                 priority
               />

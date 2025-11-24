@@ -101,27 +101,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   /**
    * Load user data from Users table
+   * ✅ FIXED: Better error checking
    */
   const loadUser = async (email: string) => {
     try {
       setLoading(true)
+      debugLog('🔍 Loading user from Users table:', email)
       
       // Load current user from Users table
       const { data: userData, error: userError } = await supabase
         .from('Users')
         .select('Email, Name, Role')
         .eq('Email', email)
-        .single()
+        .maybeSingle()
       
-      if (userError || !userData) {
-        console.error('❌ Error loading user from Users table:', userError)
-        debugLog('⚠️ User authenticated but not in Users table:', email)
-        // User exists in auth but not in Users table - this is a problem!
+      // ✅ FIXED: Check for real errors (not empty object)
+      if (userError && Object.keys(userError).length > 0) {
+        console.error('❌ Database error loading user:', userError)
+        debugLog('❌ Error details:', userError)
         await logout()
         return
       }
       
-      debugLog('✅ User loaded:', userData)
+      // ✅ FIXED: Separate check for missing user
+      if (!userData) {
+        console.error('❌ User not found in Users table:', email)
+        debugLog('⚠️ User authenticated but not in Users table')
+        alert('שגיאה: המשתמש לא נמצא במערכת. אנא פנה למנהל.')
+        await logout()
+        return
+      }
+      
+      debugLog('✅ User loaded successfully:', userData)
       setCurrentUser(userData)
       
       // Load available users based on role
@@ -148,7 +159,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       
     } catch (error) {
-      console.error('❌ Error in loadUser:', error)
+      console.error('❌ Unexpected error in loadUser:', error)
+      await logout()
     } finally {
       setLoading(false)
     }
