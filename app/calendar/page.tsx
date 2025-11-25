@@ -53,7 +53,7 @@ export default function CalendarPage() {
   const [events, setEvents] = useState<CalendarEvent[]>([])
   const [workouts, setWorkouts] = useState<Workout[]>([])
   const [loading, setLoading] = useState(true)
-  const [view, setView] = useState<View>('month')
+  const [view, setView] = useState<View>('day') // DEFAULT = DAY VIEW
   const [date, setDate] = useState(new Date())
   const [isMobile, setIsMobile] = useState(false)
   const [showAddModal, setShowAddModal] = useState(false)
@@ -176,12 +176,18 @@ export default function CalendarPage() {
   }
 
   const handleSelectSlot = (slotInfo: any) => {
-    if (!isSelectingDate) return
-    if (!activeEmail) return
+    // אם במצב הוספת אימון
+    if (isSelectingDate) {
+      if (!activeEmail) return
+      setModalInitialDate(slotInfo.start)
+      setShowAddModal(true)
+      setIsSelectingDate(false)
+      return
+    }
     
-    setModalInitialDate(slotInfo.start)
-    setShowAddModal(true)
-    setIsSelectingDate(false)
+    // אחרת - מעבר לתצוגת יום של התאריך שנלחץ
+    setDate(slotInfo.start)
+    setView('day')
   }
 
   const handleAddButtonClick = () => {
@@ -343,7 +349,8 @@ export default function CalendarPage() {
     setView('month')
   }
 
-  const ActiveCalendar = isMobile ? BigCalendar : DnDCalendar
+  // Use DnD only when NOT in month view
+  const ActiveCalendar = (isMobile || view === 'month') ? BigCalendar : DnDCalendar
 
   if (authLoading) {
     return (
@@ -388,16 +395,6 @@ export default function CalendarPage() {
             {/* Simple View Selector - Only Month + Day */}
             <div className="flex gap-2">
               <button
-                onClick={() => setView('month')}
-                className={`px-4 py-2 rounded-lg font-medium transition-all ${
-                  view === 'month'
-                    ? 'bg-blue-600 text-white shadow-md'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                📅 חודש
-              </button>
-              <button
                 onClick={() => setView('day')}
                 className={`px-4 py-2 rounded-lg font-medium transition-all ${
                   view === 'day'
@@ -406,6 +403,16 @@ export default function CalendarPage() {
                 }`}
               >
                 📋 יום
+              </button>
+              <button
+                onClick={() => setView('month')}
+                className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                  view === 'month'
+                    ? 'bg-blue-600 text-white shadow-md'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                🗓️ חודש
               </button>
             </div>
           </div>
@@ -546,19 +553,19 @@ export default function CalendarPage() {
               date={date}
               onView={() => {}}
               onNavigate={(newDate: Date) => setDate(newDate)}
-              popup={true}
-              onSelectEvent={(event: any, e: any) => {
+              popup={false}
+              onSelectEvent={!isMobile ? (event: any, e: any) => {
                 e.preventDefault()
                 e.stopPropagation()
                 handleSelectEvent(event, e)
-              }}
-              selectable={isSelectingDate}
+              } : undefined}
+              selectable={true}
               onSelectSlot={handleSelectSlot}
-              resizable={!isMobile && !isSelectingDate}
-              draggableAccessor={() => !isMobile && !isSelectingDate}
-              onEventDrop={!isSelectingDate ? handleEventDrop : undefined}
+              resizable={!isMobile && !isSelectingDate && view !== 'month'}
+              draggableAccessor={() => !isMobile && !isSelectingDate && view !== 'month'}
+              onEventDrop={!isSelectingDate && view !== 'month' ? handleEventDrop : undefined}
               components={{
-                toolbar: CalendarToolbar,
+                toolbar: CalendarToolbar as any,
                 event: (props: any) => (
                   <EventComponent
                     event={props.event as CalendarEvent}

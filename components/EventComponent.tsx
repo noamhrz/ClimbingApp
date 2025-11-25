@@ -1,103 +1,106 @@
-import React, { useRef } from 'react'
-import { getEventColor } from '@/lib/calendarUtils'
+// components/EventComponent.tsx
+// Google Calendar Style - NOT clickable in month view
 
-interface EventComponentProps {
-  event: {
-    id: number
-    title: string
-    start: Date
-    end: Date
-    completed: boolean
-    WorkoutID?: number
-    Deloading?: boolean
-    DeloadingPercentage?: number | null
-    StartTime?: string | Date
-  }
-  onDelete: (id: number) => void
-  onLongPress?: (event: any, position: { x: number; y: number }) => void
-  isAdmin?: boolean
-  isMobile?: boolean
+'use client'
+
+import { useState, useRef, useEffect } from 'react'
+
+interface CalendarEvent {
+  id: number
+  title: string
+  start: Date
+  end: Date
+  completed: boolean
+  color: string
+  WorkoutID: number
+  Deloading?: boolean
+  DeloadingPercentage?: number | null
+  StartTime?: string | Date
 }
 
-export default function EventComponent({ 
-  event, 
-  onDelete, 
-  onLongPress,
-  isAdmin = false,
-  isMobile = false,
-}: EventComponentProps) {
-  const longPressTimer = useRef<NodeJS.Timeout | null>(null)
-  const touchStartPos = useRef({ x: 0, y: 0 })
+interface Props {
+  event: CalendarEvent
+  onDelete: (id: number) => void
+  onLongPress: (event: CalendarEvent, position: { x: number; y: number }) => void
+  isAdmin: boolean
+  isMobile: boolean
+}
 
-  // Get colors based on event state
-  const colors = getEventColor({
-    StartTime: event.StartTime || event.start,
-    Completed: event.completed,
-    Deloading: event.Deloading,
-    DeloadingPercentage: event.DeloadingPercentage,
-  })
-
-  const handleTouchStart = (e: React.TouchEvent) => {
-    if (!isMobile || !onLongPress) return
-
-    const touch = e.touches[0]
-    touchStartPos.current = { x: touch.clientX, y: touch.clientY }
-
-    longPressTimer.current = setTimeout(() => {
-      // Calculate center of screen for menu position
-      const centerX = window.innerWidth / 2
-      const centerY = window.innerHeight / 2
-      
-      onLongPress(event, { x: centerX, y: centerY })
-    }, 500) // 500ms long press
-  }
-
-  const handleTouchEnd = () => {
-    if (longPressTimer.current) {
-      clearTimeout(longPressTimer.current)
-      longPressTimer.current = null
-    }
-  }
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    // Cancel long press if finger moves too much
-    const touch = e.touches[0]
-    const deltaX = Math.abs(touch.clientX - touchStartPos.current.x)
-    const deltaY = Math.abs(touch.clientY - touchStartPos.current.y)
+export default function EventComponent({ event, onDelete, onLongPress, isAdmin, isMobile }: Props) {
+  // Get event color based on status with CORRECT LOGIC
+  const getEventColor = () => {
+    const now = new Date()
+    const eventEnd = new Date(event.end)
     
-    if (deltaX > 10 || deltaY > 10) {
-      if (longPressTimer.current) {
-        clearTimeout(longPressTimer.current)
-        longPressTimer.current = null
-      }
+    // אירוע שהושלם - תמיד ירוק
+    if (event.completed) {
+      return '#10b981' // Green - completed
+    }
+    
+    // אירוע דילודינג - ציאן
+    if (event.Deloading) {
+      return '#06b6d4' // Cyan - deloading
+    }
+    
+    // אירוע שעבר ולא הושלם - אדום (MISSED)
+    if (eventEnd < now && !event.completed) {
+      return '#ef4444' // Red - missed
+    }
+    
+    // אירוע עתידי - כחול (pending)
+    return '#3b82f6' // Blue - pending
+  }
+
+  // Get border color (darker shade)
+  const getBorderColor = () => {
+    const color = getEventColor()
+    switch(color) {
+      case '#10b981': return '#047857' // Dark green
+      case '#06b6d4': return '#0891b2' // Dark cyan
+      case '#ef4444': return '#b91c1c' // Dark red
+      case '#3b82f6': return '#1d4ed8' // Dark blue
+      default: return '#1d4ed8'
     }
   }
+
+  const backgroundColor = getEventColor()
+  const borderColor = getBorderColor()
 
   return (
-    <div 
-      className="relative w-full h-full rounded p-1 text-xs font-semibold overflow-hidden"
-      style={{ backgroundColor: colors.bg, color: colors.text }}
-      onMouseDown={(e) => {
-        // Prevent react-big-calendar from thinking this is a slot selection
-        e.stopPropagation()
+    <div
+      className="h-full rounded-md overflow-hidden flex flex-col justify-center px-2"
+      style={{
+        backgroundColor,
+        borderRight: `4px solid ${borderColor}`,
+        cursor: isMobile ? 'default' : 'pointer',
       }}
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
-      onTouchMove={handleTouchMove}
     >
-      <div className="truncate pointer-events-none">
+      {/* Event Title */}
+      <div
+        className="text-white font-semibold leading-tight"
+        style={{
+          fontSize: isMobile ? '11px' : '12px',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+        }}
+      >
         {event.title}
       </div>
 
-      {/* ✅ הסרתי את כפתור המחיקה הישיר! */}
-      {/* המחיקה תהיה רק דרך Context Menu */}
-
-      {/* Deloading Badge */}
-      {event.Deloading && event.DeloadingPercentage && (
-        <div className="absolute top-1 right-1 text-[9px] bg-white/70 text-black rounded px-1 py-[1px] pointer-events-none">
-          {event.DeloadingPercentage}% 
-        </div>
-      )}
+      {/* Status Badges */}
+      <div className="flex gap-1 mt-0.5">
+        {event.completed && (
+          <span className="text-white/90 font-bold" style={{ fontSize: '9px' }}>
+            ✓
+          </span>
+        )}
+        {event.Deloading && event.DeloadingPercentage && (
+          <span className="text-white/90 font-bold" style={{ fontSize: '9px' }}>
+            🔵{event.DeloadingPercentage}%
+          </span>
+        )}
+      </div>
     </div>
   )
 }
