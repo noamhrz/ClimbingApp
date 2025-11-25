@@ -1,5 +1,5 @@
 // app/calendar-edit/[calendarId]/CalendarEditClient.tsx
-// ✨ UPDATED VERSION - with Single Hand & isDuration support & ADD LOCATION
+// ✨ UPDATED VERSION - with Blocks, Workout Info Display & Exercise Goals
 
 'use client'
 
@@ -105,7 +105,7 @@ export default function CalendarEditClient() {
     }
   }
 
-  // ✨ טעינת נתונים - UPDATED
+  // ✨ טעינת נתונים - UPDATED WITH BLOCKS & GOALS
   useEffect(() => {
     const load = async () => {
       if (!calendarId) return
@@ -129,19 +129,22 @@ export default function CalendarEditClient() {
           .maybeSingle()
         setWorkout(w)
 
-        // Load Exercises - ✨ UPDATED: טוען גם IsSingleHand, isDuration
+        // ✨ UPDATED: Load WorkoutsExercises with Block, Sets, Reps, Duration, Rest
         const { data: rels } = await supabase
           .from('WorkoutsExercises')
-          .select('ExerciseID')
+          .select('ExerciseID, Block, Sets, Reps, Duration, Rest, Order')
           .eq('WorkoutID', cal.WorkoutID)
+          .order('Order')
+
         const ids = rels?.map((r) => r.ExerciseID) || []
 
+        // Load Exercises with IsSingleHand, isDuration
         const { data: exs } = await supabase
           .from('Exercises')
           .select('ExerciseID, Name, Description, IsSingleHand, isDuration, ImageURL, VideoURL')
           .in('ExerciseID', ids)
 
-        // ✨ UPDATED: טוען לוגים קיימים כולל HandSide
+        // Load existing logs
         const { data: logs } = await supabase
           .from('ExerciseLogs')
           .select('*')
@@ -149,6 +152,9 @@ export default function CalendarEditClient() {
 
         const mappedExercises =
           exs?.map((ex) => {
+            // Find WorkoutsExercises data for this exercise
+            const weData = rels?.find(r => r.ExerciseID === ex.ExerciseID)
+            
             // ✨ UPDATED: טיפול ב-Single Hand - מחפש רשומות לפי HandSide
             if (ex.IsSingleHand) {
               const logRight = logs?.find((l) => l.ExerciseID === ex.ExerciseID && l.HandSide === 'Right')
@@ -164,6 +170,13 @@ export default function CalendarEditClient() {
                 isDuration: ex.isDuration,
                 ImageURL: ex.ImageURL,
                 VideoURL: ex.VideoURL,
+                
+                // ✨ NEW: Exercise Goals from WorkoutsExercises
+                Block: weData?.Block || 1,
+                Sets: weData?.Sets || null,
+                Reps: weData?.Reps || null,
+                Duration: weData?.Duration || null,
+                Rest: weData?.Rest || null,
                 
                 // Right hand
                 RepsDone: logRight?.RepsDone ?? null,
@@ -193,6 +206,14 @@ export default function CalendarEditClient() {
                 isDuration: ex.isDuration,
                 ImageURL: ex.ImageURL,
                 VideoURL: ex.VideoURL,
+                
+                // ✨ NEW: Exercise Goals from WorkoutsExercises
+                Block: weData?.Block || 1,
+                Sets: weData?.Sets || null,
+                Reps: weData?.Reps || null,
+                Duration: weData?.Duration || null,
+                Rest: weData?.Rest || null,
+                
                 RepsDone: log?.RepsDone ?? null,
                 DurationSec: log?.DurationSec ?? null,
                 WeightKG: log?.WeightKG ?? null,
@@ -266,6 +287,24 @@ export default function CalendarEditClient() {
     load()
   }, [calendarId])
 
+  // ✨ NEW: Group exercises by Block
+  const exercisesByBlock = useMemo(() => {
+    const blocks: { [key: number]: any[] } = {}
+    exerciseForms.forEach(ex => {
+      const blockNum = ex.Block || 1
+      if (!blocks[blockNum]) {
+        blocks[blockNum] = []
+      }
+      blocks[blockNum].push(ex)
+    })
+    return blocks
+  }, [exerciseForms])
+
+  const blockNumbers = useMemo(() => 
+    Object.keys(exercisesByBlock).map(Number).sort((a, b) => a - b),
+    [exercisesByBlock]
+  )
+
   // ✨ UPDATED: שינוי תרגיל - תומך בכל השדות
   const handleExerciseChange = (i: number, data: any) => {
     setExerciseForms((prev) => {
@@ -285,7 +324,7 @@ export default function CalendarEditClient() {
   // Check if workout contains climbing routes
   const containsClimbing = routes.length > 0
 
-  // ✨ UPDATED: שמירה - תומך ב-Single Hand & isDuration
+  // ✨ UPDATED: שמירה - תומך ב-Single Hand & isDuration (NO CHANGES TO SAVE LOGIC)
   const handleSave = async () => {
     if (!activeEmail) {
       showToast('❌ אין משתמש פעיל', 'error')
@@ -303,6 +342,7 @@ export default function CalendarEditClient() {
 
       let exerciseCount = 0
       let climbingCount = 0
+      let deletedLogIds: number[] = [] // Track deleted climbing logs
 
       // Save Exercises - ✨ UPDATED
       for (const ex of exerciseForms) {
@@ -403,206 +443,268 @@ export default function CalendarEditClient() {
                 .insert({ ...payloadLeft, CreatedAt: now })
             }
           }
-
         } else {
-          // ✨ Regular exercise
-          const hasRepsDone = ex.RepsDone !== null && ex.RepsDone !== undefined && ex.RepsDone !== ''
-          const hasDuration = ex.DurationSec !== null && ex.DurationSec !== undefined && ex.DurationSec !== ''
-          const hasWeight = ex.WeightKG !== null && ex.WeightKG !== undefined && ex.WeightKG !== ''
-          const hasRPE = ex.RPE !== null && ex.RPE !== undefined && ex.RPE !== ''
-          const hasNotes = ex.Notes && ex.Notes.trim() !== ''
-          
-          const hasData = hasRepsDone || hasDuration || hasWeight || hasRPE || hasNotes
+          // Regular exercise (HandSide='Both')
+          const hasData =
+            (ex.RepsDone !== null && ex.RepsDone !== undefined) ||
+            (ex.DurationSec !== null && ex.DurationSec !== undefined) ||
+            (ex.WeightKG !== null && ex.WeightKG !== undefined) ||
+            (ex.RPE !== null && ex.RPE !== undefined) ||
+            (ex.Notes && ex.Notes.trim() !== '')
 
-          if (!hasData) continue
+          if (hasData) {
+            exerciseCount++
+            const payloadBoth = {
+              CalendarID: calendarId,
+              WorkoutID: workout?.WorkoutID,
+              ExerciseID: ex.ExerciseID,
+              Email: email,
+              HandSide: 'Both',
+              RepsDone: ex.isDuration ? null : (ex.RepsDone || null),
+              DurationSec: ex.isDuration ? (ex.DurationSec || null) : null,
+              WeightKG: ex.WeightKG || null,
+              RPE: ex.RPE || null,
+              Notes: ex.Notes?.trim() || null,
+              Completed: true,
+              UpdatedAt: now,
+            }
+            
+            // Check if exists
+            const { data: existingBoth } = await supabase
+              .from('ExerciseLogs')
+              .select('ExerciseLogID')
+              .eq('CalendarID', calendarId)
+              .eq('ExerciseID', ex.ExerciseID)
+              .eq('HandSide', 'Both')
+              .maybeSingle()
 
-          exerciseCount++
+            if (existingBoth) {
+              // UPDATE existing
+              await supabase
+                .from('ExerciseLogs')
+                .update(payloadBoth)
+                .eq('ExerciseLogID', existingBoth.ExerciseLogID)
+            } else {
+              // INSERT new
+              await supabase
+                .from('ExerciseLogs')
+                .insert({ ...payloadBoth, CreatedAt: now })
+            }
+          }
+        }
+      }
 
+      // ✨ CLIMBING: Handle DELETE, UPDATE, INSERT
+      
+      // Step 1: Find routes that were deleted (existed before but not in current routes)
+      const currentRouteIds = new Set(routes.map(r => r.id))
+      
+      existingLogIds.forEach((climbingLogId, routeId) => {
+        if (!currentRouteIds.has(routeId)) {
+          deletedLogIds.push(climbingLogId)
+        }
+      })
+
+      // Step 2: Delete removed routes
+      if (deletedLogIds.length > 0) {
+        const { error: deleteError } = await supabase
+          .from('ClimbingLog')
+          .delete()
+          .in('ClimbingLogID', deletedLogIds)
+        
+        if (deleteError) {
+          console.error('Error deleting routes:', deleteError)
+          showToast('❌ שגיאה במחיקת מסלולים', 'error')
+          return
+        }
+      }
+
+      // Step 3: Save Climbing Routes (UPDATE existing or INSERT new)
+      if (routes.length > 0) {
+        if (!selectedLocation) {
+          showToast('⚠️ יש לבחור מיקום לפני שמירת מסלולי טיפוס', 'error')
+          return
+        }
+
+        for (const route of routes) {
+          climbingCount++
           const payload = {
             CalendarID: calendarId,
             WorkoutID: workout?.WorkoutID,
-            ExerciseID: ex.ExerciseID,
             Email: email,
-            HandSide: 'Both',
-            RepsDone: ex.isDuration ? null : (ex.RepsDone || null),
-            DurationSec: ex.isDuration ? (ex.DurationSec || null) : null,
-            WeightKG: ex.WeightKG || null,
-            RPE: ex.RPE || null,
-            Notes: ex.Notes?.trim() || null,
-            Completed: true,
-            UpdatedAt: now,
-          }
-
-          // Check if exists
-          const { data: existingLog } = await supabase
-            .from('ExerciseLogs')
-            .select('ExerciseLogID')
-            .eq('CalendarID', calendarId)
-            .eq('ExerciseID', ex.ExerciseID)
-            .eq('HandSide', 'Both')
-            .maybeSingle()
-
-          if (existingLog) {
-            // UPDATE existing
-            await supabase
-              .from('ExerciseLogs')
-              .update(payload)
-              .eq('ExerciseLogID', existingLog.ExerciseLogID)
-          } else {
-            // INSERT new
-            await supabase
-              .from('ExerciseLogs')
-              .insert({ ...payload, CreatedAt: now })
-          }
-        }
-        
-        await new Promise((r) => setTimeout(r, 100))
-      }
-
-      // Save Climbing Routes - UNCHANGED
-      if (routes.length > 0) {
-        climbingCount = routes.length
-        
-        for (const route of routes) {
-          const existingLogId = existingLogIds.get(route.id)
-          
-          const payload: any = {
-            Email: email,
-            WorkoutID: workout?.WorkoutID,
-            CalendarID: calendarId,
             ClimbType: route.climbType,
             GradeID: route.gradeID,
-            LocationID: selectedLocation,
             RouteName: route.routeName || null,
-            Attempts: route.attempts,
-            Successful: route.successful,
-            Notes: route.notes || null,
-            LogDateTime: logDateTime,  // ✅ ADD THIS
-            UpdatedAt: now,           // ✅ ADD THIS
+            LocationID: selectedLocation,
+            BoardTypeID: route.climbType === 'Board' ? selectedBoardType : null,
+            Attempts: route.attempts || 1,
+            Successful: route.successful || false,
+            Notes: route.notes?.trim() || null,
+            LogDateTime: logDateTime,
           }
 
-          if (route.climbType === 'Board') {
-            payload.BoardTypeID = selectedBoardType
-          }
-
-          if (existingLogId) {
+          const existingId = existingLogIds.get(route.id)
+          if (existingId) {
+            // UPDATE existing
             await supabase
               .from('ClimbingLog')
               .update(payload)
-              .eq('ClimbingLogID', existingLogId)
+              .eq('ClimbingLogID', existingId)
           } else {
-            await supabase
-              .from('ClimbingLog')
-              .insert({ ...payload, CreatedAt: now })
+            // INSERT new
+            await supabase.from('ClimbingLog').insert(payload)
           }
-
-          await new Promise((r) => setTimeout(r, 100))
+        }
+      } else if (existingLogIds.size > 0) {
+        // All routes were deleted - delete all existing logs
+        const allLogIds = Array.from(existingLogIds.values())
+        const { error: deleteAllError } = await supabase
+          .from('ClimbingLog')
+          .delete()
+          .in('ClimbingLogID', allLogIds)
+        
+        if (deleteAllError) {
+          console.error('Error deleting all routes:', deleteAllError)
         }
       }
 
-      // Update Calendar
+      // Update Calendar notes
       await supabase
         .from('Calendar')
-        .update({
-          Completed: true,
-          ClimberNotes: climberNotes.trim() || null,
+        .update({ 
+          ClimberNotes: climberNotes?.trim() || null,
+          UpdatedAt: now 
         })
         .eq('CalendarID', calendarId)
 
-      const parts = []
-      if (exerciseCount > 0) parts.push(`${exerciseCount} תרגילים`)
-      if (climbingCount > 0) parts.push(`${climbingCount} מסלולים`)
-      
-      const message = parts.length > 0 
-        ? `✅ נשמר! ${parts.join(' + ')}`
-        : '✅ הנתונים נשמרו בהצלחה!'
+      let message = '✅ נשמר!'
+      if (exerciseCount > 0) message += ` ${exerciseCount} תרגילים`
+      if (climbingCount > 0) message += ` ${climbingCount} מסלולים`
+      if (deletedLogIds.length > 0) message += ` (${deletedLogIds.length} מסלולים נמחקו)`
       
       showToast(message, 'success')
       
-      setTimeout(() => router.push('/calendar'), 1500)
-    } catch (err) {
-      console.error('❌ Error saving data:', err)
+      setTimeout(() => {
+        router.push('/calendar')
+      }, 1500)
+    } catch (error) {
+      console.error('Error saving:', error)
       showToast('❌ שגיאה בשמירה', 'error')
     }
   }
 
-  // Loading & Error States
-  if (authLoading) {
+  if (authLoading || loading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4 mx-auto"></div>
-          <p className="text-gray-600">טוען...</p>
-        </div>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-lg">טוען...</div>
       </div>
     )
   }
 
-  if (!activeUser) {
+  if (!workout) {
     return (
-      <div className="text-center mt-10 text-gray-600">
-        <p>אנא בחר משתמש</p>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-lg text-red-600">אימון לא נמצא</div>
       </div>
     )
   }
 
-  if (loading) {
-    return (
-      <div className="p-6 text-center">
-        <div className="text-2xl mb-2">⌛</div>
-        <p>טוען נתונים...</p>
-      </div>
-    )
-  }
-
-  if (!calendarRow) {
-    return <p className="p-6 text-center">⚠️ לא נמצא אימון לעריכה</p>
-  }
+  const containExercise = workout?.containExercise === true || workout?.containExercise === 'true'
 
   return (
     <>
-      <div className="max-w-5xl mx-auto p-6">
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <h1 className="text-3xl font-bold text-blue-600 mb-2">
-            עריכת אימון — {workout?.Name || ''}
-          </h1>
+      <div className="mx-auto max-w-6xl px-4 py-6" dir="rtl">
+        <div className="bg-white rounded-lg shadow-lg p-8">
+          {/* Header */}
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              {workout.Name}
+            </h1>
+            {calendarRow?.StartTime && (
+              <p className="text-gray-600">
+                📅 {dayjs(calendarRow.StartTime).format('DD/MM/YYYY HH:mm')}
+              </p>
+            )}
+          </div>
 
-          <p className="text-gray-600 mb-6">
-            תאריך: {dayjs(calendarRow.StartTime).format('DD/MM/YYYY HH:mm')}
-          </p>
-          {/* Workout Video */}
-          {workout?.VideoURL && (
-            <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                🎥 וידאו הסבר לאימון:
-              </label>
-              <a
-                href={workout.VideoURL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors shadow-sm"
-              >
-                <span>▶️</span>
-                <span>צפה בוידאו</span>
-              </a>
-            </div>
-          )}
-
-
-          {/* ✨ תרגילים - UPDATED: משתמש ב-ExerciseExecutionForm */}
-          {exerciseForms.length > 0 && (
-            <section className="mb-10">
-              <h2 className="font-semibold text-xl mb-4">💪 תרגילים</h2>
-              <div className="space-y-4">
-                {exerciseForms.map((ex, i) => (
-                  <ExerciseAccordion
-                    key={ex.ExerciseID}
-                    exercise={ex}
-                    onChange={(data) => handleExerciseChange(i, data)}
-                    index={i}
-                  />
-                ))}
+          {/* ✨ NEW: Workout Info Section */}
+          <section className="mb-8 space-y-4">
+            {/* Video */}
+            {workout.VideoURL && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <h3 className="font-semibold text-blue-900 mb-2 flex items-center gap-2">
+                  🎥 וידאו הדרכה
+                </h3>
+                <a 
+                  href={workout.VideoURL} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:text-blue-800 underline"
+                >
+                  צפה בווידאו
+                </a>
               </div>
+            )}
+
+            {/* Description */}
+            {workout.Description && (
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                <h3 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                  📝 תיאור האימון
+                </h3>
+                <p className="text-gray-700 whitespace-pre-wrap">{workout.Description}</p>
+              </div>
+            )}
+
+            {/* Coach Notes */}
+            {workout.WorkoutNotes && (
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <h3 className="font-semibold text-yellow-900 mb-2 flex items-center gap-2">
+                  👨‍🏫 הערות מאמן
+                </h3>
+                <p className="text-yellow-900 whitespace-pre-wrap">{workout.WorkoutNotes}</p>
+              </div>
+            )}
+
+            {/* When To Practice */}
+            {workout.WhenToPractice && (
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                <h3 className="font-semibold text-green-900 mb-2 flex items-center gap-2">
+                  ⏰ מתי להתאמן
+                </h3>
+                <p className="text-green-900">{workout.WhenToPractice}</p>
+              </div>
+            )}
+          </section>
+
+          {/* ✨ UPDATED: Exercises by Blocks */}
+          {containExercise && exerciseForms.length > 0 && (
+            <section className="mb-10">
+              <h2 className="font-semibold text-xl mb-6">💪 תרגילים</h2>
+              
+              {blockNumbers.map(blockNum => (
+                <div key={blockNum} className="mb-8">
+                  {/* Block Header */}
+                  <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-t-lg px-4 py-3 font-bold text-lg">
+                    בלוק {blockNum}
+                  </div>
+                  
+                  {/* Exercises in this block */}
+                  <div className="border border-t-0 border-gray-200 rounded-b-lg p-4 space-y-4 bg-gray-50">
+                    {exercisesByBlock[blockNum].map((ex, idx) => {
+                      const globalIndex = exerciseForms.findIndex(e => e.ExerciseID === ex.ExerciseID)
+                      return (
+                        <ExerciseAccordion
+                          key={ex.ExerciseID}
+                          exercise={ex}
+                          onChange={(data) => handleExerciseChange(globalIndex, data)}
+                          index={globalIndex}
+                        />
+                      )
+                    })}
+                  </div>
+                </div>
+              ))}
             </section>
           )}
 

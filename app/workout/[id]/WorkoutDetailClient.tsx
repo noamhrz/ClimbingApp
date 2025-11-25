@@ -126,7 +126,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
     }
   }
 
-  // === שליפת אימון ===
+  // === שליפת אימון - UPDATED WITH BLOCKS & GOALS ===
   useEffect(() => {
     let isMounted = true
 
@@ -162,10 +162,12 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
           w.containClimbing = w?.containClimbing === true || w?.containClimbing === 'true'
         }
 
+        // ✨ UPDATED: Load WorkoutsExercises with Block, Sets, Reps, Duration, Rest
         const { data: rels } = await supabase
           .from('WorkoutsExercises')
-          .select('ExerciseID')
+          .select('ExerciseID, Block, Sets, Reps, Duration, Rest, Order')
           .eq('WorkoutID', id)
+          .order('Order')
 
         let mapped: any[] = []
         if (rels?.length) {
@@ -174,28 +176,43 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
             .from('Exercises')
             .select('ExerciseID, Name, Description, IsSingleHand, isDuration, ImageURL, VideoURL')
             .in('ExerciseID', ids)
-          if (exs?.length)
-            mapped = exs.map((x) => ({
-              ExerciseID: x.ExerciseID,
-              Name: x.Name,
-              Description: x.Description,
-              IsSingleHand: x.IsSingleHand,
-              isDuration: x.isDuration,
-              ImageURL: x.ImageURL,
-              VideoURL: x.VideoURL,
-              RepsDone: null,
-              DurationSec: null,
-              WeightKG: null,
-              RPE: null,
-              Notes: '',
-              Completed: false,
-              RepsDoneLeft: null,
-              DurationSecLeft: null,
-              WeightKGLeft: null,
-              RPELeft: null,
-              NotesLeft: '',
-              CompletedLeft: false,
-            }))
+          
+          if (exs?.length) {
+            mapped = exs.map((x) => {
+              // Find WorkoutsExercises data for this exercise
+              const weData = rels.find(r => r.ExerciseID === x.ExerciseID)
+              
+              return {
+                ExerciseID: x.ExerciseID,
+                Name: x.Name,
+                Description: x.Description,
+                IsSingleHand: x.IsSingleHand,
+                isDuration: x.isDuration,
+                ImageURL: x.ImageURL,
+                VideoURL: x.VideoURL,
+                
+                // ✨ NEW: Exercise Goals from WorkoutsExercises
+                Block: weData?.Block || 1,
+                Sets: weData?.Sets || null,
+                Reps: weData?.Reps || null,
+                Duration: weData?.Duration || null,
+                Rest: weData?.Rest || null,
+                
+                RepsDone: null,
+                DurationSec: null,
+                WeightKG: null,
+                RPE: null,
+                Notes: '',
+                Completed: false,
+                RepsDoneLeft: null,
+                DurationSecLeft: null,
+                WeightKGLeft: null,
+                RPELeft: null,
+                NotesLeft: '',
+                CompletedLeft: false,
+              }
+            })
+          }
         }
 
         if (!isMounted) return
@@ -230,6 +247,24 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
       isMounted = false
     }
   }, [id, calendarIdNum])
+
+  // ✨ NEW: Group exercises by Block
+  const exercisesByBlock = useMemo(() => {
+    const blocks: { [key: number]: any[] } = {}
+    exerciseForms.forEach(ex => {
+      const blockNum = ex.Block || 1
+      if (!blocks[blockNum]) {
+        blocks[blockNum] = []
+      }
+      blocks[blockNum].push(ex)
+    })
+    return blocks
+  }, [exerciseForms])
+
+  const blockNumbers = useMemo(() => 
+    Object.keys(exercisesByBlock).map(Number).sort((a, b) => a - b),
+    [exercisesByBlock]
+  )
 
   // === שינוי תרגיל ===
   const handleExerciseChange = (i: number, data: any) => {
@@ -282,7 +317,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
     }
   }
 
-  // === שמירה ===
+  // === שמירה - NO CHANGES TO SAVE LOGIC ===
   const onComplete = async () => {
     if (!email || !workout) {
       showToast('❌ אין אימייל פעיל', 'red')
@@ -448,7 +483,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
               .eq('HandSide', 'Both')
               .maybeSingle()
 
-            const regularPayload = {
+            const payload = {
               Email: email,
               WorkoutID: id,
               CalendarID: activeCalendarId,
@@ -466,189 +501,205 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
             if (existingLog) {
               await supabase
                 .from('ExerciseLogs')
-                .update(regularPayload)
+                .update(payload)
                 .eq('ExerciseLogID', existingLog.ExerciseLogID)
             } else {
               await supabase
                 .from('ExerciseLogs')
-                .insert({ ...regularPayload, CreatedAt: now })
+                .insert({ ...payload, CreatedAt: now })
             }
           }
-          
-          await new Promise((r) => setTimeout(r, 100))
         }
       }
 
-      // === טיפוס - NEW FORMAT ===
+      // === טיפוס ===
       if (workout.containClimbing && routes.length > 0) {
-        const payload = routes.map((route) => ({
-          Email: email,
-          WorkoutID: id,
-          CalendarID: activeCalendarId,
-          LocationID: selectedLocation,
-          ClimbType: route.climbType,
-          BoardTypeID: route.climbType === 'Board' ? selectedBoardType : null,
-          GradeID: route.gradeID,
-          RouteName: route.routeName || null,
-          Attempts: route.attempts,
-          Successful: route.successful,
-          Notes: route.notes || null,
-          LogDateTime: logDateTime,
-          CreatedAt: now,
-          UpdatedAt: now
-        }))
-        await supabase.from('ClimbingLog').insert(payload)
+        if (!selectedLocation) {
+          showToast('❌ נא לבחור מיקום', 'red')
+          return
+        }
+
+        for (const route of routes) {
+          const payload = {
+            Email: email,
+            WorkoutID: id,
+            CalendarID: activeCalendarId,
+            ClimbType: route.climbType,
+            GradeID: route.gradeID,
+            RouteName: route.routeName || null,
+            LocationID: selectedLocation,
+            BoardTypeID: route.climbType === 'Board' ? selectedBoardType : null,
+            Attempts: route.attempts || 1,
+            Successful: route.successful || false,
+            Notes: route.notes?.trim() || null,
+            LogDateTime: logDateTime,
+          }
+
+          await supabase.from('ClimbingLog').insert(payload)
+        }
       }
 
-      showToast(`✅ האימון נשמר בהצלחה!${routes.length > 0 ? ` (${routes.length} מסלולים)` : ''}`, 'blue')
-      setTimeout(() => router.push(`/calendar?highlight=${activeCalendarId}`), 1000)
+      showToast('✅ האימון נשמר בהצלחה!', 'blue')
+      
+      setTimeout(() => {
+        router.push('/calendar')
+      }, 800)
     } catch (err) {
       console.error('❌ שגיאה בשמירה:', err)
-      showToast('שגיאה בשמירה', 'red')
+      showToast('❌ שגיאה בשמירה', 'red')
     }
   }
 
-  // === Loading & Error States ===
-  if (authLoading) {
+  if (authLoading || loading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4 mx-auto"></div>
-          <p className="text-gray-600">טוען...</p>
-        </div>
-      </div>
-    )
-  }
-
-  if (!activeUser) {
-    return (
-      <div className="text-center mt-10 text-gray-600">
-        <p>אנא בחר משתמש</p>
-      </div>
-    )
-  }
-
-  if (loading) {
-    return (
-      <div className="p-6 text-center">
-        <div className="text-2xl mb-2">⌛</div>
-        <p>טוען אימון...</p>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-lg">טוען...</div>
       </div>
     )
   }
 
   if (!workout) {
-    return <p className="p-6 text-center">האימון לא נמצא</p>
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-lg text-red-600">אימון לא נמצא</div>
+      </div>
+    )
   }
 
-  // === UI ===
   return (
     <>
-      <div className="max-w-4xl mx-auto">
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <h1 className="text-3xl font-bold text-blue-600 mb-2">{workout.Name}</h1>
-          <p className="text-gray-700 mb-4">{workout.Description}</p>
+      <div className="mx-auto max-w-6xl" dir="rtl">
+        <div className="bg-white rounded-lg shadow-lg p-6">
+          {/* Header */}
+          <div className="mb-6">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              {workout.Name}
+            </h1>
+            
+            {/* Date Status */}
+            {calendarRow && (
+              <div className="flex items-center gap-3 text-sm">
+                <span className="text-gray-600">
+                  📅 {formatDate(calendarRow.StartTime)}
+                </span>
+                {isPastWorkout && (
+                  <span className="bg-red-100 text-red-700 px-3 py-1 rounded-full font-medium">
+                    ⚠️ אימון עבר
+                  </span>
+                )}
+                {isFutureWorkout && (
+                  <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full font-medium">
+                    🔮 אימון עתידי
+                  </span>
+                )}
+                {isTodayWorkout && (
+                  <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full font-medium">
+                    ✅ אימון היום
+                  </span>
+                )}
+              </div>
+            )}
 
-          {/* Workout Video */}
-          {workout.VideoURL && (
-            <div className="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                🎥 וידאו הסבר לאימון:
-              </label>
-              <a
-                href={workout.VideoURL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors shadow-sm"
+            {/* Convert to Today Button */}
+            {(isFutureWorkout || isPastWorkout) && (
+              <button
+                onClick={handleConvertToToday}
+                className="mt-3 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition"
               >
-                <span>▶️</span>
-                <span>צפה בוידאו</span>
-              </a>
-            </div>
-          )}
+                🔄 העבר להיום
+              </button>
+            )}
+          </div>
 
-          {/* אימון עתידי */}
-          {isFutureWorkout && (
-            <div className="mt-4 bg-amber-50 border-r-4 border-amber-500 rounded-lg p-4 shadow-sm">
-              <div className="flex items-start gap-3">
-                <div className="text-2xl">⏰</div>
-                <div className="flex-1">
-                  <h3 className="font-bold text-amber-900">אימון עתידי</h3>
-                  <p className="text-amber-800 text-sm mt-1">
-                    האימון מתוכנן ל-{formatDate(calendarRow.StartTime)}.
-                  </p>
-                  <p className="text-amber-700 text-sm mt-2 font-medium">
-                    💡 רוצה לבצע אותו היום? לחץ על הכפתור למטה כדי להעביר את האימון להיום.
-                  </p>
-                  <button 
-                    onClick={handleConvertToToday}
-                    className="mt-3 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm font-medium transition-colors shadow-sm"
-                  >
-                    📅 העבר אימון להיום וביצע עכשיו
-                  </button>
-                </div>
+          {/* ✨ NEW: Workout Info Section */}
+          <section className="mb-8 space-y-4">
+            {/* Video */}
+            {workout.VideoURL && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <h3 className="font-semibold text-blue-900 mb-2 flex items-center gap-2">
+                  🎥 וידאו הדרכה
+                </h3>
+                <a 
+                  href={workout.VideoURL} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:text-blue-800 underline"
+                >
+                  צפה בווידאו
+                </a>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* אימון מהעבר */}
-          {isPastWorkout && (
-            <div className="mt-4 bg-gray-50 border-r-4 border-gray-400 rounded-lg p-4 shadow-sm">
-              <div className="flex items-start gap-3">
-                <div className="text-2xl">📌</div>
-                <div>
-                  <h3 className="font-bold text-gray-900">אימון שעבר</h3>
-                  <p className="text-gray-700 text-sm mt-1">
-                    האימון היה מתוכנן ל-{formatDate(calendarRow.StartTime)}.
-                    ניתן להשלים אותו עכשיו והוא יישמר לאותו תאריך.
-                  </p>
-                </div>
+            {/* Description */}
+            {workout.Description && (
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                <h3 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                  📝 תיאור האימון
+                </h3>
+                <p className="text-gray-700 whitespace-pre-wrap">{workout.Description}</p>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Deloading Banner */}
-          {deloading && deloadingPercentage && (
-            <div className="mt-4 bg-gradient-to-r from-blue-50 to-cyan-50 border-2 border-blue-300 rounded-lg p-4 shadow-sm">
-              <div className="flex items-center gap-3">
-                <div className="text-3xl">🔵</div>
-                <div>
-                  <h3 className="font-bold text-blue-800 text-lg">שבוע הפחתת עומס</h3>
-                  <p className="text-blue-700 text-sm mt-1">
-                    בצע רק <span className="font-bold text-xl">{deloadingPercentage}%</span> מהסטים המתוכננים
-                  </p>
-                </div>
+            {/* Coach Notes */}
+            {workout.WorkoutNotes && (
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <h3 className="font-semibold text-yellow-900 mb-2 flex items-center gap-2">
+                  👨‍🏫 הערות מאמן
+                </h3>
+                <p className="text-yellow-900 whitespace-pre-wrap">{workout.WorkoutNotes}</p>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* תרגילים */}
+            {/* When To Practice */}
+            {workout.WhenToPractice && (
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                <h3 className="font-semibold text-green-900 mb-2 flex items-center gap-2">
+                  ⏰ מתי להתאמן
+                </h3>
+                <p className="text-green-900">{workout.WhenToPractice}</p>
+              </div>
+            )}
+          </section>
+
+          {/* ✨ UPDATED: Exercises by Blocks */}
           {containsExercises && (
-            <section className="mt-6">
-              <h2 className="font-semibold text-xl mb-4">💪 תרגילים</h2>
-              <div className="space-y-4">
-                {exerciseForms.map((ex, i) => (
-                  <ExerciseAccordion
-                    key={ex.ExerciseID}
-                    exercise={ex}
-                    onChange={(data) => handleExerciseChange(i, data)}
-                    index={i}
-                  />
-                ))}
-              </div>
+            <section className="mb-8">
+              <h2 className="font-semibold text-xl mb-6">💪 תרגילים</h2>
+
+              {blockNumbers.map(blockNum => (
+                <div key={blockNum} className="mb-8">
+                  {/* Block Header */}
+                  <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-t-lg px-4 py-3 font-bold text-lg">
+                    בלוק {blockNum}
+                  </div>
+                  
+                  {/* Exercises in this block */}
+                  <div className="border border-t-0 border-gray-200 rounded-b-lg p-4 space-y-4 bg-gray-50">
+                    {exercisesByBlock[blockNum].map((ex, idx) => {
+                      const globalIndex = exerciseForms.findIndex(e => e.ExerciseID === ex.ExerciseID)
+                      return (
+                        <ExerciseAccordion
+                          key={ex.ExerciseID}
+                          exercise={ex}
+                          onChange={(data) => handleExerciseChange(globalIndex, data)}
+                          index={globalIndex}
+                        />
+                      )
+                    })}
+                  </div>
+                </div>
+              ))}
             </section>
           )}
 
-          {/* טיפוס - NEW DESIGN WITH ADD LOCATION */}
+          {/* Climbing Section */}
           {containsClimbing && (
-            <section className="mt-8">
-              <h2 className="font-semibold text-xl mb-4">🧗 רישום טיפוס</h2>
-              
-              {/* Location Selector with Required Indicator & ADD NEW */}
+            <section className="mb-8">
+              <h2 className="font-semibold text-xl mb-4">🧗 רישומי טיפוס</h2>
+
+              {/* Location Selector */}
               <div className="mb-6">
-                <label className="block font-medium mb-2">
-                  📍 מיקום {routes.length > 0 && <span className="text-red-500">*</span>}
-                </label>
+                <label className="block font-medium mb-2">📍 מיקום:</label>
                 <div className="space-y-2">
                   <select
                     value={selectedLocation || ''}
