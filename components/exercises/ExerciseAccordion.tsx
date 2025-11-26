@@ -9,6 +9,11 @@ interface Exercise {
   isDuration: boolean
   ImageURL?: string | null
   VideoURL?: string | null
+  // ✨ NEW: Goals from WorkoutsExercises
+  Sets?: number | null
+  Reps?: number | null
+  Duration?: number | null
+  Rest?: number | null
 }
 
 interface ExerciseFormData {
@@ -59,6 +64,9 @@ export default function ExerciseAccordion({ exercise, index, onChange }: Props) 
     return parts.length > 0 ? parts.join(' • ') : 'לא הושלם'
   }
 
+  // ✨ NEW: Check if exercise has goals
+  const hasGoals = exercise.Sets || exercise.Reps || exercise.Duration || exercise.Rest
+
   return (
     <div className="border border-gray-200 rounded-lg overflow-hidden bg-white shadow-sm">
       {/* Accordion Header */}
@@ -107,6 +115,34 @@ export default function ExerciseAccordion({ exercise, index, onChange }: Props) 
             </div>
           )}
 
+          {/* ✨ NEW: Exercise Goals Section - Minimalist */}
+          {hasGoals && (
+            <div className="mb-4 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+              <div className="flex flex-wrap gap-4 text-sm text-gray-700">
+                {exercise.Sets && (
+                  <span>
+                    <span className="font-medium">{exercise.Sets}</span> סטים
+                  </span>
+                )}
+                {exercise.Reps && (
+                  <span>
+                    <span className="font-medium">{exercise.Reps}</span> חזרות
+                  </span>
+                )}
+                {exercise.Duration && (
+                  <span>
+                    <span className="font-medium">{exercise.Duration}</span> שניות
+                  </span>
+                )}
+                {exercise.Rest && (
+                  <span className="text-gray-500">
+                    מנוחה: <span className="font-medium">{exercise.Rest}</span> שנ׳
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Media Section */}
           {(exercise.ImageURL || exercise.VideoURL) && (
             <div className="mb-4 space-y-3">
@@ -149,8 +185,7 @@ export default function ExerciseAccordion({ exercise, index, onChange }: Props) 
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors shadow-sm"
                   >
-                    <span>▶️</span>
-                    <span>צפה בוידאו</span>
+                    צפה בוידאו
                   </a>
                 </div>
               )}
