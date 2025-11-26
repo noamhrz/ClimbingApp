@@ -1,4 +1,5 @@
 import './globals.css'
+import './mobile-fixes.css'
 import { AuthProvider } from '@/context/AuthContext'
 import ClientLayoutWrapper from './ClientLayoutWrapper'
 import Footer from '@/components/Footer'

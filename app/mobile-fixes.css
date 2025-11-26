@@ -1,0 +1,102 @@
+/* ========================================
+   MOBILE & DEV FIXES - SIMPLE APPROACH
+   תיקוני מובייל ופיתוח - גישה פשוטה
+   ======================================== */
+
+/* 🚫 הסתר את ה-Turbopack dev indicator (הפוטר השקוף) */
+#turbopack-devtools,
+[id*="turbopack"],
+[class*="turbopack"],
+nextjs-portal {
+  display: none !important;
+}
+
+/* 🔥 MOBILE FIX */
+@media (max-width: 1024px) {
+  /* Body padding */
+  body {
+    padding-bottom: 80px !important;
+  }
+  
+  main,
+  .page-container,
+  div[dir="rtl"] {
+    padding-bottom: 80px !important;
+  }
+  
+  /* 🔥 MODALS - גישה פשוטה ואפקטיבית */
+  
+  /* כל מה שקשור למודל - תוכן בתוכו צריך מרווח אדיר */
+  [role="dialog"] {
+    z-index: 9999 !important;
+  }
+  
+  /* כל div בתוך המודל */
+  [role="dialog"] * {
+    scroll-padding-bottom: 300px !important;
+  }
+  
+  /* הקונטיינר הראשי של המודל */
+  [role="dialog"] > div {
+    min-height: calc(100vh - 50px) !important;
+    padding-bottom: 250px !important;
+  }
+  
+  /* כל טופס */
+  [role="dialog"] form {
+    padding-bottom: 250px !important;
+  }
+  
+  /* כל div עם max-w (זה בדרך כלל הקונטיינר של המודל) */
+  [role="dialog"] div[class*="max-w"] {
+    padding-bottom: 250px !important;
+  }
+  
+  /* Footer - z-index נמוך רק כשאין תפריט פתוח */
+  footer {
+    z-index: 1 !important;
+  }
+  
+  /* אבל כשיש תפריט משתמשים - z-index גבוה! */
+  footer:has(.fixed.bottom-20),
+  footer > .fixed,
+  .fixed.bottom-20 {
+    z-index: 9998 !important;
+  }
+  
+  /* Backdrop של תפריט משתמשים */
+  .fixed.inset-0.bg-black\/50,
+  [class*="bg-black/50"] {
+    z-index: 9997 !important;
+    opacity: 1 !important;
+    background-color: rgba(0, 0, 0, 0.5) !important;
+  }
+  
+  /* התפריט עצמו */
+  .fixed.bottom-20.left-0.right-0 {
+    z-index: 9998 !important;
+    background-color: white !important;
+    opacity: 1 !important;
+  }
+}
+
+/* 📱 PHONES */
+@media (max-width: 640px) {
+  body {
+    padding-bottom: 100px !important;
+  }
+  
+  [role="dialog"] > div,
+  [role="dialog"] form {
+    padding-bottom: 300px !important;
+  }
+}
+
+/* 🍎 iOS */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  @media (max-width: 1024px) {
+    body {
+      padding-bottom: calc(80px + env(safe-area-inset-bottom)) !important;
+    }
+  }
+}
