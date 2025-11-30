@@ -195,6 +195,15 @@ export default function CalendarPage() {
       alert('לא נמצא אימייל משתמש')
       return
     }
+    
+    // ✨ אם בתצוגת יום - פתח modal ישירות עם התאריך הנוכחי
+    if (view === 'day') {
+      setModalInitialDate(date)
+      setShowAddModal(true)
+      return
+    }
+    
+    // אחרת (תצוגת חודש) - מצב בחירת תאריך רגיל
     setIsSelectingDate(true)
   }
 
