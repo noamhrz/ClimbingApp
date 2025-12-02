@@ -11,7 +11,7 @@ import ClimbingVolumeChart from '@/components/dashboard/ClimbingVolumeChart'
 import ExerciseAmountChart from '@/components/dashboard/ExerciseAmountChart'
 import MotivationalQuote from '@/components/dashboard/MotivationalQuote'
 import WellnessModal from '@/components/dashboard/WellnessModal'
-import { subDays, format, startOfWeek, endOfWeek, differenceInWeeks, eachDayOfInterval, eachWeekOfInterval, setHours, setMinutes, setSeconds, isBefore } from 'date-fns'
+import { subDays, format, startOfWeek, endOfWeek, differenceInWeeks, eachDayOfInterval, eachWeekOfInterval, setHours, setMinutes, setSeconds, isBefore, startOfDay, isAfter } from 'date-fns'
 
 // WEEK CONFIGURATION - SUNDAY TO SATURDAY (for stats cards only)
 const WEEK_STARTS_ON = 0 // 0 = Sunday, 6 = Saturday
@@ -128,13 +128,18 @@ export default function DashboardPage() {
       const pending: typeof workouts = []
       const missed: typeof workouts = []
 
+      // ✨ FIX: Compare dates only, not times
+      const todayStart = startOfDay(now)
+
       workouts?.forEach(w => {
         const workoutTime = new Date(w.StartTime)
+        const workoutDay = startOfDay(workoutTime)
         
         if (w.Completed === true) {
           completed.push(w)
         } else {
-          if (isBefore(workoutTime, now)) {
+          // ✨ Compare day-to-day: if workout day is BEFORE today (not including today)
+          if (isBefore(workoutDay, todayStart)) {
             missed.push(w)
           } else {
             pending.push(w)
