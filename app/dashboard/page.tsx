@@ -11,7 +11,7 @@ import ClimbingVolumeChart from '@/components/dashboard/ClimbingVolumeChart'
 import ExerciseAmountChart from '@/components/dashboard/ExerciseAmountChart'
 import MotivationalQuote from '@/components/dashboard/MotivationalQuote'
 import WellnessModal from '@/components/dashboard/WellnessModal'
-import { subDays, format, startOfWeek, endOfWeek, differenceInWeeks, eachDayOfInterval, eachWeekOfInterval, setHours, setMinutes, setSeconds, isBefore, startOfDay, isAfter } from 'date-fns'
+import { subDays, format, startOfWeek, endOfWeek, differenceInWeeks, eachDayOfInterval, eachWeekOfInterval, setHours, setMinutes, setSeconds, isBefore, startOfDay, endOfDay } from 'date-fns'
 
 // WEEK CONFIGURATION - SUNDAY TO SATURDAY (for stats cards only)
 const WEEK_STARTS_ON = 0 // 0 = Sunday, 6 = Saturday
@@ -81,7 +81,9 @@ export default function DashboardPage() {
     }
     
     const start = subDays(now, daysBack)
-    return { start, end: now }
+    // ✨ FIX: Use end of day to include all of today
+    const end = endOfDay(now)
+    return { start, end }
   }
 
   const getWeekLabel = (weekStart: Date, now: Date) => {
