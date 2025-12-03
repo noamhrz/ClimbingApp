@@ -15,6 +15,7 @@ import DeloadingModal from '@/components/DeloadingModal'
 import EventContextMenu from '@/components/EventContextMenu'
 import EditEventModal from '@/components/EditEventModal'
 import WeekDuplicateModal from '@/components/WeekDuplicateModal'
+import DeleteRangeModal from '@/components/DeleteRangeModal'
 import DayListView from '@/components/calendar/DayListView'
 import CalendarToolbar from '@/components/calendar/CalendarToolbar'
 
@@ -66,6 +67,7 @@ export default function CalendarPage() {
   const [showDeloadingModal, setShowDeloadingModal] = useState(false)
   const [deloadingMode, setDeloadingMode] = useState<'apply' | 'remove'>('apply')
   const [showDuplicateModal, setShowDuplicateModal] = useState(false)
+  const [showDeleteRangeModal, setShowDeleteRangeModal] = useState(false)
 
   // Mobile detection
   useEffect(() => {
@@ -348,6 +350,10 @@ export default function CalendarPage() {
     await fetchCalendar()
   }
 
+  const handleDeleteRangeSuccess = async () => {
+    await fetchCalendar()
+  }
+
   // Navigation handler for day view
   const handleNavigate = (newDate: Date) => {
     setDate(newDate)
@@ -484,6 +490,13 @@ export default function CalendarPage() {
             onSuccess={handleModalSuccess}
             email={activeEmail}
           />
+          
+          <DeleteRangeModal
+            isOpen={showDeleteRangeModal}
+            onClose={() => setShowDeleteRangeModal(false)}
+            onSuccess={handleDeleteRangeSuccess}
+            email={activeEmail}
+          />
         </>
       )}
 
@@ -533,6 +546,13 @@ export default function CalendarPage() {
             title="הסר דילודינג"
           >
             ❌ הסר דילודינג
+          </button>
+          <button
+            onClick={() => setShowDeleteRangeModal(true)}
+            className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg shadow-lg text-sm font-medium transition-all"
+            title="נקה טווח תאריכים"
+          >
+            🗑️ נקה טווח
           </button>
         </div>
       )}
