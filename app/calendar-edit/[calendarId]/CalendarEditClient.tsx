@@ -34,6 +34,7 @@ export default function CalendarEditClient() {
   const [leadGrades, setLeadGrades] = useState<LeadGrade[]>([])
   const [boulderGrades, setBoulderGrades] = useState<BoulderGrade[]>([])
   const [locations, setLocations] = useState<ClimbingLocation[]>([])
+  const [locationSearch, setLocationSearch] = useState('') // Search filter for locations
   const [boardTypes, setBoardTypes] = useState<BoardType[]>([])
   const [climberNotes, setClimberNotes] = useState('')
   const [loading, setLoading] = useState(true)
@@ -104,6 +105,16 @@ export default function CalendarEditClient() {
       setSavingLocation(false)
     }
   }
+
+  // Filter locations based on search
+  const filteredLocations = useMemo(() => {
+    if (!locationSearch.trim()) return locations
+    
+    const searchLower = locationSearch.toLowerCase()
+    return locations.filter(loc => 
+      loc.LocationName.toLowerCase().includes(searchLower)
+    )
+  }, [locations, locationSearch])
 
   // ✨ טעינת נתונים - UPDATED WITH BLOCKS & GOALS
   useEffect(() => {
@@ -713,22 +724,39 @@ export default function CalendarEditClient() {
             <section className="mb-10">
             <h2 className="font-semibold text-xl mb-4">🧗 רישומי טיפוס</h2>
 
-            {/* Location Selector WITH ADD NEW */}
+            {/* Location Selector WITH SEARCH */}
             <div className="mb-6">
               <label className="block font-medium mb-2">📍 מיקום:</label>
               <div className="space-y-2">
+                {/* Search input */}
+                <input
+                  type="text"
+                  placeholder="🔍 חפש מיקום..."
+                  value={locationSearch}
+                  onChange={(e) => setLocationSearch(e.target.value)}
+                  className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+                />
+                
+                {/* Filtered select */}
                 <select
                   value={selectedLocation || ''}
                   onChange={(e) => setSelectedLocation(Number(e.target.value) || null)}
                   className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="">בחר מיקום</option>
-                  {locations.map(loc => (
+                  {filteredLocations.map(loc => (
                     <option key={loc.LocationID} value={loc.LocationID}>
                       {loc.LocationName}
                     </option>
                   ))}
                 </select>
+                
+                {/* Show count if filtering */}
+                {locationSearch && (
+                  <p className="text-sm text-gray-600">
+                    נמצאו {filteredLocations.length} מתוך {locations.length} מיקומים
+                  </p>
+                )}
                 
                 {/* Add New Location Button */}
                 <button

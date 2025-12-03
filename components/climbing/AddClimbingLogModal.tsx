@@ -1,7 +1,7 @@
 // components/climbing/AddClimbingLogModal.tsx - WITH ADD NEW LOCATION
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { format } from 'date-fns'
 import { supabase } from '@/lib/supabaseClient'
 
@@ -45,13 +45,24 @@ export default function AddClimbingLogModal({
   
   // NEW: Local locations state (to allow immediate updates)
   const [localLocations, setLocalLocations] = useState(locations)
+  const [locationSearch, setLocationSearch] = useState('') // Search filter for locations
 
   // Sync local locations with prop
   useEffect(() => {
     setLocalLocations(locations)
   }, [locations])
 
-  if (!isOpen) return null
+  // Filter locations based on search
+  const filteredLocations = useMemo(() => {
+    if (!locationSearch.trim()) return localLocations
+    
+    const searchLower = locationSearch.toLowerCase()
+    return localLocations.filter(loc => 
+      loc.LocationName.toLowerCase().includes(searchLower)
+    )
+  }, [localLocations, locationSearch])
+
+    if (!isOpen) return null
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -294,24 +305,41 @@ export default function AddClimbingLogModal({
               </div>
             </div>
 
-            {/* Location - WITH ADD NEW OPTION */}
+            {/* Location - WITH SEARCH */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 מיקום (אופציונלי)
               </label>
               <div className="space-y-2">
+                {/* Search input */}
+                <input
+                  type="text"
+                  placeholder="🔍 חפש מיקום..."
+                  value={locationSearch}
+                  onChange={(e) => setLocationSearch(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+                />
+                
+                {/* Filtered select */}
                 <select
                   value={locationId || ''}
                   onChange={(e) => setLocationId(e.target.value ? Number(e.target.value) : null)}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="">בחר מיקום</option>
-                  {localLocations.map((loc) => (
+                  {filteredLocations.map((loc) => (
                     <option key={loc.LocationID} value={loc.LocationID}>
                       {loc.LocationName}
                     </option>
                   ))}
                 </select>
+                
+                {/* Show count if filtering */}
+                {locationSearch && (
+                  <p className="text-sm text-gray-600">
+                    נמצאו {filteredLocations.length} מתוך {localLocations.length} מיקומים
+                  </p>
+                )}
                 
                 {/* Add New Location Button */}
                 <button
