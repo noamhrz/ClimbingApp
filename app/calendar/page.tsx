@@ -359,8 +359,9 @@ export default function CalendarPage() {
     setDate(newDate)
   }
 
-  // Back to month view
+  // Back to month view (disabled on mobile to prevent accidental swipe gestures)
   const handleBackToMonth = () => {
+    if (isMobile) return // Don't switch views on mobile - prevents accidental swipe/scroll gestures
     setView('month')
   }
 
