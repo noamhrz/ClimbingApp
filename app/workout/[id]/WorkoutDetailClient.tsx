@@ -10,6 +10,7 @@ import { RouteTypeBlock } from '@/components/climbing/RouteTypeBlock'
 import { ClimbingRoute, BoulderGrade, LeadGrade, ClimbingLocation, BoardType } from '@/types/climbing'
 import ExerciseAccordion from "@/components/exercises/ExerciseAccordion"
 import moment from 'moment-timezone'
+import LoadLastWorkoutButton from './LoadLastWorkoutButton'
 
 export default function WorkoutDetailClient({ id }: { id: number }) {
   const { activeUser, loading: authLoading } = useAuth()
@@ -671,6 +672,18 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
               </div>
             )}
           </section>
+
+          {/* Load from last workout button - MOVED TO TOP */}
+          {workout.containExercise && (
+            <LoadLastWorkoutButton
+              email={email}
+              workoutId={id}
+              exerciseForms={exerciseForms}
+              setExerciseForms={setExerciseForms}
+              showToast={showToast}
+              formatDate={formatDate}
+            />
+          )}
 
           {/* ✨ UPDATED: Exercises by Blocks */}
           {containsExercises && (
