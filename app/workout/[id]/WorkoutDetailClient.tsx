@@ -52,6 +52,9 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
   const [newLocationName, setNewLocationName] = useState('')
   const [savingLocation, setSavingLocation] = useState(false)
 
+  // 🐛 FIX: Prevent double-submit
+  const [isSaving, setIsSaving] = useState(false)
+
   const [toast, setToast] = useState<{ text: string; color: string } | null>(null)
   const showToast = (text: string, color: string) => {
     setToast({ text, color })
@@ -329,8 +332,13 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
     }
   }
 
-  // === שמירה - NO CHANGES TO SAVE LOGIC ===
+  // === שמירה - UPDATED WITH DOUBLE-SUBMIT FIX ===
   const onComplete = async () => {
+    // 🐛 FIX: Prevent double-submit
+    if (isSaving) {
+      return // Already saving, ignore additional clicks
+    }
+
     if (!email || !workout) {
       showToast('❌ אין אימייל פעיל', 'red')
       return
@@ -341,6 +349,8 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
       showToast('❌ נא לבחור מיקום', 'red')
       return
     }
+
+    setIsSaving(true) // 🐛 FIX: Set saving state
 
     const now = moment().format('YYYY-MM-DD HH:mm:ss')
 
@@ -559,6 +569,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
     } catch (err) {
       console.error('❌ שגיאה בשמירה:', err)
       showToast('❌ שגיאה בשמירה', 'red')
+      setIsSaving(false) // Only reset on error - on success, redirect will happen
     }
   }
 
@@ -847,15 +858,21 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
             />
           </div>
 
-          {/* כפתור שמירה */}
+          {/* כפתור שמירה - UPDATED WITH DOUBLE-SUBMIT FIX */}
           <div className="text-center mt-8">
             <button 
               className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-semibold text-lg shadow-md transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
               onClick={onComplete}
-              disabled={workout.containClimbing && routes.length > 0 && !selectedLocation}
+              disabled={isSaving || (workout.containClimbing && routes.length > 0 && !selectedLocation)}
             >
-              ✅ סיום אימון ושמירה
-              {workout.containClimbing && routes.length > 0 && ` (${routes.length} מסלולים)`}
+              {isSaving ? (
+                <>⏳ שומר...</>
+              ) : (
+                <>
+                  ✅ סיום אימון ושמירה
+                  {workout.containClimbing && routes.length > 0 && ` (${routes.length} מסלולים)`}
+                </>
+              )}
             </button>
             {workout.containClimbing && routes.length > 0 && !selectedLocation && (
               <p className="text-red-600 text-sm mt-2">
