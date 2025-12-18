@@ -47,6 +47,9 @@ export default function CalendarEditClient() {
   const [newLocationName, setNewLocationName] = useState('')
   const [savingLocation, setSavingLocation] = useState(false)
 
+  // ✨ NEW: Track which exercise accordions are open (by ExerciseID)
+  const [openExercises, setOpenExercises] = useState<Set<number>>(new Set())
+
   // Toast notification state
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
 
@@ -323,6 +326,45 @@ export default function CalendarEditClient() {
       next[i] = { ...next[i], ...data }
       return next
     })
+  }
+
+  // ✨ NEW: Toggle single exercise accordion
+  const toggleExercise = (exerciseId: number) => {
+    setOpenExercises(prev => {
+      const next = new Set(prev)
+      if (next.has(exerciseId)) {
+        next.delete(exerciseId)  // Close
+      } else {
+        next.add(exerciseId)  // Open
+      }
+      return next
+    })
+  }
+
+  // ✨ NEW: Toggle all exercises in a block
+  const toggleBlock = (blockNum: number) => {
+    const exerciseIds = exercisesByBlock[blockNum].map(ex => ex.ExerciseID)
+    const allOpen = exerciseIds.every(id => openExercises.has(id))
+    
+    setOpenExercises(prev => {
+      const next = new Set(prev)
+      
+      if (allOpen) {
+        // Close all - remove all IDs
+        exerciseIds.forEach(id => next.delete(id))
+      } else {
+        // Open all - add all IDs
+        exerciseIds.forEach(id => next.add(id))
+      }
+      
+      return next
+    })
+  }
+
+  // ✨ NEW: Check if all exercises in block are open
+  const isBlockAllOpen = (blockNum: number) => {
+    const exerciseIds = exercisesByBlock[blockNum].map(ex => ex.ExerciseID)
+    return exerciseIds.length > 0 && exerciseIds.every(id => openExercises.has(id))
   }
 
   // Group routes by type
@@ -693,29 +735,47 @@ export default function CalendarEditClient() {
             <section className="mb-10">
               <h2 className="font-semibold text-xl mb-6">💪 תרגילים</h2>
               
-              {blockNumbers.map(blockNum => (
-                <div key={blockNum} className="mb-8">
-                  {/* Block Header */}
-                  <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-t-lg px-4 py-3 font-bold text-lg">
-                    בלוק {blockNum}
+              {blockNumbers.map(blockNum => {
+                const blockOpen = isBlockAllOpen(blockNum)
+                const exerciseCount = exercisesByBlock[blockNum].length
+                
+                return (
+                  <div key={blockNum} className="mb-8">
+                    {/* Block Header - Clickable Toggle */}
+                    <div 
+                      className="bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-t-lg px-4 py-3 font-bold text-lg cursor-pointer hover:from-blue-600 hover:to-blue-700 transition-all flex justify-between items-center select-none"
+                      onClick={() => toggleBlock(blockNum)}
+                    >
+                      <span>📦 בלוק {blockNum}</span>
+                      <div className="flex items-center gap-3 text-sm">
+                        <span className="opacity-90 font-normal">
+                          {exerciseCount} {exerciseCount === 1 ? 'תרגיל' : 'תרגילים'}
+                        </span>
+                        <span className="font-bold">
+                          {blockOpen ? '▼ סגור הכל' : '▶ פתח הכל'}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    {/* Exercises in this block */}
+                    <div className="border border-t-0 border-gray-200 rounded-b-lg p-4 space-y-4 bg-gray-50">
+                      {exercisesByBlock[blockNum].map((ex, idx) => {
+                        const globalIndex = exerciseForms.findIndex(e => e.ExerciseID === ex.ExerciseID)
+                        return (
+                          <ExerciseAccordion
+                            key={ex.ExerciseID}
+                            exercise={ex}
+                            onChange={(data) => handleExerciseChange(globalIndex, data)}
+                            index={globalIndex}
+                            isOpen={openExercises.has(ex.ExerciseID)}
+                            onToggle={() => toggleExercise(ex.ExerciseID)}
+                          />
+                        )
+                      })}
+                    </div>
                   </div>
-                  
-                  {/* Exercises in this block */}
-                  <div className="border border-t-0 border-gray-200 rounded-b-lg p-4 space-y-4 bg-gray-50">
-                    {exercisesByBlock[blockNum].map((ex, idx) => {
-                      const globalIndex = exerciseForms.findIndex(e => e.ExerciseID === ex.ExerciseID)
-                      return (
-                        <ExerciseAccordion
-                          key={ex.ExerciseID}
-                          exercise={ex}
-                          onChange={(data) => handleExerciseChange(globalIndex, data)}
-                          index={globalIndex}
-                        />
-                      )
-                    })}
-                  </div>
-                </div>
-              ))}
+                )
+              })}
             </section>
           )}
 

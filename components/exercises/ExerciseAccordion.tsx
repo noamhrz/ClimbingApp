@@ -1,3 +1,6 @@
+// components/exercises/ExerciseAccordion.tsx
+// ✨ UPDATED: Added isOpen/onToggle support while preserving all existing functionality
+
 import { useState } from 'react'
 import ExerciseExecutionForm from './ExerciseExecutionForm'
 
@@ -9,7 +12,7 @@ interface Exercise {
   isDuration: boolean
   ImageURL?: string | null
   VideoURL?: string | null
-  // ✨ NEW: Goals from WorkoutsExercises
+  // ✨ Goals from WorkoutsExercises
   Sets?: number | null
   Reps?: number | null
   Duration?: number | null
@@ -33,10 +36,23 @@ interface Props {
   exercise: Exercise & ExerciseFormData
   index: number
   onChange: (data: any) => void
+  isOpen?: boolean      // ✨ NEW: Controlled state for Toggle Block
+  onToggle?: () => void // ✨ NEW: Toggle handler for Toggle Block
 }
 
-export default function ExerciseAccordion({ exercise, index, onChange }: Props) {
-  const [isExpanded, setIsExpanded] = useState(false)
+export default function ExerciseAccordion({ 
+  exercise, 
+  index, 
+  onChange,
+  isOpen = false,    // ✨ NEW: Default to closed
+  onToggle           // ✨ NEW: Optional toggle handler
+}: Props) {
+  // ✨ NEW: Use internal state only if onToggle is not provided (backward compatibility)
+  const [localExpanded, setLocalExpanded] = useState(false)
+  
+  // ✨ NEW: Use controlled state if onToggle provided, otherwise use local state
+  const isExpanded = onToggle ? isOpen : localExpanded
+  const handleToggle = onToggle || (() => setLocalExpanded(!localExpanded))
 
   const getSummary = () => {
     const parts: string[] = []
@@ -64,14 +80,14 @@ export default function ExerciseAccordion({ exercise, index, onChange }: Props) 
     return parts.length > 0 ? parts.join(' • ') : 'לא הושלם'
   }
 
-  // ✨ NEW: Check if exercise has goals
+  // Check if exercise has goals
   const hasGoals = exercise.Sets || exercise.Reps || exercise.Duration || exercise.Rest
 
   return (
     <div className="border border-gray-200 rounded-lg overflow-hidden bg-white shadow-sm">
       {/* Accordion Header */}
       <button
-        onClick={() => setIsExpanded(!isExpanded)}
+        onClick={handleToggle}
         className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
       >
         <div className="flex items-center gap-3 flex-1 text-right">
@@ -115,7 +131,7 @@ export default function ExerciseAccordion({ exercise, index, onChange }: Props) 
             </div>
           )}
 
-          {/* ✨ NEW: Exercise Goals Section - Minimalist */}
+          {/* Exercise Goals Section - Minimalist */}
           {hasGoals && (
             <div className="mb-4 p-3 bg-gray-50 border border-gray-200 rounded-lg">
               <div className="flex flex-wrap gap-4 text-sm text-gray-700">
@@ -192,7 +208,7 @@ export default function ExerciseAccordion({ exercise, index, onChange }: Props) 
             </div>
           )}
 
-          {/* Exercise Form - ✅ עם value */}
+          {/* Exercise Form */}
           <ExerciseExecutionForm
             exercise={exercise}
             value={exercise}
