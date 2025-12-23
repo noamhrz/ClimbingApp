@@ -9,9 +9,12 @@ export default function UserHeader() {
   const { activeUser, currentUser, isImpersonating, switchToSelf, logout } = useAuth()
   const router = useRouter()
 
-  if (!activeUser) return null
+  // ✅ Show header even if activeUser is not loaded yet
+  const displayUser = activeUser || currentUser
+  
+  if (!displayUser) return null
 
-  const activeConfig = getRoleConfig(activeUser.Role)
+  const activeConfig = getRoleConfig(displayUser.Role)
   const currentConfig = currentUser ? getRoleConfig(currentUser.Role) : null
 
   // Get role image
@@ -36,8 +39,8 @@ export default function UserHeader() {
             {/* Role Image - Large and prominent */}
             <div className="w-16 h-16 bg-white rounded-full p-2 shadow-lg flex items-center justify-center">
               <img 
-                src={getRoleImage(activeUser.Role)}
-                alt={activeUser.Role}
+                src={getRoleImage(displayUser.Role)}
+                alt={displayUser.Role}
                 className="w-full h-full object-contain"
               />
             </div>
@@ -48,11 +51,11 @@ export default function UserHeader() {
                 href="/profile"
                 className="font-bold text-lg hover:text-blue-100 transition-colors inline-flex items-center gap-1 group"
               >
-                <span>{activeUser.Name}</span>
+                <span>{displayUser.Name}</span>
                 <span className="opacity-0 group-hover:opacity-100 transition-opacity text-sm">👤</span>
               </Link>
               <p className="text-xs text-blue-200">
-                {activeUser.Email}
+                {displayUser.Email}
               </p>
             </div>
           </div>
@@ -87,27 +90,34 @@ export default function UserHeader() {
         <nav className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
           <Link
             href="/dashboard"
-            className="bg-white/10 hover:bg-white/20 backdrop-blur-sm px-4 py-2 rounded-lg transition-all whitespace-nowrap font-medium border border-white/20 hover:border-white/40"
+            className="bg-white/10 hover:bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-lg transition-all whitespace-nowrap text-sm font-medium border border-white/20 hover:border-white/40"
           >
             📊 Dashboard
           </Link>
           <Link
             href="/calendar"
-            className="bg-white/10 hover:bg-white/20 backdrop-blur-sm px-4 py-2 rounded-lg transition-all whitespace-nowrap font-medium border border-white/20 hover:border-white/40"
+            className="bg-white/10 hover:bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-lg transition-all whitespace-nowrap text-sm font-medium border border-white/20 hover:border-white/40"
           >
-            📅 לוח אימונים
+            📅 לוח
           </Link>
           <Link
             href="/workouts"
-            className="bg-white/10 hover:bg-white/20 backdrop-blur-sm px-4 py-2 rounded-lg transition-all whitespace-nowrap font-medium border border-white/20 hover:border-white/40"
+            className="bg-white/10 hover:bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-lg transition-all whitespace-nowrap text-sm font-medium border border-white/20 hover:border-white/40"
           >
             🏋️ אימונים
           </Link>
           <Link
             href="/climbing-log"
-            className="bg-white/10 hover:bg-white/20 backdrop-blur-sm px-4 py-2 rounded-lg transition-all whitespace-nowrap font-medium border border-white/20 hover:border-white/40"
+            className="bg-white/10 hover:bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-lg transition-all whitespace-nowrap text-sm font-medium border border-white/20 hover:border-white/40"
           >
-            📖 לוג בוק
+            📖 לוג
+          </Link>
+
+          <Link
+            href={`/athlete-stats/${(activeUser || currentUser)?.Email || ''}`}
+            className="bg-white/10 hover:bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-lg transition-all whitespace-nowrap text-sm font-medium border border-white/20 hover:border-white/40"
+          >
+            📊 סטטיסטיקות
           </Link>
           
           {/* Coach/Admin only links */}
@@ -115,21 +125,27 @@ export default function UserHeader() {
             <>
               <Link
                 href="/exercises"
-                className="bg-white/10 hover:bg-white/20 backdrop-blur-sm px-4 py-2 rounded-lg transition-all whitespace-nowrap font-medium border border-white/20 hover:border-white/40"
+                className="bg-white/10 hover:bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-lg transition-all whitespace-nowrap text-sm font-medium border border-white/20 hover:border-white/40"
               >
                 💪 תרגילים
               </Link>
               <Link
                 href="/workouts-editor"
-                className="bg-white/10 hover:bg-white/20 backdrop-blur-sm px-4 py-2 rounded-lg transition-all whitespace-nowrap font-medium border border-white/20 hover:border-white/40"
+                className="bg-white/10 hover:bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-lg transition-all whitespace-nowrap text-sm font-medium border border-white/20 hover:border-white/40"
               >
-                🏋️ ניהול אימונים
+                🏋️ ניהול
               </Link>
               <Link
                 href="/admin/assign-workouts"
-                className="bg-white/10 hover:bg-white/20 backdrop-blur-sm px-4 py-2 rounded-lg transition-all whitespace-nowrap font-medium border border-white/20 hover:border-white/40"
+                className="bg-white/10 hover:bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-lg transition-all whitespace-nowrap text-sm font-medium border border-white/20 hover:border-white/40"
               >
-                📋 הקצאת אימונים
+                📋 הקצאה
+              </Link>
+              <Link
+                href="/coach/urgency"
+                className="bg-white/10 hover:bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-lg transition-all whitespace-nowrap text-sm font-medium border border-white/20 hover:border-white/40"
+              >
+                🚨 דחיפות
               </Link>
             </>
           )}
@@ -139,9 +155,9 @@ export default function UserHeader() {
             <>
               <Link
                 href="/admin/users"
-                className="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 backdrop-blur-sm px-4 py-2 rounded-lg transition-all whitespace-nowrap font-medium border-2 border-purple-400 hover:border-purple-300 shadow-lg"
+                className="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 backdrop-blur-sm px-3 py-1.5 rounded-lg transition-all whitespace-nowrap text-sm font-medium border-2 border-purple-400 hover:border-purple-300 shadow-lg"
               >
-                👥 ניהול משתמשים
+                👥 משתמשים
               </Link>
             </>
           )}
@@ -155,7 +171,7 @@ export default function UserHeader() {
                 <span>🔍</span>
                 <span>
                   אתה ({currentConfig?.icon} {currentUser.Name}) צופה כ-{' '}
-                  <strong>{activeConfig.icon} {activeUser.Name}</strong>
+                  <strong>{activeConfig.icon} {displayUser.Name}</strong>
                 </span>
               </div>
               <button
