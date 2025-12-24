@@ -10,6 +10,9 @@ import { useAuth } from '@/context/AuthContext'
 import { supabase } from '@/lib/supabaseClient'
 import { getProfileMetrics } from '@/lib/athlete-stats-metrics'
 import type { ProfileMetrics } from '@/lib/athlete-stats-metrics'
+import { getClimbingPerformance } from '@/lib/climbing-stats-metrics'
+import type { ClimbingPerformance } from '@/lib/climbing-stats-metrics'
+import { ClimbingStatsDisplay } from '@/components/climbing-stats-display'
 
 interface PageProps {
   params: Promise<{ email: string }>
@@ -23,6 +26,7 @@ export default function ProfilePage({ params }: PageProps) {
   const [selectedEmail, setSelectedEmail] = useState<string>(decodeURIComponent(resolvedParams.email))
   const [users, setUsers] = useState<Array<{ Email: string; Name: string }>>([])
   const [metrics, setMetrics] = useState<ProfileMetrics | null>(null)
+  const [climbingPerformance, setClimbingPerformance] = useState<ClimbingPerformance | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -94,8 +98,14 @@ export default function ProfilePage({ params }: PageProps) {
     setError(null)
 
     try {
-      const data = await getProfileMetrics(selectedEmail, startDate, endDate)
-      setMetrics(data)
+      // Load both metrics in parallel
+      const [metricsData, climbingData] = await Promise.all([
+        getProfileMetrics(selectedEmail, startDate, endDate),
+        getClimbingPerformance(selectedEmail, startDate, endDate)
+      ])
+      
+      setMetrics(metricsData)
+      setClimbingPerformance(climbingData)
     } catch (error) {
       console.error('Error loading metrics:', error)
       setError(error instanceof Error ? error.message : 'שגיאה בטעינת נתונים')
@@ -212,7 +222,7 @@ export default function ProfilePage({ params }: PageProps) {
 
       {/* Metrics Cards */}
       {metrics && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           {/* Workout Completion Card */}
           <div className="bg-white rounded-lg shadow-lg p-6 border-r-4 border-blue-500">
             <div className="flex items-center justify-between mb-4">
@@ -296,6 +306,13 @@ export default function ProfilePage({ params }: PageProps) {
               )}
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Climbing Performance Stats */}
+      {climbingPerformance && (
+        <div className="mb-8">
+          <ClimbingStatsDisplay performance={climbingPerformance} />
         </div>
       )}
 
