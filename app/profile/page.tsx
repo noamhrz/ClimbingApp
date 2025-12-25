@@ -1,18 +1,125 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '@/context/AuthContext'
 import { supabase } from '@/lib/supabaseClient'
 import { useRouter } from 'next/navigation'
 
+interface ProfileData {
+  Email: string
+  BodyWeightKG: number
+  Phone: string | null
+}
+
 export default function UserProfilePage() {
   const { currentUser } = useAuth()
   const router = useRouter()
+  
+  // Profile data
+  const [bodyWeight, setBodyWeight] = useState<number>(70)
+  const [phone, setPhone] = useState<string>('')
+  const [profileExists, setProfileExists] = useState<boolean>(false)
+  
+  // UI states
   const [loading, setLoading] = useState(false)
+  const [loadingProfile, setLoadingProfile] = useState(true)
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
+  const [isEditingProfile, setIsEditingProfile] = useState(false)
+  
+  // Password states
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [showPasswordForm, setShowPasswordForm] = useState(false)
+
+  // Load profile data
+  useEffect(() => {
+    if (currentUser?.Email) {
+      loadProfile()
+    }
+  }, [currentUser])
+
+  const loadProfile = async () => {
+    if (!currentUser?.Email) return
+
+    setLoadingProfile(true)
+    try {
+      const { data, error } = await supabase
+        .from('Profiles')
+        .select('*')
+        .eq('Email', currentUser.Email)
+        .single()
+
+      if (error && error.code !== 'PGRST116') {
+        throw error
+      }
+
+      if (data) {
+        setProfileExists(true)
+        setBodyWeight(data.BodyWeightKG)
+        setPhone(data.Phone || '')
+      } else {
+        setProfileExists(false)
+        setBodyWeight(70)
+        setPhone('')
+      }
+    } catch (err: any) {
+      console.error('Error loading profile:', err)
+    } finally {
+      setLoadingProfile(false)
+    }
+  }
+
+  const handleSaveProfile = async () => {
+    if (!currentUser?.Email) return
+
+    // Validation
+    if (bodyWeight < 30 || bodyWeight > 200) {
+      setMessage({ type: 'error', text: '⚠️ משקל גוף חייב להיות בין 30 ל-200 ק"ג' })
+      return
+    }
+
+    setLoading(true)
+    setMessage(null)
+
+    try {
+      if (profileExists) {
+        // Update existing profile
+        const { error } = await supabase
+          .from('Profiles')
+          .update({
+            BodyWeightKG: bodyWeight,
+            Phone: phone.trim() || null,
+            UpdatedAt: new Date().toISOString()
+          })
+          .eq('Email', currentUser.Email)
+
+        if (error) throw error
+      } else {
+        // Insert new profile
+        const { error } = await supabase
+          .from('Profiles')
+          .insert({
+            Email: currentUser.Email,
+            BodyWeightKG: bodyWeight,
+            Phone: phone.trim() || null
+          })
+
+        if (error) throw error
+        setProfileExists(true)
+      }
+
+      setMessage({ type: 'success', text: '✅ הפרופיל נשמר בהצלחה!' })
+      setIsEditingProfile(false)
+      
+      // Clear message after 3 seconds
+      setTimeout(() => setMessage(null), 3000)
+
+    } catch (error: any) {
+      setMessage({ type: 'error', text: `❌ שגיאה: ${error.message}` })
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const handleDirectPasswordReset = async () => {
     if (!newPassword || !confirmPassword) {
@@ -34,7 +141,6 @@ export default function UserProfilePage() {
     setMessage(null)
 
     try {
-      // Try to update password using current session
       const { error } = await supabase.auth.updateUser({
         password: newPassword
       })
@@ -94,6 +200,18 @@ export default function UserProfilePage() {
 
       {/* Main Content */}
       <div className="max-w-2xl mx-auto px-4 py-6">
+        
+        {/* Message */}
+        {message && (
+          <div className={`mb-4 p-4 rounded-lg ${
+            message.type === 'success' 
+              ? 'bg-green-50 text-green-800 border border-green-200' 
+              : 'bg-red-50 text-red-800 border border-red-200'
+          }`}>
+            {message.text}
+          </div>
+        )}
+
         {/* Profile Card */}
         <div className="bg-white rounded-xl shadow-sm border p-6 mb-6">
           <div className="flex items-center gap-4 mb-6">
@@ -144,22 +262,131 @@ export default function UserProfilePage() {
           </div>
         </div>
 
+        {/* Body Weight & Phone Card */}
+        <div className="bg-white rounded-xl shadow-sm border p-6 mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <span className="text-2xl">⚖️</span>
+              <h3 className="text-xl font-bold text-gray-800">נתוני מתאמן</h3>
+            </div>
+            {!isEditingProfile && (
+              <button
+                onClick={() => setIsEditingProfile(true)}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+              >
+                ✏️ ערוך
+              </button>
+            )}
+          </div>
+
+          {loadingProfile ? (
+            <div className="text-center py-8">
+              <div className="text-4xl mb-2">⏳</div>
+              <p className="text-gray-600">טוען נתונים...</p>
+            </div>
+          ) : !isEditingProfile ? (
+            <div className="space-y-4">
+              {/* Body Weight */}
+              <div className="flex items-center justify-between py-3 border-b">
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">⚖️</span>
+                  <div>
+                    <p className="text-sm text-gray-500">משקל גוף</p>
+                    <p className="font-bold text-2xl text-indigo-600">{bodyWeight} ק"ג</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Phone */}
+              <div className="flex items-center justify-between py-3 border-b">
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">📱</span>
+                  <div>
+                    <p className="text-sm text-gray-500">טלפון</p>
+                    <p className="font-medium text-gray-800">
+                      {phone || <span className="text-gray-400">לא הוזן</span>}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Info Box */}
+              <div className="bg-blue-50 rounded-lg p-4 border border-blue-200 mt-4">
+                <p className="text-sm text-blue-800">
+                  <strong>💡 למה צריך משקל גוף?</strong><br/>
+                  משקל הגוף משמש לחישוב מדויק של סטטיסטיקות תרגילים שכוללים משקל גוף 
+                  (כמו מתחים, שכיבות סמיכה וכו').
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {/* Body Weight Input */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  ⚖️ משקל גוף (ק"ג) *
+                </label>
+                <input
+                  type="number"
+                  value={bodyWeight}
+                  onChange={(e) => setBodyWeight(parseFloat(e.target.value))}
+                  min="30"
+                  max="200"
+                  step="0.5"
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 text-lg"
+                  placeholder="70"
+                  disabled={loading}
+                />
+                <p className="text-xs text-gray-500 mt-1">בין 30 ל-200 ק"ג</p>
+              </div>
+
+              {/* Phone Input */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  📱 טלפון (אופציונלי)
+                </label>
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 text-lg"
+                  placeholder="050-1234567"
+                  dir="ltr"
+                  disabled={loading}
+                />
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-2 pt-2">
+                <button
+                  onClick={handleSaveProfile}
+                  disabled={loading}
+                  className="flex-1 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+                >
+                  {loading ? '💾 שומר...' : '💾 שמור נתונים'}
+                </button>
+                <button
+                  onClick={() => {
+                    setIsEditingProfile(false)
+                    loadProfile() // Reset to original values
+                    setMessage(null)
+                  }}
+                  disabled={loading}
+                  className="px-6 py-3 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 transition-colors font-medium"
+                >
+                  ביטול
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* Security Card */}
-        <div className="bg-white rounded-xl shadow-sm border p-6">
+        <div className="bg-white rounded-xl shadow-sm border p-6 mb-6">
           <div className="flex items-center gap-2 mb-4">
             <span className="text-2xl">🔐</span>
             <h3 className="text-xl font-bold text-gray-800">שינוי סיסמה</h3>
           </div>
-
-          {message && (
-            <div className={`mb-4 p-4 rounded-lg ${
-              message.type === 'success' 
-                ? 'bg-green-50 text-green-800 border border-green-200' 
-                : 'bg-red-50 text-red-800 border border-red-200'
-            }`}>
-              {message.text}
-            </div>
-          )}
 
           {!showPasswordForm ? (
             <div className="space-y-4">

@@ -11,6 +11,7 @@ import { supabase } from '@/lib/supabaseClient'
 export interface WorkoutStats {
   workoutId: number
   workoutName: string
+  workoutCategory: string | null  // New!
   totalSessions: number        // סה"כ פעמים שהאימון היה בלוח
   completedSessions: number    // כמה פעמים בוצע
   completionRate: number       // אחוז השלמה (0-100)
@@ -49,7 +50,7 @@ export async function getWorkoutPerformance(
       Completed,
       RPE,
       StartTime,
-      Workouts!inner(WorkoutID, Name)
+      Workouts:Calendar_WorkoutID_fkey(WorkoutID, Name, Category)
     `)
     .eq('Email', email)
     .gte('StartTime', startDate)
@@ -65,6 +66,7 @@ export async function getWorkoutPerformance(
   // Group by WorkoutID
   const workoutMap = new Map<number, {
     workoutName: string
+    workoutCategory: string | null
     sessions: any[]
     completedSessions: any[]
   }>()
@@ -75,10 +77,13 @@ export async function getWorkoutPerformance(
 
     // @ts-ignore - Supabase nested type
     const workoutName = entry.Workouts?.Name || `Workout ${workoutId}`
+    // @ts-ignore
+    const workoutCategory = entry.Workouts?.Category || null
     
     if (!workoutMap.has(workoutId)) {
       workoutMap.set(workoutId, {
         workoutName,
+        workoutCategory,
         sessions: [],
         completedSessions: []
       })
@@ -117,6 +122,7 @@ export async function getWorkoutPerformance(
     workouts.push({
       workoutId,
       workoutName: data.workoutName,
+      workoutCategory: data.workoutCategory,
       totalSessions,
       completedSessions,
       completionRate,

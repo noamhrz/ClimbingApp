@@ -119,6 +119,14 @@ export default function UserHeader() {
           >
             📊 סטטיסטיקות
           </Link>
+
+          {/* Profile Link */}
+          <Link
+            href="/profile"
+            className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 backdrop-blur-sm px-3 py-1.5 rounded-lg transition-all whitespace-nowrap text-sm font-medium border-2 border-indigo-400 hover:border-indigo-300 shadow-lg"
+          >
+            👤 פרופיל
+          </Link>
           
           {/* Coach/Admin only links */}
           {(currentUser?.Role === 'coach' || currentUser?.Role === 'admin') && (

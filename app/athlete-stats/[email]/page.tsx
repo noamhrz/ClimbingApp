@@ -13,6 +13,12 @@ import type { ProfileMetrics } from '@/lib/athlete-stats-metrics'
 import { getClimbingPerformance } from '@/lib/climbing-stats-metrics'
 import type { ClimbingPerformance } from '@/lib/climbing-stats-metrics'
 import { ClimbingStatsDisplay } from '@/components/climbing-stats-display'
+import { getWorkoutPerformance } from '@/lib/workout-stats-metrics'
+import type { WorkoutPerformance } from '@/lib/workout-stats-metrics'
+import { WorkoutStatsDisplay } from '@/components/workout-stats-display'
+import { getExercisePerformance } from '@/lib/exercise-stats-metrics'
+import type { ExercisePerformance } from '@/lib/exercise-stats-metrics'
+import { ExerciseStatsDisplay } from '@/components/exercise-stats-display'
 
 interface PageProps {
   params: Promise<{ email: string }>
@@ -27,6 +33,8 @@ export default function ProfilePage({ params }: PageProps) {
   const [users, setUsers] = useState<Array<{ Email: string; Name: string }>>([])
   const [metrics, setMetrics] = useState<ProfileMetrics | null>(null)
   const [climbingPerformance, setClimbingPerformance] = useState<ClimbingPerformance | null>(null)
+  const [workoutPerformance, setWorkoutPerformance] = useState<WorkoutPerformance | null>(null)
+  const [exercisePerformance, setExercisePerformance] = useState<ExercisePerformance | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -98,14 +106,18 @@ export default function ProfilePage({ params }: PageProps) {
     setError(null)
 
     try {
-      // Load both metrics in parallel
-      const [metricsData, climbingData] = await Promise.all([
+      // Load all metrics in parallel
+      const [metricsData, climbingData, workoutData, exerciseData] = await Promise.all([
         getProfileMetrics(selectedEmail, startDate, endDate),
-        getClimbingPerformance(selectedEmail, startDate, endDate)
+        getClimbingPerformance(selectedEmail, startDate, endDate),
+        getWorkoutPerformance(selectedEmail, startDate, endDate),
+        getExercisePerformance(selectedEmail, startDate, endDate)
       ])
       
       setMetrics(metricsData)
       setClimbingPerformance(climbingData)
+      setWorkoutPerformance(workoutData)
+      setExercisePerformance(exerciseData)
     } catch (error) {
       console.error('Error loading metrics:', error)
       setError(error instanceof Error ? error.message : 'שגיאה בטעינת נתונים')
@@ -313,6 +325,20 @@ export default function ProfilePage({ params }: PageProps) {
       {climbingPerformance && (
         <div className="mb-8">
           <ClimbingStatsDisplay performance={climbingPerformance} />
+        </div>
+      )}
+
+      {/* Workout Performance Stats */}
+      {workoutPerformance && (
+        <div className="mb-8">
+          <WorkoutStatsDisplay performance={workoutPerformance} />
+        </div>
+      )}
+
+      {/* Exercise Performance Stats */}
+      {exercisePerformance && (
+        <div className="mb-8">
+          <ExerciseStatsDisplay performance={exercisePerformance} />
         </div>
       )}
 
