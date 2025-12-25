@@ -17,6 +17,9 @@ export function ExerciseStatsDisplay({ performance }: ExerciseStatsDisplayProps)
   
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
   
+  const bodyWeightKG = performance.bodyWeightKG || 70
+  const maxScaleKG = bodyWeightKG * 1.5 // BW + 50%
+  
   if (performance.exercises.length === 0) {
     return (
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-8 text-center">
@@ -82,7 +85,13 @@ export function ExerciseStatsDisplay({ performance }: ExerciseStatsDisplayProps)
 
       {/* Category Sections */}
       {Object.entries(filteredExercises).map(([category, exercises]) => (
-        <CategorySection key={category} category={category} exercises={exercises} />
+        <CategorySection 
+          key={category} 
+          category={category} 
+          exercises={exercises}
+          bodyWeightKG={bodyWeightKG}
+          maxScaleKG={maxScaleKG}
+        />
       ))}
     </div>
   )
@@ -131,7 +140,17 @@ function getCategoryIcon(category: string): string {
 // Category Section
 // ═══════════════════════════════════════════════════════════════════
 
-function CategorySection({ category, exercises }: { category: string; exercises: ExerciseStats[] }) {
+function CategorySection({ 
+  category, 
+  exercises,
+  bodyWeightKG,
+  maxScaleKG
+}: { 
+  category: string
+  exercises: ExerciseStats[]
+  bodyWeightKG: number
+  maxScaleKG: number
+}) {
   return (
     <div className="bg-white rounded-lg shadow-lg border-2 border-gray-200">
       {/* Category Header */}
@@ -146,7 +165,12 @@ function CategorySection({ category, exercises }: { category: string; exercises:
       {/* Exercises */}
       <div className="p-6 space-y-6">
         {exercises.map((exercise) => (
-          <ExerciseCard key={exercise.exerciseId} exercise={exercise} />
+          <ExerciseCard 
+            key={exercise.exerciseId} 
+            exercise={exercise}
+            bodyWeightKG={bodyWeightKG}
+            maxScaleKG={maxScaleKG}
+          />
         ))}
       </div>
     </div>
@@ -157,7 +181,15 @@ function CategorySection({ category, exercises }: { category: string; exercises:
 // Exercise Card
 // ═══════════════════════════════════════════════════════════════════
 
-function ExerciseCard({ exercise }: { exercise: ExerciseStats }) {
+function ExerciseCard({ 
+  exercise,
+  bodyWeightKG,
+  maxScaleKG
+}: { 
+  exercise: ExerciseStats
+  bodyWeightKG: number
+  maxScaleKG: number
+}) {
   return (
     <div className="border-2 border-gray-200 rounded-lg p-4 hover:border-purple-300 transition">
       {/* Exercise Name */}
@@ -170,6 +202,8 @@ function ExerciseCard({ exercise }: { exercise: ExerciseStats }) {
           stats={exercise.rightHand} 
           color="green"
           maxValue={exercise.rightHand.max}
+          bodyWeightKG={bodyWeightKG}
+          maxScaleKG={maxScaleKG}
         />
       )}
 
@@ -181,6 +215,8 @@ function ExerciseCard({ exercise }: { exercise: ExerciseStats }) {
           color={exercise.imbalance?.status === 'critical' ? 'red' : 
                  exercise.imbalance?.status === 'warning' ? 'yellow' : 'green'}
           maxValue={exercise.rightHand?.max || exercise.leftHand.max}
+          bodyWeightKG={bodyWeightKG}
+          maxScaleKG={maxScaleKG}
         />
       )}
 
@@ -191,6 +227,8 @@ function ExerciseCard({ exercise }: { exercise: ExerciseStats }) {
           stats={exercise.bothHands} 
           color="blue"
           maxValue={exercise.bothHands.max}
+          bodyWeightKG={bodyWeightKG}
+          maxScaleKG={maxScaleKG}
         />
       )}
 
@@ -210,19 +248,23 @@ function HandStatsBar({
   label, 
   stats, 
   color,
-  maxValue 
+  maxValue,
+  bodyWeightKG,
+  maxScaleKG
 }: { 
   label: string
   stats: HandStats
   color: 'green' | 'red' | 'yellow' | 'blue'
   maxValue: number
+  bodyWeightKG: number
+  maxScaleKG: number
 }) {
   
-  // Global scale: 0-150 KG for all weight exercises
-  const globalMaxKG = 150
-  const effectiveMax = stats.unit === 'KG' ? globalMaxKG : maxValue
+  // Dynamic scale based on body weight (BW × 1.5)
+  // Only for KG exercises, others use their own max
+  const effectiveMaxScale = stats.unit === 'KG' ? maxScaleKG : maxValue
   
-  const percentage = effectiveMax > 0 ? (stats.current / effectiveMax) * 100 : 0
+  const percentage = effectiveMaxScale > 0 ? (stats.current / effectiveMaxScale) * 100 : 0
   
   // Check if this is a bodyweight exercise
   const isBodyWeight = stats.isBodyWeight === true
@@ -254,36 +296,134 @@ function HandStatsBar({
         )}
       </div>
 
-      {/* Progress Bar */}
-      <div className="w-full bg-gray-200 rounded-full h-6 mb-2 relative">
-        <div
-          className={`h-6 rounded-full ${colorClasses[color]} transition-all flex items-center justify-end pr-2`}
-          style={{ width: `${Math.min(percentage, 100)}%` }}
-        >
-          <span className="text-white text-sm font-bold">
-            {formatValue(stats.current, stats.unit, isBodyWeight)}
-          </span>
+      {/* Body Weight - No Bar, just stats in box */}
+      {isBodyWeight ? (
+        <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-2">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-sm text-gray-600 italic">** לא הוזן משקל</p>
+            <span className="text-2xl font-bold text-purple-600">{formatValue(stats.current, stats.unit, isBodyWeight)}</span>
+          </div>
+          {/* Stats for body weight */}
+          <div className="flex items-center gap-4 text-sm text-gray-600">
+            <span>Max: <strong>{formatValue(stats.max, stats.unit, isBodyWeight)}</strong></span>
+            <span>Avg: <strong>{formatValue(stats.avg, stats.unit, isBodyWeight)}</strong></span>
+            <span>Sessions: <strong>{stats.totalSessions}</strong></span>
+          </div>
+          {/* Last 5 for body weight */}
+          {stats.last5.length > 0 && (
+            <div className="mt-2 text-xs text-gray-500">
+              📈 Last 5: {stats.last5.map(v => formatValue(v, stats.unit, isBodyWeight)).join(' → ')}
+            </div>
+          )}
         </div>
-        {/* Scale indicator for KG */}
-        {stats.unit === 'KG' && !isBodyWeight && (
-          <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-400">
-            /{globalMaxKG} KG
-          </span>
-        )}
-      </div>
+      ) : (
+        <>
+          {/* Progress Bar - only for exercises with weight */}
+          <div className="w-full mb-6 relative" dir="ltr">
+            <div className="w-full bg-gray-200 rounded-full h-8 relative overflow-visible">
+              
+              {/* Grid lines and labels for KG exercises */}
+              {stats.unit === 'KG' && (
+                <>
+                  {/* Generate grid lines every 5kg - RTL */}
+                  {Array.from({ length: Math.floor(maxScaleKG / 5) + 1 }, (_, i) => i * 5).map((kg) => {
+                    const position = 100 - (kg / maxScaleKG) * 100  // Flip: 100 - position
+                    const isMajor = kg % 10 === 0 // Every 10kg is major
+                    
+                    if (kg === 0) return null // Skip 0
+                    
+                    return (
+                      <div key={kg}>
+                        {/* Grid line */}
+                        <div 
+                          className={`absolute top-0 bottom-0 ${isMajor ? 'w-0.5 bg-gray-400' : 'w-px bg-gray-300'}`}
+                          style={{ left: `${position}%` }}
+                        />
+                        {/* Label every 10kg */}
+                        {isMajor && (
+                          <div 
+                            className="absolute -top-5 text-xs font-medium text-gray-600 whitespace-nowrap"
+                            style={{ left: `${position}%`, transform: 'translateX(-50%)' }}
+                          >
+                            {kg}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </>
+              )}
+              
+              {/* BW Marker for KG exercises - MUST be visible above bar */}
+              {stats.unit === 'KG' && (
+                <>
+                  {/* White background line for contrast */}
+                  <div 
+                    className="absolute top-0 bottom-0 w-2 bg-white z-20"
+                    style={{ 
+                      left: `${100 - (bodyWeightKG / effectiveMaxScale) * 100}%`,
+                      transform: 'translateX(-50%)'
+                    }}
+                  />
+                  {/* Black vertical line on top */}
+                  <div 
+                    className="absolute top-0 bottom-0 w-1 bg-black z-30"
+                    style={{ 
+                      left: `${100 - (bodyWeightKG / effectiveMaxScale) * 100}%`,
+                      transform: 'translateX(-50%)'
+                    }}
+                  />
+                  {/* BW Label - BLACK with strong white outline */}
+                  <div 
+                    className="absolute -top-6 text-sm font-black text-black whitespace-nowrap bg-white px-2 py-1 rounded-md border-2 border-black z-40"
+                    style={{ 
+                      left: `${100 - (bodyWeightKG / effectiveMaxScale) * 100}%`, 
+                      transform: 'translateX(-50%)',
+                      boxShadow: '0 0 0 3px white, 0 3px 6px rgba(0,0,0,0.4)'
+                    }}
+                  >
+                    BW
+                  </div>
+                </>
+              )}
+              
+              {/* Progress bar - aligned to right (RTL) */}
+              <div
+                className={`h-8 rounded-full ${colorClasses[color]} transition-all flex items-center justify-end pr-2 relative z-10`}
+                style={{ 
+                  width: `${Math.min(percentage, 100)}%`,
+                  marginLeft: 'auto'  // Align to right
+                }}
+              >
+                <span className="text-white text-sm font-bold">
+                  {formatValue(stats.current, stats.unit, isBodyWeight)}
+                </span>
+              </div>
+            </div>
+            
+            {/* Scale labels - RTL */}
+            {stats.unit === 'KG' && (
+              <div className="flex justify-between mt-1">
+                <span className="text-xs text-gray-500">0</span>
+                <span className="text-xs text-gray-500">{maxScaleKG.toFixed(0)} KG</span>
+              </div>
+            )}
+          </div>
 
-      {/* Stats Row */}
-      <div className="flex items-center gap-4 text-sm text-gray-600">
-        <span>Max: <strong>{formatValue(stats.max, stats.unit, isBodyWeight)}</strong></span>
-        <span>Avg: <strong>{formatValue(stats.avg, stats.unit, isBodyWeight)}</strong></span>
-        <span>Sessions: <strong>{stats.totalSessions}</strong></span>
-      </div>
+          {/* Stats Row - only for exercises with bar */}
+          <div className="flex items-center gap-4 text-sm text-gray-600">
+            <span>Max: <strong>{formatValue(stats.max, stats.unit, isBodyWeight)}</strong></span>
+            <span>Avg: <strong>{formatValue(stats.avg, stats.unit, isBodyWeight)}</strong></span>
+            <span>Sessions: <strong>{stats.totalSessions}</strong></span>
+          </div>
 
-      {/* Last 5 Timeline */}
-      {stats.last5.length > 0 && (
-        <div className="mt-2 text-xs text-gray-500">
-          📈 Last 5: {stats.last5.map(v => formatValue(v, stats.unit, isBodyWeight)).join(' → ')}
-        </div>
+          {/* Last 5 Timeline - only for exercises with bar */}
+          {stats.last5.length > 0 && (
+            <div className="mt-2 text-xs text-gray-500">
+              📈 Last 5: {stats.last5.map(v => formatValue(v, stats.unit, isBodyWeight)).join(' → ')}
+            </div>
+          )}
+        </>
       )}
     </div>
   )

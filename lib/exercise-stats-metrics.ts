@@ -44,6 +44,7 @@ export interface ExerciseStats {
 
 export interface ExercisePerformance {
   exercises: ExerciseStats[]
+  bodyWeightKG: number
   dateRange: {
     start: string
     end: string
@@ -61,6 +62,23 @@ export async function getExercisePerformance(
 ): Promise<ExercisePerformance> {
   
   try {
+    // Fetch user's body weight for scale calculation
+    const { data: profileData, error: profileError } = await supabase
+      .from('Profiles')
+      .select('BodyWeightKG')
+      .eq('Email', email)
+      .single()
+    
+    if (profileError) {
+      console.warn('⚠️ Profile fetch error:', profileError)
+    }
+    
+    console.log('📊 Profile data for', email, ':', profileData)
+    
+    const bodyWeightKG = profileData?.BodyWeightKG || 70 // Default to 70kg
+    
+    console.log('⚖️ Body Weight:', bodyWeightKG, 'kg')
+
     // Fetch exercise logs with exercise info
     const { data: logs, error: logsError } = await supabase
       .from('ExerciseLogs')
@@ -181,6 +199,7 @@ export async function getExercisePerformance(
 
     return {
       exercises,
+      bodyWeightKG,
       dateRange: {
         start: startDate,
         end: endDate
