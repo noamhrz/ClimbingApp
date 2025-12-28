@@ -46,7 +46,7 @@ export async function getProfileMetrics(
     .select('CalendarID, Completed')
     .eq('Email', email)
     .gte('StartTime', startDate)
-    .lte('StartTime', endDate)
+    .lte('StartTime', `${endDate}T23:59:59.999`)
 
   if (workoutsError) {
     console.warn('⚠️ Error fetching workouts:', workoutsError)
@@ -66,7 +66,7 @@ export async function getProfileMetrics(
     .select('SleepHours')
     .eq('Email', email)
     .gte('Date', startDate)
-    .lte('Date', endDate)
+    .lte('Date', `${endDate}T23:59:59.999`)
     .not('SleepHours', 'is', null)
     .gt('SleepHours', 0)  // Only include actual reported sleep
 

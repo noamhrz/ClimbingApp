@@ -2,6 +2,7 @@
 // 💪 תצוגת סטטיסטיקות תרגילים
 // ✅ Left vs Right comparison
 // 📊 Progress bars with trend
+// 🔧 RTL FIX: Scale labels now show max on left, 0 on right
 
 'use client'
 
@@ -401,11 +402,11 @@ function HandStatsBar({
               </div>
             </div>
             
-            {/* Scale labels - RTL */}
+            {/* Scale labels - RTL FIXED */}
             {stats.unit === 'KG' && (
               <div className="flex justify-between mt-1">
-                <span className="text-xs text-gray-500">0</span>
                 <span className="text-xs text-gray-500">{maxScaleKG.toFixed(0)} KG</span>
+                <span className="text-xs text-gray-500">0</span>
               </div>
             )}
           </div>

@@ -15,12 +15,6 @@ export function WorkoutStatsDisplay({ performance }: WorkoutStatsDisplayProps) {
   
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
   
-  console.log('🏋️ Workout Performance Data:', performance)
-  console.log('📊 Workouts with categories:', performance.workouts.map(w => ({
-    name: w.workoutName,
-    category: w.workoutCategory
-  })))
-  
   if (performance.workouts.length === 0) {
     return (
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-8 text-center">
@@ -155,11 +149,7 @@ function getCategoryIcon(category: string): string {
     'אחר': '📋'
   }
   
-  const icon = icons[category]
-  if (!icon) {
-    console.log(`⚠️ Unknown category: "${category}"`)
-  }
-  return icon || '📋'
+  return icons[category] || '📋'
 }
 
 // ═══════════════════════════════════════════════════════════════════

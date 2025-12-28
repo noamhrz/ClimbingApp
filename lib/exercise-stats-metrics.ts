@@ -73,11 +73,7 @@ export async function getExercisePerformance(
       console.warn('⚠️ Profile fetch error:', profileError)
     }
     
-    console.log('📊 Profile data for', email, ':', profileData)
-    
     const bodyWeightKG = profileData?.BodyWeightKG || 70 // Default to 70kg
-    
-    console.log('⚖️ Body Weight:', bodyWeightKG, 'kg')
 
     // Fetch exercise logs with exercise info
     const { data: logs, error: logsError } = await supabase
@@ -95,7 +91,7 @@ export async function getExercisePerformance(
       `)
       .eq('Email', email)
       .gte('CreatedAt', startDate)
-      .lte('CreatedAt', endDate)
+      .lte('CreatedAt', `${endDate}T23:59:59.999`)
       .eq('Completed', true)
       .order('CreatedAt', { ascending: true })
 
@@ -181,12 +177,15 @@ export async function getExercisePerformance(
         stats.bothHands = calculateHandStats(data.bothLogs, data.isDuration)
       }
 
-      // Calculate imbalance if single hand exercise
-      if (data.isSingleHand && stats.rightHand && stats.leftHand) {
-        stats.imbalance = calculateImbalance(stats.rightHand, stats.leftHand)
-      }
+      // Only add exercises with valid data
+      if (stats.rightHand || stats.leftHand || stats.bothHands) {
+        // Calculate imbalance if single hand exercise
+        if (data.isSingleHand && stats.rightHand && stats.leftHand) {
+          stats.imbalance = calculateImbalance(stats.rightHand, stats.leftHand)
+        }
 
-      exercises.push(stats)
+        exercises.push(stats)
+      }
     }
 
     // Sort by category, then by exercise name
@@ -241,10 +240,14 @@ function calculateHandStats(logs: any[], isDuration: boolean = false): HandStats
     values = logs.map(l => l.DurationSec || 0).filter(v => v > 0)
   } else if (hasReps) {
     // Priority 3: Body Weight exercise (has reps but no weight)
-    unit = 'KG'
+    unit = 'reps'
     isBodyWeight = true
-    // Use reps as placeholder, will display as "Body Weight"
     values = logs.map(l => l.RepsDone || 0).filter(v => v > 0)
+  } else if (hasDuration) {
+    // Duration without reps or weight
+    unit = 'seconds'
+    isBodyWeight = true
+    values = logs.map(l => l.DurationSec || 0).filter(v => v > 0)
   } else {
     // Fallback
     unit = 'reps'
@@ -254,17 +257,8 @@ function calculateHandStats(logs: any[], isDuration: boolean = false): HandStats
   // Note: RepsDone can coexist with Weight or Duration as a secondary metric
 
   if (values.length === 0) {
-    return {
-      current: 0,
-      max: 0,
-      avg: 0,
-      stdDev: 0,
-      trend: 0,
-      last5: [],
-      totalSessions: 0,
-      unit,
-      isBodyWeight: false
-    }
+    // No valid data - return null instead of empty stats
+    return null as any  // Will be filtered out
   }
 
   // Calculate stats
@@ -358,11 +352,13 @@ function calculateImbalance(
 export function formatValue(value: number, unit: string, isBodyWeight?: boolean): string {
   if (unit === 'KG') {
     if (isBodyWeight) {
-      return 'Body Weight'
+      return 'Body Weight'  // Only if no other data
     }
     return `${value.toFixed(1)} KG`
   } else if (unit === 'seconds') {
     return `${value.toFixed(0)}s`
+  } else if (unit === 'reps') {
+    return `${value.toFixed(0)} reps`
   } else {
     return `${value.toFixed(0)} reps`
   }

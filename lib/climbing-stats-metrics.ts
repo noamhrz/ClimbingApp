@@ -56,7 +56,7 @@ export async function getClimbingPerformance(
     .select('ClimbingLogID, ClimbType, GradeID, Attempts, Successful, LogDateTime')
     .eq('Email', email)
     .gte('LogDateTime', startDate)
-    .lte('LogDateTime', endDate)
+    .lte('LogDateTime', `${endDate}T23:59:59.999`)
     .order('LogDateTime', { ascending: false })
 
   if (error) {

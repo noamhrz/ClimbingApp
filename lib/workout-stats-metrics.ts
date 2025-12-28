@@ -54,7 +54,7 @@ export async function getWorkoutPerformance(
     `)
     .eq('Email', email)
     .gte('StartTime', startDate)
-    .lte('StartTime', endDate)
+    .lte('StartTime', `${endDate}T23:59:59.999`)
     .not('WorkoutID', 'is', null)
     .order('StartTime', { ascending: false })
 

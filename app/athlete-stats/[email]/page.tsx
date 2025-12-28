@@ -4,8 +4,8 @@
 
 'use client'
 
-import { use, useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
+import { useRouter, useParams } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
 import { supabase } from '@/lib/supabaseClient'
 import { getProfileMetrics } from '@/lib/athlete-stats-metrics'
@@ -20,22 +20,19 @@ import { getExercisePerformance } from '@/lib/exercise-stats-metrics'
 import type { ExercisePerformance } from '@/lib/exercise-stats-metrics'
 import { ExerciseStatsDisplay } from '@/components/exercise-stats-display'
 
-interface PageProps {
-  params: Promise<{ email: string }>
-}
-
-export default function ProfilePage({ params }: PageProps) {
-  const resolvedParams = use(params)
+export default function ProfilePage() {
+  const params = useParams()
   const { activeUser, currentUser } = useAuth()
   const router = useRouter()
 
-  const [selectedEmail, setSelectedEmail] = useState<string>(decodeURIComponent(resolvedParams.email))
+  const [selectedEmail, setSelectedEmail] = useState<string>('')
   const [users, setUsers] = useState<Array<{ Email: string; Name: string }>>([])
   const [metrics, setMetrics] = useState<ProfileMetrics | null>(null)
   const [climbingPerformance, setClimbingPerformance] = useState<ClimbingPerformance | null>(null)
   const [workoutPerformance, setWorkoutPerformance] = useState<WorkoutPerformance | null>(null)
   const [exercisePerformance, setExercisePerformance] = useState<ExercisePerformance | null>(null)
   const [loading, setLoading] = useState(true)
+  const [refreshLoading, setRefreshLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   // Date range state - default: last 30 days
@@ -46,11 +43,20 @@ export default function ProfilePage({ params }: PageProps) {
     return date.toISOString().split('T')[0]
   })
 
+  // Initialize selectedEmail from params
+  useEffect(() => {
+    if (params.email) {
+      setSelectedEmail(decodeURIComponent(params.email as string))
+    }
+  }, [params.email])
+
   // Check permissions
   const canViewOthers = currentUser?.Role === 'admin' || currentUser?.Role === 'coach'
   const isViewingSelf = selectedEmail === activeUser?.Email
 
   useEffect(() => {
+    if (!selectedEmail) return
+
     // Redirect if user tries to view others without permission
     if (!canViewOthers && selectedEmail !== activeUser?.Email) {
       router.push(`/athlete-stats/${activeUser?.Email}`)
@@ -131,8 +137,10 @@ export default function ProfilePage({ params }: PageProps) {
     router.push(`/athlete-stats/${email}`)
   }
 
-  const handleDateRangeChange = () => {
-    loadMetrics()
+  const handleDateRangeChange = async () => {
+    setRefreshLoading(true)
+    await loadMetrics()
+    setRefreshLoading(false)
   }
 
   if (loading && !metrics) {
@@ -141,6 +149,17 @@ export default function ProfilePage({ params }: PageProps) {
         <div className="text-center">
           <div className="text-2xl mb-2">⏳</div>
           <div className="text-xl">טוען נתונים...</div>
+        </div>
+      </div>
+    )
+  }
+
+  if (!selectedEmail) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="text-2xl mb-2">⏳</div>
+          <div className="text-xl">טוען...</div>
         </div>
       </div>
     )
@@ -191,7 +210,8 @@ export default function ProfilePage({ params }: PageProps) {
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
                 max={endDate}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                disabled={refreshLoading}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
               />
             </div>
             <div className="flex-1 min-w-[200px]">
@@ -204,15 +224,24 @@ export default function ProfilePage({ params }: PageProps) {
                 onChange={(e) => setEndDate(e.target.value)}
                 min={startDate}
                 max={new Date().toISOString().split('T')[0]}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                disabled={refreshLoading}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
               />
             </div>
             <div className="flex items-end">
               <button
                 onClick={handleDateRangeChange}
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
+                disabled={refreshLoading}
+                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               >
-                🔄 רענן
+                {refreshLoading ? (
+                  <>
+                    <span className="animate-spin">⏳</span>
+                    טוען...
+                  </>
+                ) : (
+                  '🔄 רענן'
+                )}
               </button>
             </div>
           </div>
