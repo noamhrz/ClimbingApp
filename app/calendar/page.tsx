@@ -217,11 +217,23 @@ export default function CalendarPage() {
     await fetchCalendar()
   }
 
+  // ═══════════════════════════════════════════════════════════════════
+  // ✅ FIXED: handleEventDrop with EstimatedTotalTime
+  // ═══════════════════════════════════════════════════════════════════
   const handleEventDrop = async ({ event, start, end }: any) => {
     const originalStart = moment(event.start)
     const newDate = moment(start)
     const newStart = newDate.hour(originalStart.hour()).minute(originalStart.minute()).second(0).toDate()
-    const newEnd = moment(newStart).add(1, 'hour').toDate()
+    
+    // ✅ FIX: Fetch EstimatedTotalTime for this workout
+    const { data: workoutData } = await supabase
+      .from('Workouts')
+      .select('EstimatedTotalTime')
+      .eq('WorkoutID', event.WorkoutID)
+      .single()
+    
+    const durationMinutes = workoutData?.EstimatedTotalTime || 60
+    const newEnd = moment(newStart).add(durationMinutes, 'minutes').toDate()
 
     try {
       const { error: calendarError } = await supabase
@@ -290,10 +302,21 @@ export default function CalendarPage() {
     }
   }
 
+  // ═══════════════════════════════════════════════════════════════════
+  // ✅ FIXED: handleSaveEditedEvent with EstimatedTotalTime
+  // ═══════════════════════════════════════════════════════════════════
   const handleSaveEditedEvent = async (newDate: Date, newTime: 'morning' | 'afternoon' | 'evening') => {
     if (!selectedEvent) return
 
-    const newEnd = moment(newDate).add(1, 'hour').toDate()
+    // ✅ FIX: Fetch EstimatedTotalTime for this workout
+    const { data: workoutData } = await supabase
+      .from('Workouts')
+      .select('EstimatedTotalTime')
+      .eq('WorkoutID', selectedEvent.WorkoutID)
+      .single()
+    
+    const durationMinutes = workoutData?.EstimatedTotalTime || 60
+    const newEnd = moment(newDate).add(durationMinutes, 'minutes').toDate()
 
     try {
       const { error: calendarError } = await supabase

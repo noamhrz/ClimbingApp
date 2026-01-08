@@ -56,6 +56,9 @@ export default function AddWorkoutModal({
     })
   }
 
+  // ═══════════════════════════════════════════════════════════════════
+  // ✅ FIXED: handleSubmit with EstimatedTotalTime
+  // ═══════════════════════════════════════════════════════════════════
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -68,6 +71,24 @@ export default function AddWorkoutModal({
     setIsSubmitting(true)
 
     try {
+      // ✅ FIX: Fetch EstimatedTotalTime for selected workouts
+      const { data: workoutsData, error: workoutsError } = await supabase
+        .from('Workouts')
+        .select('WorkoutID, EstimatedTotalTime')
+        .in('WorkoutID', selectedWorkoutIds)
+
+      if (workoutsError) {
+        console.error('❌ Error fetching workout durations:', workoutsError)
+        alert('שגיאה בטעינת פרטי אימונים')
+        setIsSubmitting(false)
+        return
+      }
+
+      // Create duration map
+      const durationMap = new Map(
+        (workoutsData || []).map(w => [w.WorkoutID, w.EstimatedTotalTime || 60])
+      )
+
       // Calculate time based on selection
       const baseDate = moment.tz(selectedDate, 'Asia/Jerusalem')
       let hour = 9 // morning default
@@ -75,10 +96,13 @@ export default function AddWorkoutModal({
       if (selectedTime === 'afternoon') hour = 14
       else if (selectedTime === 'evening') hour = 18
 
-      // CHANGED: Create multiple calendar entries
+      // ✅ FIX: Create multiple calendar entries with correct duration
       const calendarEntries = selectedWorkoutIds.map(workoutId => {
         const startTime = baseDate.hour(hour).minute(0).second(0).toDate()
-        const endTime = moment(startTime).add(1, 'hour').toDate()
+        
+        // ✅ Use EstimatedTotalTime instead of hardcoded +1 hour
+        const durationMinutes = durationMap.get(workoutId) || 60
+        const endTime = moment(startTime).add(durationMinutes, 'minutes').toDate()
 
         return {
           Email: email,
