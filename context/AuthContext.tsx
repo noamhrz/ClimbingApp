@@ -1,10 +1,11 @@
-// context/AuthContext.tsx - WITH REAL SUPABASE AUTH
+// context/AuthContext.tsx - WITH REAL SUPABASE AUTH + SESSION EXPIRY REDIRECT
 // CLEANED: Debug logs hidden by default
 'use client'
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { Session } from '@supabase/supabase-js'
+import { useRouter } from 'next/navigation' // ✅ ADDED: Import for redirect
 import { 
   Role, 
   Permission,
@@ -59,12 +60,30 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const router = useRouter() // ✅ ADDED: Router for redirect
+  
   const [currentUser, setCurrentUser] = useState<User | null>(null)
   const [activeUser, setActiveUser] = useState<User | null>(null)
   const [availableUsers, setAvailableUsers] = useState<User[]>([])
   const [traineeEmails, setTraineeEmails] = useState<Set<string>>(new Set())
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
+
+  // ═══════════════════════════════════════════════════════════════════
+  // ✅ ADDED: Redirect to root if session expires
+  // ═══════════════════════════════════════════════════════════════════
+  useEffect(() => {
+    // Only check after initial loading is complete
+    if (!loading && !session && typeof window !== 'undefined') {
+      const currentPath = window.location.pathname
+      
+      // Don't redirect if already on root or login (prevents infinite loop)
+      if (currentPath !== '/' && currentPath !== '/login') {
+        debugLog('🔒 Session expired, redirecting to root')
+        router.push('/')
+      }
+    }
+  }, [session, loading, router])
 
   // Listen to auth state changes
   useEffect(() => {
