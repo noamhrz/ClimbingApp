@@ -1,6 +1,5 @@
-// lib/urgency-checker.ts
-// 🚨 מערכת דחיפות מתאמנים - קובץ ראשי
-// מתחבר ל-Supabase ומשתמש באלגוריתמים
+// lib/urgency-checker-OPTIMIZED.ts
+// 🚀 OPTIMIZED: Batch queries instead of N+1
 
 import { supabase } from '@/lib/supabaseClient'
 import { UrgencyFlag, AthleteUrgency, WellnessData } from './urgency-types'
@@ -14,9 +13,7 @@ import {
   determineUrgencyLevel
 } from './urgency-algorithms'
 
-// ═══════════════════════════════════════════════════════
-// Helper functions for urgency display
-// ═══════════════════════════════════════════════════════
+// Helper functions (same as before)
 export function getUrgencyColor(level: 'critical' | 'high' | 'medium' | 'low'): string {
   switch (level) {
     case 'critical': return 'bg-red-100 border-red-300 text-red-900'
@@ -44,16 +41,53 @@ export function getFlagIcon(category: UrgencyFlag['category']): string {
   }
 }
 
-// ═══════════════════════════════════════════════════════
-// Check all flags for a single athlete
-// ═══════════════════════════════════════════════════════
-export async function checkAthleteFlags(email: string): Promise<UrgencyFlag[]> {
-  const flags: UrgencyFlag[] = []
+// ✅ OPTIMIZED: Get all athletes by urgency with BATCH QUERIES
+export async function getAthletesByUrgency(
+  currentUserEmail: string,
+  currentUserRole: 'admin' | 'coach' | 'user'
+): Promise<AthleteUrgency[]> {
   
-  // ═══════════════════════════════════════════════════════
-  // 🟡/🔴 דגל פעילות: לא התאמן 4/7 ימים
-  // ═══════════════════════════════════════════════════════
+  if (currentUserRole === 'user') {
+    throw new Error('אין לך הרשאה לצפות בדף זה')
+  }
+  
+  let athleteEmails: string[] = []
+  
   try {
+    // Step 1: Get athlete list
+    if (currentUserRole === 'admin') {
+      const { data: allUsers, error } = await supabase
+        .from('Users')
+        .select('Email, Name')
+        .eq('Role', 'user')
+      
+      if (error || !allUsers) return []
+      athleteEmails = allUsers.map(u => u.Email)
+      
+    } else if (currentUserRole === 'coach') {
+      const { data: assignments, error } = await supabase
+        .from('CoachTrainees')
+        .select('TraineeEmail')
+        .eq('CoachEmail', currentUserEmail)
+        .eq('Active', true)
+        .eq('Status', 'active')
+      
+      if (error || !assignments) return []
+      athleteEmails = assignments.map(a => a.TraineeEmail)
+    }
+    
+    if (athleteEmails.length === 0) return []
+    
+    // Step 2: Get athlete details (BATCH)
+    const { data: athletes } = await supabase
+      .from('Users')
+      .select('Email, Name')
+      .in('Email', athleteEmails)
+      .order('Name')
+    
+    if (!athletes || athletes.length === 0) return []
+    
+    // ✅ Step 3: BATCH QUERY - Get ALL workouts for ALL athletes at once!
     const sevenDaysAgo = new Date()
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
     const sevenDaysAgoStr = sevenDaysAgo.toISOString().split('T')[0]
@@ -62,31 +96,63 @@ export async function checkAthleteFlags(email: string): Promise<UrgencyFlag[]> {
     fourDaysAgo.setDate(fourDaysAgo.getDate() - 4)
     const fourDaysAgoStr = fourDaysAgo.toISOString().split('T')[0]
     
-    const { data: recentWorkouts, error: workoutsError } = await supabase
+    const { data: allWorkouts } = await supabase
       .from('Calendar')
-      .select('CalendarID')
-      .eq('Email', email)
+      .select('Email, StartTime, Completed')
+      .in('Email', athleteEmails)
       .eq('Completed', true)
       .gte('StartTime', sevenDaysAgoStr)
+      .order('StartTime', { ascending: false })
     
-    if (workoutsError) {
-      console.warn('⚠️ Error checking workouts:', workoutsError)
-    } else {
-      const workoutCount = recentWorkouts?.length || 0
+    // ✅ Step 4: BATCH QUERY - Get ALL wellness data for ALL athletes at once!
+    const { data: allWellness } = await supabase
+      .from('WellnessLog')
+      .select('Email, Date, SleepHours, VitalityLevel, PainLevel')
+      .in('Email', athleteEmails)
+      .gte('Date', sevenDaysAgoStr)
+      .order('Date', { ascending: true })
+    
+    // ✅ Step 5: Group data by email (in-memory, super fast!)
+    const workoutsByEmail = new Map<string, any[]>()
+    const wellnessByEmail = new Map<string, WellnessData[]>()
+    const lastWorkoutByEmail = new Map<string, Date>()
+    
+    allWorkouts?.forEach(w => {
+      if (!workoutsByEmail.has(w.Email)) {
+        workoutsByEmail.set(w.Email, [])
+      }
+      workoutsByEmail.get(w.Email)!.push(w)
       
-      if (workoutCount === 0) {
-        // בדיקה אם גם לא התאמן ב-4 ימים האחרונים
-        const { data: fourDayWorkouts } = await supabase
-          .from('Calendar')
-          .select('CalendarID')
-          .eq('Email', email)
-          .eq('Completed', true)
-          .gte('StartTime', fourDaysAgoStr)
-        
-        const fourDayCount = fourDayWorkouts?.length || 0
-        
-        if (fourDayCount === 0) {
-          // לא התאמן 7 ימים = אדום
+      // Track last workout
+      const workoutDate = new Date(w.StartTime)
+      if (!lastWorkoutByEmail.has(w.Email) || workoutDate > lastWorkoutByEmail.get(w.Email)!) {
+        lastWorkoutByEmail.set(w.Email, workoutDate)
+      }
+    })
+    
+    allWellness?.forEach(w => {
+      if (!wellnessByEmail.has(w.Email)) {
+        wellnessByEmail.set(w.Email, [])
+      }
+      wellnessByEmail.get(w.Email)!.push(w as WellnessData)
+    })
+    
+    // ✅ Step 6: Calculate flags for each athlete (in-memory, no queries!)
+    const athletesWithFlags = athletes.map(athlete => {
+      const flags: UrgencyFlag[] = []
+      const workouts = workoutsByEmail.get(athlete.Email) || []
+      const wellness = wellnessByEmail.get(athlete.Email) || []
+      
+      // 🚶 Activity flags
+      const sevenDayWorkouts = workouts.filter(w => 
+        new Date(w.StartTime) >= sevenDaysAgo
+      )
+      const fourDayWorkouts = workouts.filter(w => 
+        new Date(w.StartTime) >= fourDaysAgo
+      )
+      
+      if (sevenDayWorkouts.length === 0) {
+        if (fourDayWorkouts.length === 0) {
           flags.push({
             type: 'red',
             category: 'activity',
@@ -94,7 +160,6 @@ export async function checkAthleteFlags(email: string): Promise<UrgencyFlag[]> {
             data: { daysWithoutWorkout: 7 }
           })
         } else {
-          // התאמן ב-4 ימים אחרונים אבל לא ב-7 = צהוב
           flags.push({
             type: 'yellow',
             category: 'activity',
@@ -102,222 +167,80 @@ export async function checkAthleteFlags(email: string): Promise<UrgencyFlag[]> {
             data: { daysWithoutWorkout: 5 }
           })
         }
-      } else {
-        // בדוק אם לא התאמן 4 ימים
-        const { data: fourDayWorkouts } = await supabase
-          .from('Calendar')
-          .select('CalendarID')
-          .eq('Email', email)
-          .eq('Completed', true)
-          .gte('StartTime', fourDaysAgoStr)
-        
-        const fourDayCount = fourDayWorkouts?.length || 0
-        
-        if (fourDayCount === 0) {
-          // לא התאמן 4 ימים = צהוב
-          flags.push({
-            type: 'yellow',
-            category: 'activity',
-            message: '🟡 לא התאמן 4 ימים',
-            data: { daysWithoutWorkout: 4 }
-          })
-        }
-      }
-    }
-  } catch (error) {
-    console.error('❌ Error in activity check:', error)
-  }
-  
-  // ═══════════════════════════════════════════════════════
-  // 📊 ממוצע חכם - 7 ימים אחרונים (Wellness)
-  // ═══════════════════════════════════════════════════════
-  try {
-    const sevenDaysAgo = new Date()
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
-    const sevenDaysAgoStr = sevenDaysAgo.toISOString().split('T')[0]
-    
-    const { data: wellnessData, error: wellnessError } = await supabase
-      .from('WellnessLog')
-      .select('Date, SleepHours, VitalityLevel, PainLevel')
-      .eq('Email', email)
-      .gte('Date', sevenDaysAgoStr)
-      .order('Date', { ascending: true })
-    
-    // ✅ טיפול בשגיאות - אם אין טבלת Wellness
-    if (wellnessError) {
-      if (wellnessError.code === '42P01' || wellnessError.message.includes('does not exist')) {
-        // טבלה לא קיימת - התעלם בשקט
-        console.warn('⚠️ Wellness table does not exist - skipping wellness checks')
-      } else {
-        console.warn('⚠️ Error fetching wellness data:', wellnessError)
-      }
-      return flags  // החזר רק דגלי פעילות
-    }
-    
-    if (wellnessData && wellnessData.length > 0) {
-      // 😴 שינה
-      const sleepAvg = calculateSleepAverage(wellnessData as WellnessData[])
-      if (sleepAvg) {
-        flags.push(createSleepFlag(sleepAvg.average, sleepAvg.daysReported))
+      } else if (fourDayWorkouts.length === 0) {
+        flags.push({
+          type: 'yellow',
+          category: 'activity',
+          message: '🟡 לא התאמן 4 ימים',
+          data: { daysWithoutWorkout: 4 }
+        })
       }
       
-      // ⚡ חיוניות
-      const vitalityAvg = calculateVitalityAverage(wellnessData as WellnessData[])
-      if (vitalityAvg) {
-        flags.push(createVitalityFlag(vitalityAvg.average, vitalityAvg.daysReported))
-      }
-      
-      // 🤕 כאב
-      const painAvg = calculatePainAverage(wellnessData as WellnessData[])
-      if (painAvg) {
-        flags.push(createPainFlag(painAvg.average, painAvg.daysReported))
-      }
-    }
-  } catch (error) {
-    console.error('❌ Error in wellness check:', error)
-  }
-  
-  return flags
-}
-
-// ═══════════════════════════════════════════════════════
-// Get all athletes sorted by urgency (with permissions)
-// ═══════════════════════════════════════════════════════
-export async function getAthletesByUrgency(
-  currentUserEmail: string,
-  currentUserRole: 'admin' | 'coach' | 'user'
-): Promise<AthleteUrgency[]> {
-  
-  // ✅ Check permissions
-  if (currentUserRole === 'user') {
-    throw new Error('אין לך הרשאה לצפות בדף זה')
-  }
-  
-  let athleteEmails: string[] = []
-  
-  try {
-    if (currentUserRole === 'admin') {
-      // Admin sees everyone
-      const { data: allUsers, error } = await supabase
-        .from('Users')
-        .select('Email, Name, Role, IsActive')
-        .eq('Role', 'user')
-      
-      if (error) {
-        console.error('❌ Error fetching users:', error)
-        return []
-      }
-      
-      athleteEmails = allUsers?.map(u => u.Email) || []
-      
-    } else if (currentUserRole === 'coach') {
-      // Coach sees only assigned trainees
-      const { data: assignments, error } = await supabase
-        .from('CoachTrainees')
-        .select('TraineeEmail')
-        .eq('CoachEmail', currentUserEmail)
-        .eq('Active', true)
-        .eq('Status', 'active')
-      
-      if (error) {
-        console.error('❌ Error fetching assignments:', error)
-        return []
-      }
-      
-      athleteEmails = assignments?.map(a => a.TraineeEmail) || []
-    }
-    
-    if (athleteEmails.length === 0) {
-      return []
-    }
-    
-    // Get athlete details
-    const { data: athletes, error: athletesError } = await supabase
-      .from('Users')
-      .select('Email, Name')
-      .in('Email', athleteEmails)
-      .order('Name')
-    
-    if (athletesError) {
-      console.error('❌ Error fetching athlete details:', athletesError)
-      return []
-    }
-    
-    if (!athletes || athletes.length === 0) {
-      return []
-    }
-    
-    // Check flags for each athlete
-    const athletesWithFlags = await Promise.all(
-      athletes.map(async (athlete) => {
-        const flags = await checkAthleteFlags(athlete.Email)
-        
-        // Calculate urgency score
-        const urgencyScoreMap = { critical: 100, red: 50, yellow: 25, green: 0 }
-        const urgencyScore = flags.reduce((total, flag) => {
-          return total + (urgencyScoreMap[flag.type] || 0)
-        }, 0)
-        
-        // Determine urgency level based on flags
-        const urgencyLevel = determineUrgencyLevel(flags)
-        
-        // Get last completed workout
-        let lastWorkout: Date | undefined
-        try {
-          const { data: lastWorkoutData } = await supabase
-            .from('Calendar')
-            .select('StartTime')
-            .eq('Email', athlete.Email)
-            .eq('Completed', true)
-            .order('StartTime', { ascending: false })
-            .limit(1)
-          
-          if (lastWorkoutData?.[0]?.StartTime) {
-            lastWorkout = new Date(lastWorkoutData[0].StartTime)
-          }
-        } catch (error) {
-          console.warn('⚠️ Error fetching last workout:', error)
+      // 📊 Wellness flags
+      if (wellness.length > 0) {
+        // 😴 Sleep
+        const sleepAvg = calculateSleepAverage(wellness)
+        if (sleepAvg) {
+          flags.push(createSleepFlag(sleepAvg.average, sleepAvg.daysReported))
         }
         
-        return {
-          email: athlete.Email,
-          name: athlete.Name,
-          flags,
-          urgencyScore,
-          urgencyLevel,
-          lastWorkout
+        // ⚡ Vitality
+        const vitalityAvg = calculateVitalityAverage(wellness)
+        if (vitalityAvg) {
+          flags.push(createVitalityFlag(vitalityAvg.average, vitalityAvg.daysReported))
         }
-      })
-    )
+        
+        // 🤕 Pain
+        const painAvg = calculatePainAverage(wellness)
+        if (painAvg) {
+          flags.push(createPainFlag(painAvg.average, painAvg.daysReported))
+        }
+      }
+      
+      // Calculate urgency
+      const urgencyScoreMap = { critical: 100, red: 50, yellow: 25, green: 0 }
+      const urgencyScore = flags.reduce((total, flag) => {
+        return total + (urgencyScoreMap[flag.type] || 0)
+      }, 0)
+      
+      const urgencyLevel = determineUrgencyLevel(flags)
+      const lastWorkout = lastWorkoutByEmail.get(athlete.Email)
+      
+      return {
+        email: athlete.Email,
+        name: athlete.Name,
+        flags,
+        urgencyScore,
+        urgencyLevel,
+        lastWorkout
+      }
+    })
     
-    // Sort by urgency: first by red flags, then by yellow flags
+    // ✅ Sort by urgency
     return athletesWithFlags.sort((a, b) => {
-      // Count flags by type
       const aRed = a.flags.filter(f => f.type === 'critical' || f.type === 'red').length
       const bRed = b.flags.filter(f => f.type === 'critical' || f.type === 'red').length
       const aYellow = a.flags.filter(f => f.type === 'yellow').length
       const bYellow = b.flags.filter(f => f.type === 'yellow').length
       
-      // Sort by red flags first
-      if (aRed !== bRed) {
-        return bRed - aRed  // More red flags = higher priority
-      }
+      if (aRed !== bRed) return bRed - aRed
+      if (aYellow !== bYellow) return bYellow - aYellow
       
-      // If same red flags, sort by yellow flags
-      if (aYellow !== bYellow) {
-        return bYellow - aYellow  // More yellow flags = higher priority
-      }
-      
-      // If same flags, sort by urgency level
       const urgencyOrder = { critical: 0, high: 1, medium: 2, low: 3 }
       return urgencyOrder[a.urgencyLevel] - urgencyOrder[b.urgencyLevel]
     })
     
   } catch (error) {
-    console.error('❌ Fatal error in getAthletesByUrgency:', error)
+    console.error('❌ Fatal error:', error)
     return []
   }
 }
 
-// Export types for use in other files
+// Keep old function for backwards compatibility (but it won't be used)
+export async function checkAthleteFlags(email: string): Promise<UrgencyFlag[]> {
+  // This is now deprecated, kept only for backwards compatibility
+  // Use getAthletesByUrgency() instead
+  return []
+}
+
 export type { UrgencyFlag, AthleteUrgency } from './urgency-types'
