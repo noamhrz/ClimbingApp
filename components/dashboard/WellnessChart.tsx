@@ -1,4 +1,4 @@
-// components/dashboard/WellnessChart.tsx - WITHOUT MOOD
+// components/dashboard/WellnessChart.tsx - FIXED: All dates on axis, smooth line
 'use client'
 
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
@@ -21,9 +21,17 @@ export default function WellnessChart({ data }: Props) {
     )
   }
 
+  // ✅ FIX: Convert 0 values to null (so chart skips them but keeps the date)
+  const processedData = data.map(d => ({
+    date: d.date,
+    sleep: d.sleep > 0 ? d.sleep : null,
+    energy: d.energy > 0 ? d.energy : null,
+    soreness: d.soreness > 0 ? d.soreness : null,
+  }))
+
   return (
     <ResponsiveContainer width="100%" height={300}>
-      <LineChart data={data}>
+      <LineChart data={processedData}>
         <CartesianGrid strokeDasharray="3 3" />
         <XAxis 
           dataKey="date" 
@@ -52,6 +60,7 @@ export default function WellnessChart({ data }: Props) {
           name="😴 שינה"
           dot={{ r: 4 }}
           activeDot={{ r: 6 }}
+          connectNulls={true}  // ✅ Connects across missing days
         />
         <Line 
           type="monotone" 
@@ -61,6 +70,7 @@ export default function WellnessChart({ data }: Props) {
           name="⚡ אנרגיה"
           dot={{ r: 4 }}
           activeDot={{ r: 6 }}
+          connectNulls={true}  // ✅ Connects across missing days
         />
         <Line 
           type="monotone" 
@@ -70,6 +80,7 @@ export default function WellnessChart({ data }: Props) {
           name="💪 כאב"
           dot={{ r: 4 }}
           activeDot={{ r: 6 }}
+          connectNulls={true}  // ✅ Connects across missing days
         />
       </LineChart>
     </ResponsiveContainer>
