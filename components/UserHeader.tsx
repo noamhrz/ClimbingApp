@@ -9,7 +9,6 @@ export default function UserHeader() {
   const { activeUser, currentUser, isImpersonating, switchToSelf, logout } = useAuth()
   const router = useRouter()
 
-  // ✅ Show header even if activeUser is not loaded yet
   const displayUser = activeUser || currentUser
   
   if (!displayUser) return null
@@ -17,14 +16,12 @@ export default function UserHeader() {
   const activeConfig = getRoleConfig(displayUser.Role)
   const currentConfig = currentUser ? getRoleConfig(currentUser.Role) : null
 
-  // Get role image
   const getRoleImage = (role: string) => {
     if (role === 'admin') return '/admin.png'
     if (role === 'coach') return '/coach.png'
     return '/climber.png'
   }
 
-  // ✅ FIXED: Redirect to / (home/login page)
   const handleLogout = async () => {
     await logout()
     router.push('/')
@@ -36,7 +33,6 @@ export default function UserHeader() {
         {/* Top Row - User Info */}
         <div className="flex justify-between items-center mb-3">
           <div className="flex items-center gap-3">
-            {/* Role Image - Large and prominent */}
             <div className="w-16 h-16 bg-white rounded-full p-2 shadow-lg flex items-center justify-center">
               <img 
                 src={getRoleImage(displayUser.Role)}
@@ -46,7 +42,6 @@ export default function UserHeader() {
             </div>
             <div>
               <p className="text-xs text-blue-200">משתמש פעיל:</p>
-              {/* Profile link */}
               <Link 
                 href="/profile"
                 className="font-bold text-lg hover:text-blue-100 transition-colors inline-flex items-center gap-1 group"
@@ -61,7 +56,6 @@ export default function UserHeader() {
           </div>
 
           <div className="flex items-center gap-2">
-            {/* If impersonating - show "Back to Self" */}
             {isImpersonating && (
               <button
                 onClick={switchToSelf}
@@ -74,7 +68,6 @@ export default function UserHeader() {
               </button>
             )}
 
-            {/* Logout Button */}
             <button
               onClick={handleLogout}
               className="bg-red-500 hover:bg-red-600 text-white font-semibold px-4 py-2 rounded-lg transition-all shadow-md flex items-center gap-2"
@@ -120,7 +113,18 @@ export default function UserHeader() {
             📊 סטטיסטיקות
           </Link>
 
-          {/* Profile Link */}
+          {/* Goals Link - Smart routing */}
+          <Link
+            href={
+              currentUser?.Role === 'admin' || currentUser?.Role === 'coach'
+                ? '/goals'
+                : `/goals/${encodeURIComponent((activeUser || currentUser)?.Email || '')}`
+            }
+            className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 backdrop-blur-sm px-3 py-1.5 rounded-lg transition-all whitespace-nowrap text-sm font-medium border-2 border-green-400 hover:border-green-300 shadow-lg"
+          >
+            🎯 יעדים
+          </Link>
+
           <Link
             href="/profile"
             className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 backdrop-blur-sm px-3 py-1.5 rounded-lg transition-all whitespace-nowrap text-sm font-medium border-2 border-indigo-400 hover:border-indigo-300 shadow-lg"
@@ -128,7 +132,6 @@ export default function UserHeader() {
             👤 פרופיל
           </Link>
           
-          {/* Coach/Admin only links */}
           {(currentUser?.Role === 'coach' || currentUser?.Role === 'admin') && (
             <>
               <Link
@@ -158,7 +161,6 @@ export default function UserHeader() {
             </>
           )}
 
-          {/* Admin only links */}
           {currentUser?.Role === 'admin' && (
             <>
               <Link
@@ -171,7 +173,6 @@ export default function UserHeader() {
           )}
         </nav>
 
-        {/* Impersonation Banner */}
         {isImpersonating && currentUser && (
           <div className="mt-3 bg-yellow-500/20 border border-yellow-400/30 rounded-lg px-4 py-2 backdrop-blur-sm">
             <div className="flex items-center justify-between text-sm">
