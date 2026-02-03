@@ -1,16 +1,21 @@
+// components/EventContextMenu.tsx
+// ✅ FIXED: Always centered on screen + Shows event date
+
 'use client'
 
-import { motion, AnimatePresence } from 'framer-motion'
+import { useEffect } from 'react'
+import moment from 'moment'
 
 interface EventContextMenuProps {
   isOpen: boolean
   position: { x: number; y: number }
   onEdit: () => void
   onDelete: () => void
-  onStartNow?: () => void  // Start workout or edit completed workout
+  onStartNow: () => void
   onClose: () => void
   eventTitle: string
-  isCompleted?: boolean  // 🔧 NEW: To show different text
+  isCompleted: boolean
+  eventDate?: Date | string // ✨ NEW: Event date
 }
 
 export default function EventContextMenu({
@@ -21,100 +26,126 @@ export default function EventContextMenu({
   onStartNow,
   onClose,
   eventTitle,
-  isCompleted = false,
+  isCompleted,
+  eventDate
 }: EventContextMenuProps) {
+  useEffect(() => {
+    if (!isOpen) return
+
+    const handleClickOutside = (e: MouseEvent) => {
+      const menu = document.getElementById('context-menu')
+      if (menu && !menu.contains(e.target as Node)) {
+        onClose()
+      }
+    }
+
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose()
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    document.addEventListener('keydown', handleEscape)
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('keydown', handleEscape)
+    }
+  }, [isOpen, onClose])
+
+  if (!isOpen) return null
+
+  // ✅ Format date if provided - with debug
+  console.log('EventContextMenu - eventDate:', eventDate)
+  const formattedDate = eventDate 
+    ? moment(eventDate).format('dddd, DD/MM/YYYY • HH:mm')
+    : null
+  console.log('EventContextMenu - formattedDate:', formattedDate)
+
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <>
-          {/* Backdrop */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-            className="fixed inset-0 bg-black bg-opacity-30 z-50"
-          />
+    <>
+      {/* Backdrop */}
+      <div 
+        className="fixed inset-0 bg-black/40 z-[100] animate-in fade-in duration-200"
+        onClick={onClose}
+      />
 
-          {/* Menu */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9 }}
-            transition={{ type: 'spring', duration: 0.2 }}
-            style={{
-              position: 'fixed',
-              left: `${position.x}px`,
-              top: `${position.y}px`,
-              transform: 'translate(-50%, -50%)',
-            }}
-            className="bg-white rounded-xl shadow-2xl z-50 overflow-hidden min-w-[220px]"
-            dir="rtl"
-          >
-            {/* Header */}
-            <div className="bg-blue-600 px-4 py-3">
-              <h3 className="text-white font-bold text-sm truncate">
-                {eventTitle}
-              </h3>
-            </div>
+      {/* ✅ FIXED: Always centered modal */}
+      <div
+        id="context-menu"
+        className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[101] w-11/12 max-w-sm animate-in zoom-in-95 duration-200"
+        role="menu"
+      >
+        <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
+          {/* Header with Title + Date */}
+          <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-5 py-4">
+            {/* Workout title - FIRST */}
+            <h3 className="font-bold text-white text-xl text-center mb-2">
+              {eventTitle}
+            </h3>
+            
+            {/* ✅ Date below title */}
+            {formattedDate ? (
+              <p className="text-blue-100 text-base text-center font-medium">
+                📅 {formattedDate}
+              </p>
+            ) : (
+              <p className="text-red-300 text-sm text-center">
+                ⚠️ אין מידע על תאריך
+              </p>
+            )}
+          </div>
 
-            {/* Menu Items */}
-            <div className="py-2">
-              {/* 🔧 Start/Edit Now Button - Different text based on completed status */}
-              {onStartNow && (
-                <button
-                  onClick={() => {
-                    onStartNow()
-                    onClose()
-                  }}
-                  className={`w-full px-4 py-3 text-right transition-colors flex items-center gap-3 ${
-                    isCompleted 
-                      ? 'hover:bg-blue-50 text-blue-700' 
-                      : 'hover:bg-green-50 text-green-700'
-                  }`}
-                >
-                  <span className="text-xl">{isCompleted ? '📝' : '▶️'}</span>
-                  <span className="font-medium">
-                    {isCompleted ? 'עריכת אימון' : 'התחל אימון'}
-                  </span>
-                </button>
-              )}
+          {/* Menu Items */}
+          <div className="p-3 space-y-2">
+            {/* Start/View Button */}
+            <button
+              onClick={() => {
+                onClose()
+                onStartNow()
+              }}
+              className={`w-full py-3 px-4 rounded-xl font-semibold text-white transition-all active:scale-95 ${
+                isCompleted
+                  ? 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700'
+                  : 'bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700'
+              }`}
+            >
+              {isCompleted ? '✅ צפה באימון' : '▶️ התחל אימון'}
+            </button>
 
-              <button
-                onClick={() => {
-                  onEdit()
-                  onClose()
-                }}
-                className="w-full px-4 py-3 text-right hover:bg-gray-100 transition-colors flex items-center gap-3"
-              >
-                <span className="text-xl">📅</span>
-                <span className="font-medium">הזז תאריך</span>
-              </button>
+            {/* Edit Date Button */}
+            <button
+              onClick={() => {
+                onClose()
+                onEdit()
+              }}
+              className="w-full py-3 px-4 bg-gray-100 hover:bg-gray-200 rounded-xl font-medium text-gray-700 transition-all active:scale-95"
+            >
+              📅 הזז תאריך
+            </button>
 
-              <button
-                onClick={() => {
-                  onDelete()
-                  onClose()
-                }}
-                className="w-full px-4 py-3 text-right hover:bg-red-50 text-red-600 transition-colors flex items-center gap-3"
-              >
-                <span className="text-xl">🗑️</span>
-                <span className="font-medium">מחק אימון</span>
-              </button>
+            {/* Delete Button */}
+            <button
+              onClick={() => {
+                onClose()
+                onDelete()
+              }}
+              className="w-full py-3 px-4 bg-red-100 hover:bg-red-200 rounded-xl font-medium text-red-700 transition-all active:scale-95"
+            >
+              🗑️ מחק אימון
+            </button>
 
-              <div className="border-t my-2"></div>
-
-              <button
-                onClick={onClose}
-                className="w-full px-4 py-3 text-right hover:bg-gray-100 transition-colors flex items-center gap-3"
-              >
-                <span className="text-xl">❌</span>
-                <span className="font-medium text-gray-600">ביטול</span>
-              </button>
-            </div>
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>
+            {/* Cancel Button */}
+            <button
+              onClick={onClose}
+              className="w-full py-2 px-4 bg-white hover:bg-gray-50 rounded-xl font-medium text-gray-500 transition-all active:scale-95 border border-gray-200"
+            >
+              ביטול
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
   )
 }

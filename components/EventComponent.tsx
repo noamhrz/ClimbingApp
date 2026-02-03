@@ -1,9 +1,9 @@
 // components/EventComponent.tsx
-// Google Calendar Style - NOT clickable in month view
+// Simple: title tooltip + subtle hover effect
 
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useRef } from 'react'
 
 interface CalendarEvent {
   id: number
@@ -15,90 +15,89 @@ interface CalendarEvent {
   WorkoutID: number
   Deloading?: boolean
   DeloadingPercentage?: number | null
-  StartTime?: string | Date
 }
 
-interface Props {
+interface EventComponentProps {
   event: CalendarEvent
   onDelete: (id: number) => void
-  onLongPress: (event: CalendarEvent, position: { x: number; y: number }) => void
-  isAdmin: boolean
-  isMobile: boolean
+  onLongPress?: (event: CalendarEvent, position: { x: number; y: number }) => void
+  isAdmin?: boolean
+  isMobile?: boolean
 }
 
-export default function EventComponent({ event, onDelete, onLongPress, isAdmin, isMobile }: Props) {
-  // Get event color based on status with CORRECT LOGIC
+export default function EventComponent({
+  event,
+  onDelete,
+  onLongPress,
+  isAdmin = false,
+  isMobile = false,
+}: EventComponentProps) {
+  const longPressTimer = useRef<NodeJS.Timeout | null>(null)
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (!isMobile) return
+    
+    longPressTimer.current = setTimeout(() => {
+      const rect = e.currentTarget.getBoundingClientRect()
+      onLongPress?.(event, {
+        x: rect.left + rect.width / 2,
+        y: rect.top + rect.height / 2,
+      })
+    }, 500)
+  }
+
+  const handleTouchEnd = () => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current)
+      longPressTimer.current = null
+    }
+  }
+
+  const handleMouseLeave = () => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current)
+      longPressTimer.current = null
+    }
+  }
+
   const getEventColor = () => {
-    const now = new Date()
-    const eventEnd = new Date(event.end)
-    
-    // אירוע שהושלם - תמיד ירוק
-    if (event.completed) {
-      return '#10b981' // Green - completed
-    }
-    
-    // אירוע דילודינג - ציאן
     if (event.Deloading) {
-      return '#06b6d4' // Cyan - deloading
+      return event.completed ? '#b7f7b3' : '#cce9ff'
     }
     
-    // אירוע שעבר ולא הושלם - אדום (MISSED)
-    if (eventEnd < now && !event.completed) {
-      return '#ef4444' // Red - missed
-    }
+    const now = new Date()
+    const eventDate = new Date(event.start)
+    const isToday = eventDate.toDateString() === now.toDateString()
     
-    // אירוע עתידי - כחול (pending)
-    return '#3b82f6' // Blue - pending
+    if (event.completed) return 'rgb(34 197 94)'
+    if (isToday) return 'rgb(251 191 36)'
+    if (eventDate < now) return 'rgb(239 68 68)'
+    return 'rgb(37 99 235)'
   }
-
-  // Get border color (darker shade)
-  const getBorderColor = () => {
-    const color = getEventColor()
-    switch(color) {
-      case '#10b981': return '#047857' // Dark green
-      case '#06b6d4': return '#0891b2' // Dark cyan
-      case '#ef4444': return '#b91c1c' // Dark red
-      case '#3b82f6': return '#1d4ed8' // Dark blue
-      default: return '#1d4ed8'
-    }
-  }
-
-  const backgroundColor = getEventColor()
-  const borderColor = getBorderColor()
 
   return (
     <div
-      className="h-full rounded-md overflow-hidden flex flex-col justify-center px-2"
-      style={{
-        backgroundColor,
-        borderRight: `4px solid ${borderColor}`,
-        cursor: isMobile ? 'default' : 'pointer',
-      }}
+      className="relative h-full w-full pointer-events-none"
+      onMouseLeave={handleMouseLeave}
     >
-      {/* Event Title */}
       <div
-        className="text-white font-semibold leading-tight"
+        className="h-full w-full px-1 py-1 pointer-events-auto cursor-pointer overflow-hidden transition-all duration-200 hover:brightness-110 hover:shadow-lg"
         style={{
-          fontSize: isMobile ? '11px' : '12px',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap',
+          backgroundColor: getEventColor(),
+          color: 'white',
         }}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+        title={event.title}
       >
-        {event.title}
-      </div>
+        <div className="font-bold text-xs text-center leading-tight truncate">
+          {event.title}
+        </div>
 
-      {/* Status Badges */}
-      <div className="flex gap-1 mt-0.5">
-        {event.completed && (
-          <span className="text-white/90 font-bold" style={{ fontSize: '9px' }}>
-            ✓
-          </span>
-        )}
         {event.Deloading && event.DeloadingPercentage && (
-          <span className="text-white/90 font-bold" style={{ fontSize: '9px' }}>
-            🔵{event.DeloadingPercentage}%
-          </span>
+          <div className="absolute top-0 right-0 bg-blue-600 text-white text-[10px] px-1 rounded-bl">
+            {event.DeloadingPercentage}%
+          </div>
         )}
       </div>
     </div>

@@ -54,7 +54,7 @@ export default function CalendarPage() {
   const [events, setEvents] = useState<CalendarEvent[]>([])
   const [workouts, setWorkouts] = useState<Workout[]>([])
   const [loading, setLoading] = useState(true)
-  const [view, setView] = useState<View>('day') // DEFAULT = DAY VIEW
+  const [view, setView] = useState<View>('day')
   const [date, setDate] = useState(new Date())
   const [isMobile, setIsMobile] = useState(false)
   const [showAddModal, setShowAddModal] = useState(false)
@@ -178,7 +178,6 @@ export default function CalendarPage() {
   }
 
   const handleSelectSlot = (slotInfo: any) => {
-    // אם במצב הוספת אימון
     if (isSelectingDate) {
       if (!activeEmail) return
       setModalInitialDate(slotInfo.start)
@@ -187,7 +186,6 @@ export default function CalendarPage() {
       return
     }
     
-    // אחרת - מעבר לתצוגת יום של התאריך שנלחץ
     setDate(slotInfo.start)
     setView('day')
   }
@@ -198,14 +196,12 @@ export default function CalendarPage() {
       return
     }
     
-    // ✨ אם בתצוגת יום - פתח modal ישירות עם התאריך הנוכחי
     if (view === 'day') {
       setModalInitialDate(date)
       setShowAddModal(true)
       return
     }
     
-    // אחרת (תצוגת חודש) - מצב בחירת תאריך רגיל
     setIsSelectingDate(true)
   }
 
@@ -217,15 +213,11 @@ export default function CalendarPage() {
     await fetchCalendar()
   }
 
-  // ═══════════════════════════════════════════════════════════════════
-  // ✅ FIXED: handleEventDrop with EstimatedTotalTime
-  // ═══════════════════════════════════════════════════════════════════
   const handleEventDrop = async ({ event, start, end }: any) => {
     const originalStart = moment(event.start)
     const newDate = moment(start)
     const newStart = newDate.hour(originalStart.hour()).minute(originalStart.minute()).second(0).toDate()
     
-    // ✅ FIX: Fetch EstimatedTotalTime for this workout
     const { data: workoutData } = await supabase
       .from('Workouts')
       .select('EstimatedTotalTime')
@@ -302,13 +294,9 @@ export default function CalendarPage() {
     }
   }
 
-  // ═══════════════════════════════════════════════════════════════════
-  // ✅ FIXED: handleSaveEditedEvent with EstimatedTotalTime
-  // ═══════════════════════════════════════════════════════════════════
   const handleSaveEditedEvent = async (newDate: Date, newTime: 'morning' | 'afternoon' | 'evening') => {
     if (!selectedEvent) return
 
-    // ✅ FIX: Fetch EstimatedTotalTime for this workout
     const { data: workoutData } = await supabase
       .from('Workouts')
       .select('EstimatedTotalTime')
@@ -377,18 +365,15 @@ export default function CalendarPage() {
     await fetchCalendar()
   }
 
-  // Navigation handler for day view
   const handleNavigate = (newDate: Date) => {
     setDate(newDate)
   }
 
-  // Back to month view (disabled on mobile to prevent accidental swipe gestures)
   const handleBackToMonth = () => {
-    if (isMobile) return // Don't switch views on mobile - prevents accidental swipe/scroll gestures
+    if (isMobile) return
     setView('month')
   }
 
-  // Use DnD only when NOT in month view
   const ActiveCalendar = (isMobile || view === 'month') ? BigCalendar : DnDCalendar
 
   if (authLoading) {
@@ -425,13 +410,11 @@ export default function CalendarPage() {
 
   return (
     <div dir="rtl" className="min-h-screen bg-gray-50 pb-20">
-      {/* Page Title with View Selector */}
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
             <h1 className="text-xl font-bold text-blue-600">📅 לוח אימונים</h1>
             
-            {/* Simple View Selector - Only Month + Day */}
             <div className="flex gap-2">
               <button
                 onClick={() => setView('day')}
@@ -458,7 +441,6 @@ export default function CalendarPage() {
         </div>
       </div>
 
-      {/* Floating Add Button */}
       <button
         onClick={handleAddButtonClick}
         className={`fixed bottom-28 left-6 text-white text-3xl rounded-full w-16 h-16 shadow-lg hover:shadow-xl transition-all duration-200 z-40 flex items-center justify-center ${
@@ -471,7 +453,6 @@ export default function CalendarPage() {
         +
       </button>
 
-      {/* Date Selection Message */}
       {isSelectingDate && (
         <div className="fixed top-20 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-orange-500 to-orange-600 text-white px-6 py-4 rounded-xl shadow-2xl z-50 animate-bounce pointer-events-none">
           <div className="text-center">
@@ -488,7 +469,6 @@ export default function CalendarPage() {
         </div>
       )}
 
-      {/* Modals */}
       {activeEmail && (
         <>
           <AddWorkoutModal
@@ -535,6 +515,7 @@ export default function CalendarPage() {
             onClose={() => setShowContextMenu(false)}
             eventTitle={selectedEvent.title}
             isCompleted={selectedEvent.completed}
+            eventDate={selectedEvent.start}
           />
           
           <EditEventModal
@@ -547,7 +528,6 @@ export default function CalendarPage() {
         </>
       )}
 
-      {/* Admin Actions */}
       {isAdmin && (
         <div className="fixed bottom-28 right-6 flex flex-col gap-2 z-40">
           <button
@@ -581,10 +561,8 @@ export default function CalendarPage() {
         </div>
       )}
 
-      {/* Calendar Content */}
       <div className="max-w-7xl mx-auto p-4">
         <div className="bg-white rounded-xl shadow-sm p-4 overflow-hidden">
-          {/* Simple: Day view or Month view */}
           {view === 'day' ? (
             <DayListView
               events={events}
@@ -602,16 +580,18 @@ export default function CalendarPage() {
               endAccessor={"end" as any}
               style={{ height: 'calc(100vh - 150px)', minHeight: '600px' }}
               views={['month', 'week', 'day']}
-              view={'month'}
+              view={"month" as View}
               date={date}
               onView={() => {}}
               onNavigate={(newDate: Date) => setDate(newDate)}
               popup={false}
-              onSelectEvent={!isMobile ? (event: any, e: any) => {
-                e.preventDefault()
-                e.stopPropagation()
+              onSelectEvent={(event: any, e: any) => {
+                if (e) {
+                  e.preventDefault()
+                  e.stopPropagation()
+                }
                 handleSelectEvent(event, e)
-              } : undefined}
+              }}
               selectable={true}
               onSelectSlot={handleSelectSlot}
               resizable={!isMobile && !isSelectingDate && view !== 'month'}
