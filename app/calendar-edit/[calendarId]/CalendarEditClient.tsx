@@ -1,5 +1,5 @@
 // app/calendar-edit/[calendarId]/CalendarEditClient.tsx
-// ✨ UPDATED VERSION - with Blocks, Workout Info Display & Exercise Goals
+// ✨ FIXED VERSION - Proper save handling, no premature navigation
 
 'use client'
 
@@ -26,7 +26,7 @@ export default function CalendarEditClient() {
   const [workout, setWorkout] = useState<any>(null)
   const [exerciseForms, setExerciseForms] = useState<any[]>([])
   
-  // New climbing state
+  // Climbing state
   const [routes, setRoutes] = useState<ClimbingRoute[]>([])
   const [selectedLocation, setSelectedLocation] = useState<number | null>(null)
   const [selectedBoardType, setSelectedBoardType] = useState<number | null>(null)
@@ -34,21 +34,24 @@ export default function CalendarEditClient() {
   const [leadGrades, setLeadGrades] = useState<LeadGrade[]>([])
   const [boulderGrades, setBoulderGrades] = useState<BoulderGrade[]>([])
   const [locations, setLocations] = useState<ClimbingLocation[]>([])
-  const [locationSearch, setLocationSearch] = useState('') // Search filter for locations
+  const [locationSearch, setLocationSearch] = useState('')
   const [boardTypes, setBoardTypes] = useState<BoardType[]>([])
   const [climberNotes, setClimberNotes] = useState('')
   const [loading, setLoading] = useState(true)
 
-  // Track which routes existed in DB (for UPDATE vs INSERT)
+  // Track which routes existed in DB
   const [existingLogIds, setExistingLogIds] = useState<Map<string, number>>(new Map())
 
-  // NEW: Add location modal state
+  // Location modal state
   const [showAddLocationModal, setShowAddLocationModal] = useState(false)
   const [newLocationName, setNewLocationName] = useState('')
   const [savingLocation, setSavingLocation] = useState(false)
 
-  // ✨ NEW: Track which exercise accordions are open (by ExerciseID)
+  // Track open exercises
   const [openExercises, setOpenExercises] = useState<Set<number>>(new Set())
+
+  // ✅ NEW: Saving state
+  const [isSaving, setIsSaving] = useState(false)
 
   // Toast notification state
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
@@ -58,7 +61,7 @@ export default function CalendarEditClient() {
     setTimeout(() => setToast(null), 3000)
   }
 
-  // NEW: Load locations function
+  // Load locations
   const loadLocations = async () => {
     const { data } = await supabase
       .from('ClimbingLocations')
@@ -68,7 +71,7 @@ export default function CalendarEditClient() {
     setLocations(data || [])
   }
 
-  // NEW: Add new location
+  // Add new location
   const handleAddLocation = async () => {
     if (!newLocationName.trim()) {
       showToast('⚠️ יש להזין שם מיקום', 'error')
@@ -81,22 +84,17 @@ export default function CalendarEditClient() {
         .from('ClimbingLocations')
         .insert({
           LocationName: newLocationName.trim(),
-          LocationType: 'Indoor', // Default
-          City: '', // Can be filled later
-          Country: 'Israel' // Default
+          LocationType: 'Indoor',
+          City: '',
+          Country: 'Israel'
         })
         .select()
         .single()
 
       if (error) throw error
 
-      // Refresh locations list
       await loadLocations()
-
-      // Auto-select new location
       setSelectedLocation(data.LocationID)
-
-      // Close modal and reset
       setShowAddLocationModal(false)
       setNewLocationName('')
 
@@ -119,7 +117,20 @@ export default function CalendarEditClient() {
     )
   }, [locations, locationSearch])
 
-  // ✨ טעינת נתונים - UPDATED WITH BLOCKS & GOALS
+  // ✅ Block navigation during save
+  useEffect(() => {
+    if (!isSaving) return
+
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault()
+      e.returnValue = 'שמירה בתהליך - האם אתה בטוח שברצונך לעזוב?'
+    }
+
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+  }, [isSaving])
+
+  // Load data
   useEffect(() => {
     const load = async () => {
       if (!calendarId) return
@@ -143,7 +154,7 @@ export default function CalendarEditClient() {
           .maybeSingle()
         setWorkout(w)
 
-        // ✨ UPDATED: Load WorkoutsExercises with Block, Sets, Reps, Duration, Rest
+        // Load WorkoutsExercises with Block, Sets, Reps, Duration, Rest
         const { data: rels } = await supabase
           .from('WorkoutsExercises')
           .select('ExerciseID, Block, Sets, Reps, Duration, Rest, Order')
@@ -152,7 +163,7 @@ export default function CalendarEditClient() {
 
         const ids = rels?.map((r) => r.ExerciseID) || []
 
-        // Load Exercises with IsSingleHand, isDuration
+        // Load Exercises
         const { data: exs } = await supabase
           .from('Exercises')
           .select('ExerciseID, Name, Description, IsSingleHand, isDuration, ImageURL, VideoURL')
@@ -166,10 +177,8 @@ export default function CalendarEditClient() {
 
         const mappedExercises =
           exs?.map((ex) => {
-            // Find WorkoutsExercises data for this exercise
             const weData = rels?.find(r => r.ExerciseID === ex.ExerciseID)
             
-            // ✨ UPDATED: טיפול ב-Single Hand - מחפש רשומות לפי HandSide
             if (ex.IsSingleHand) {
               const logRight = logs?.find((l) => l.ExerciseID === ex.ExerciseID && l.HandSide === 'Right')
               const logLeft = logs?.find((l) => l.ExerciseID === ex.ExerciseID && l.HandSide === 'Left')
@@ -185,14 +194,12 @@ export default function CalendarEditClient() {
                 ImageURL: ex.ImageURL,
                 VideoURL: ex.VideoURL,
                 
-                // ✨ NEW: Exercise Goals from WorkoutsExercises
                 Block: weData?.Block || 1,
                 Sets: weData?.Sets || null,
                 Reps: weData?.Reps || null,
                 Duration: weData?.Duration || null,
                 Rest: weData?.Rest || null,
                 
-                // Right hand
                 RepsDone: logRight?.RepsDone ?? null,
                 DurationSec: logRight?.DurationSec ?? null,
                 WeightKG: logRight?.WeightKG ?? null,
@@ -200,7 +207,6 @@ export default function CalendarEditClient() {
                 Notes: logRight?.Notes ?? '',
                 Completed: logRight?.Completed ?? false,
                 
-                // Left hand
                 RepsDoneLeft: logLeft?.RepsDone ?? null,
                 DurationSecLeft: logLeft?.DurationSec ?? null,
                 WeightKGLeft: logLeft?.WeightKG ?? null,
@@ -209,7 +215,6 @@ export default function CalendarEditClient() {
                 CompletedLeft: logLeft?.Completed ?? false,
               }
             } else {
-              // Regular exercise - look for HandSide='Both'
               const log = logs?.find((l) => l.ExerciseID === ex.ExerciseID && l.HandSide === 'Both')
               return {
                 ExerciseLogID: log?.ExerciseLogID || null,
@@ -221,7 +226,6 @@ export default function CalendarEditClient() {
                 ImageURL: ex.ImageURL,
                 VideoURL: ex.VideoURL,
                 
-                // ✨ NEW: Exercise Goals from WorkoutsExercises
                 Block: weData?.Block || 1,
                 Sets: weData?.Sets || null,
                 Reps: weData?.Reps || null,
@@ -251,7 +255,7 @@ export default function CalendarEditClient() {
         setLocations(loc.data || [])
         setBoardTypes(bt.data || [])
 
-        // Load existing ClimbingLogs and convert to ClimbingRoute format
+        // Load existing ClimbingLogs
         const { data: climbLogs } = await supabase
           .from('ClimbingLog')
           .select('*')
@@ -294,6 +298,7 @@ export default function CalendarEditClient() {
         }
       } catch (err) {
         console.error('❌ Error loading data:', err)
+        showToast('❌ שגיאה בטעינת נתונים', 'error')
       } finally {
         setLoading(false)
       }
@@ -301,7 +306,7 @@ export default function CalendarEditClient() {
     load()
   }, [calendarId])
 
-  // ✨ NEW: Group exercises by Block
+  // Group exercises by Block
   const exercisesByBlock = useMemo(() => {
     const blocks: { [key: number]: any[] } = {}
     exerciseForms.forEach(ex => {
@@ -319,7 +324,6 @@ export default function CalendarEditClient() {
     [exercisesByBlock]
   )
 
-  // ✨ UPDATED: שינוי תרגיל - תומך בכל השדות
   const handleExerciseChange = (i: number, data: any) => {
     setExerciseForms((prev) => {
       const next = [...prev]
@@ -328,20 +332,18 @@ export default function CalendarEditClient() {
     })
   }
 
-  // ✨ NEW: Toggle single exercise accordion
   const toggleExercise = (exerciseId: number) => {
     setOpenExercises(prev => {
       const next = new Set(prev)
       if (next.has(exerciseId)) {
-        next.delete(exerciseId)  // Close
+        next.delete(exerciseId)
       } else {
-        next.add(exerciseId)  // Open
+        next.add(exerciseId)
       }
       return next
     })
   }
 
-  // ✨ NEW: Toggle all exercises in a block
   const toggleBlock = (blockNum: number) => {
     const exerciseIds = exercisesByBlock[blockNum].map(ex => ex.ExerciseID)
     const allOpen = exerciseIds.every(id => openExercises.has(id))
@@ -350,10 +352,8 @@ export default function CalendarEditClient() {
       const next = new Set(prev)
       
       if (allOpen) {
-        // Close all - remove all IDs
         exerciseIds.forEach(id => next.delete(id))
       } else {
-        // Open all - add all IDs
         exerciseIds.forEach(id => next.add(id))
       }
       
@@ -361,7 +361,6 @@ export default function CalendarEditClient() {
     })
   }
 
-  // ✨ NEW: Check if all exercises in block are open
   const isBlockAllOpen = (blockNum: number) => {
     const exerciseIds = exercisesByBlock[blockNum].map(ex => ex.ExerciseID)
     return exerciseIds.length > 0 && exerciseIds.every(id => openExercises.has(id))
@@ -374,34 +373,38 @@ export default function CalendarEditClient() {
     Lead: routes.filter(r => r.climbType === 'Lead')
   }), [routes])
 
-  // Check if workout contains climbing routes
   const containsClimbing = routes.length > 0
 
-  // ✨ UPDATED: שמירה - תומך ב-Single Hand & isDuration (NO CHANGES TO SAVE LOGIC)
+  // ✅ FIXED: Save function with proper async handling
   const handleSave = async () => {
     if (!activeEmail) {
       showToast('❌ אין משתמש פעיל', 'error')
       return
     }
 
+    if (isSaving) {
+      showToast('⏳ שמירה כבר בתהליך...', 'error')
+      return
+    }
+
+    setIsSaving(true)
+
     try {
       const now = moment().format('YYYY-MM-DD HH:mm:ss')
       const email = calendarRow?.Email || activeEmail
 
-      // ✅ FIX: Use calendar's StartTime for LogDateTime
+      // ✅ Use calendar's StartTime for LogDateTime
       const logDateTime = calendarRow?.StartTime 
         ? moment(calendarRow.StartTime).format('YYYY-MM-DD HH:mm:ss')
         : now
 
       let exerciseCount = 0
       let climbingCount = 0
-      let deletedLogIds: number[] = [] // Track deleted climbing logs
+      let deletedLogIds: number[] = []
 
-      // Save Exercises - ✨ UPDATED
+      // Save Exercises
       for (const ex of exerciseForms) {
         if (ex.IsSingleHand) {
-          // ✨ Single Hand: שמירת 2 רשומות
-          
           // Right hand
           const hasDataRight =
             (ex.RepsDone !== null && ex.RepsDone !== undefined) ||
@@ -427,7 +430,6 @@ export default function CalendarEditClient() {
               UpdatedAt: now,
             }
             
-            // Check if exists
             const { data: existingRight } = await supabase
               .from('ExerciseLogs')
               .select('ExerciseLogID')
@@ -437,13 +439,11 @@ export default function CalendarEditClient() {
               .maybeSingle()
 
             if (existingRight) {
-              // UPDATE existing
               await supabase
                 .from('ExerciseLogs')
                 .update(payloadRight)
                 .eq('ExerciseLogID', existingRight.ExerciseLogID)
             } else {
-              // INSERT new
               await supabase
                 .from('ExerciseLogs')
                 .insert({ ...payloadRight, CreatedAt: now })
@@ -474,7 +474,6 @@ export default function CalendarEditClient() {
               UpdatedAt: now,
             }
             
-            // Check if exists
             const { data: existingLeft } = await supabase
               .from('ExerciseLogs')
               .select('ExerciseLogID')
@@ -484,20 +483,18 @@ export default function CalendarEditClient() {
               .maybeSingle()
 
             if (existingLeft) {
-              // UPDATE existing
               await supabase
                 .from('ExerciseLogs')
                 .update(payloadLeft)
                 .eq('ExerciseLogID', existingLeft.ExerciseLogID)
             } else {
-              // INSERT new
               await supabase
                 .from('ExerciseLogs')
                 .insert({ ...payloadLeft, CreatedAt: now })
             }
           }
         } else {
-          // Regular exercise (HandSide='Both')
+          // Regular exercise
           const hasData =
             (ex.RepsDone !== null && ex.RepsDone !== undefined) ||
             (ex.DurationSec !== null && ex.DurationSec !== undefined) ||
@@ -522,7 +519,6 @@ export default function CalendarEditClient() {
               UpdatedAt: now,
             }
             
-            // Check if exists
             const { data: existingBoth } = await supabase
               .from('ExerciseLogs')
               .select('ExerciseLogID')
@@ -532,13 +528,11 @@ export default function CalendarEditClient() {
               .maybeSingle()
 
             if (existingBoth) {
-              // UPDATE existing
               await supabase
                 .from('ExerciseLogs')
                 .update(payloadBoth)
                 .eq('ExerciseLogID', existingBoth.ExerciseLogID)
             } else {
-              // INSERT new
               await supabase
                 .from('ExerciseLogs')
                 .insert({ ...payloadBoth, CreatedAt: now })
@@ -547,9 +541,7 @@ export default function CalendarEditClient() {
         }
       }
 
-      // ✨ CLIMBING: Handle DELETE, UPDATE, INSERT
-      
-      // Step 1: Find routes that were deleted (existed before but not in current routes)
+      // Handle Climbing Routes - DELETE, UPDATE, INSERT
       const currentRouteIds = new Set(routes.map(r => r.id))
       
       existingLogIds.forEach((climbingLogId, routeId) => {
@@ -558,7 +550,7 @@ export default function CalendarEditClient() {
         }
       })
 
-      // Step 2: Delete removed routes
+      // Delete removed routes
       if (deletedLogIds.length > 0) {
         const { error: deleteError } = await supabase
           .from('ClimbingLog')
@@ -567,16 +559,14 @@ export default function CalendarEditClient() {
         
         if (deleteError) {
           console.error('Error deleting routes:', deleteError)
-          showToast('❌ שגיאה במחיקת מסלולים', 'error')
-          return
+          throw new Error('שגיאה במחיקת מסלולים')
         }
       }
 
-      // Step 3: Save Climbing Routes (UPDATE existing or INSERT new)
+      // Save Climbing Routes
       if (routes.length > 0) {
         if (!selectedLocation) {
-          showToast('⚠️ יש לבחור מיקום לפני שמירת מסלולי טיפוס', 'error')
-          return
+          throw new Error('יש לבחור מיקום לפני שמירת מסלולי טיפוס')
         }
 
         for (const route of routes) {
@@ -594,31 +584,25 @@ export default function CalendarEditClient() {
             Successful: route.successful || false,
             Notes: route.notes?.trim() || null,
             LogDateTime: logDateTime,
+            UpdatedAt: now,
           }
 
           const existingId = existingLogIds.get(route.id)
           if (existingId) {
-            // UPDATE existing
             await supabase
               .from('ClimbingLog')
               .update(payload)
               .eq('ClimbingLogID', existingId)
           } else {
-            // INSERT new
-            await supabase.from('ClimbingLog').insert(payload)
+            await supabase.from('ClimbingLog').insert({ ...payload, CreatedAt: now })
           }
         }
       } else if (existingLogIds.size > 0) {
-        // All routes were deleted - delete all existing logs
         const allLogIds = Array.from(existingLogIds.values())
-        const { error: deleteAllError } = await supabase
+        await supabase
           .from('ClimbingLog')
           .delete()
           .in('ClimbingLogID', allLogIds)
-        
-        if (deleteAllError) {
-          console.error('Error deleting all routes:', deleteAllError)
-        }
       }
 
       // Update Calendar notes
@@ -630,19 +614,26 @@ export default function CalendarEditClient() {
         })
         .eq('CalendarID', calendarId)
 
-      let message = '✅ נשמר!'
+      // ✅ Build success message
+      let message = '✅ נשמר בהצלחה!'
       if (exerciseCount > 0) message += ` ${exerciseCount} תרגילים`
       if (climbingCount > 0) message += ` ${climbingCount} מסלולים`
       if (deletedLogIds.length > 0) message += ` (${deletedLogIds.length} מסלולים נמחקו)`
       
       showToast(message, 'success')
       
-      setTimeout(() => {
-        router.push('/calendar')
-      }, 1500)
-    } catch (error) {
+      // ✅ Wait for user to see success message, THEN navigate
+      await new Promise(resolve => setTimeout(resolve, 1500))
+      
+      // ✅ Only navigate after ALL saves completed successfully
+      router.push('/calendar')
+
+    } catch (error: any) {
       console.error('Error saving:', error)
-      showToast('❌ שגיאה בשמירה', 'error')
+      showToast(`❌ שגיאה בשמירה: ${error.message || 'אנא נסה שוב'}`, 'error')
+      // ❌ Don't navigate if there was an error!
+    } finally {
+      setIsSaving(false)
     }
   }
 
@@ -680,9 +671,8 @@ export default function CalendarEditClient() {
             )}
           </div>
 
-          {/* ✨ NEW: Workout Info Section */}
+          {/* Workout Info Section */}
           <section className="mb-8 space-y-4">
-            {/* Video */}
             {workout.VideoURL && (
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <h3 className="font-semibold text-blue-900 mb-2 flex items-center gap-2">
@@ -699,7 +689,6 @@ export default function CalendarEditClient() {
               </div>
             )}
 
-            {/* Description */}
             {workout.Description && (
               <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
                 <h3 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
@@ -709,7 +698,6 @@ export default function CalendarEditClient() {
               </div>
             )}
 
-            {/* Coach Notes */}
             {workout.WorkoutNotes && (
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                 <h3 className="font-semibold text-yellow-900 mb-2 flex items-center gap-2">
@@ -719,7 +707,6 @@ export default function CalendarEditClient() {
               </div>
             )}
 
-            {/* When To Practice */}
             {workout.WhenToPractice && (
               <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                 <h3 className="font-semibold text-green-900 mb-2 flex items-center gap-2">
@@ -730,7 +717,7 @@ export default function CalendarEditClient() {
             )}
           </section>
 
-          {/* ✨ UPDATED: Exercises by Blocks */}
+          {/* Exercises by Blocks */}
           {containExercise && exerciseForms.length > 0 && (
             <section className="mb-10">
               <h2 className="font-semibold text-xl mb-6">💪 תרגילים</h2>
@@ -741,7 +728,6 @@ export default function CalendarEditClient() {
                 
                 return (
                   <div key={blockNum} className="mb-8">
-                    {/* Block Header - Clickable Toggle */}
                     <div 
                       className="bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-t-lg px-4 py-3 font-bold text-lg cursor-pointer hover:from-blue-600 hover:to-blue-700 transition-all flex justify-between items-center select-none"
                       onClick={() => toggleBlock(blockNum)}
@@ -757,7 +743,6 @@ export default function CalendarEditClient() {
                       </div>
                     </div>
                     
-                    {/* Exercises in this block */}
                     <div className="border border-t-0 border-gray-200 rounded-b-lg p-4 space-y-4 bg-gray-50">
                       {exercisesByBlock[blockNum].map((ex, idx) => {
                         const globalIndex = exerciseForms.findIndex(e => e.ExerciseID === ex.ExerciseID)
@@ -779,111 +764,107 @@ export default function CalendarEditClient() {
             </section>
           )}
 
-          {/* טיפוס - Show only if containsClimbing WITH ADD LOCATION */}
+          {/* Climbing Routes */}
           {containsClimbing && (
             <section className="mb-10">
-            <h2 className="font-semibold text-xl mb-4">🧗 רישומי טיפוס</h2>
+              <h2 className="font-semibold text-xl mb-4">🧗 רישומי טיפוס</h2>
 
-            {/* Location Selector WITH SEARCH */}
-            <div className="mb-6">
-              <label className="block font-medium mb-2">📍 מיקום:</label>
-              <div className="space-y-2">
-                {/* Search input */}
-                <input
-                  type="text"
-                  placeholder="🔍 חפש מיקום..."
-                  value={locationSearch}
-                  onChange={(e) => setLocationSearch(e.target.value)}
-                  className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
-                />
-                
-                {/* Filtered select */}
-                <select
-                  value={selectedLocation || ''}
-                  onChange={(e) => setSelectedLocation(Number(e.target.value) || null)}
-                  className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">בחר מיקום</option>
-                  {filteredLocations.map(loc => (
-                    <option key={loc.LocationID} value={loc.LocationID}>
-                      {loc.LocationName}
-                    </option>
-                  ))}
-                </select>
-                
-                {/* Show count if filtering */}
-                {locationSearch && (
-                  <p className="text-sm text-gray-600">
-                    נמצאו {filteredLocations.length} מתוך {locations.length} מיקומים
-                  </p>
-                )}
-                
-                {/* Add New Location Button */}
-                <button
-                  type="button"
-                  onClick={() => setShowAddLocationModal(true)}
-                  className="w-full py-2 px-4 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 transition-all font-medium"
-                >
-                  ➕ הוסף מיקום חדש
-                </button>
+              <div className="mb-6">
+                <label className="block font-medium mb-2">📍 מיקום:</label>
+                <div className="space-y-2">
+                  <input
+                    type="text"
+                    placeholder="🔍 חפש מיקום..."
+                    value={locationSearch}
+                    onChange={(e) => setLocationSearch(e.target.value)}
+                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+                  />
+                  
+                  <select
+                    value={selectedLocation || ''}
+                    onChange={(e) => setSelectedLocation(Number(e.target.value) || null)}
+                    className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">בחר מיקום</option>
+                    {filteredLocations.map(loc => (
+                      <option key={loc.LocationID} value={loc.LocationID}>
+                        {loc.LocationName}
+                      </option>
+                    ))}
+                  </select>
+                  
+                  {locationSearch && (
+                    <p className="text-sm text-gray-600">
+                      נמצאו {filteredLocations.length} מתוך {locations.length} מיקומים
+                    </p>
+                  )}
+                  
+                  <button
+                    type="button"
+                    onClick={() => setShowAddLocationModal(true)}
+                    className="w-full py-2 px-4 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 transition-all font-medium"
+                  >
+                    ➕ הוסף מיקום חדש
+                  </button>
+                </div>
               </div>
-            </div>
 
-            <ClimbingSummary routes={routes} />
+              <ClimbingSummary routes={routes} />
 
-            <RouteTypeBlock
-              type="Boulder"
-              icon="🪨"
-              routes={routesByType.Boulder}
-              onRoutesChange={(newRoutes) => {
-                setRoutes([
-                  ...routes.filter(r => r.climbType !== 'Boulder'),
-                  ...newRoutes
-                ])
-              }}
-              boulderGrades={boulderGrades}
-              leadGrades={leadGrades}
-              boardTypes={boardTypes}
-              selectedBoardType={selectedBoardType}
-              onBoardTypeChange={setSelectedBoardType}
-            />
+              <RouteTypeBlock
+                type="Boulder"
+                icon="🪨"
+                routes={routesByType.Boulder}
+                onRoutesChange={(newRoutes) => {
+                  setRoutes([
+                    ...routes.filter(r => r.climbType !== 'Boulder'),
+                    ...newRoutes
+                  ])
+                }}
+                boulderGrades={boulderGrades}
+                leadGrades={leadGrades}
+                boardTypes={boardTypes}
+                selectedBoardType={selectedBoardType}
+                onBoardTypeChange={setSelectedBoardType}
+              />
 
-            <RouteTypeBlock
-              type="Board"
-              icon="🏋️"
-              routes={routesByType.Board}
-              onRoutesChange={(newRoutes) => {
-                setRoutes([
-                  ...routes.filter(r => r.climbType !== 'Board'),
-                  ...newRoutes
-                ])
-              }}
-              boulderGrades={boulderGrades}
-              leadGrades={leadGrades}
-              boardTypes={boardTypes}
-              selectedBoardType={selectedBoardType}
-              onBoardTypeChange={setSelectedBoardType}
-            />
+              <RouteTypeBlock
+                type="Board"
+                icon="🏋️"
+                routes={routesByType.Board}
+                onRoutesChange={(newRoutes) => {
+                  setRoutes([
+                    ...routes.filter(r => r.climbType !== 'Board'),
+                    ...newRoutes
+                  ])
+                }}
+                boulderGrades={boulderGrades}
+                leadGrades={leadGrades}
+                boardTypes={boardTypes}
+                selectedBoardType={selectedBoardType}
+                onBoardTypeChange={setSelectedBoardType}
+              />
 
-            <RouteTypeBlock
-              type="Lead"
-              icon="🧗"
-              routes={routesByType.Lead}
-              onRoutesChange={(newRoutes) => {
-                setRoutes([
-                  ...routes.filter(r => r.climbType !== 'Lead'),
-                  ...newRoutes
-                ])
-              }}
-              boulderGrades={boulderGrades}
-              leadGrades={leadGrades}
-              boardTypes={boardTypes}
-              selectedBoardType={selectedBoardType}
-              onBoardTypeChange={setSelectedBoardType}
-            />
+              <RouteTypeBlock
+                type="Lead"
+                icon="🧗"
+                routes={routesByType.Lead}
+                onRoutesChange={(newRoutes) => {
+                  setRoutes([
+                    ...routes.filter(r => r.climbType !== 'Lead'),
+                    ...newRoutes
+                  ])
+                }}
+                boulderGrades={boulderGrades}
+                leadGrades={leadGrades}
+                boardTypes={boardTypes}
+                selectedBoardType={selectedBoardType}
+                onBoardTypeChange={setSelectedBoardType}
+              />
             </section>
           )}
-          {/* הערות מטפס */}
+
+          {/* Climber Notes */}
           <section className="mb-8">
             <h2 className="font-semibold text-lg mb-2">הערות מטפס</h2>
             <textarea
@@ -892,25 +873,40 @@ export default function CalendarEditClient() {
               placeholder="הערות כלליות על האימון..."
               value={climberNotes}
               onChange={(e) => setClimberNotes(e.target.value)}
+              disabled={isSaving}
             />
           </section>
 
-          {/* כפתורים */}
+          {/* Action Buttons */}
           <div className="flex justify-end gap-3">
             <button
-              className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-6 py-2 rounded font-medium"
+              className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-6 py-2 rounded font-medium disabled:opacity-50 disabled:cursor-not-allowed"
               onClick={() => router.push('/calendar')}
+              disabled={isSaving}
             >
               ביטול
             </button>
             <button
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded font-medium"
+              className={`bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
+                isSaving ? 'animate-pulse' : ''
+              }`}
               onClick={handleSave}
+              disabled={isSaving}
             >
-              💾 שמירה
-              {routes.length > 0 && ` (${routes.length} מסלולים)`}
+              {isSaving ? '⏳ שומר...' : '💾 שמירה'}
+              {routes.length > 0 && !isSaving && ` (${routes.length} מסלולים)`}
             </button>
           </div>
+
+          {/* ✅ Saving indicator */}
+          {isSaving && (
+            <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg text-center">
+              <div className="flex items-center justify-center gap-2 text-blue-700">
+                <div className="animate-spin h-5 w-5 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+                <span className="font-medium">שומר נתונים... אנא המתן</span>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Toast Notification */}
@@ -927,7 +923,6 @@ export default function CalendarEditClient() {
       {showAddLocationModal && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[60] p-4">
           <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6" dir="rtl">
-            {/* Header */}
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-xl font-bold text-gray-900">
                 📍 הוספת מיקום חדש
@@ -941,14 +936,12 @@ export default function CalendarEditClient() {
               </button>
             </div>
 
-            {/* Info */}
             <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
               <p className="text-sm text-blue-900">
                 💡 הוסף מיקום חדש לרשימה. המיקום יהיה זמין לכולם.
               </p>
             </div>
 
-            {/* Name Input */}
             <div className="mb-6">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 שם המיקום *
@@ -970,7 +963,6 @@ export default function CalendarEditClient() {
               />
             </div>
 
-            {/* Actions */}
             <div className="flex gap-3">
               <button
                 onClick={handleAddLocation}
