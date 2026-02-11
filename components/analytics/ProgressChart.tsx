@@ -3,12 +3,13 @@
 
 'use client'
 
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Label } from 'recharts'
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Label, ReferenceLine, LabelList } from 'recharts'
 import { ChartDataPoint } from '@/types/analytics'
 
 interface ProgressChartProps {
   data: ChartDataPoint[]
   isSingleHand: boolean
+  bodyWeight: number | null
 }
 
 // Custom label for reps on bars - Both Hands
@@ -76,7 +77,27 @@ const LeftHandRepsLabel = (props: any) => {
   )
 }
 
-export default function ProgressChart({ data, isSingleHand }: ProgressChartProps) {
+// Custom label showing percentage of body weight
+const PercentageBWLabel = ({ x, y, width, value, bodyWeight }: any) => {
+  if (!bodyWeight || !value) return null
+  
+  const percentage = ((value / bodyWeight) * 100).toFixed(0)
+  
+  return (
+    <text 
+      x={x + width / 2} 
+      y={y - 24}  // Above reps
+      fill="#6b7280" 
+      fontSize="10" 
+      fontWeight="600"
+      textAnchor="middle"
+    >
+      {percentage}%
+    </text>
+  )
+}
+
+export default function ProgressChart({ data, isSingleHand, bodyWeight }: ProgressChartProps) {
   
   if (!data || data.length === 0) {
     return (
@@ -98,15 +119,23 @@ export default function ProgressChart({ data, isSingleHand }: ProgressChartProps
           <p className="font-bold text-gray-900 mb-3 text-base border-b pb-2">📅 {label}</p>
           <div className="space-y-2">
             {data.weight !== null && data.weight !== undefined && (
-              <div className="flex items-center justify-between gap-4">
-                <span className="text-sm font-medium text-gray-700">⚖️ משקל:</span>
-                <span className="text-sm font-bold text-blue-600">{data.weight.toFixed(1)} ק״ג</span>
-              </div>
+              <>
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-sm font-medium text-gray-700">⚖️ משקל:</span>
+                  <span className="text-sm font-bold text-blue-600">{data.weight.toFixed(1)} ק״ג</span>
+                </div>
+                {bodyWeight && (
+                  <div className="flex items-center justify-between gap-4">
+                    <span className="text-sm font-medium text-gray-700">📊 % ממשקל גוף:</span>
+                    <span className="text-sm font-bold text-purple-600">{((data.weight / bodyWeight) * 100).toFixed(1)}%</span>
+                  </div>
+                )}
+              </>
             )}
             {data.reps !== null && data.reps !== undefined && (
               <div className="flex items-center justify-between gap-4">
                 <span className="text-sm font-medium text-gray-700">🔁 חזרות:</span>
-                <span className="text-sm font-bold text-green-600">{data.reps}</span>
+                <span className="text-sm font-bold text-green-600">{Math.round(data.reps)}</span>
               </div>
             )}
             {data.rpe !== null && data.rpe !== undefined && (
@@ -117,18 +146,51 @@ export default function ProgressChart({ data, isSingleHand }: ProgressChartProps
             )}
             {/* Single hand data */}
             {data.right !== null && data.right !== undefined && (
-              <div className="flex items-center justify-between gap-4">
-                <span className="text-sm font-medium text-gray-700">🫱 ימין:</span>
-                <span className="text-sm font-bold text-blue-600">{data.right.toFixed(1)} ק״ג</span>
-              </div>
+              <>
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-sm font-medium text-gray-700">🫱 ימין:</span>
+                  <span className="text-sm font-bold text-blue-600">{data.right.toFixed(1)} ק״ג</span>
+                </div>
+                {bodyWeight && (
+                  <div className="flex items-center justify-between gap-4">
+                    <span className="text-sm font-medium text-gray-700">📊 % ממשקל גוף:</span>
+                    <span className="text-sm font-bold text-purple-600">{((data.right / bodyWeight) * 100).toFixed(1)}%</span>
+                  </div>
+                )}
+                {data.rightReps && (
+                  <div className="flex items-center justify-between gap-4">
+                    <span className="text-sm font-medium text-gray-700">🔁 חזרות:</span>
+                    <span className="text-sm font-bold text-blue-600">{data.rightReps}</span>
+                  </div>
+                )}
+              </>
             )}
             {data.left !== null && data.left !== undefined && (
-              <div className="flex items-center justify-between gap-4">
-                <span className="text-sm font-medium text-gray-700">🫲 שמאל:</span>
-                <span className="text-sm font-bold text-green-600">{data.left.toFixed(1)} ק״ג</span>
-              </div>
+              <>
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-sm font-medium text-gray-700">🫲 שמאל:</span>
+                  <span className="text-sm font-bold text-green-600">{data.left.toFixed(1)} ק״ג</span>
+                </div>
+                {bodyWeight && (
+                  <div className="flex items-center justify-between gap-4">
+                    <span className="text-sm font-medium text-gray-700">📊 % ממשקל גוף:</span>
+                    <span className="text-sm font-bold text-purple-600">{((data.left / bodyWeight) * 100).toFixed(1)}%</span>
+                  </div>
+                )}
+                {data.leftReps && (
+                  <div className="flex items-center justify-between gap-4">
+                    <span className="text-sm font-medium text-gray-700">🔁 חזרות:</span>
+                    <span className="text-sm font-bold text-green-600">{data.leftReps}</span>
+                  </div>
+                )}
+              </>
             )}
           </div>
+          {bodyWeight && (
+            <div className="mt-3 pt-2 border-t text-xs text-gray-500 text-center">
+              משקל גוף: {bodyWeight} ק״ג
+            </div>
+          )}
         </div>
       )
     }
@@ -200,6 +262,23 @@ export default function ProgressChart({ data, isSingleHand }: ProgressChartProps
             />
             <Tooltip content={<CustomTooltip />} />
             
+            {/* Body weight reference line */}
+            {bodyWeight && (
+              <ReferenceLine 
+                y={bodyWeight} 
+                stroke="#ef4444" 
+                strokeDasharray="5 5" 
+                strokeWidth={2}
+                label={{ 
+                  value: `BW: ${bodyWeight}kg`, 
+                  position: 'right',
+                  fill: '#ef4444',
+                  fontSize: 12,
+                  fontWeight: 'bold'
+                }}
+              />
+            )}
+            
             {/* Right hand bar */}
             <Bar 
               dataKey="right" 
@@ -208,7 +287,9 @@ export default function ProgressChart({ data, isSingleHand }: ProgressChartProps
               radius={[8, 8, 0, 0]}
               maxBarSize={30}
               label={<RightHandRepsLabel />}
-            />
+            >
+              <LabelList dataKey="right" content={(props) => <PercentageBWLabel {...props} bodyWeight={bodyWeight} />} />
+            </Bar>
             
             {/* Left hand bar */}
             <Bar 
@@ -218,7 +299,9 @@ export default function ProgressChart({ data, isSingleHand }: ProgressChartProps
               radius={[8, 8, 0, 0]}
               maxBarSize={30}
               label={<LeftHandRepsLabel />}
-            />
+            >
+              <LabelList dataKey="left" content={(props) => <PercentageBWLabel {...props} bodyWeight={bodyWeight} />} />
+            </Bar>
           </BarChart>
         </ResponsiveContainer>
       </div>
@@ -267,6 +350,23 @@ export default function ProgressChart({ data, isSingleHand }: ProgressChartProps
           
           <Tooltip content={<CustomTooltip />} />
           
+          {/* Body weight reference line */}
+          {bodyWeight && (
+            <ReferenceLine 
+              y={bodyWeight} 
+              stroke="#ef4444" 
+              strokeDasharray="5 5" 
+              strokeWidth={2}
+              label={{ 
+                value: `BW: ${bodyWeight}kg`, 
+                position: 'right',
+                fill: '#ef4444',
+                fontSize: 12,
+                fontWeight: 'bold'
+              }}
+            />
+          )}
+          
           {/* Weight bars */}
           <Bar 
             dataKey="weight" 
@@ -275,7 +375,9 @@ export default function ProgressChart({ data, isSingleHand }: ProgressChartProps
             radius={[8, 8, 0, 0]}
             maxBarSize={40}
             label={<BarRepsLabel />}
-          />
+          >
+            <LabelList dataKey="weight" content={(props) => <PercentageBWLabel {...props} bodyWeight={bodyWeight} />} />
+          </Bar>
         </BarChart>
       </ResponsiveContainer>
       

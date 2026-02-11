@@ -29,6 +29,7 @@ export default function ExerciseAnalyticsPage() {
 
   // ✅ EMAIL HIERARCHY: URL param > UserContext > AuthContext
   const [targetEmail, setTargetEmail] = useState<string>('')
+  const [bodyWeight, setBodyWeight] = useState<number | null>(null)
 
   useEffect(() => {
     // 1️⃣ Try URL parameter
@@ -51,6 +52,25 @@ export default function ExerciseAnalyticsPage() {
       setTargetEmail(activeUser.Email)
     }
   }, [activeUser?.Email, selectedUser])
+
+  // Fetch body weight when targetEmail changes
+  useEffect(() => {
+    if (!targetEmail) return
+
+    const fetchBodyWeight = async () => {
+      const { data, error } = await supabase
+        .from('Profiles')
+        .select('BodyWeightKG')
+        .eq('Email', targetEmail)
+        .single()
+
+      if (!error && data) {
+        setBodyWeight(data.BodyWeightKG)
+      }
+    }
+
+    fetchBodyWeight()
+  }, [targetEmail])
 
   // State
   const [exercises, setExercises] = useState<Exercise[]>([])
@@ -438,6 +458,7 @@ export default function ExerciseAnalyticsPage() {
             <ProgressChart
               data={chartData}
               isSingleHand={selectedExercise?.IsSingleHand || false}
+              bodyWeight={bodyWeight}
             />
 
             {/* Sessions Table */}
