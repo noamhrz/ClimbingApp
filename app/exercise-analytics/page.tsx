@@ -27,12 +27,23 @@ export default function ExerciseAnalyticsPage() {
   const { activeUser, loading: authLoading } = useAuth()
   const { selectedUser } = useUserContext()
 
-  // ✅ EMAIL HIERARCHY: URL param > UserContext > AuthContext
+  // ✅ EMAIL HIERARCHY: URL param > Manual selection > UserContext > AuthContext
   const [targetEmail, setTargetEmail] = useState<string>('')
   const [bodyWeight, setBodyWeight] = useState<number | null>(null)
+  const [users, setUsers] = useState<Array<{ Email: string; Name: string }>>([])
+
+  // Check permissions
+  const canViewOthers = activeUser?.Role === 'admin' || activeUser?.Role === 'coach'
 
   useEffect(() => {
-    // 1️⃣ Try URL parameter
+    // Load users list for admin/coach
+    if (canViewOthers) {
+      loadUsers()
+    }
+  }, [canViewOthers, activeUser])
+
+  useEffect(() => {
+    // 1️⃣ Try URL parameter (highest priority)
     const urlParams = new URLSearchParams(window.location.search)
     const urlEmail = urlParams.get('email')
     
@@ -41,17 +52,63 @@ export default function ExerciseAnalyticsPage() {
       return
     }
     
-    // 2️⃣ Try UserContext (admin impersonation)
+    // 2️⃣ If admin/coach and users loaded, keep current selection or use first user
+    if (canViewOthers && users.length > 0 && !targetEmail) {
+      // Use first user from list as default
+      setTargetEmail(users[0].Email)
+      return
+    }
+    
+    // 3️⃣ Try UserContext (admin impersonation)
     if (selectedUser?.userEmail || selectedUser?.Email) {
       setTargetEmail(selectedUser.userEmail || selectedUser.Email)
       return
     }
     
-    // 3️⃣ Fallback to current user
+    // 4️⃣ Fallback to current user
     if (activeUser?.Email) {
       setTargetEmail(activeUser.Email)
     }
-  }, [activeUser?.Email, selectedUser])
+  }, [activeUser?.Email, selectedUser, users, canViewOthers])
+
+  const loadUsers = async () => {
+    try {
+      if (activeUser?.Role === 'admin') {
+        // Admin sees ALL users
+        const { data, error } = await supabase
+          .from('Users')
+          .select('Email, Name')
+          .eq('IsActive', true)
+          .order('Name')
+
+        if (error) throw error
+        setUsers(data || [])
+      } else if (activeUser?.Role === 'coach') {
+        // Coach sees only their assigned trainees
+        const { data, error } = await supabase
+          .from('CoachTraineesActiveView')
+          .select('TraineeEmail, TraineeName')
+          .eq('CoachEmail', activeUser.Email)
+          .order('TraineeName')
+
+        if (error) throw error
+        
+        // Map to User format
+        const trainees = (data || []).map(t => ({
+          Email: t.TraineeEmail,
+          Name: t.TraineeName
+        }))
+        
+        setUsers(trainees)
+      }
+    } catch (error) {
+      console.error('Error loading users:', error)
+    }
+  }
+
+  const handleUserChange = (email: string) => {
+    setTargetEmail(email)
+  }
 
   // Fetch body weight when targetEmail changes
   useEffect(() => {
@@ -400,6 +457,32 @@ export default function ExerciseAnalyticsPage() {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 py-6">
+        
+        {/* User Selector - Only for admin/coach */}
+        {canViewOthers && users.length > 0 && (
+          <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl shadow-md p-5 mb-6 border-2 border-purple-200">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="text-2xl">👥</div>
+              <div>
+                <h3 className="text-lg font-bold text-gray-900">בחירת מתאמן לניתוח</h3>
+                <p className="text-sm text-gray-600">
+                  {activeUser?.Role === 'admin' ? 'כאדמין, ניתן לצפות בכל המשתמשים' : 'מציג את המתאמנים שלך'}
+                </p>
+              </div>
+            </div>
+            <select
+              value={targetEmail}
+              onChange={(e) => handleUserChange(e.target.value)}
+              className="w-full px-4 py-3 border-2 border-purple-300 rounded-lg text-base font-medium focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white"
+            >
+              {users.map((user) => (
+                <option key={user.Email} value={user.Email}>
+                  {user.Name} • {user.Email}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
         
         {/* Filters */}
         <ExerciseFilters
