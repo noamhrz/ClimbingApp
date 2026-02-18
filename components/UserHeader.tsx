@@ -113,6 +113,14 @@ export default function UserHeader() {
             📊 סטטיסטיקות
           </Link>
 
+          {/* ✅ NEW: Exercise Analytics Link */}
+          <Link
+            href="/exercise-analytics"
+            className="bg-white/10 hover:bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-lg transition-all whitespace-nowrap text-sm font-medium border border-white/20 hover:border-white/40"
+          >
+            💪 ניתוח תרגילים
+          </Link>
+
           {/* Goals Link - Smart routing */}
           <Link
             href={
