@@ -17,11 +17,12 @@ import { formatValue } from '@/lib/exercise-stats-metrics'
 
 interface ExerciseStatsDisplayProps {
   performance: ExercisePerformance
+  selectedEmail?: string
 }
 
-export function ExerciseStatsDisplay({ performance }: ExerciseStatsDisplayProps) {
+export function ExerciseStatsDisplay({ performance, selectedEmail }: ExerciseStatsDisplayProps) {
   const { selectedUser } = useUserContext()
-  const userEmail = selectedUser?.userEmail || selectedUser?.Email
+  const userEmail = selectedEmail || selectedUser?.userEmail || selectedUser?.Email
   
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
   

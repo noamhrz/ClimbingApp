@@ -31,9 +31,23 @@ export default function ExerciseAnalyticsPage() {
   const [targetEmail, setTargetEmail] = useState<string>('')
   const [bodyWeight, setBodyWeight] = useState<number | null>(null)
   const [users, setUsers] = useState<Array<{ Email: string; Name: string }>>([])
+  const [initialUrlParamsLoaded, setInitialUrlParamsLoaded] = useState(false)
 
   // Check permissions
   const canViewOthers = activeUser?.Role === 'admin' || activeUser?.Role === 'coach'
+
+  // ✅ FIRST: Load email from URL on mount (before anything else)
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search)
+    const urlEmail = urlParams.get('email')
+    
+    if (urlEmail) {
+      setTargetEmail(urlEmail)
+      setInitialUrlParamsLoaded(true)
+    } else {
+      setInitialUrlParamsLoaded(true)
+    }
+  }, [])
 
   useEffect(() => {
     // Load users list for admin/coach
@@ -43,33 +57,32 @@ export default function ExerciseAnalyticsPage() {
   }, [canViewOthers, activeUser])
 
   useEffect(() => {
-    // 1️⃣ Try URL parameter (highest priority)
+    // Skip if we haven't loaded URL params yet
+    if (!initialUrlParamsLoaded) return
+    
+    // Skip if we already have email from URL
     const urlParams = new URLSearchParams(window.location.search)
     const urlEmail = urlParams.get('email')
+    if (urlEmail && targetEmail === urlEmail) return
     
-    if (urlEmail) {
-      setTargetEmail(urlEmail)
-      return
-    }
-    
-    // 2️⃣ If admin/coach and users loaded, keep current selection or use first user
+    // 1️⃣ If admin/coach and users loaded, keep current selection or use first user
     if (canViewOthers && users.length > 0 && !targetEmail) {
       // Use first user from list as default
       setTargetEmail(users[0].Email)
       return
     }
     
-    // 3️⃣ Try UserContext (admin impersonation)
-    if (selectedUser?.userEmail || selectedUser?.Email) {
+    // 2️⃣ Try UserContext (admin impersonation)
+    if (!targetEmail && (selectedUser?.userEmail || selectedUser?.Email)) {
       setTargetEmail(selectedUser.userEmail || selectedUser.Email)
       return
     }
     
-    // 4️⃣ Fallback to current user
-    if (activeUser?.Email) {
+    // 3️⃣ Fallback to current user
+    if (!targetEmail && activeUser?.Email) {
       setTargetEmail(activeUser.Email)
     }
-  }, [activeUser?.Email, selectedUser, users, canViewOthers])
+  }, [initialUrlParamsLoaded, selectedUser, users, canViewOthers, activeUser])
 
   const loadUsers = async () => {
     try {
@@ -108,6 +121,13 @@ export default function ExerciseAnalyticsPage() {
 
   const handleUserChange = (email: string) => {
     setTargetEmail(email)
+    
+    // Update URL with new email
+    const urlParams = new URLSearchParams(window.location.search)
+    urlParams.set('email', email)
+    
+    const newUrl = `${window.location.pathname}?${urlParams.toString()}`
+    window.history.replaceState({}, '', newUrl)
   }
 
   // Fetch body weight when targetEmail changes
@@ -140,6 +160,75 @@ export default function ExerciseAnalyticsPage() {
     customStartDate: null,
     customEndDate: null
   })
+  const [filtersLoadedFromUrl, setFiltersLoadedFromUrl] = useState(false)
+
+  // ✅ Load dateRange and category from URL immediately (don't need exercises)
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search)
+    const categoryParam = urlParams.get('category')
+    const dateRangeParam = urlParams.get('dateRange') as DateRange
+    
+    if (categoryParam || dateRangeParam) {
+      setFilters(prev => ({
+        ...prev,
+        category: categoryParam || prev.category,
+        dateRange: dateRangeParam || prev.dateRange
+      }))
+    }
+  }, []) // Only on mount
+
+  // ✅ Load exerciseId from URL AFTER exercises are loaded
+  useEffect(() => {
+    if (exercises.length === 0 || filtersLoadedFromUrl) return
+    
+    const urlParams = new URLSearchParams(window.location.search)
+    const exerciseIdParam = urlParams.get('exerciseId')
+    
+    if (exerciseIdParam) {
+      const exerciseId = parseInt(exerciseIdParam)
+      
+      // Verify exerciseId exists in loaded exercises
+      const exerciseExists = exercises.some(e => e.ExerciseID === exerciseId)
+      
+      if (exerciseExists) {
+        setFilters(prev => ({
+          ...prev,
+          exerciseId: exerciseId
+        }))
+      }
+    }
+    
+    setFiltersLoadedFromUrl(true)
+  }, [exercises, filtersLoadedFromUrl])
+
+  // ✅ Update URL when filters change (but not during initial load)
+  useEffect(() => {
+    if (!filtersLoadedFromUrl) return // Don't update URL until we've loaded from it
+    
+    // Build new URL with current filters
+    const newParams = new URLSearchParams()
+    
+    // ✅ Use targetEmail state instead of reading from URL
+    if (targetEmail) {
+      newParams.set('email', targetEmail)
+    }
+    
+    if (filters.exerciseId) {
+      newParams.set('exerciseId', filters.exerciseId.toString())
+    }
+    
+    if (filters.category) {
+      newParams.set('category', filters.category)
+    }
+    
+    if (filters.dateRange && filters.dateRange !== '3months') { // Only save if not default
+      newParams.set('dateRange', filters.dateRange)
+    }
+    
+    // Update URL without reload
+    const newUrl = `${window.location.pathname}${newParams.toString() ? '?' + newParams.toString() : ''}`
+    window.history.replaceState({}, '', newUrl)
+  }, [filters, filtersLoadedFromUrl, targetEmail])  // ✅ Add targetEmail to dependencies
 
   // Get unique categories
   const categories = useMemo(() => {
@@ -155,27 +244,28 @@ export default function ExerciseAnalyticsPage() {
 
   // Calculate date range
   const { startDate, endDate } = useMemo(() => {
-    const end = moment()
+    // ✅ Add 3 hours buffer to catch timezone issues
+    const end = moment().add(3, 'hours').endOf('day')
     let start = moment()
     
     switch (filters.dateRange) {
       case 'week':
-        start = moment().subtract(7, 'days')
+        start = moment().subtract(7, 'days').startOf('day')
         break
       case 'month':
-        start = moment().subtract(30, 'days')
+        start = moment().subtract(30, 'days').startOf('day')
         break
       case '3months':
-        start = moment().subtract(90, 'days')
+        start = moment().subtract(90, 'days').startOf('day')
         break
       case '6months':
-        start = moment().subtract(180, 'days')
+        start = moment().subtract(180, 'days').startOf('day')
         break
       case 'year':
-        start = moment().subtract(365, 'days')
+        start = moment().subtract(365, 'days').startOf('day')
         break
       case 'all':
-        start = moment('2020-01-01')
+        start = moment('2020-01-01').startOf('day')
         break
     }
     
@@ -184,19 +274,6 @@ export default function ExerciseAnalyticsPage() {
       endDate: end.toISOString() 
     }
   }, [filters.dateRange])
-
-  // Auto-select exercise from URL
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search)
-    const exerciseId = urlParams.get('exerciseId')
-    
-    if (exerciseId && exercises.length > 0) {
-      setFilters(prev => ({
-        ...prev,
-        exerciseId: parseInt(exerciseId)
-      }))
-    }
-  }, [exercises])
 
   // Fetch exercises on mount
   useEffect(() => {
@@ -459,7 +536,7 @@ export default function ExerciseAnalyticsPage() {
       <div className="max-w-7xl mx-auto px-4 py-6">
         
         {/* User Selector - Only for admin/coach */}
-        {canViewOthers && users.length > 0 && (
+        {canViewOthers && (
           <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl shadow-md p-5 mb-6 border-2 border-purple-200">
             <div className="flex items-center gap-3 mb-3">
               <div className="text-2xl">👥</div>
@@ -470,17 +547,24 @@ export default function ExerciseAnalyticsPage() {
                 </p>
               </div>
             </div>
-            <select
-              value={targetEmail}
-              onChange={(e) => handleUserChange(e.target.value)}
-              className="w-full px-4 py-3 border-2 border-purple-300 rounded-lg text-base font-medium focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white"
-            >
-              {users.map((user) => (
-                <option key={user.Email} value={user.Email}>
-                  {user.Name} • {user.Email}
-                </option>
-              ))}
-            </select>
+            
+            {users.length > 0 ? (
+              <select
+                value={targetEmail}
+                onChange={(e) => handleUserChange(e.target.value)}
+                className="w-full px-4 py-3 border-2 border-purple-300 rounded-lg text-base font-medium focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white"
+              >
+                {users.map((user) => (
+                  <option key={user.Email} value={user.Email}>
+                    {user.Name} • {user.Email}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <div className="text-center py-3 text-gray-500 animate-pulse">
+                ⏳ טוען משתמשים...
+              </div>
+            )}
           </div>
         )}
         

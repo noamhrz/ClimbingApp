@@ -1,6 +1,7 @@
 // app/athlete-stats/[email]/page.tsx
 // 📊 דף סטטיסטיקות מתאמן
 // ✅ הרשאות: User רואה רק עצמו, Coach/Admin רואים הכל
+// 🔧 FIXED: Pass selectedEmail to ExerciseStatsDisplay
 
 'use client'
 
@@ -364,10 +365,13 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* Exercise Performance Stats */}
+      {/* Exercise Performance Stats - ✅ FIXED: Pass selectedEmail */}
       {exercisePerformance && (
         <div className="mb-8">
-          <ExerciseStatsDisplay performance={exercisePerformance} />
+          <ExerciseStatsDisplay 
+            performance={exercisePerformance}
+            selectedEmail={selectedEmail}
+          />
         </div>
       )}
 
