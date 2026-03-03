@@ -1,16 +1,19 @@
 // app/workouts-editor/new/page.tsx
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { useActiveUserEmail } from '@/context/AuthContext'
+import { supabase } from '@/lib/supabaseClient'
+import { useAuth, useActiveUserEmail } from '@/context/AuthContext'
 import { WorkoutFormData } from '@/types/workouts'
 import { createWorkout } from '@/lib/workout-api'
 import WorkoutForm from '@/components/workouts/WorkoutForm'
 
 export default function NewWorkoutPage() {
   const router = useRouter()
+  const { activeUser, loading: authLoading } = useAuth()
   const email = useActiveUserEmail()
+  const [userRole, setUserRole] = useState<'admin' | 'coach' | null>(null)
   const [formData, setFormData] = useState<WorkoutFormData>({
     Name: '',
     Category: '',
@@ -23,6 +26,30 @@ export default function NewWorkoutPage() {
     EstimatedClimbingTime: 0,
   })
   const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      if (!authLoading && !activeUser) {
+        router.push('/dashboard')
+        return
+      }
+      if (!email) return
+
+      const { data: user } = await supabase
+        .from('Users')
+        .select('Role')
+        .eq('Email', email)
+        .single()
+
+      if (!user || (user.Role !== 'admin' && user.Role !== 'coach')) {
+        router.push('/dashboard')
+        return
+      }
+
+      setUserRole(user.Role)
+    }
+    checkAuth()
+  }, [authLoading, activeUser, email, router])
 
   const handleSave = async () => {
     if (!email) {
@@ -66,6 +93,8 @@ export default function NewWorkoutPage() {
       router.push('/workouts-editor')
     }
   }
+
+  if (!userRole) return null
 
   return (
     <div className="max-w-4xl mx-auto p-6">

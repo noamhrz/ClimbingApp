@@ -3,7 +3,8 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { useActiveUserEmail } from '@/context/AuthContext'
+import { supabase } from '@/lib/supabaseClient'
+import { useAuth, useActiveUserEmail } from '@/context/AuthContext'
 import { WorkoutFormData, WorkoutWithExercises } from '@/types/workouts'
 import { fetchWorkoutWithExercises, updateWorkout } from '@/lib/workout-api'
 import WorkoutForm from '@/components/workouts/WorkoutForm'
@@ -12,6 +13,7 @@ import WorkoutExercises from '@/components/workouts/WorkoutExercises'
 export default function EditWorkoutPage() {
   const params = useParams()
   const router = useRouter()
+  const { activeUser, loading: authLoading } = useAuth()
   const email = useActiveUserEmail()
   const workoutId = Number(params?.id)
 
@@ -20,13 +22,38 @@ export default function EditWorkoutPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [autoSaving, setAutoSaving] = useState(false)
+  const [userRole, setUserRole] = useState<'admin' | 'coach' | null>(null)
   const autoSaveTimeout = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
-    if (workoutId) {
+    const checkAuth = async () => {
+      if (!authLoading && !activeUser) {
+        router.push('/dashboard')
+        return
+      }
+      if (!email) return
+
+      const { data: user } = await supabase
+        .from('Users')
+        .select('Role')
+        .eq('Email', email)
+        .single()
+
+      if (!user || (user.Role !== 'admin' && user.Role !== 'coach')) {
+        router.push('/dashboard')
+        return
+      }
+
+      setUserRole(user.Role)
+    }
+    checkAuth()
+  }, [authLoading, activeUser, email, router])
+
+  useEffect(() => {
+    if (workoutId && userRole) {
       loadWorkout()
     }
-  }, [workoutId])
+  }, [workoutId, userRole])
 
   const loadWorkout = async () => {
     setLoading(true)
@@ -133,6 +160,8 @@ export default function EditWorkoutPage() {
       console.error('Error reloading exercises:', error)
     }
   }, [workoutId])
+
+  if (!userRole) return null
 
   if (loading) {
     return (
