@@ -1,8 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
-import { useAuth } from '@/context/AuthContext'
+import { useAuth, useActiveUserEmail } from '@/context/AuthContext'
 
 // Types
 interface User {
@@ -27,9 +28,12 @@ interface WorkoutForUser {
 }
 
 export default function AssignWorkoutsClient() {
+  const router = useRouter()
   const { currentUser, trainees, loading: authLoading } = useAuth()
-  
+  const activeEmail = useActiveUserEmail()
+
   // State
+  const [userRole, setUserRole] = useState<'admin' | 'coach' | null>(null)
   const [selectedUserEmail, setSelectedUserEmail] = useState<string>('')
   const [allWorkouts, setAllWorkouts] = useState<Workout[]>([])
   const [userWorkouts, setUserWorkouts] = useState<Workout[]>([])
@@ -39,22 +43,34 @@ export default function AssignWorkoutsClient() {
   const [searchQuery, setSearchQuery] = useState<string>('')
   const [loading, setLoading] = useState(false)
 
-  // Check permissions
-  const isAdmin = currentUser?.Role === 'admin'
-  const isCoach = currentUser?.Role === 'coach'
-  const canAssign = isAdmin || isCoach
-
-  // Redirect if no permission
   useEffect(() => {
-    if (!authLoading && !canAssign) {
-      window.location.href = '/dashboard'
+    const checkAuth = async () => {
+      if (!authLoading && !activeEmail) {
+        router.push('/dashboard')
+        return
+      }
+      if (!activeEmail) return
+
+      const { data: user } = await supabase
+        .from('Users')
+        .select('Role')
+        .eq('Email', activeEmail)
+        .single()
+
+      if (!user || (user.Role !== 'admin' && user.Role !== 'coach')) {
+        router.push('/dashboard')
+        return
+      }
+
+      setUserRole(user.Role)
     }
-  }, [authLoading, canAssign])
+    checkAuth()
+  }, [authLoading, activeEmail, router])
 
-  // Fetch all workouts on mount
+  // Fetch all workouts once auth is confirmed
   useEffect(() => {
-    fetchAllWorkouts()
-  }, [])
+    if (userRole) fetchAllWorkouts()
+  }, [userRole])
 
   // Update available workouts when user or category changes
   useEffect(() => {
@@ -289,22 +305,7 @@ export default function AssignWorkoutsClient() {
     return category ? emojiMap[category] || '🏋️' : '🏋️'
   }
 
-  // Loading state
-  if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">טוען...</p>
-        </div>
-      </div>
-    )
-  }
-
-  // No permission
-  if (!canAssign) {
-    return null
-  }
+  if (!userRole) return null
 
   const selectedUser = trainees.find(t => t.Email === selectedUserEmail)
 
