@@ -12,7 +12,7 @@ interface ProfileData {
 }
 
 export default function UserProfilePage() {
-  const { currentUser } = useAuth()
+  const { currentUser, activeUser, isImpersonating } = useAuth()
   const router = useRouter()
   
   // Profile data
@@ -33,20 +33,20 @@ export default function UserProfilePage() {
 
   // Load profile data
   useEffect(() => {
-    if (currentUser?.Email) {
+    if (activeUser?.Email) {
       loadProfile()
     }
-  }, [currentUser])
+  }, [activeUser])
 
   const loadProfile = async () => {
-    if (!currentUser?.Email) return
+    if (!activeUser?.Email) return
 
     setLoadingProfile(true)
     try {
       const { data, error } = await supabase
         .from('Profiles')
         .select('*')
-        .eq('Email', currentUser.Email)
+        .eq('Email', activeUser.Email)
         .single()
 
       if (error && error.code !== 'PGRST116') {
@@ -70,7 +70,7 @@ export default function UserProfilePage() {
   }
 
   const handleSaveProfile = async () => {
-    if (!currentUser?.Email) return
+    if (!activeUser?.Email) return
 
     // Validation
     if (bodyWeight < 30 || bodyWeight > 200) {
@@ -91,7 +91,7 @@ export default function UserProfilePage() {
             Phone: phone.trim() || null,
             UpdatedAt: new Date().toISOString()
           })
-          .eq('Email', currentUser.Email)
+          .eq('Email', activeUser.Email)
 
         if (error) throw error
       } else {
@@ -99,7 +99,7 @@ export default function UserProfilePage() {
         const { error } = await supabase
           .from('Profiles')
           .insert({
-            Email: currentUser.Email,
+            Email: activeUser.Email,
             BodyWeightKG: bodyWeight,
             Phone: phone.trim() || null
           })
@@ -216,11 +216,11 @@ export default function UserProfilePage() {
         <div className="bg-white rounded-xl shadow-sm border p-6 mb-6">
           <div className="flex items-center gap-4 mb-6">
             <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-3xl font-bold">
-              {currentUser.Name?.charAt(0).toUpperCase() || '?'}
+              {activeUser?.Name?.charAt(0).toUpperCase() || '?'}
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-gray-800">{currentUser.Name}</h2>
-              <p className="text-gray-500">{currentUser.Email}</p>
+              <h2 className="text-2xl font-bold text-gray-800">{activeUser?.Name}</h2>
+              <p className="text-gray-500">{activeUser?.Email}</p>
             </div>
           </div>
 
@@ -231,7 +231,7 @@ export default function UserProfilePage() {
                 <span className="text-2xl">📧</span>
                 <div>
                   <p className="text-sm text-gray-500">אימייל</p>
-                  <p className="font-medium text-gray-800">{currentUser.Email}</p>
+                  <p className="font-medium text-gray-800">{activeUser?.Email}</p>
                 </div>
               </div>
             </div>
@@ -241,7 +241,7 @@ export default function UserProfilePage() {
                 <span className="text-2xl">👤</span>
                 <div>
                   <p className="text-sm text-gray-500">שם מלא</p>
-                  <p className="font-medium text-gray-800">{currentUser.Name}</p>
+                  <p className="font-medium text-gray-800">{activeUser?.Name}</p>
                 </div>
               </div>
             </div>
@@ -252,8 +252,8 @@ export default function UserProfilePage() {
                 <div>
                   <p className="text-sm text-gray-500">תפקיד</p>
                   <p className="font-medium text-gray-800">
-                    {currentUser.Role === 'admin' ? '👑 מנהל' : 
-                     currentUser.Role === 'coach' ? '🏋️ מאמן' : 
+                    {activeUser?.Role === 'admin' ? '👑 מנהל' :
+                     activeUser?.Role === 'coach' ? '🏋️ מאמן' :
                      '🧗 מטפס'}
                   </p>
                 </div>
@@ -381,8 +381,8 @@ export default function UserProfilePage() {
           )}
         </div>
 
-        {/* Security Card */}
-        <div className="bg-white rounded-xl shadow-sm border p-6 mb-6">
+        {/* Security Card - only shown when viewing own profile */}
+        {!isImpersonating && <div className="bg-white rounded-xl shadow-sm border p-6 mb-6">
           <div className="flex items-center gap-2 mb-4">
             <span className="text-2xl">🔐</span>
             <h3 className="text-xl font-bold text-gray-800">שינוי סיסמה</h3>
@@ -479,7 +479,7 @@ export default function UserProfilePage() {
               </div>
             </div>
           )}
-        </div>
+        </div>}
 
         {/* Logout Button */}
         <div className="mt-6">
