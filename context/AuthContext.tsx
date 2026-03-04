@@ -73,29 +73,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // ✅ PART 1: Redirect if session expires (basic check)
   // ═══════════════════════════════════════════════════════════════════
   useEffect(() => {
-    if (!loading && !session && typeof window !== 'undefined') {
+    if (!loading && !session && !currentUser && typeof window !== 'undefined') {
       const currentPath = window.location.pathname
-      
+
       if (currentPath !== '/' && currentPath !== '/login') {
         debugLog('🔒 Session expired, redirecting to root')
         router.push('/')
       }
     }
-  }, [session, loading, router])
+  }, [session, loading, currentUser, router])
 
   // ═══════════════════════════════════════════════════════════════════
-  // ✅ PART 2: Validate session on navigation (manual cookie delete)
+  // ✅ PART 2: Validate session on back/forward navigation only
+  // NOTE: visibilitychange intentionally removed — it races with Supabase
+  // token refresh on mobile: getSession() returns null mid-refresh,
+  // triggering a false logout. onAuthStateChange (PART 3) handles all
+  // real session changes reliably, including token refresh.
   // ═══════════════════════════════════════════════════════════════════
   useEffect(() => {
     if (typeof window === 'undefined') return
 
     const validateSession = async () => {
-      // Only validate if we think we have a user
       if (!currentUser && !activeUser) return
 
       const { data: { session } } = await supabase.auth.getSession()
-      
-      // If Supabase says no session but we have user state
+
       if (!session) {
         debugLog('🔒 Session invalid on navigation, clearing state')
         setCurrentUser(null)
@@ -104,7 +106,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setAvailableUsers([])
         setTraineeEmails(new Set())
         localStorage.removeItem('activeUserEmail')
-        
+
         const currentPath = window.location.pathname
         if (currentPath !== '/' && currentPath !== '/login') {
           router.push('/')
@@ -112,31 +114,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     }
 
-    // Listen to browser navigation (back/forward buttons)
-    const handleNavigation = () => {
-      validateSession()
-    }
-
-    window.addEventListener('popstate', handleNavigation)
-    
-    // Listen to Next.js route changes
-    const handleRouteChange = () => {
-      validateSession()
-    }
-    
-    // For Next.js App Router - check on any client-side navigation
-    const checkOnFocus = () => {
-      // Only check when window regains focus (user comes back to tab)
-      if (document.visibilityState === 'visible') {
-        validateSession()
-      }
-    }
-    
-    document.addEventListener('visibilitychange', checkOnFocus)
+    window.addEventListener('popstate', validateSession)
 
     return () => {
-      window.removeEventListener('popstate', handleNavigation)
-      document.removeEventListener('visibilitychange', checkOnFocus)
+      window.removeEventListener('popstate', validateSession)
     }
   }, [currentUser, activeUser, router])
 
@@ -156,14 +137,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     })
 
     // Listen for auth changes (handles logout, token refresh, etc.)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      debugLog('🔐 Auth state changed:', _event, session?.user?.email)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      debugLog('🔐 Auth state changed:', event, session?.user?.email)
       setSession(session)
-      
+
+      if (event === 'TOKEN_REFRESHED') {
+        // JWT silently refreshed — user data is unchanged, skip DB reload
+        debugLog('🔄 Token refreshed, skipping loadUser')
+        return
+      }
+
       if (session?.user?.email) {
         loadUser(session.user.email)
       } else {
-        // Logged out or session expired
+        // SIGNED_OUT or session truly expired
         setCurrentUser(null)
         setActiveUser(null)
         setAvailableUsers([])
@@ -191,9 +178,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .maybeSingle()
       
       if (userError && Object.keys(userError).length > 0) {
+        // Transient DB/network error — don't sign the user out.
+        // They are still authenticated with Supabase; retrying on next navigation is fine.
         console.error('❌ Database error loading user:', userError)
-        debugLog('❌ Error details:', userError)
-        await logout()
+        setLoading(false)
         return
       }
       
@@ -232,8 +220,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       
     } catch (error) {
+      // Network or unexpected error — don't sign the user out.
       console.error('❌ Unexpected error in loadUser:', error)
-      await logout()
     } finally {
       setLoading(false)
     }
