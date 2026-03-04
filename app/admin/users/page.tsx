@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabaseClient'
-import { useAuth } from '@/context/AuthContext'
+import { useAuth, useActiveUserEmail } from '@/context/AuthContext'
 import { useRouter } from 'next/navigation'
 import AdminPasswordReset from '@/components/admin/AdminPasswordReset'
 
@@ -27,8 +27,10 @@ const getAuthHeaders = async () => {
 }
 
 export default function UserManagementPage() {
-  const { currentUser } = useAuth()
+  const { currentUser, loading: authLoading } = useAuth()
+  const activeEmail = useActiveUserEmail()
   const router = useRouter()
+  const [userRole, setUserRole] = useState<'admin' | 'coach' | null>(null)
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
@@ -47,12 +49,32 @@ export default function UserManagementPage() {
   })
 
   useEffect(() => {
-    if (currentUser?.Role !== 'admin') {
-      router.push('/dashboard')
-      return
+    const checkAuth = async () => {
+      if (!authLoading && !activeEmail) {
+        router.push('/dashboard')
+        return
+      }
+      if (!activeEmail) return
+
+      const { data: user } = await supabase
+        .from('Users')
+        .select('Role')
+        .eq('Email', activeEmail)
+        .single()
+
+      if (!user || (user.Role !== 'admin' && user.Role !== 'coach')) {
+        router.push('/dashboard')
+        return
+      }
+
+      setUserRole(user.Role)
     }
-    fetchUsers()
-  }, [currentUser])
+    checkAuth()
+  }, [authLoading, activeEmail, router])
+
+  useEffect(() => {
+    if (userRole) fetchUsers()
+  }, [userRole])
 
   const fetchUsers = async () => {
     try {
@@ -300,6 +322,8 @@ export default function UserManagementPage() {
   // ========================================
   // LOADING STATE
   // ========================================
+  if (!userRole) return null
+
   if (loading && users.length === 0) {
     return (
       <div className="min-h-screen flex items-center justify-center">
