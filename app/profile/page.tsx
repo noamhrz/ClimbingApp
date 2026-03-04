@@ -71,6 +71,7 @@ export default function UserProfilePage() {
 
   const handleSaveProfile = async () => {
     if (!activeUser?.Email) return
+    if (isImpersonating) return
 
     // Validation
     if (bodyWeight < 30 || bodyWeight > 200) {
@@ -269,7 +270,7 @@ export default function UserProfilePage() {
               <span className="text-2xl">⚖️</span>
               <h3 className="text-xl font-bold text-gray-800">נתוני מתאמן</h3>
             </div>
-            {!isEditingProfile && (
+            {!isEditingProfile && !isImpersonating && (
               <button
                 onClick={() => setIsEditingProfile(true)}
                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
