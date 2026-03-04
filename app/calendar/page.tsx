@@ -18,6 +18,7 @@ import WeekDuplicateModal from '@/components/WeekDuplicateModal'
 import DeleteRangeModal from '@/components/DeleteRangeModal'
 import DayListView from '@/components/calendar/DayListView'
 import CalendarToolbar from '@/components/calendar/CalendarToolbar'
+import { copyPreviousWorkout } from '@/utils/copyPreviousWorkout'
 
 moment.locale('he')
 moment.tz.setDefault('Asia/Jerusalem')
@@ -294,6 +295,16 @@ export default function CalendarPage() {
     }
   }
 
+  const handleMarkCompletedWithPrevious = async () => {
+    if (!selectedEvent || !activeEmail) return
+
+    const result = await copyPreviousWorkout(selectedEvent.id, activeEmail)
+    if (result.success) {
+      await fetchCalendar()
+    }
+    alert(result.message)
+  }
+
   const handleSaveEditedEvent = async (newDate: Date, newTime: 'morning' | 'afternoon' | 'evening') => {
     if (!selectedEvent) return
 
@@ -512,6 +523,7 @@ export default function CalendarPage() {
             onEdit={handleEditDate}
             onDelete={() => handleDeleteEvent(selectedEvent.id)}
             onStartNow={handleStartNow}
+            onMarkCompleted={handleMarkCompletedWithPrevious}
             onClose={() => setShowContextMenu(false)}
             eventTitle={selectedEvent.title}
             isCompleted={selectedEvent.completed}

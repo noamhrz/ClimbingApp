@@ -13,6 +13,7 @@ interface EventContextMenuProps {
   onDelete: () => void
   onStartNow: () => void
   onClose: () => void
+  onMarkCompleted?: () => void
   eventTitle: string
   isCompleted: boolean
   eventDate?: Date | string // ✨ NEW: Event date
@@ -25,6 +26,7 @@ export default function EventContextMenu({
   onDelete,
   onStartNow,
   onClose,
+  onMarkCompleted,
   eventTitle,
   isCompleted,
   eventDate
@@ -135,6 +137,19 @@ export default function EventContextMenu({
             >
               🗑️ מחק אימון
             </button>
+
+            {/* Mark Completed from Previous Workout Button */}
+            {!isCompleted && onMarkCompleted && (
+              <button
+                onClick={() => {
+                  onClose()
+                  onMarkCompleted()
+                }}
+                className="w-full py-3 px-4 bg-purple-100 hover:bg-purple-200 rounded-xl font-medium text-purple-700 transition-all active:scale-95"
+              >
+                📋 סמן כבוצע (נתונים מאימון קודם)
+              </button>
+            )}
 
             {/* Cancel Button */}
             <button
