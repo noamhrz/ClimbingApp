@@ -235,15 +235,11 @@ export default function UserManagementPage() {
       console.log('🗑️ Starting deletion for:', user.Email)
 
       // Use API route to bypass RLS
+      const headers = await getAuthHeaders()
       const response = await fetch('/api/admin/delete-user', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          email: user.Email,
-          adminEmail: currentUser?.Email
-        })
+        headers,
+        body: JSON.stringify({ email: user.Email })
       })
 
       const result = await response.json()
