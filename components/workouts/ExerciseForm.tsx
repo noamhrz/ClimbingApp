@@ -132,10 +132,12 @@ export default function ExerciseForm({
             <label className="block text-xs text-gray-600 mb-1">זמן (שניות)</label>
             <input
               type="number"
-              value={localData.Duration || DEFAULT_WORKOUT_EXERCISE.Duration}
+              value={localData.Duration ?? DEFAULT_WORKOUT_EXERCISE.Duration}
               onChange={(e) => {
-                handleChange('Duration', parseInt(e.target.value) || 0)
-                handleChange('Reps', 1) // Auto set Reps to 1 for duration
+                const duration = parseInt(e.target.value) || 0
+                const updated = { ...localData, Duration: duration, Reps: 1 }
+                setLocalData(updated)
+                onChange({ Duration: duration, Reps: 1 })
               }}
               min="1"
               className="w-full border rounded px-2 py-1 text-sm"
