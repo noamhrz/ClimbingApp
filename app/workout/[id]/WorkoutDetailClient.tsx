@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo, useCallback } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { useAuth, useActiveUserEmail } from '@/context/AuthContext'
@@ -11,6 +11,7 @@ import { ClimbingRoute, BoulderGrade, LeadGrade, ClimbingLocation, BoardType } f
 import ExerciseAccordion from "@/components/exercises/ExerciseAccordion"
 import moment from 'moment-timezone'
 import LoadLastWorkoutButton from './LoadLastWorkoutButton'
+import { useFormDraft } from '@/lib/useFormDraft'
 
 export default function WorkoutDetailClient({ id }: { id: number }) {
   const { activeUser, loading: authLoading } = useAuth()
@@ -133,6 +134,33 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
       setSavingLocation(false)
     }
   }
+
+  // === Draft persistence ===
+  const draftKey = calendarIdNum
+    ? `workout-draft-${calendarIdNum}`
+    : `workout-draft-new-${id}`
+
+  const draftState = useMemo(() => ({
+    exerciseForms,
+    routes,
+    selectedLocation,
+    selectedBoardType,
+    climberNotes,
+    deloading,
+    deloadingPercentage,
+  }), [exerciseForms, routes, selectedLocation, selectedBoardType, climberNotes, deloading, deloadingPercentage])
+
+  const onDraftRestore = useCallback((draft: typeof draftState) => {
+    if (draft.exerciseForms?.length > 0) setExerciseForms(draft.exerciseForms)
+    if (draft.routes) setRoutes(draft.routes)
+    if (draft.selectedLocation !== undefined) setSelectedLocation(draft.selectedLocation)
+    if (draft.selectedBoardType !== undefined) setSelectedBoardType(draft.selectedBoardType)
+    if (draft.climberNotes !== undefined) setClimberNotes(draft.climberNotes)
+    if (draft.deloading !== undefined) setDeloading(draft.deloading)
+    if (draft.deloadingPercentage !== undefined) setDeloadingPercentage(draft.deloadingPercentage)
+  }, [])
+
+  const { clearDraft } = useFormDraft(draftKey, draftState, !loading, onDraftRestore)
 
   // === שליפת אימון - UPDATED WITH BLOCKS & GOALS ===
   // Filter locations based on search
@@ -604,7 +632,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
       }
 
       showToast('✅ האימון נשמר בהצלחה!', 'blue')
-      
+      clearDraft()
       setTimeout(() => {
         router.push('/calendar')
       }, 800)

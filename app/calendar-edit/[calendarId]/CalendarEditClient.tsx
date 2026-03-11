@@ -3,7 +3,7 @@
 
 'use client'
 
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { useAuth, useActiveUserEmail } from '@/context/AuthContext'
@@ -14,6 +14,7 @@ import { generateTempId, getGradeDisplay } from '@/lib/climbing-helpers'
 import ExerciseAccordion from "@/components/exercises/ExerciseAccordion"
 import dayjs from 'dayjs'
 import moment from 'moment-timezone'
+import { useFormDraft } from '@/lib/useFormDraft'
 
 export default function CalendarEditClient() {
   const { activeUser, loading: authLoading } = useAuth()
@@ -106,6 +107,30 @@ export default function CalendarEditClient() {
       setSavingLocation(false)
     }
   }
+
+  // === Draft persistence ===
+  const draftState = useMemo(() => ({
+    exerciseForms,
+    routes,
+    selectedLocation,
+    selectedBoardType,
+    climberNotes,
+  }), [exerciseForms, routes, selectedLocation, selectedBoardType, climberNotes])
+
+  const onDraftRestore = useCallback((draft: typeof draftState) => {
+    if (draft.exerciseForms?.length > 0) setExerciseForms(draft.exerciseForms)
+    if (draft.routes) setRoutes(draft.routes)
+    if (draft.selectedLocation !== undefined) setSelectedLocation(draft.selectedLocation)
+    if (draft.selectedBoardType !== undefined) setSelectedBoardType(draft.selectedBoardType)
+    if (draft.climberNotes !== undefined) setClimberNotes(draft.climberNotes)
+  }, [])
+
+  const { clearDraft } = useFormDraft(
+    `calendar-edit-draft-${calendarId}`,
+    draftState,
+    !loading,
+    onDraftRestore
+  )
 
   // Filter locations based on search
   const filteredLocations = useMemo(() => {
@@ -624,8 +649,9 @@ export default function CalendarEditClient() {
       
       // ✅ Wait for user to see success message, THEN navigate
       await new Promise(resolve => setTimeout(resolve, 1500))
-      
+
       // ✅ Only navigate after ALL saves completed successfully
+      clearDraft()
       router.push('/calendar')
 
     } catch (error: any) {
@@ -881,7 +907,7 @@ export default function CalendarEditClient() {
           <div className="flex justify-end gap-3">
             <button
               className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-6 py-2 rounded font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-              onClick={() => router.push('/calendar')}
+              onClick={() => { clearDraft(); router.push('/calendar') }}
               disabled={isSaving}
             >
               ביטול
