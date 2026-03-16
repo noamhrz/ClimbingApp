@@ -11,13 +11,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized - No token' }, { status: 401 })
     }
 
-    // 2. Verify the token and get the caller's identity
+    // 2. Extract token and create a Supabase client with the user's JWT attached
+    const token = authHeader.replace('Bearer ', '')
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      { global: { headers: { Authorization: `Bearer ${token}` } } }
     )
 
-    const token = authHeader.replace('Bearer ', '')
     const { data: { user }, error: userError } = await supabase.auth.getUser(token)
 
     if (userError || !user) {

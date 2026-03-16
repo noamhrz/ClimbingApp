@@ -11,14 +11,14 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: 'Unauthorized - No token' }, { status: 401 })
     }
 
-    // 2. Create a regular Supabase client to verify the admin
+    // 2. Extract token and create a Supabase client with the user's JWT attached
+    const token = authHeader.replace('Bearer ', '')
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      { global: { headers: { Authorization: `Bearer ${token}` } } }
     )
 
-    // Set the auth header
-    const token = authHeader.replace('Bearer ', '')
     const { data: { user }, error: userError } = await supabase.auth.getUser(token)
     
     if (userError || !user) {
@@ -46,6 +46,13 @@ export async function PUT(request: Request) {
       )
     }
 
+    if (role !== undefined) {
+      const VALID_ROLES = ['admin', 'coach', 'user']
+      if (!VALID_ROLES.includes(role)) {
+        return NextResponse.json({ error: 'Invalid role' }, { status: 400 })
+      }
+    }
+
     // 5. Create admin client with Service Role Key
     const supabaseAdmin = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -64,7 +71,6 @@ export async function PUT(request: Request) {
       .update({
         Name: name,
         Role: role,
-        UpdatedAt: new Date().toISOString()
       })
       .eq('Email', email.toLowerCase())
 
