@@ -321,6 +321,33 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
     })
   }
 
+  // Close current exercise, open next, scroll to it (or to save button if last)
+  const handleNextExercise = (currentExerciseId: number) => {
+    const currentIdx = exerciseForms.findIndex(e => e.ExerciseID === currentExerciseId)
+    const nextEx = exerciseForms[currentIdx + 1]
+
+    setOpenExercises(prev => {
+      const next = new Set(prev)
+      next.delete(currentExerciseId)
+      if (nextEx) next.add(nextEx.ExerciseID)
+      return next
+    })
+
+    setTimeout(() => {
+      if (nextEx) {
+        const el = document.querySelector(`[data-exercise-id="${nextEx.ExerciseID}"]`)
+        if (el) {
+          const headerHeight = document.querySelector('header')?.offsetHeight ?? 0
+          const y = el.getBoundingClientRect().top + window.scrollY - headerHeight - 12
+          window.scrollTo({ top: y, behavior: 'smooth' })
+        }
+      } else {
+        document.getElementById('save-workout-btn')
+          ?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }
+    }, 100)
+  }
+
   // ✨ NEW: Toggle single exercise accordion
   const toggleExercise = (exerciseId: number) => {
     setOpenExercises(prev => {
@@ -805,6 +832,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
                             index={globalIndex}
                             isOpen={openExercises.has(ex.ExerciseID)}
                             onToggle={() => toggleExercise(ex.ExerciseID)}
+                            onNext={() => handleNextExercise(ex.ExerciseID)}
                           />
                         )
                       })}
@@ -948,7 +976,8 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
 
           {/* כפתור שמירה - UPDATED WITH DOUBLE-SUBMIT FIX */}
           <div className="text-center mt-8">
-            <button 
+            <button
+              id="save-workout-btn"
               className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-semibold text-lg shadow-md transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
               onClick={onComplete}
               disabled={isSaving || (workout.containClimbing && routes.length > 0 && !selectedLocation)}

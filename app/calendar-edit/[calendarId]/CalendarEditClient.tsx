@@ -357,6 +357,32 @@ export default function CalendarEditClient() {
     })
   }
 
+  const handleNextExercise = (currentExerciseId: number) => {
+    const currentIdx = exerciseForms.findIndex(e => e.ExerciseID === currentExerciseId)
+    const nextEx = exerciseForms[currentIdx + 1]
+
+    setOpenExercises(prev => {
+      const next = new Set(prev)
+      next.delete(currentExerciseId)
+      if (nextEx) next.add(nextEx.ExerciseID)
+      return next
+    })
+
+    setTimeout(() => {
+      if (nextEx) {
+        const el = document.querySelector(`[data-exercise-id="${nextEx.ExerciseID}"]`)
+        if (el) {
+          const headerHeight = document.querySelector('header')?.offsetHeight ?? 0
+          const y = el.getBoundingClientRect().top + window.scrollY - headerHeight - 12
+          window.scrollTo({ top: y, behavior: 'smooth' })
+        }
+      } else {
+        document.getElementById('save-workout-btn')
+          ?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }
+    }, 100)
+  }
+
   const toggleExercise = (exerciseId: number) => {
     setOpenExercises(prev => {
       const next = new Set(prev)
@@ -780,6 +806,7 @@ export default function CalendarEditClient() {
                             index={globalIndex}
                             isOpen={openExercises.has(ex.ExerciseID)}
                             onToggle={() => toggleExercise(ex.ExerciseID)}
+                            onNext={() => handleNextExercise(ex.ExerciseID)}
                           />
                         )
                       })}
@@ -913,6 +940,7 @@ export default function CalendarEditClient() {
               ביטול
             </button>
             <button
+              id="save-workout-btn"
               className={`bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
                 isSaving ? 'animate-pulse' : ''
               }`}

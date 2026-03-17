@@ -36,21 +36,21 @@ interface Props {
   exercise: Exercise & ExerciseFormData
   index: number
   onChange: (data: any) => void
-  isOpen?: boolean      // ✨ NEW: Controlled state for Toggle Block
-  onToggle?: () => void // ✨ NEW: Toggle handler for Toggle Block
+  isOpen?: boolean
+  onToggle?: () => void
+  onNext?: () => void   // close current, open + scroll to next exercise
 }
 
-export default function ExerciseAccordion({ 
-  exercise, 
-  index, 
+export default function ExerciseAccordion({
+  exercise,
+  index,
   onChange,
-  isOpen = false,    // ✨ NEW: Default to closed
-  onToggle           // ✨ NEW: Optional toggle handler
+  isOpen = false,
+  onToggle,
+  onNext,
 }: Props) {
-  // ✨ NEW: Use internal state only if onToggle is not provided (backward compatibility)
   const [localExpanded, setLocalExpanded] = useState(false)
-  
-  // ✨ NEW: Use controlled state if onToggle provided, otherwise use local state
+
   const isExpanded = onToggle ? isOpen : localExpanded
   const handleToggle = onToggle || (() => setLocalExpanded(!localExpanded))
 
@@ -84,7 +84,7 @@ export default function ExerciseAccordion({
   const hasGoals = exercise.Sets || exercise.Reps || exercise.Duration || exercise.Rest
 
   return (
-    <div className="border border-gray-200 rounded-lg overflow-hidden bg-white shadow-sm">
+    <div data-exercise-id={exercise.ExerciseID} className="border border-gray-200 rounded-lg overflow-hidden bg-white shadow-sm">
       {/* Accordion Header */}
       <button
         onClick={handleToggle}
@@ -214,6 +214,16 @@ export default function ExerciseAccordion({
             value={exercise}
             onChange={onChange}
           />
+
+          {/* Close / next button */}
+          <div className="mt-4 flex justify-center">
+            <button
+              onClick={onNext ?? handleToggle}
+              className="px-6 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-lg text-sm font-medium transition-colors"
+            >
+              ✓ סיום והבא ←
+            </button>
+          </div>
         </div>
       )}
     </div>
