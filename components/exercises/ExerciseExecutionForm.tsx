@@ -294,35 +294,7 @@ export default function ExerciseExecutionForm({ exercise, value, onChange, disab
   )
 
   return (
-    <div className="border border-gray-200 rounded-lg p-4 bg-white shadow-sm">
-      {/* Header */}
-      <div className="mb-4">
-        <div className="flex items-start gap-3">
-          <div className="flex-shrink-0 text-2xl">
-            {IsSingleHand ? '🖐️' : isDuration ? '⏱️' : '💪'}
-          </div>
-          <div className="flex-1">
-            <h3 className="font-bold text-lg text-gray-900">{exercise.Name}</h3>
-            {exercise.Description && (
-              <p className="text-sm text-gray-600 mt-1">{exercise.Description}</p>
-            )}
-            <div className="flex gap-2 mt-2">
-              {IsSingleHand && (
-                <span className="inline-block px-2 py-0.5 text-xs rounded-full bg-orange-100 text-orange-800">
-                  🖐️ יד אחת
-                </span>
-              )}
-              {isDuration && (
-                <span className="inline-block px-2 py-0.5 text-xs rounded-full bg-purple-100 text-purple-800">
-                  ⏱️ זמן
-                </span>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Form */}
+    <div>
       {IsSingleHand ? renderSingleHand() : renderRegular()}
     </div>
   )
