@@ -84,12 +84,14 @@ export async function PUT(request: Request) {
 
     // 7. Update auth metadata if name changed
     if (name) {
-      // Get user ID from auth.users
-      const { data: authUsers } = await supabaseAdmin.auth.admin.listUsers()
-      const targetUser = authUsers.users.find(u => u.email?.toLowerCase() === email.toLowerCase())
+      const { data: userRow } = await supabaseAdmin
+        .from('Users')
+        .select('id')
+        .eq('Email', email.toLowerCase())
+        .single()
 
-      if (targetUser) {
-        await supabaseAdmin.auth.admin.updateUserById(targetUser.id, {
+      if (userRow?.id) {
+        await supabaseAdmin.auth.admin.updateUserById(userRow.id, {
           user_metadata: { name }
         })
       }

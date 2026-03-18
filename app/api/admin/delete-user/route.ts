@@ -70,11 +70,14 @@ export async function POST(request: Request) {
     }
 
     // 7. Delete from auth.users
-    const { data: authUsers } = await supabaseAdmin.auth.admin.listUsers()
-    const userToDelete = authUsers?.users?.find(u => u.email === email)
+    const { data: userRow } = await supabaseAdmin
+      .from('Users')
+      .select('id')
+      .eq('Email', email)
+      .single()
 
-    if (userToDelete) {
-      await supabaseAdmin.auth.admin.deleteUser(userToDelete.id)
+    if (userRow?.id) {
+      await supabaseAdmin.auth.admin.deleteUser(userRow.id)
     }
 
     return NextResponse.json({
