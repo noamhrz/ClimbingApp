@@ -44,11 +44,11 @@ export async function POST(request: Request) {
     }
 
     // 5. Prevent self-deletion
-    if (email === user.email) {
-      return NextResponse.json({ error: 'Cannot delete your own account' }, { status: 400 })
+    if (email.toLowerCase() === user.email?.toLowerCase()) {
+      return NextResponse.json({ error: 'לא ניתן למחוק את עצמך' }, { status: 400 })
     }
 
-    // 6. Perform deletion using the service role client
+    // 6. Create service role client
     const supabaseAdmin = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!,
@@ -60,6 +60,18 @@ export async function POST(request: Request) {
       }
     )
 
+    // 7. Fetch target user's role and auth id before any deletion
+    const { data: targetUser } = await supabaseAdmin
+      .from('Users')
+      .select('id, Role')
+      .eq('Email', email.toLowerCase())
+      .single()
+
+    if (targetUser?.Role === 'admin') {
+      return NextResponse.json({ error: 'לא ניתן למחוק משתמש אדמין' }, { status: 400 })
+    }
+
+    // 8. Delete from Users table
     const { error: deleteError } = await supabaseAdmin
       .from('Users')
       .delete()
@@ -69,12 +81,9 @@ export async function POST(request: Request) {
       throw deleteError
     }
 
-    // 7. Delete from auth.users
-    const { data: authUsers } = await supabaseAdmin.auth.admin.listUsers()
-    const userToDelete = authUsers?.users?.find(u => u.email === email)
-
-    if (userToDelete) {
-      await supabaseAdmin.auth.admin.deleteUser(userToDelete.id)
+    // 9. Delete from auth.users using the id fetched before deletion
+    if (targetUser?.id) {
+      await supabaseAdmin.auth.admin.deleteUser(targetUser.id)
     }
 
     return NextResponse.json({
