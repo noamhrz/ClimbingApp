@@ -448,14 +448,15 @@ export default function UserManagementPage() {
                         >
                           🔐
                         </button>
-                        <button
-                          onClick={() => handleDeleteUser(user)}
-                          disabled={user.Email === currentUser?.Email}
-                          className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
-                          title="מחק"
-                        >
-                          🗑️
-                        </button>
+                        {user.Role !== 'admin' && user.Email !== currentUser?.Email && (
+                          <button
+                            onClick={() => handleDeleteUser(user)}
+                            className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm"
+                            title="מחק"
+                          >
+                            🗑️
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>

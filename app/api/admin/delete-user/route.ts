@@ -64,10 +64,10 @@ export async function POST(request: Request) {
     const { data: targetUser } = await supabaseAdmin
       .from('Users')
       .select('id, Role')
-      .eq('Email', email.toLowerCase())
+      .eq('Email', email)
       .single()
 
-    if (targetUser?.Role === 'admin') {
+    if (targetUser?.Role?.toLowerCase() === 'admin') {
       return NextResponse.json({ error: 'לא ניתן למחוק משתמש אדמין' }, { status: 400 })
     }
 
