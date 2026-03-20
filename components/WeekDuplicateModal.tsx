@@ -94,7 +94,9 @@ export default function WeekDuplicateModal({ isOpen, onClose, onSuccess, email }
       for (let weekNum = 1; weekNum <= numWeeks; weekNum++) {
         for (const event of originalEvents) {
           const originalStartTime = moment(event.StartTime)
-          const originalEndTime = moment(event.EndTime)
+          const originalEndTime = event.EndTime
+            ? moment(event.EndTime)
+            : moment(event.StartTime).add(1, 'hours')
           
           // Add (weekLength * weekNum) days to the original dates
           const newStartTime = originalStartTime.clone().add(weekLength * weekNum, 'days')
