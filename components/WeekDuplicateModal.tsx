@@ -85,18 +85,13 @@ export default function WeekDuplicateModal({ isOpen, onClose, onSuccess, email }
         return
       }
 
-      console.log(`📥 Found ${originalEvents.length} events in original week`)
-
       // 2. Calculate week length
       const weekLength = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1
-      console.log(`📏 Week length: ${weekLength} days`)
 
       // 3. Create duplicates for each week
       const allNewEvents = []
 
       for (let weekNum = 1; weekNum <= numWeeks; weekNum++) {
-        console.log(`\n🔄 Creating week ${weekNum}...`)
-        
         for (const event of originalEvents) {
           const originalStartTime = moment(event.StartTime)
           const originalEndTime = moment(event.EndTime)
@@ -122,12 +117,8 @@ export default function WeekDuplicateModal({ isOpen, onClose, onSuccess, email }
           }
 
           allNewEvents.push(newEvent)
-          
-          console.log(`  ✅ Event: ${originalStartTime.format('DD/MM')} → ${newStartTime.format('DD/MM')}`)
         }
       }
-
-      console.log(`\n📊 Total events to insert: ${allNewEvents.length}`)
 
       // 4. Insert all new events
       const { error: insertError } = await supabase
@@ -135,8 +126,6 @@ export default function WeekDuplicateModal({ isOpen, onClose, onSuccess, email }
         .insert(allNewEvents)
 
       if (insertError) throw insertError
-
-      console.log('✅ All events inserted successfully!')
 
       alert(`✅ ${allNewEvents.length} אירועים שוכפלו בהצלחה!\n\n${originalEvents.length} אירועים × ${numWeeks} שבועות`)
       

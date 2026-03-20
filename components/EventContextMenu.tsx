@@ -58,12 +58,9 @@ export default function EventContextMenu({
 
   if (!isOpen) return null
 
-  // ✅ Format date if provided - with debug
-  console.log('EventContextMenu - eventDate:', eventDate)
-  const formattedDate = eventDate 
+  const formattedDate = eventDate
     ? moment(eventDate).format('dddd, DD/MM/YYYY • HH:mm')
     : null
-  console.log('EventContextMenu - formattedDate:', formattedDate)
 
   return (
     <>

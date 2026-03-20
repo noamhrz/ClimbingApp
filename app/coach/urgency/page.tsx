@@ -42,9 +42,7 @@ export default function UrgencyDashboard() {
     setError(null)
     
     try {
-      console.log('🔍 Loading athletes for:', activeUser.Email, 'Role:', activeUser.Role)
       const data = await getAthletesByUrgency(activeUser.Email, activeUser.Role)
-      console.log('✅ Loaded athletes:', data.length)
       setAthletes(data)
     } catch (error) {
       console.error('❌ Error loading athletes:', error)

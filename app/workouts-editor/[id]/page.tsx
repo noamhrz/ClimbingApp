@@ -112,7 +112,6 @@ export default function EditWorkoutPage() {
     setAutoSaving(true)
     try {
       await updateWorkout(workoutId, formData)
-      console.log('✅ Auto-saved workout details')
     } catch (error) {
       console.error('Error auto-saving:', error)
     } finally {

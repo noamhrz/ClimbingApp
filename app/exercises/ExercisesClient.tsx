@@ -27,9 +27,7 @@ export default function ExercisesClient() {
   // ✨ PERSIST modal state across page refreshes
   const [showModal, setShowModal] = useState(() => {
     if (typeof window !== 'undefined') {
-      const saved = sessionStorage.getItem('exercise-modal-open')
-      console.log('📂 Modal state on load:', saved)
-      return saved === 'true'
+      return sessionStorage.getItem('exercise-modal-open') === 'true'
     }
     return false
   })
@@ -40,7 +38,6 @@ export default function ExercisesClient() {
   // ✨ Save modal state whenever it changes
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      console.log('💾 Saving modal state:', showModal)
       sessionStorage.setItem('exercise-modal-open', showModal.toString())
     }
   }, [showModal])
@@ -75,7 +72,6 @@ export default function ExercisesClient() {
   // ✨ Load only once when component mounts
   useEffect(() => {
     if (userRole && exercises.length === 0) {
-      console.log('📥 Loading exercises...')
       loadExercises()
       loadCategories()
     }
