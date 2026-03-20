@@ -38,9 +38,7 @@ export default function ExerciseModal({ exercise, onSave, onClose, isDuplicate =
       const saved = localStorage.getItem(STORAGE_KEY)
       if (saved) {
         try {
-          const parsed = JSON.parse(saved)
-          console.log('📥 Loaded draft from localStorage:', parsed.Name)
-          return parsed
+          return JSON.parse(saved)
         } catch {
           // Ignore parse errors
         }
@@ -63,14 +61,12 @@ export default function ExerciseModal({ exercise, onSave, onClose, isDuplicate =
   useEffect(() => {
     // Only save draft for new exercises (not editing)
     if (!exercise && (formData.Name || formData.Description || formData.Category)) {
-      console.log('💾 Saving draft to localStorage:', formData.Name)
       localStorage.setItem(STORAGE_KEY, JSON.stringify(formData))
     }
   }, [formData, exercise])
 
   // ✨ Clear both localStorage and sessionStorage
   const clearDraft = () => {
-    console.log('🗑️ Clearing draft from localStorage')
     localStorage.removeItem(STORAGE_KEY)
     sessionStorage.removeItem('exercise-modal-open')
   }

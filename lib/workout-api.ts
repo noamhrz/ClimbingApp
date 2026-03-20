@@ -102,8 +102,6 @@ export async function createWorkout(
   formData: WorkoutFormData,
   email: string
 ): Promise<number> {
-  console.log('createWorkout called with:', { formData, email })
-  
   const insertData = {
     ...formData,
     CreatedBy: email,
@@ -112,27 +110,22 @@ export async function createWorkout(
     EstimatedTotalTime: formData.EstimatedClimbingTime,
     UpdatedAt: new Date().toISOString(),
   }
-  
-  console.log('Inserting data:', insertData)
-  
+
   const { data, error } = await supabase
     .from('Workouts')
     .insert(insertData)
     .select('WorkoutID')
     .single()
 
-  console.log('Insert result:', { data, error })
-
   if (error) {
     console.error('Supabase error:', error)
     throw error
   }
-  
+
   if (!data) {
     throw new Error('No data returned from insert')
   }
-  
-  console.log('Created workout with ID:', data.WorkoutID)
+
   return data.WorkoutID
 }
 

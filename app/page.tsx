@@ -40,8 +40,6 @@ export default function LoginPage() {
         throw authError
       }
 
-      console.log('✅ Login successful!')
-      
       // AuthContext will automatically load the user from Users table
       // Just redirect to dashboard
       router.push('/dashboard')

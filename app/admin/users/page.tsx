@@ -254,7 +254,6 @@ export default function UserManagementPage() {
 
     try {
       setLoading(true)
-      console.log('🗑️ Starting deletion for:', user.Email)
 
       // Use API route to bypass RLS
       const headers = await getAuthHeaders()
@@ -270,7 +269,6 @@ export default function UserManagementPage() {
         throw new Error(result.error || 'Failed to delete user')
       }
 
-      console.log('✅ User deleted successfully')
       alert(`✅ המשתמש ${user.Name} נמחק בהצלחה`)
       fetchUsers()
     } catch (error: any) {

@@ -20,9 +20,7 @@ import {
 const DEBUG = false
 
 // Helper functions for logging
-const debugLog = (...args: any[]) => {
-  if (DEBUG) console.log(...args)
-}
+const debugLog = (..._args: any[]) => {}
 
 interface User {
   Email: string
