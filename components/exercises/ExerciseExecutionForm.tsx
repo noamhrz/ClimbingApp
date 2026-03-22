@@ -59,6 +59,7 @@ export default function ExerciseExecutionForm({ exercise, value, onChange, disab
               onChange={(e) => handleChange('DurationSec', e.target.value ? Number(e.target.value) : null)}
               placeholder="שניות"
               disabled={disabled}
+              onFocus={(e) => e.target.select()}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
             />
           </div>
@@ -72,6 +73,7 @@ export default function ExerciseExecutionForm({ exercise, value, onChange, disab
               onChange={(e) => handleChange('RepsDone', e.target.value ? Number(e.target.value) : null)}
               placeholder="חזרות"
               disabled={disabled}
+              onFocus={(e) => e.target.select()}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
             />
           </div>
@@ -87,6 +89,7 @@ export default function ExerciseExecutionForm({ exercise, value, onChange, disab
             onChange={(e) => handleChange('WeightKG', e.target.value ? Number(e.target.value) : null)}
             placeholder="משקל"
             disabled={disabled}
+            onFocus={(e) => e.target.select()}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
           />
         </div>
@@ -102,6 +105,7 @@ export default function ExerciseExecutionForm({ exercise, value, onChange, disab
             onChange={(e) => handleChange('RPE', e.target.value ? Number(e.target.value) : null)}
             placeholder="RPE"
             disabled={disabled}
+            onFocus={(e) => e.target.select()}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
           />
         </div>
@@ -145,6 +149,7 @@ export default function ExerciseExecutionForm({ exercise, value, onChange, disab
                   onChange={(e) => handleChange('DurationSec', e.target.value ? Number(e.target.value) : null)}
                   placeholder="שניות"
                   disabled={disabled}
+                  onFocus={(e) => e.target.select()}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
                 />
               </div>
@@ -158,6 +163,7 @@ export default function ExerciseExecutionForm({ exercise, value, onChange, disab
                   onChange={(e) => handleChange('RepsDone', e.target.value ? Number(e.target.value) : null)}
                   placeholder="חזרות"
                   disabled={disabled}
+                  onFocus={(e) => e.target.select()}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
                 />
               </div>
@@ -173,6 +179,7 @@ export default function ExerciseExecutionForm({ exercise, value, onChange, disab
                 onChange={(e) => handleChange('WeightKG', e.target.value ? Number(e.target.value) : null)}
                 placeholder="משקל"
                 disabled={disabled}
+                onFocus={(e) => e.target.select()}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
               />
             </div>
@@ -188,6 +195,7 @@ export default function ExerciseExecutionForm({ exercise, value, onChange, disab
                 onChange={(e) => handleChange('RPE', e.target.value ? Number(e.target.value) : null)}
                 placeholder="RPE"
                 disabled={disabled}
+                onFocus={(e) => e.target.select()}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
               />
             </div>
@@ -228,6 +236,7 @@ export default function ExerciseExecutionForm({ exercise, value, onChange, disab
                   onChange={(e) => handleChange('DurationSecLeft', e.target.value ? Number(e.target.value) : null)}
                   placeholder="שניות"
                   disabled={disabled}
+                  onFocus={(e) => e.target.select()}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 disabled:bg-gray-100"
                 />
               </div>
@@ -241,6 +250,7 @@ export default function ExerciseExecutionForm({ exercise, value, onChange, disab
                   onChange={(e) => handleChange('RepsDoneLeft', e.target.value ? Number(e.target.value) : null)}
                   placeholder="חזרות"
                   disabled={disabled}
+                  onFocus={(e) => e.target.select()}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 disabled:bg-gray-100"
                 />
               </div>
@@ -256,6 +266,7 @@ export default function ExerciseExecutionForm({ exercise, value, onChange, disab
                 onChange={(e) => handleChange('WeightKGLeft', e.target.value ? Number(e.target.value) : null)}
                 placeholder="משקל"
                 disabled={disabled}
+                onFocus={(e) => e.target.select()}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 disabled:bg-gray-100"
               />
             </div>
@@ -271,6 +282,7 @@ export default function ExerciseExecutionForm({ exercise, value, onChange, disab
                 onChange={(e) => handleChange('RPELeft', e.target.value ? Number(e.target.value) : null)}
                 placeholder="RPE"
                 disabled={disabled}
+                onFocus={(e) => e.target.select()}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 disabled:bg-gray-100"
               />
             </div>

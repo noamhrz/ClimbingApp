@@ -97,6 +97,7 @@ export function RouteTable({ routes, onUpdate, onDelete }: RouteTableProps) {
                     onChange={(e) => onUpdate(route.id, { attempts: parseInt(e.target.value) || 1 })}
                     min="1"
                     max="99"
+                    onFocus={(e) => e.target.select()}
                     className="w-16 px-2 py-2 border rounded text-center focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
                   />
                 </td>
@@ -186,6 +187,7 @@ export function RouteTable({ routes, onUpdate, onDelete }: RouteTableProps) {
                   onChange={(e) => onUpdate(route.id, { attempts: parseInt(e.target.value) || 1 })}
                   min="1"
                   max="99"
+                  onFocus={(e) => e.target.select()}
                   className="w-full px-3 py-2 border rounded text-center focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
                 />
               </div>

@@ -270,6 +270,7 @@ export default function AddClimbingLogModal({
                   min="1"
                   value={attempts}
                   onChange={(e) => setAttempts(Number(e.target.value))}
+                  onFocus={(e) => e.target.select()}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                   required
                 />
