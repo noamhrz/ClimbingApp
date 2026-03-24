@@ -169,6 +169,7 @@ export default function UserHeader() {
             {isAdmin && <DropdownItem href="/admin/users">👥 משתמשים</DropdownItem>}
             <DropdownItem href="/profile">👤 פרופיל</DropdownItem>
             <DropdownItem href={goalsHref}>🎯 יעדים</DropdownItem>
+            <DropdownItem href="/monthly-sessions">📋 פגישות חודשיות</DropdownItem>
           </NavDropdown>
 
         </nav>
