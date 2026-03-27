@@ -170,6 +170,7 @@ export default function UserHeader() {
             <DropdownItem href="/profile">👤 פרופיל</DropdownItem>
             <DropdownItem href={goalsHref}>🎯 יעדים</DropdownItem>
             <DropdownItem href="/monthly-sessions">📋 פגישות חודשיות</DropdownItem>
+            <DropdownItem href="/media">📁 מדיה</DropdownItem>
           </NavDropdown>
 
         </nav>

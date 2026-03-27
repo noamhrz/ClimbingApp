@@ -1,0 +1,554 @@
+'use client'
+
+import { useState, useEffect, useCallback, useRef, Suspense } from 'react'
+import { useSearchParams, useRouter, usePathname } from 'next/navigation'
+import { useAuth } from '@/context/AuthContext'
+import { supabase } from '@/lib/supabaseClient'
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+interface MediaFile {
+  FileID: number
+  Email: string
+  GoogleDriveFileId: string
+  FileName: string
+  MimeType: string
+  FileSize: number | null
+  UploadedBy: string
+  CreatedAt: string
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function isVideo(mime: string) { return mime.startsWith('video/') }
+function isImage(mime: string) { return mime.startsWith('image/') }
+
+function formatBytes(bytes: number | null) {
+  if (!bytes) return ''
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
+
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleDateString('he-IL', { day: 'numeric', month: 'short', year: 'numeric' })
+}
+
+function shortEmail(email: string) {
+  return email.split('@')[0]
+}
+
+// ─── File card ────────────────────────────────────────────────────────────────
+
+function FileCard({
+  file,
+  token,
+  canDelete,
+  onDelete,
+  uploaderName,
+}: {
+  file: MediaFile
+  token: string
+  canDelete: boolean
+  onDelete: (id: number) => void
+  uploaderName: string
+}) {
+  const streamUrl = `/api/media/stream/${file.FileID}?token=${encodeURIComponent(token)}`
+  const [deleting, setDeleting] = useState(false)
+
+  const handleDelete = async () => {
+    if (!confirm(`למחוק את הקובץ "${file.FileName}"?`)) return
+    setDeleting(true)
+    onDelete(file.FileID)
+  }
+
+  return (
+    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
+      {/* Preview */}
+      <div className="bg-gray-100 relative" style={{ minHeight: '160px' }}>
+        {isVideo(file.MimeType) ? (
+          <video
+            src={streamUrl}
+            controls
+            preload="metadata"
+            className="w-full h-full object-contain max-h-64"
+          />
+        ) : isImage(file.MimeType) ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={streamUrl}
+            alt={file.FileName}
+            className="w-full h-40 object-cover"
+          />
+        ) : (
+          <div className="flex items-center justify-center h-40 text-4xl text-gray-400">
+            📄
+          </div>
+        )}
+      </div>
+
+      {/* Info */}
+      <div className="p-3 flex flex-col gap-1 flex-1">
+        <p className="text-sm font-medium text-gray-900 truncate" title={file.FileName}>
+          {file.FileName}
+        </p>
+        <p className="text-xs text-gray-400">
+          הועלה על ידי {uploaderName}
+        </p>
+        <div className="flex items-center justify-between mt-1">
+          <span className="text-xs text-gray-400">
+            {formatDate(file.CreatedAt)}{file.FileSize ? ` · ${formatBytes(file.FileSize)}` : ''}
+          </span>
+          {canDelete && (
+            <button
+              onClick={handleDelete}
+              disabled={deleting}
+              className="text-xs text-red-400 hover:text-red-600 disabled:opacity-40 transition-colors p-1"
+              title="מחק"
+            >
+              🗑️
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Drop zone ────────────────────────────────────────────────────────────────
+
+function DropZone({ onFiles }: { onFiles: (files: FileList) => void }) {
+  const [dragOver, setDragOver] = useState(false)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  return (
+    <div
+      onDragOver={e => { e.preventDefault(); setDragOver(true) }}
+      onDragLeave={() => setDragOver(false)}
+      onDrop={e => { e.preventDefault(); setDragOver(false); if (e.dataTransfer.files.length) onFiles(e.dataTransfer.files) }}
+      onClick={() => inputRef.current?.click()}
+      className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors ${
+        dragOver ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-blue-400 hover:bg-gray-50'
+      }`}
+    >
+      <p className="text-3xl mb-2">📁</p>
+      <p className="text-sm font-medium text-gray-700">גרור קובץ לכאן או לחץ לבחירה</p>
+      <p className="text-xs text-gray-400 mt-1">וידאו, תמונות, מסמכים</p>
+      <input ref={inputRef} type="file" multiple className="hidden" onChange={e => e.target.files && onFiles(e.target.files)} />
+    </div>
+  )
+}
+
+// ─── Main content ─────────────────────────────────────────────────────────────
+
+function MediaContent() {
+  const { currentUser, activeUser } = useAuth()
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+  const now = new Date()
+
+  const isCoachOrAdmin = currentUser?.Role === 'coach' || currentUser?.Role === 'admin'
+
+  // ── Auth token for API calls ──────────────────────────────────
+  const [token, setToken] = useState('')
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setToken(session?.access_token ?? '')
+    })
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setToken(session?.access_token ?? '')
+    })
+    return () => subscription.unsubscribe()
+  }, [])
+
+  // ── Users list ────────────────────────────────────────────────
+  const [users, setUsers] = useState<{ Email: string; Name: string }[]>([])
+  const [usersLoaded, setUsersLoaded] = useState(false)
+  // Map for resolving uploader names
+  const [allUsers, setAllUsers] = useState<Record<string, string>>({})
+
+  // ── URL-based filter ──────────────────────────────────────────
+  const urlEmail = searchParams.get('email') ?? ''
+  const selectedEmail = urlEmail
+
+  function setSelectedEmail(email: string) {
+    const params = new URLSearchParams(searchParams.toString())
+    params.set('email', email)
+    router.replace(`${pathname}?${params.toString()}`)
+  }
+
+  // ── Files state ───────────────────────────────────────────────
+  const [files, setFiles] = useState<MediaFile[]>([])
+  const [filesLoading, setFilesLoading] = useState(false)
+  const [uploadError, setUploadError] = useState('')
+
+  // ── Upload progress ───────────────────────────────────────────
+  // progress -1 = idle, 0-100 = uploading
+  const [uploadProgress, setUploadProgress] = useState(-1)
+  const [uploadFileName, setUploadFileName] = useState('')
+  const [uploadFileIndex, setUploadFileIndex] = useState(0)
+  const [uploadFileTotal, setUploadFileTotal] = useState(0)
+  const xhrRef = useRef<XMLHttpRequest | null>(null)
+  const [syncing, setSyncing] = useState(false)
+
+  // ── Load users & set URL default ─────────────────────────────
+  useEffect(() => {
+    if (!currentUser) return
+
+    async function loadUsers() {
+      console.log(`[media] loadUsers role=${currentUser!.Role} email=${currentUser!.Email}`)
+      let list: { Email: string; Name: string }[] = []
+
+      if (currentUser!.Role === 'admin') {
+        const { data } = await supabase.from('Users').select('Email, Name').order('Name')
+        list = data ?? []
+      } else if (currentUser!.Role === 'coach') {
+        const { data } = await supabase
+          .from('CoachTraineesActiveView')
+          .select('TraineeEmail, TraineeName')
+          .eq('CoachEmail', currentUser!.Email)
+        list = (data ?? []).map(t => ({ Email: t.TraineeEmail, Name: t.TraineeName }))
+      } else {
+        const { data } = await supabase
+          .from('Users')
+          .select('Email, Name')
+          .eq('Email', currentUser!.Email)
+          .single()
+        if (data) list = [data]
+      }
+
+      console.log(`[media] users list loaded: ${list.length} entries`, list.map(u => u.Email))
+      setUsers(list)
+
+      // Also load all users for uploader name resolution
+      const { data: allData } = await supabase.from('Users').select('Email, Name')
+      const map: Record<string, string> = {}
+      ;(allData ?? []).forEach(u => { map[u.Email] = u.Name })
+      setAllUsers(map)
+
+      // Initialise URL param
+      const emailInUrl = searchParams.get('email')
+      const defaultEmail = activeUser?.Email || currentUser!.Email
+      const validEmail =
+        list.find(u => u.Email === emailInUrl)?.Email ||
+        list.find(u => u.Email === defaultEmail)?.Email ||
+        list[0]?.Email ||
+        ''
+
+      if (!emailInUrl || emailInUrl !== validEmail) {
+        const params = new URLSearchParams(searchParams.toString())
+        params.set('email', validEmail)
+        router.replace(`${pathname}?${params.toString()}`)
+      }
+
+      setUsersLoaded(true)
+    }
+
+    loadUsers()
+  }, [currentUser]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Load files when selected email or token changes ───────────
+  const loadFiles = useCallback(async () => {
+    if (!selectedEmail || !token) return
+    setFilesLoading(true)
+    try {
+      // Auto-sync with Drive before listing (best-effort — won't block if Drive is unavailable)
+      await fetch('/api/media/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ email: selectedEmail }),
+      }).catch(() => {})
+
+      const res = await fetch(`/api/media/list?email=${encodeURIComponent(selectedEmail)}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      const json = await res.json()
+      setFiles(res.ok ? json.files : [])
+    } catch {
+      setFiles([])
+    }
+    setFilesLoading(false)
+  }, [selectedEmail, token])
+
+  useEffect(() => {
+    if (selectedEmail && token) loadFiles()
+  }, [loadFiles, selectedEmail, token])
+
+  // ── Direct-to-Drive upload helpers ───────────────────────────
+  async function initUpload(params: {
+    email: string; fileName: string; mimeType: string; fileSize: number
+  }): Promise<string> {
+    const res = await fetch('/api/media/init-upload', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify(params),
+    })
+    const json = await res.json()
+    if (!res.ok) throw new Error(json.error || 'Failed to init upload')
+    return json.uploadUrl
+  }
+
+  function xhrUploadDirect(
+    file: File,
+    uploadUrl: string,
+    onProgress: (pct: number) => void
+  ): Promise<{ driveFileId: string; fileSize: number }> {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest()
+      xhrRef.current = xhr
+      xhr.upload.addEventListener('progress', e => {
+        if (e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100))
+      })
+      xhr.addEventListener('load', () => {
+        xhrRef.current = null
+        if (xhr.status === 200 || xhr.status === 201) {
+          try {
+            const data = JSON.parse(xhr.responseText)
+            resolve({ driveFileId: data.id, fileSize: Number(data.size ?? file.size) })
+          } catch {
+            reject(new Error('Invalid Drive response'))
+          }
+        } else {
+          reject(new Error(`Drive upload failed: ${xhr.status}`))
+        }
+      })
+      xhr.addEventListener('error', () => { xhrRef.current = null; reject(new Error('שגיאת רשת')) })
+      xhr.addEventListener('abort', () => { xhrRef.current = null; reject(new Error('__cancelled__')) })
+      xhr.open('PUT', uploadUrl)
+      xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream')
+      xhr.send(file)
+    })
+  }
+
+  async function registerFile(params: {
+    email: string; driveFileId: string; fileName: string; mimeType: string; fileSize: number
+  }): Promise<void> {
+    const res = await fetch('/api/media/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify(params),
+    })
+    if (!res.ok) {
+      const json = await res.json()
+      throw new Error(json.error || 'Failed to register file')
+    }
+  }
+
+  // ── Upload handler ────────────────────────────────────────────
+  const handleFiles = async (fileList: FileList) => {
+    if (!token || !selectedEmail) return
+    setUploadError('')
+
+    const allFiles = Array.from(fileList)
+    setUploadFileTotal(allFiles.length)
+
+    for (let i = 0; i < allFiles.length; i++) {
+      const file = allFiles[i]
+      setUploadFileIndex(i + 1)
+      setUploadFileName(file.name)
+      setUploadProgress(0)
+
+      try {
+        const mimeType = file.type || 'application/octet-stream'
+
+        // Step 1: get resumable upload URL from our server
+        const uploadUrl = await initUpload({
+          email: selectedEmail, fileName: file.name, mimeType, fileSize: file.size,
+        })
+
+        // Step 2: upload directly from browser to Google Drive (no Vercel in the loop)
+        const { driveFileId, fileSize } = await xhrUploadDirect(file, uploadUrl, pct => setUploadProgress(pct))
+
+        // Step 3: save metadata to Supabase via our server
+        await registerFile({ email: selectedEmail, driveFileId, fileName: file.name, mimeType, fileSize })
+      } catch (err: any) {
+        if (err.message !== '__cancelled__') {
+          setUploadError(err.message || 'שגיאה בהעלאה')
+        }
+        break
+      }
+    }
+
+    setUploadProgress(-1)
+    setUploadFileName('')
+    loadFiles()
+  }
+
+  const handleCancel = () => {
+    xhrRef.current?.abort()
+  }
+
+  const handleSync = async () => {
+    if (!selectedEmail || !token) return
+    setSyncing(true)
+    try {
+      await loadFiles()
+    } finally {
+      setSyncing(false)
+    }
+  }
+
+  // ── Block navigation while uploading ─────────────────────────
+  const isUploading = uploadProgress >= 0
+  useEffect(() => {
+    if (!isUploading) return
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault()
+      e.returnValue = ''
+    }
+    window.addEventListener('beforeunload', handler)
+    return () => window.removeEventListener('beforeunload', handler)
+  }, [isUploading])
+
+  // ── Delete ────────────────────────────────────────────────────
+  const handleDelete = async (fileId: number) => {
+    await fetch(`/api/media/${fileId}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    setFiles(prev => prev.filter(f => f.FileID !== fileId))
+  }
+
+  // ── Can delete? ───────────────────────────────────────────────
+  function canDeleteFile(file: MediaFile) {
+    if (!currentUser) return false
+    if (currentUser.Role === 'admin') return true
+    if (currentUser.Role === 'coach') return true
+    return file.UploadedBy === currentUser.Email
+  }
+
+  // ── Render ────────────────────────────────────────────────────
+  if (!usersLoaded) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <p className="text-gray-400">טוען...</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="max-w-5xl mx-auto px-4 py-6 pb-24" dir="rtl">
+      <h1 className="text-2xl font-bold text-gray-900 mb-6">מדיה</h1>
+
+      {/* ── Filters (only admin/coach see the dropdown) ── */}
+      {isCoachOrAdmin ? (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">
+          <div className="flex flex-wrap gap-3 items-end">
+            <div className="flex flex-col gap-1 flex-1 min-w-[160px]">
+              <label className="text-xs font-medium text-gray-500">ספורטאי</label>
+              <select
+                value={selectedEmail}
+                onChange={e => setSelectedEmail(e.target.value)}
+                className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                {users.map(u => (
+                  <option key={u.Email} value={u.Email}>{u.Name}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 px-4 py-3 mb-6">
+          <p className="text-sm text-gray-600">
+            <span className="font-medium">{users[0]?.Name ?? currentUser?.Name}</span>
+            <span className="text-gray-400 mr-1"> — הקבצים שלי</span>
+          </p>
+        </div>
+      )}
+
+      {/* ── Upload zone (coach/admin only) ── */}
+      {isCoachOrAdmin && (
+        <div className="mb-6">
+          {uploadProgress >= 0 ? (
+            <div className="border-2 border-blue-300 rounded-xl p-5 bg-blue-50">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-sm font-medium text-blue-800 truncate ml-3" title={uploadFileName}>
+                  {uploadFileName}
+                </p>
+                <div className="flex items-center gap-2 shrink-0">
+                  {uploadFileTotal > 1 && (
+                    <span className="text-xs text-blue-500">{uploadFileIndex} / {uploadFileTotal}</span>
+                  )}
+                  <button
+                    onClick={handleCancel}
+                    className="text-xs text-red-500 hover:text-red-700 font-medium px-2 py-0.5 rounded border border-red-300 hover:border-red-500 transition-colors"
+                  >
+                    ביטול
+                  </button>
+                </div>
+              </div>
+              <div className="w-full bg-blue-200 rounded-full h-2.5 overflow-hidden">
+                <div
+                  className="bg-blue-600 h-2.5 rounded-full transition-all duration-100"
+                  style={{ width: `${uploadProgress}%` }}
+                />
+              </div>
+              <p className="text-xs text-blue-500 mt-1.5 text-center">{uploadProgress}%</p>
+            </div>
+          ) : (
+            <DropZone onFiles={handleFiles} />
+          )}
+          {uploadError && (
+            <p className="text-red-500 text-sm mt-2 text-center">{uploadError}</p>
+          )}
+        </div>
+      )}
+
+      {/* ── Sync row ── */}
+      <div className="flex justify-end mb-3">
+        <button
+          onClick={handleSync}
+          disabled={syncing || !selectedEmail}
+          className="text-xs text-gray-500 hover:text-blue-600 disabled:opacity-40 flex items-center gap-1.5 transition-colors"
+        >
+          <span className={syncing ? 'animate-spin' : ''}>🔄</span>
+          {syncing ? 'מסנכרן...' : 'סנכרן עם Drive'}
+        </button>
+      </div>
+
+      {/* ── File gallery ── */}
+      {filesLoading ? (
+        <div className="flex items-center justify-center py-16">
+          <p className="text-gray-400">טוען קבצים...</p>
+        </div>
+      ) : files.length === 0 ? (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-10 text-center">
+          <p className="text-4xl mb-3">📂</p>
+          <p className="text-gray-500">אין קבצים עדיין</p>
+          {isCoachOrAdmin && (
+            <p className="text-gray-400 text-sm mt-1">גרור קבצים לאזור ההעלאה למעלה</p>
+          )}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {files.map(file => (
+            <FileCard
+              key={file.FileID}
+              file={file}
+              token={token}
+              canDelete={canDeleteFile(file)}
+              onDelete={handleDelete}
+              uploaderName={allUsers[file.UploadedBy] ?? shortEmail(file.UploadedBy)}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── Page export ──────────────────────────────────────────────────────────────
+
+export default function MediaPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-[60vh]" dir="rtl">
+        <p className="text-gray-400">טוען...</p>
+      </div>
+    }>
+      <MediaContent />
+    </Suspense>
+  )
+}
