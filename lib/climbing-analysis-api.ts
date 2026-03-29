@@ -41,6 +41,11 @@ export interface ClimbingAnalysis {
   RawLogJson: { hand: 'L' | 'R'; time: number }[] | null
   ThirdsByMoves: ThirdByMoves[] | null
   ThirdsByTime: ThirdByTime[] | null
+  TotalClips: number | null
+  AvgClipDuration: number | null
+  LongestClip: number | null
+  ClippingTime: number | null
+  MovementTime: number | null
   CreatedAt: string
   UpdatedAt: string
 }

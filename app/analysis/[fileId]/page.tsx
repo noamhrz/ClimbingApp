@@ -13,6 +13,7 @@ import MediaComments from '@/components/media/MediaComments'
 // ── Types ──────────────────────────────────────────────────────────────────────
 
 interface Move { hand: 'L' | 'R'; time: number }
+interface Clip { startTime: number; endTime: number; duration: number }
 
 interface MediaFile {
   FileID: number
@@ -35,6 +36,11 @@ interface Metrics {
   StallsLong: number
   ThirdsByMoves: ThirdByMoves[]
   ThirdsByTime: ThirdByTime[]
+  TotalClips: number
+  AvgClipDuration: number
+  LongestClip: number
+  ClippingTime: number
+  MovementTime: number
 }
 
 type ScoreKey = 'ScorePrecision' | 'ScoreClipping' | 'ScoreTension' | 'ScoreFlow' |
@@ -53,6 +59,7 @@ const SCORE_LABELS: [ScoreKey, string][] = [
 
 const STALL_THRESHOLD = 7
 const LONG_STALL = 15
+const INEFFICIENT_CLIP = 10
 const THIRDS_COLORS = ['bg-green-400', 'bg-yellow-400', 'bg-red-500']
 const THIRDS_TEXT = ['text-green-700', 'text-yellow-700', 'text-red-700']
 const THIRDS_LABELS = ['שליש א׳', 'שליש ב׳', 'שליש ג׳']
@@ -70,9 +77,9 @@ function avg(arr: number[]): number {
   return arr.length > 0 ? arr.reduce((a, b) => a + b, 0) / arr.length : 0
 }
 
-// startTime = when SPACE was first pressed, endTime = when SPACE was pressed second time.
+// startTime = when ↑ was pressed, endTime = when ↓ was pressed.
 // lastGap (from last L/R to endTime) is included in active/rest and stall counts.
-function calculateMetrics(moves: Move[], startTime: number, endTime: number): Metrics {
+function calculateMetrics(moves: Move[], startTime: number, endTime: number, clips: Clip[]): Metrics {
   const T0 = startTime
   const Tn = endTime
   const ClimbDuration = Tn - T0
@@ -148,6 +155,11 @@ function calculateMetrics(moves: Move[], startTime: number, endTime: number): Me
     StallsLong: allGaps.filter(g => g >= LONG_STALL).length,
     ThirdsByMoves,
     ThirdsByTime,
+    TotalClips: clips.length,
+    AvgClipDuration: clips.length > 0 ? avg(clips.map(c => c.duration)) : 0,
+    LongestClip: clips.length > 0 ? Math.max(...clips.map(c => c.duration)) : 0,
+    ClippingTime: clips.reduce((s, c) => s + c.duration, 0),
+    MovementTime: Math.max(0, ActiveTime - clips.reduce((s, c) => s + c.duration, 0)),
   }
 }
 
@@ -169,6 +181,11 @@ function analysisToMetrics(a: ClimbingAnalysis): Metrics | null {
     StallsLong: a.StallsLong ?? 0,
     ThirdsByMoves: a.ThirdsByMoves ?? [],
     ThirdsByTime: a.ThirdsByTime ?? [],
+    TotalClips: a.TotalClips ?? 0,
+    AvgClipDuration: a.AvgClipDuration ?? 0,
+    LongestClip: a.LongestClip ?? 0,
+    ClippingTime: a.ClippingTime ?? 0,
+    MovementTime: a.MovementTime ?? 0,
   }
 }
 
@@ -261,6 +278,38 @@ function OverallSummary({ metrics, isTop }: { metrics: Metrics; isTop?: boolean 
           </span>
         )}
       </div>
+
+      {/* Clips */}
+      {metrics.TotalClips > 0 && (
+        <div className="border-t border-gray-100 pt-3">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-xs text-gray-500 font-medium">הקלפות</span>
+            <span className="text-sm font-bold text-yellow-700">{metrics.TotalClips}</span>
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            <div className="bg-yellow-50 rounded-lg p-2 text-center">
+              <div className="text-sm font-bold text-yellow-700">{fmtSec(metrics.AvgClipDuration)}</div>
+              <div className="text-[10px] text-yellow-600 mt-0.5">ממוצע</div>
+            </div>
+            <div className={`rounded-lg p-2 text-center ${metrics.LongestClip > INEFFICIENT_CLIP ? 'bg-red-50' : 'bg-yellow-50'}`}>
+              <div className={`text-sm font-bold ${metrics.LongestClip > INEFFICIENT_CLIP ? 'text-red-600' : 'text-yellow-700'}`}>
+                {fmtSec(metrics.LongestClip)}
+                {metrics.LongestClip > INEFFICIENT_CLIP && ' ⚠'}
+              </div>
+              <div className="text-[10px] text-gray-500 mt-0.5">ארוכה ביותר</div>
+            </div>
+            <div className="bg-yellow-50 rounded-lg p-2 text-center">
+              <div className="text-sm font-bold text-yellow-700">{fmtSec(metrics.ClippingTime)}</div>
+              <div className="text-[10px] text-yellow-600 mt-0.5">סה״כ זמן</div>
+            </div>
+          </div>
+          {metrics.MovementTime > 0 && (
+            <p className="text-[11px] text-gray-400 mt-1.5 text-center">
+              זמן תנועה טהור: <strong className="text-gray-600">{fmtSec(metrics.MovementTime)}</strong>
+            </p>
+          )}
+        </div>
+      )}
     </div>
   )
 }
@@ -388,16 +437,21 @@ export default function AnalysisPage() {
   const [loading, setLoading] = useState(true)
 
   // ── Session ───────────────────────────────────────────────────
-  // States: idle → (SPACE) → active → (L/R moves) → active → (SPACE) → ended
+  // States: idle → (↑) → active → (L/R/C moves) → active → (↓) → ended
   const [moves, setMoves] = useState<Move[]>([])
+  const [clips, setClips] = useState<Clip[]>([])
   const [sessionState, setSessionState] = useState<'idle' | 'active' | 'ended'>('idle')
   const [liveMetrics, setLiveMetrics] = useState<Metrics | null>(null)
   const [flashSide, setFlashSide] = useState<'L' | 'R' | null>(null)
+  const [flashClip, setFlashClip] = useState(false)
   const sessionStateRef = useRef<'idle' | 'active' | 'ended'>('idle')
   useEffect(() => { sessionStateRef.current = sessionState }, [sessionState])
   const movesRef = useRef<Move[]>([])
   useEffect(() => { movesRef.current = moves }, [moves])
+  const clipsRef = useRef<Clip[]>([])
+  useEffect(() => { clipsRef.current = clips }, [clips])
   const startTimeRef = useRef<number>(0)
+  const clipStartRef = useRef<number | null>(null) // null = not clipping, number = clip in progress
 
   // ── Qualitative ───────────────────────────────────────────────
   const [tab, setTab] = useState<'quantitative' | 'qualitative'>('quantitative')
@@ -485,8 +539,17 @@ export default function AnalysisPage() {
     if (!video) return
     const current = movesRef.current
     if (current.length < 1) return
+    // Close any in-progress clip
+    const currentClips = clipsRef.current
+    if (clipStartRef.current !== null) {
+      const duration = video.currentTime - clipStartRef.current
+      currentClips.push({ startTime: clipStartRef.current, endTime: video.currentTime, duration })
+      clipStartRef.current = null
+      clipsRef.current = [...currentClips]
+      setClips([...currentClips])
+    }
     try {
-      const m = calculateMetrics(current, startTimeRef.current, video.currentTime)
+      const m = calculateMetrics(current, startTimeRef.current, video.currentTime, clipsRef.current)
       setLiveMetrics(m)
       setSessionState('ended')
     } catch {
@@ -494,7 +557,27 @@ export default function AnalysisPage() {
     }
   }, [])
 
-  // SPACE: start on first press, end on second press
+  const handleClip = useCallback(() => {
+    if (sessionStateRef.current !== 'active') return
+    const video = videoRef.current
+    if (!video || video.paused || video.ended) return
+
+    setFlashClip(true)
+    setTimeout(() => setFlashClip(false), 300)
+
+    if (clipStartRef.current === null) {
+      // Start clip
+      clipStartRef.current = video.currentTime
+    } else {
+      // End clip
+      const duration = video.currentTime - clipStartRef.current
+      const clip: Clip = { startTime: clipStartRef.current, endTime: video.currentTime, duration }
+      clipStartRef.current = null
+      setClips(prev => [...prev, clip])
+    }
+  }, [])
+
+  // ↑/↓: start on first press, end on second press
   const handleSpace = useCallback(() => {
     const video = videoRef.current
     if (!video || video.paused || video.ended) return
@@ -508,9 +591,11 @@ export default function AnalysisPage() {
 
   function handleReset() {
     setMoves([])
+    setClips([])
     setSessionState('idle')
     setLiveMetrics(null)
     startTimeRef.current = 0
+    clipStartRef.current = null
   }
 
   // ── Keyboard ──────────────────────────────────────────────────
@@ -521,10 +606,11 @@ export default function AnalysisPage() {
       if (e.code === 'ArrowLeft' || e.code === 'KeyL') { e.preventDefault(); recordMove('L') }
       else if (e.code === 'ArrowRight' || e.code === 'KeyR') { e.preventDefault(); recordMove('R') }
       else if (e.code === 'ArrowUp' || e.code === 'ArrowDown') { e.preventDefault(); handleSpace() }
+      else if (e.code === 'KeyC') { e.preventDefault(); handleClip() }
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  }, [canCapture, recordMove, handleSpace])
+  }, [canCapture, recordMove, handleSpace, handleClip])
 
   // ── Save ──────────────────────────────────────────────────────
   async function handleSave() {
@@ -540,6 +626,14 @@ export default function AnalysisPage() {
 
     let result: ClimbingAnalysis | null = null
 
+    const clipMetrics = (m: Metrics) => ({
+      TotalClips: m.TotalClips,
+      AvgClipDuration: m.AvgClipDuration,
+      LongestClip: m.LongestClip,
+      ClippingTime: m.ClippingTime,
+      MovementTime: m.MovementTime,
+    })
+
     if (analysis) {
       const updateData: Partial<AnalysisInsert> = liveMetrics ? {
         TotalMoves: liveMetrics.TotalMoves,
@@ -554,6 +648,7 @@ export default function AnalysisPage() {
         RawLogJson: moves,
         ThirdsByMoves: liveMetrics.ThirdsByMoves,
         ThirdsByTime: liveMetrics.ThirdsByTime,
+        ...clipMetrics(liveMetrics),
         ...qualData,
       } : qualData
       result = await updateAnalysis(analysis.AnalysisID, updateData)
@@ -574,6 +669,7 @@ export default function AnalysisPage() {
         RawLogJson: moves,
         ThirdsByMoves: liveMetrics.ThirdsByMoves,
         ThirdsByTime: liveMetrics.ThirdsByTime,
+        ...clipMetrics(liveMetrics),
         ...qualData,
       })
     }
@@ -601,8 +697,10 @@ export default function AnalysisPage() {
     await deleteAnalysis(analysis.AnalysisID)
     setAnalysis(null)
     setMoves([])
+    setClips([])
     setSessionState('idle')
     setLiveMetrics(null)
+    clipStartRef.current = null
     setScores({
       ScorePrecision: 3, ScoreClipping: 3, ScoreTension: 3, ScoreFlow: 3,
       ScoreMomentum: 3, ScoreHips: 3, ScoreSolid: 3, ScoreCommitment: 3,
@@ -674,7 +772,7 @@ export default function AnalysisPage() {
                 <p className="text-sm">טוען סרטון...</p>
               </div>
             )}
-            {/* Flash overlays */}
+            {/* Flash overlays — L=blue left, R=red right, C=yellow full */}
             <div
               className="absolute inset-y-0 left-0 w-1/2 pointer-events-none transition-opacity duration-200"
               style={{ opacity: flashSide === 'L' ? 1 : 0, background: 'rgba(59,130,246,0.35)' }}
@@ -683,22 +781,38 @@ export default function AnalysisPage() {
               className="absolute inset-y-0 right-0 w-1/2 pointer-events-none transition-opacity duration-200"
               style={{ opacity: flashSide === 'R' ? 1 : 0, background: 'rgba(239,68,68,0.35)' }}
             />
+            <div
+              className="absolute inset-0 pointer-events-none transition-opacity duration-200"
+              style={{ opacity: flashClip ? 1 : 0, background: 'rgba(234,179,8,0.3)' }}
+            />
           </div>
 
           {/* Capture buttons — coach/admin, session not ended */}
           {canCapture && sessionState !== 'ended' && (
-            <div className="flex gap-2 mt-3" dir="ltr">
+            <div className="flex gap-1.5 mt-3" dir="ltr">
               <button
                 onPointerDown={e => { e.preventDefault(); recordMove('L') }}
                 disabled={sessionState === 'idle'}
-                className="flex-1 py-5 bg-blue-500 hover:bg-blue-600 active:bg-blue-700 disabled:opacity-25 disabled:pointer-events-none text-white rounded-xl font-bold text-base shadow select-none touch-none"
+                className="flex-1 py-4 bg-blue-500 hover:bg-blue-600 active:bg-blue-700 disabled:opacity-25 disabled:pointer-events-none text-white rounded-xl font-bold text-sm shadow select-none touch-none"
               >
                 יד שמאל
                 <span className="block text-xs opacity-60 font-normal">←</span>
               </button>
               <button
+                onPointerDown={e => { e.preventDefault(); handleClip() }}
+                disabled={sessionState === 'idle'}
+                className={`px-3 py-4 text-white rounded-xl font-bold shadow select-none touch-none transition-colors disabled:opacity-25 disabled:pointer-events-none ${
+                  clipStartRef.current !== null
+                    ? 'bg-yellow-500 hover:bg-yellow-600 active:bg-yellow-700 ring-2 ring-yellow-300'
+                    : 'bg-yellow-400 hover:bg-yellow-500 active:bg-yellow-600'
+                }`}
+              >
+                קליפ
+                <span className="block text-xs opacity-70 font-normal">[C]</span>
+              </button>
+              <button
                 onPointerDown={e => { e.preventDefault(); handleSpace() }}
-                className={`px-4 py-5 text-white rounded-xl font-bold shadow select-none touch-none transition-colors ${
+                className={`px-3 py-4 text-white rounded-xl font-bold shadow select-none touch-none transition-colors ${
                   sessionState === 'idle'
                     ? 'bg-green-500 hover:bg-green-600 active:bg-green-700'
                     : 'bg-gray-400 hover:bg-gray-500 active:bg-gray-600'
@@ -710,7 +824,7 @@ export default function AnalysisPage() {
               <button
                 onPointerDown={e => { e.preventDefault(); recordMove('R') }}
                 disabled={sessionState === 'idle'}
-                className="flex-1 py-5 bg-red-500 hover:bg-red-600 active:bg-red-700 disabled:opacity-25 disabled:pointer-events-none text-white rounded-xl font-bold text-base shadow select-none touch-none"
+                className="flex-1 py-4 bg-red-500 hover:bg-red-600 active:bg-red-700 disabled:opacity-25 disabled:pointer-events-none text-white rounded-xl font-bold text-sm shadow select-none touch-none"
               >
                 יד ימין
                 <span className="block text-xs opacity-60 font-normal">→</span>
@@ -720,10 +834,13 @@ export default function AnalysisPage() {
 
           {/* Live counter during active session */}
           {sessionState === 'active' && moves.length > 0 && (
-            <div className="flex justify-center gap-6 mt-2 text-sm text-gray-600">
+            <div className="flex justify-center gap-4 mt-2 text-sm text-gray-600 flex-wrap">
               <span>שמאל: <strong>{leftCount}</strong></span>
               <span className="font-bold text-blue-600 text-base">{moves.length}</span>
               <span>ימין: <strong>{rightCount}</strong></span>
+              {clips.length > 0 && (
+                <span className="text-yellow-600">קליפים: <strong>{clips.length}</strong></span>
+              )}
             </div>
           )}
 
@@ -740,7 +857,7 @@ export default function AnalysisPage() {
           {/* Keyboard hint */}
           {canCapture && sessionState === 'idle' && (
             <p className="text-[11px] text-gray-400 text-center mt-2 hidden lg:block">
-              הפעל סרטון ← ↑ התחל · ← יד שמאל · → יד ימין · ↓ סיום
+              ↑ התחל · ← יד שמאל · → יד ימין · C הקלפה · ↓ סיום
             </p>
           )}
         </div>

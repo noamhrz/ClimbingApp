@@ -227,7 +227,6 @@ function MediaContent() {
     if (!currentUser) return
 
     async function loadUsers() {
-      console.log(`[media] loadUsers role=${currentUser!.Role} email=${currentUser!.Email}`)
       let list: { Email: string; Name: string }[] = []
 
       if (currentUser!.Role === 'admin') {
@@ -248,7 +247,6 @@ function MediaContent() {
         if (data) list = [data]
       }
 
-      console.log(`[media] users list loaded: ${list.length} entries`, list.map(u => u.Email))
       setUsers(list)
 
       // Also load all users for uploader name resolution
@@ -276,7 +274,7 @@ function MediaContent() {
     }
 
     loadUsers()
-  }, [currentUser]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [currentUser?.Email]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Load files when selected email or token changes ───────────
   const loadFiles = useCallback(async () => {

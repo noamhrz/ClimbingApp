@@ -139,7 +139,7 @@ export async function fetchDriveFile(
   if (rangeHeader) headers['Range'] = rangeHeader
 
   return fetch(
-    `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
+    `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&supportsAllDrives=true`,
     { headers }
   )
 }
