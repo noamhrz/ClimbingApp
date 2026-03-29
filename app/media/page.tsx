@@ -2,8 +2,10 @@
 
 import { useState, useEffect, useCallback, useRef, Suspense } from 'react'
 import { useSearchParams, useRouter, usePathname } from 'next/navigation'
+import Link from 'next/link'
 import { useAuth } from '@/context/AuthContext'
 import { supabase } from '@/lib/supabaseClient'
+import MediaComments from '@/components/media/MediaComments'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -46,12 +48,16 @@ function FileCard({
   canDelete,
   onDelete,
   uploaderName,
+  currentUser,
+  hasAnalysis,
 }: {
   file: MediaFile
   token: string
   canDelete: boolean
   onDelete: (id: number) => void
   uploaderName: string
+  currentUser: { Email: string; Name: string; Role: string }
+  hasAnalysis: boolean
 }) {
   const streamUrl = `/api/media/stream/${file.FileID}?token=${encodeURIComponent(token)}`
   const [deleting, setDeleting] = useState(false)
@@ -63,9 +69,9 @@ function FileCard({
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
+    <div className="bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col">
       {/* Preview */}
-      <div className="bg-gray-100 relative" style={{ minHeight: '160px' }}>
+      <div className="bg-gray-100 relative rounded-t-xl overflow-hidden" style={{ minHeight: '160px' }}>
         {isVideo(file.MimeType) ? (
           <video
             src={streamUrl}
@@ -95,22 +101,45 @@ function FileCard({
         <p className="text-xs text-gray-400">
           הועלה על ידי {uploaderName}
         </p>
-        <div className="flex items-center justify-between mt-1">
-          <span className="text-xs text-gray-400">
-            {formatDate(file.CreatedAt)}{file.FileSize ? ` · ${formatBytes(file.FileSize)}` : ''}
-          </span>
-          {canDelete && (
-            <button
-              onClick={handleDelete}
-              disabled={deleting}
-              className="text-xs text-red-400 hover:text-red-600 disabled:opacity-40 transition-colors p-1"
-              title="מחק"
-            >
-              🗑️
-            </button>
-          )}
+        <div className="flex items-center justify-between mt-1 gap-2">
+          <div className="flex items-center gap-1.5 min-w-0">
+            <span className="text-xs text-gray-400 truncate">
+              {formatDate(file.CreatedAt)}{file.FileSize ? ` · ${formatBytes(file.FileSize)}` : ''}
+            </span>
+            {isVideo(file.MimeType) && hasAnalysis && (
+              <span className="shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-green-100 text-green-700 border border-green-200">
+                נותח ✓
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-0.5 shrink-0">
+            {isVideo(file.MimeType) && (
+              <Link
+                href={`/analysis/${file.FileID}`}
+                className={`text-xs px-2 py-1 rounded-lg transition-colors font-medium ${
+                  hasAnalysis
+                    ? 'bg-green-50 text-green-700 hover:bg-green-100 border border-green-200'
+                    : 'text-blue-500 hover:text-blue-700'
+                }`}
+                title={hasAnalysis ? 'צפה בניתוח' : 'נתח סרטון'}
+              >
+                {hasAnalysis ? 'צפה בניתוח' : '📊 נתח'}
+              </Link>
+            )}
+            {canDelete && (
+              <button
+                onClick={handleDelete}
+                disabled={deleting}
+                className="text-xs text-red-400 hover:text-red-600 disabled:opacity-40 transition-colors p-1"
+                title="מחק"
+              >
+                🗑️
+              </button>
+            )}
+          </div>
         </div>
       </div>
+      <MediaComments fileId={file.FileID} currentUser={currentUser} />
     </div>
   )
 }
@@ -180,6 +209,7 @@ function MediaContent() {
 
   // ── Files state ───────────────────────────────────────────────
   const [files, setFiles] = useState<MediaFile[]>([])
+  const [analysedFileIds, setAnalysedFileIds] = useState<Set<number>>(new Set())
   const [filesLoading, setFilesLoading] = useState(false)
   const [uploadError, setUploadError] = useState('')
 
@@ -264,7 +294,20 @@ function MediaContent() {
         headers: { Authorization: `Bearer ${token}` },
       })
       const json = await res.json()
-      setFiles(res.ok ? json.files : [])
+      const loadedFiles: MediaFile[] = res.ok ? json.files : []
+      setFiles(loadedFiles)
+
+      // Check which video FileIDs have an existing analysis
+      const videoIds = loadedFiles.filter(f => f.MimeType.startsWith('video/')).map(f => f.FileID)
+      if (videoIds.length > 0) {
+        const { data: analyses } = await supabase
+          .from('ClimbingAnalysis')
+          .select('FileID')
+          .in('FileID', videoIds)
+        setAnalysedFileIds(new Set((analyses ?? []).map((a: { FileID: number }) => a.FileID)))
+      } else {
+        setAnalysedFileIds(new Set())
+      }
     } catch {
       setFiles([])
     }
@@ -531,6 +574,8 @@ function MediaContent() {
               canDelete={canDeleteFile(file)}
               onDelete={handleDelete}
               uploaderName={allUsers[file.UploadedBy] ?? shortEmail(file.UploadedBy)}
+              currentUser={currentUser!}
+              hasAnalysis={analysedFileIds.has(file.FileID)}
             />
           ))}
         </div>
