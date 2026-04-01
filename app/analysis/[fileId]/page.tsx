@@ -5,8 +5,8 @@ import { useParams, useRouter } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
 import { supabase } from '@/lib/supabaseClient'
 import {
-  getAnalysis, saveAnalysis, updateAnalysis, deleteAnalysis,
-  ClimbingAnalysis, AnalysisInsert, ThirdByMoves, ThirdByTime,
+  getAnalysis, upsertAnalysis, deleteAnalysis,
+  ClimbingAnalysis, ThirdByMoves, ThirdByTime, RestPeriod,
 } from '@/lib/climbing-analysis-api'
 import MediaComments from '@/components/media/MediaComments'
 
@@ -39,8 +39,11 @@ interface Metrics {
   TotalClips: number
   AvgClipDuration: number
   LongestClip: number
+  LongestClipStartTime: number | null
   ClippingTime: number
   MovementTime: number
+  StallTime: number
+  restPeriods: RestPeriod[]
 }
 
 type ScoreKey = 'ScorePrecision' | 'ScoreClipping' | 'ScoreTension' | 'ScoreFlow' |
@@ -85,14 +88,44 @@ function calculateMetrics(moves: Move[], startTime: number, endTime: number, cli
   const ClimbDuration = Tn - T0
   const N = moves.length
 
-  // Gaps between consecutive L/R presses
+  // Raw gaps (used for ThirdsByMoves time-span calculations)
   const midGaps = N > 1 ? moves.slice(1).map((m, i) => m.time - moves[i].time) : []
-  // Final gap: last L/R press → end (time on last hold before fall/top)
   const lastGap = N > 0 ? Tn - moves[N - 1].time : 0
-  const allGaps = N > 0 ? [...midGaps, lastGap] : []
 
-  const ActiveTime = allGaps.filter(g => g < STALL_THRESHOLD).reduce((a, b) => a + b, 0)
-  const RestTime = allGaps.filter(g => g >= STALL_THRESHOLD).reduce((a, b) => a + b, 0)
+  // Clip overlap within a time window — so a clip that occurred during a rest
+  // doesn't inflate the rest classification or duration.
+  const clipOverlapInWindow = (ws: number, we: number) =>
+    clips.reduce((sum, c) => sum + Math.max(0, Math.min(c.endTime, we) - Math.max(c.startTime, ws)), 0)
+
+  // One entry per inter-move gap, carrying the net (clip-adjusted) duration.
+  const gapWindows: Array<{
+    netGap: number; windowStart: number; windowEnd: number; afterMoveIndex: number
+  }> = []
+  for (let i = 0; i < N - 1; i++) {
+    const ws = moves[i].time, we = moves[i + 1].time
+    gapWindows.push({ netGap: Math.max(0, (we - ws) - clipOverlapInWindow(ws, we)), windowStart: ws, windowEnd: we, afterMoveIndex: i })
+  }
+  if (N > 0) {
+    const ws = moves[N - 1].time
+    gapWindows.push({ netGap: Math.max(0, lastGap - clipOverlapInWindow(ws, Tn)), windowStart: ws, windowEnd: Tn, afterMoveIndex: N - 1 })
+  }
+
+  // ActiveTime / RestTime now reflect net non-clipping time only
+  const ActiveTime = gapWindows.filter(g => g.netGap < STALL_THRESHOLD).reduce((s, g) => s + g.netGap, 0)
+  const RestTime   = gapWindows.filter(g => g.netGap >= STALL_THRESHOLD).reduce((s, g) => s + g.netGap, 0)
+
+  // Build rest periods classified by net gap
+  const restPeriods: RestPeriod[] = gapWindows
+    .filter(g => g.netGap >= STALL_THRESHOLD)
+    .map((g, idx) => ({
+      index: idx,
+      afterMoveIndex: g.afterMoveIndex,
+      startTime: g.windowStart,
+      endTime: g.windowEnd,
+      duration: g.netGap,
+      type: (g.netGap >= LONG_STALL ? 'rest' : 'tactical') as RestPeriod['type'],
+    }))
+  const StallTime = restPeriods.filter(r => r.type === 'tactical').reduce((s, r) => s + r.duration, 0)
 
   const leftTimes = moves.filter(m => m.hand === 'L').map(m => m.time)
   const rightTimes = moves.filter(m => m.hand === 'R').map(m => m.time)
@@ -141,6 +174,9 @@ function calculateMetrics(moves: Move[], startTime: number, endTime: number, cli
     }
   })
 
+  const ClippingTime = clips.reduce((s, c) => s + c.duration, 0)
+  const longestClipObj = clips.length > 0 ? clips.reduce((a, b) => a.duration > b.duration ? a : b) : null
+
   return {
     TotalMoves: N,
     LeftMoves: leftTimes.length,
@@ -151,15 +187,20 @@ function calculateMetrics(moves: Move[], startTime: number, endTime: number, cli
     AvgPaceOverall: N > 0 ? ClimbDuration / N : 0,
     AvgPaceLeft: avg(leftGaps),
     AvgPaceRight: avg(rightGaps),
-    StallsShort: allGaps.filter(g => g >= STALL_THRESHOLD && g < LONG_STALL).length,
-    StallsLong: allGaps.filter(g => g >= LONG_STALL).length,
+    StallsShort: gapWindows.filter(g => g.netGap >= STALL_THRESHOLD && g.netGap < LONG_STALL).length,
+    StallsLong: gapWindows.filter(g => g.netGap >= LONG_STALL).length,
     ThirdsByMoves,
     ThirdsByTime,
     TotalClips: clips.length,
     AvgClipDuration: clips.length > 0 ? avg(clips.map(c => c.duration)) : 0,
-    LongestClip: clips.length > 0 ? Math.max(...clips.map(c => c.duration)) : 0,
-    ClippingTime: clips.reduce((s, c) => s + c.duration, 0),
-    MovementTime: Math.max(0, ActiveTime - clips.reduce((s, c) => s + c.duration, 0)),
+    LongestClip: longestClipObj?.duration ?? 0,
+    LongestClipStartTime: longestClipObj?.startTime ?? null,
+    ClippingTime,
+    // Remainder ensures ClippingTime + MovementTime + RestTime = ClimbDuration exactly,
+    // regardless of clips that fall outside gap windows (e.g. before first move).
+    MovementTime: Math.max(0, ClimbDuration - ClippingTime - RestTime),
+    StallTime,
+    restPeriods,
   }
 }
 
@@ -184,18 +225,141 @@ function analysisToMetrics(a: ClimbingAnalysis): Metrics | null {
     TotalClips: a.TotalClips ?? 0,
     AvgClipDuration: a.AvgClipDuration ?? 0,
     LongestClip: a.LongestClip ?? 0,
+    LongestClipStartTime: null,
     ClippingTime: a.ClippingTime ?? 0,
-    MovementTime: a.MovementTime ?? 0,
+    MovementTime: Math.max(0, (a.ClimbDuration ?? 0) - (a.ClippingTime ?? 0) - (a.RestTime ?? 0)),
+    StallTime: a.StallTime ?? 0,
+    restPeriods: a.RestPeriodsJson ?? [],
   }
 }
 
 // ── Sub-components ─────────────────────────────────────────────────────────────
 
-function OverallSummary({ metrics, isTop }: { metrics: Metrics; isTop?: boolean }) {
-  const activePct = metrics.ClimbDuration > 0
-    ? Math.round((metrics.ActiveTime / metrics.ClimbDuration) * 100)
-    : 0
-  const restPct = 100 - activePct
+function TimeBreakdownBar({
+  metrics,
+  classifiedRests,
+}: {
+  metrics: Metrics
+  classifiedRests: RestPeriod[]
+}) {
+  const { ClimbDuration, MovementTime, ClippingTime, RestTime, StallTime } = metrics
+  if (ClimbDuration <= 0) return null
+
+  const stallTime = classifiedRests.length > 0
+    ? classifiedRests.filter(r => r.type === 'tactical').reduce((s, r) => s + r.duration, 0)
+    : StallTime
+  const hesitationTime = classifiedRests.filter(r => r.type === 'hesitation').reduce((s, r) => s + r.duration, 0)
+  const footworkTime = classifiedRests.filter(r => r.type === 'footwork').reduce((s, r) => s + r.duration, 0)
+  // Physical rest = all classified rest periods minus tactical, hesitation, and footwork
+  const physicalRestTime = Math.max(0, RestTime - stallTime - hesitationTime - footworkTime)
+  // Footwork pauses count as movement (climber is actively adjusting feet)
+  const displayMovementTime = MovementTime + footworkTime
+
+  const pct = (v: number) => `${Math.max(0, (v / ClimbDuration) * 100).toFixed(1)}%`
+
+  const segments = [
+    { label: 'הקלפה', value: ClippingTime, color: 'bg-yellow-400', text: 'text-yellow-700' },
+    { label: 'תנועה', value: displayMovementTime, color: 'bg-emerald-400', text: 'text-emerald-700' },
+    { label: 'עצירה', value: stallTime, color: 'bg-orange-400', text: 'text-orange-700' },
+    { label: 'מנוחה', value: physicalRestTime, color: 'bg-red-400', text: 'text-red-700' },
+    { label: 'היסוס', value: hesitationTime, color: 'bg-purple-400', text: 'text-purple-700' },
+  ].filter(s => s.value > 0.01)
+
+  return (
+    <div>
+      <div className="flex h-3 rounded-full overflow-hidden">
+        {segments.map((s, i) => (
+          <div key={i} className={`${s.color} transition-all`} style={{ width: pct(s.value) }} />
+        ))}
+      </div>
+      <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1">
+        {segments.map((s, i) => (
+          <span key={i} className={`text-[10px] ${s.text}`}>
+            {s.label}: {fmtSec(s.value)} ({(s.value / ClimbDuration * 100).toFixed(0)}%)
+          </span>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function RestPeriodsList({
+  classifiedRests,
+  onToggle,
+  onSeek,
+}: {
+  classifiedRests: RestPeriod[]
+  onToggle: (idx: number, targetType: 'rest' | 'hesitation' | 'footwork' | 'tactical') => void
+  onSeek?: (t: number) => void
+}) {
+  const [expanded, setExpanded] = useState(false)
+  if (classifiedRests.length === 0) return null
+
+  return (
+    <div className="border-t border-gray-100 pt-3">
+      <button
+        onClick={() => setExpanded(v => !v)}
+        className="w-full flex items-center justify-between text-xs text-gray-500 hover:text-gray-700 transition-colors"
+      >
+        <span className="text-[10px]">{expanded ? '▲' : '▼'}</span>
+        <span>פירוט מנוחות ({classifiedRests.length})</span>
+      </button>
+      {expanded && (
+        <div className="mt-2 space-y-1.5">
+          {classifiedRests.map(r => (
+            <div key={r.index} className="flex items-center gap-2 text-xs">
+              <button
+                onClick={() => onSeek?.(r.startTime)}
+                className="text-blue-500 hover:text-blue-700 underline shrink-0 font-mono"
+                title="קפוץ לנקודה זו בסרטון"
+              >
+                {fmtSec(r.startTime)}
+              </button>
+              <span className="text-gray-400 shrink-0">↔ {r.afterMoveIndex + 1}</span>
+              <span className={`shrink-0 font-semibold ${
+                r.type === 'tactical' ? 'text-orange-500' :
+                r.type === 'hesitation' ? 'text-purple-600' :
+                r.type === 'footwork' ? 'text-emerald-600' : 'text-red-500'
+              }`}>{fmtSec(r.duration)}</span>
+              <div className="flex gap-1 mr-auto flex-wrap">
+                {(
+                  [
+                    { key: 'rest',      label: 'מנוחה',        active: 'bg-red-100 border-red-300 text-red-700',         idle: 'hover:border-red-300 hover:text-red-500' },
+                    { key: 'hesitation',label: 'היסוס',        active: 'bg-purple-100 border-purple-300 text-purple-700', idle: 'hover:border-purple-300 hover:text-purple-500' },
+                    { key: 'footwork',  label: 'רגליים',       active: 'bg-emerald-100 border-emerald-300 text-emerald-700', idle: 'hover:border-emerald-300 hover:text-emerald-500' },
+                    { key: 'tactical',  label: 'עצירה טקטית', active: 'bg-orange-100 border-orange-300 text-orange-700', idle: 'hover:border-orange-300 hover:text-orange-500' },
+                  ] as const
+                ).map(btn => (
+                  <button
+                    key={btn.key}
+                    onClick={() => onToggle(r.index, btn.key)}
+                    className={`px-1.5 py-0.5 rounded text-[10px] border transition-colors ${
+                      r.type === btn.key
+                        ? `${btn.active} font-semibold`
+                        : `bg-white border-gray-200 text-gray-400 ${btn.idle}`
+                    }`}
+                  >
+                    {btn.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function OverallSummary({
+  metrics, isTop, classifiedRests, onSeek, onToggleRest,
+}: {
+  metrics: Metrics
+  isTop?: boolean
+  classifiedRests: RestPeriod[]
+  onSeek?: (t: number) => void
+  onToggleRest?: (idx: number, targetType: 'rest' | 'hesitation' | 'footwork' | 'tactical') => void
+}) {
   const leftPct = metrics.TotalMoves > 0 ? (metrics.LeftMoves / metrics.TotalMoves) * 100 : 50
 
   return (
@@ -226,20 +390,13 @@ function OverallSummary({ metrics, isTop }: { metrics: Metrics; isTop?: boolean 
         </div>
       </div>
 
-      {/* Duration + active/rest bar */}
+      {/* Duration + 5-segment breakdown bar */}
       <div>
         <div className="flex items-baseline justify-between mb-1.5">
           <span className="text-xs text-gray-500">משך טיפוס</span>
           <span className="text-lg font-bold text-gray-800">{fmtSec(metrics.ClimbDuration)}</span>
         </div>
-        <div className="flex h-3 rounded-full overflow-hidden">
-          <div className="bg-emerald-400 transition-all" style={{ width: `${activePct}%` }} />
-          <div className="bg-orange-300 transition-all" style={{ width: `${restPct}%` }} />
-        </div>
-        <div className="flex justify-between text-[11px] mt-0.5">
-          <span className="text-emerald-600">פעיל {fmtSec(metrics.ActiveTime)} ({activePct}%)</span>
-          <span className="text-orange-500">מנוחה {fmtSec(metrics.RestTime)} ({restPct}%)</span>
-        </div>
+        <TimeBreakdownBar metrics={metrics} classifiedRests={classifiedRests} />
       </div>
 
       {/* Pace */}
@@ -291,11 +448,18 @@ function OverallSummary({ metrics, isTop }: { metrics: Metrics; isTop?: boolean 
               <div className="text-sm font-bold text-yellow-700">{fmtSec(metrics.AvgClipDuration)}</div>
               <div className="text-[10px] text-yellow-600 mt-0.5">ממוצע</div>
             </div>
-            <div className={`rounded-lg p-2 text-center ${metrics.LongestClip > INEFFICIENT_CLIP ? 'bg-red-50' : 'bg-yellow-50'}`}>
+            <div
+              className={`rounded-lg p-2 text-center ${metrics.LongestClipStartTime !== null ? 'cursor-pointer hover:ring-1 hover:ring-blue-200' : ''} ${metrics.LongestClip > INEFFICIENT_CLIP ? 'bg-red-50' : 'bg-yellow-50'}`}
+              onClick={() => metrics.LongestClipStartTime !== null && onSeek?.(metrics.LongestClipStartTime)}
+              title={metrics.LongestClipStartTime !== null ? 'לחץ לדילוג לנקודה זו' : undefined}
+            >
               <div className={`text-sm font-bold ${metrics.LongestClip > INEFFICIENT_CLIP ? 'text-red-600' : 'text-yellow-700'}`}>
                 {fmtSec(metrics.LongestClip)}
                 {metrics.LongestClip > INEFFICIENT_CLIP && ' ⚠'}
               </div>
+              {metrics.LongestClipStartTime !== null && (
+                <div className="text-[10px] text-blue-500">@ {fmtSec(metrics.LongestClipStartTime)}</div>
+              )}
               <div className="text-[10px] text-gray-500 mt-0.5">ארוכה ביותר</div>
             </div>
             <div className="bg-yellow-50 rounded-lg p-2 text-center">
@@ -310,6 +474,13 @@ function OverallSummary({ metrics, isTop }: { metrics: Metrics; isTop?: boolean 
           )}
         </div>
       )}
+
+      {/* Rest periods list — Tasks 5 & 7 */}
+      <RestPeriodsList
+        classifiedRests={classifiedRests}
+        onToggle={onToggleRest ?? (() => {})}
+        onSeek={onSeek}
+      />
     </div>
   )
 }
@@ -413,10 +584,24 @@ function ThirdsViz({ metrics }: { metrics: Metrics }) {
   )
 }
 
-function MetricsDisplay({ metrics, isTop }: { metrics: Metrics; isTop?: boolean }) {
+function MetricsDisplay({
+  metrics, isTop, classifiedRests, onSeek, onToggleRest,
+}: {
+  metrics: Metrics
+  isTop?: boolean
+  classifiedRests: RestPeriod[]
+  onSeek?: (t: number) => void
+  onToggleRest?: (idx: number, targetType: 'rest' | 'hesitation' | 'footwork' | 'tactical') => void
+}) {
   return (
     <div>
-      <OverallSummary metrics={metrics} isTop={isTop} />
+      <OverallSummary
+        metrics={metrics}
+        isTop={isTop}
+        classifiedRests={classifiedRests}
+        onSeek={onSeek}
+        onToggleRest={onToggleRest}
+      />
       <ThirdsViz metrics={metrics} />
     </div>
   )
@@ -444,6 +629,7 @@ export default function AnalysisPage() {
   const [liveMetrics, setLiveMetrics] = useState<Metrics | null>(null)
   const [flashSide, setFlashSide] = useState<'L' | 'R' | null>(null)
   const [flashClip, setFlashClip] = useState(false)
+  const [clipInProgress, setClipInProgress] = useState(false)
   const sessionStateRef = useRef<'idle' | 'active' | 'ended'>('idle')
   useEffect(() => { sessionStateRef.current = sessionState }, [sessionState])
   const movesRef = useRef<Move[]>([])
@@ -452,6 +638,7 @@ export default function AnalysisPage() {
   useEffect(() => { clipsRef.current = clips }, [clips])
   const startTimeRef = useRef<number>(0)
   const clipStartRef = useRef<number | null>(null) // null = not clipping, number = clip in progress
+  const [classifiedRests, setClassifiedRests] = useState<RestPeriod[]>([])
 
   // ── Qualitative ───────────────────────────────────────────────
   const [tab, setTab] = useState<'quantitative' | 'qualitative'>('quantitative')
@@ -469,6 +656,9 @@ export default function AnalysisPage() {
   const [deleting, setDeleting] = useState(false)
 
   const videoRef = useRef<HTMLVideoElement>(null)
+  const seekTo = useCallback((t: number) => {
+    if (videoRef.current) videoRef.current.currentTime = t
+  }, [])
 
   const isCoachOrAdmin = currentUser?.Role === 'coach' || currentUser?.Role === 'admin'
   const canCapture = !!isCoachOrAdmin
@@ -506,6 +696,7 @@ export default function AnalysisPage() {
         setIsTop(analysisData.IsTop ?? false)
         setCoachComment(analysisData.CoachComment ?? '')
         setClimberComment(analysisData.ClimberComment ?? '')
+        setClassifiedRests(analysisData.RestPeriodsJson ?? [])
       }
 
       setLoading(false)
@@ -545,12 +736,14 @@ export default function AnalysisPage() {
       const duration = video.currentTime - clipStartRef.current
       currentClips.push({ startTime: clipStartRef.current, endTime: video.currentTime, duration })
       clipStartRef.current = null
+      setClipInProgress(false)
       clipsRef.current = [...currentClips]
       setClips([...currentClips])
     }
     try {
       const m = calculateMetrics(current, startTimeRef.current, video.currentTime, clipsRef.current)
       setLiveMetrics(m)
+      setClassifiedRests(m.restPeriods)
       setSessionState('ended')
     } catch {
       // not enough data
@@ -568,11 +761,13 @@ export default function AnalysisPage() {
     if (clipStartRef.current === null) {
       // Start clip
       clipStartRef.current = video.currentTime
+      setClipInProgress(true)
     } else {
       // End clip
       const duration = video.currentTime - clipStartRef.current
       const clip: Clip = { startTime: clipStartRef.current, endTime: video.currentTime, duration }
       clipStartRef.current = null
+      setClipInProgress(false)
       setClips(prev => [...prev, clip])
     }
   }, [])
@@ -596,7 +791,14 @@ export default function AnalysisPage() {
     setLiveMetrics(null)
     startTimeRef.current = 0
     clipStartRef.current = null
+    setClipInProgress(false)
   }
+
+  const handleToggleRest = useCallback((idx: number, targetType: 'rest' | 'hesitation' | 'footwork' | 'tactical') => {
+    setClassifiedRests(prev => [...prev.map(r =>
+      r.index === idx ? { ...r, type: targetType } : r
+    )])
+  }, [])
 
   // ── Keyboard ──────────────────────────────────────────────────
   useEffect(() => {
@@ -617,62 +819,52 @@ export default function AnalysisPage() {
     if (!fileRecord || !currentUser) return
     setSaving(true)
 
-    const qualData = {
+    // Qualitative scores + comments
+    const qualPayload = {
       ...scores,
       IsTop: isTop,
       CoachComment: coachComment || null,
       ClimberComment: climberComment || null,
     }
 
-    let result: ClimbingAnalysis | null = null
-
-    const clipMetrics = (m: Metrics) => ({
-      TotalClips: m.TotalClips,
-      AvgClipDuration: m.AvgClipDuration,
-      LongestClip: m.LongestClip,
-      ClippingTime: m.ClippingTime,
-      MovementTime: m.MovementTime,
-    })
-
-    if (analysis) {
-      const updateData: Partial<AnalysisInsert> = liveMetrics ? {
-        TotalMoves: liveMetrics.TotalMoves,
-        ClimbDuration: liveMetrics.ClimbDuration,
-        ActiveTime: liveMetrics.ActiveTime,
-        RestTime: liveMetrics.RestTime,
-        AvgPaceOverall: liveMetrics.AvgPaceOverall,
-        AvgPaceLeft: liveMetrics.AvgPaceLeft,
-        AvgPaceRight: liveMetrics.AvgPaceRight,
-        StallsShort: liveMetrics.StallsShort,
-        StallsLong: liveMetrics.StallsLong,
-        RawLogJson: moves,
-        ThirdsByMoves: liveMetrics.ThirdsByMoves,
-        ThirdsByTime: liveMetrics.ThirdsByTime,
-        ...clipMetrics(liveMetrics),
-        ...qualData,
-      } : qualData
-      result = await updateAnalysis(analysis.AnalysisID, updateData)
-    } else if (liveMetrics) {
-      result = await saveAnalysis({
-        FileID: fileRecord.FileID,
-        Email: fileRecord.Email,
-        CoachEmail: currentUser.Email,
-        TotalMoves: liveMetrics.TotalMoves,
-        ClimbDuration: liveMetrics.ClimbDuration,
-        ActiveTime: liveMetrics.ActiveTime,
-        RestTime: liveMetrics.RestTime,
-        AvgPaceOverall: liveMetrics.AvgPaceOverall,
-        AvgPaceLeft: liveMetrics.AvgPaceLeft,
-        AvgPaceRight: liveMetrics.AvgPaceRight,
-        StallsShort: liveMetrics.StallsShort,
-        StallsLong: liveMetrics.StallsLong,
-        RawLogJson: moves,
-        ThirdsByMoves: liveMetrics.ThirdsByMoves,
-        ThirdsByTime: liveMetrics.ThirdsByTime,
-        ...clipMetrics(liveMetrics),
-        ...qualData,
-      })
+    // Rest classification data — always derived from current classifiedRests state
+    const restPayload = {
+      StallTime: classifiedRests.filter(r => r.type === 'tactical').reduce((s, r) => s + r.duration, 0) || null,
+      HesitationTime: classifiedRests.filter(r => r.type === 'hesitation').reduce((s, r) => s + r.duration, 0) || null,
+      RestPeriodsJson: classifiedRests.length > 0 ? classifiedRests : null,
     }
+
+    // Quantitative metrics — only included when a live recording session exists
+    const quantPayload = liveMetrics ? {
+      TotalMoves: liveMetrics.TotalMoves,
+      ClimbDuration: liveMetrics.ClimbDuration,
+      ActiveTime: liveMetrics.ActiveTime,
+      RestTime: liveMetrics.RestTime,
+      AvgPaceOverall: liveMetrics.AvgPaceOverall,
+      AvgPaceLeft: liveMetrics.AvgPaceLeft,
+      AvgPaceRight: liveMetrics.AvgPaceRight,
+      StallsShort: liveMetrics.StallsShort,
+      StallsLong: liveMetrics.StallsLong,
+      RawLogJson: moves,
+      ThirdsByMoves: liveMetrics.ThirdsByMoves,
+      ThirdsByTime: liveMetrics.ThirdsByTime,
+      TotalClips: liveMetrics.TotalClips,
+      AvgClipDuration: liveMetrics.AvgClipDuration,
+      LongestClip: liveMetrics.LongestClip,
+      ClippingTime: liveMetrics.ClippingTime,
+      MovementTime: liveMetrics.MovementTime,
+    } : {}
+
+    const payload = {
+      FileID: fileRecord.FileID,
+      Email: fileRecord.Email,
+      CoachEmail: currentUser.Email,
+      ...quantPayload,
+      ...restPayload,
+      ...qualPayload,
+    }
+
+    const result = await upsertAnalysis(payload)
 
     if (result) {
       setAnalysis(result)
@@ -683,9 +875,9 @@ export default function AnalysisPage() {
   }
 
   async function handleSaveComment() {
-    if (!analysis) return
+    if (!analysis || !fileRecord) return
     setSaving(true)
-    const result = await updateAnalysis(analysis.AnalysisID, { ClimberComment: climberComment || null })
+    const result = await upsertAnalysis({ FileID: fileRecord.FileID, ClimberComment: climberComment || null })
     if (result) { setAnalysis(result); setSaved(true); setTimeout(() => setSaved(false), 3000) }
     setSaving(false)
   }
@@ -708,6 +900,7 @@ export default function AnalysisPage() {
     setIsTop(false)
     setCoachComment('')
     setClimberComment('')
+    setClassifiedRests([])
     setDeleting(false)
   }
 
@@ -785,6 +978,25 @@ export default function AnalysisPage() {
               className="absolute inset-0 pointer-events-none transition-opacity duration-200"
               style={{ opacity: flashClip ? 1 : 0, background: 'rgba(234,179,8,0.3)' }}
             />
+            {/* Pulsing sun — visible while a clip is recording */}
+            {clipInProgress && (
+              <div className="absolute top-3 right-3 pointer-events-none" style={{ zIndex: 10 }}>
+                <div
+                  className="absolute animate-ping"
+                  style={{
+                    width: 45, height: 45, borderRadius: '50%',
+                    background: 'rgba(255,215,0,0.5)',
+                  }}
+                />
+                <div
+                  style={{
+                    width: 45, height: 45, borderRadius: '50%',
+                    background: '#FFD700',
+                    boxShadow: '0 0 18px 6px rgba(255,165,0,0.65)',
+                  }}
+                />
+              </div>
+            )}
           </div>
 
           {/* Capture buttons — coach/admin, session not ended */}
@@ -802,7 +1014,7 @@ export default function AnalysisPage() {
                 onPointerDown={e => { e.preventDefault(); handleClip() }}
                 disabled={sessionState === 'idle'}
                 className={`px-3 py-4 text-white rounded-xl font-bold shadow select-none touch-none transition-colors disabled:opacity-25 disabled:pointer-events-none ${
-                  clipStartRef.current !== null
+                  clipInProgress
                     ? 'bg-yellow-500 hover:bg-yellow-600 active:bg-yellow-700 ring-2 ring-yellow-300'
                     : 'bg-yellow-400 hover:bg-yellow-500 active:bg-yellow-600'
                 }`}
@@ -938,7 +1150,13 @@ export default function AnalysisPage() {
               )}
 
               {activeMetrics && (sessionState === 'ended' || sessionState === 'idle') && (
-                <MetricsDisplay metrics={activeMetrics} isTop={isTop} />
+                <MetricsDisplay
+                  metrics={activeMetrics}
+                  isTop={isTop}
+                  classifiedRests={classifiedRests}
+                  onSeek={seekTo}
+                  onToggleRest={handleToggleRest}
+                />
               )}
             </div>
           )}

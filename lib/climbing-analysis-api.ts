@@ -1,5 +1,14 @@
 import { supabase } from './supabaseClient'
 
+export interface RestPeriod {
+  index: number
+  afterMoveIndex: number
+  startTime: number
+  endTime: number
+  duration: number
+  type: 'tactical' | 'rest' | 'hesitation' | 'footwork'
+}
+
 export interface ThirdByMoves {
   move_count: number
   avg_pace: number
@@ -46,6 +55,9 @@ export interface ClimbingAnalysis {
   LongestClip: number | null
   ClippingTime: number | null
   MovementTime: number | null
+  StallTime: number | null
+  HesitationTime: number | null
+  RestPeriodsJson: RestPeriod[] | null
   CreatedAt: string
   UpdatedAt: string
 }
@@ -89,6 +101,17 @@ export async function updateAnalysis(
     .eq('AnalysisID', id)
     .select()
     .single()
+  return result
+}
+
+export async function upsertAnalysis(data: Partial<AnalysisInsert> & { FileID: number }): Promise<ClimbingAnalysis | null> {
+  console.log('Saving payload:', data)
+  const { data: result, error } = await supabase
+    .from('ClimbingAnalysis')
+    .upsert(data, { onConflict: 'FileID' })
+    .select()
+    .single()
+  if (error) console.error('upsertAnalysis error:', error)
   return result
 }
 
