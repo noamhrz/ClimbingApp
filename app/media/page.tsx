@@ -222,6 +222,8 @@ function MediaContent() {
   const xhrRef = useRef<XMLHttpRequest | null>(null)
   const [syncing, setSyncing] = useState(false)
   const [syncError, setSyncError] = useState('')
+  // -1 = idle, 0 = loading FFmpeg WASM, 1-100 = compressing
+  const [compressionProgress, setCompressionProgress] = useState(-1)
 
   // ── Load users & set URL default ─────────────────────────────
   useEffect(() => {
@@ -448,30 +450,51 @@ function MediaContent() {
         const file = allFiles[i]
         setUploadFileIndex(i + 1)
         setUploadFileName(file.name)
-        setUploadProgress(0)
 
         try {
-          const mimeType = file.type || 'application/octet-stream'
+          let fileToUpload = file
+          let mimeType = file.type || 'application/octet-stream'
+
+          // Step 0: compress video files between 10 MB – 150 MB before uploading.
+          // Files > 150 MB exceed what single-threaded WASM can handle in-browser reliably.
+          const COMPRESS_MIN = 10 * 1024 * 1024   // 10 MB
+          const COMPRESS_MAX = 150 * 1024 * 1024  // 150 MB
+          if (mimeType.startsWith('video/') && file.size > COMPRESS_MIN && file.size <= COMPRESS_MAX) {
+            setCompressionProgress(0)
+            setUploadProgress(-1)
+            const { compressVideo } = await import('@/lib/video-compress')
+            fileToUpload = await compressVideo(file, pct => setCompressionProgress(pct))
+            mimeType = 'video/mp4'
+            setCompressionProgress(-1)
+          }
+
+          setUploadProgress(0)
 
           // Step 1: create resumable session URL on our server
           const uploadUrl = await initUpload({
-            email: selectedEmail, fileName: file.name, mimeType, fileSize: file.size,
+            email: selectedEmail, fileName: fileToUpload.name, mimeType, fileSize: fileToUpload.size,
           })
 
-          // Step 2: upload in 5 MB chunks directly to Google Drive (no Vercel in the loop)
-          const { driveFileId, fileSize } = await xhrUploadChunked(file, uploadUrl, pct => setUploadProgress(pct))
+          // Step 2: upload in 25 MB chunks directly to Google Drive (no Vercel in the loop)
+          const { driveFileId, fileSize } = await xhrUploadChunked(fileToUpload, uploadUrl, pct => setUploadProgress(pct))
 
           // Step 3: save metadata to Supabase via our server
-          await registerFile({ email: selectedEmail, driveFileId, fileName: file.name, mimeType, fileSize })
+          await registerFile({ email: selectedEmail, driveFileId, fileName: fileToUpload.name, mimeType, fileSize })
         } catch (err: any) {
-          if (err.message !== '__cancelled__') {
-            setUploadError(err.message || 'שגיאה בהעלאה')
+          setCompressionProgress(-1)
+          console.error('[upload] error:', err)
+          const msg = err instanceof Error ? err.message
+            : typeof err === 'string' ? err
+            : JSON.stringify(err)
+          if (msg !== '__cancelled__') {
+            setUploadError(msg || 'שגיאה לא ידועה — פתח DevTools לפרטים')
           }
           break
         }
       }
     } finally {
       wakeLock?.release().catch(() => {})
+      setCompressionProgress(-1)
       setUploadProgress(-1)
       setUploadFileName('')
       loadFiles()
@@ -492,8 +515,8 @@ function MediaContent() {
     }
   }
 
-  // ── Block navigation while uploading ─────────────────────────
-  const isUploading = uploadProgress >= 0
+  // ── Block navigation while uploading or compressing ──────────
+  const isUploading = uploadProgress >= 0 || compressionProgress >= 0
   useEffect(() => {
     if (!isUploading) return
     const handler = (e: BeforeUnloadEvent) => {
@@ -564,7 +587,36 @@ function MediaContent() {
       {/* ── Upload zone (coach/admin only) ── */}
       {isCoachOrAdmin && (
         <div className="mb-6">
-          {uploadProgress >= 0 ? (
+          {compressionProgress >= 0 ? (
+            /* ── Compression phase ── */
+            <div className="border-2 border-purple-300 rounded-xl p-5 bg-purple-50">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-sm font-medium text-purple-800 truncate ml-3" title={uploadFileName}>
+                  {uploadFileName}
+                </p>
+                {uploadFileTotal > 1 && (
+                  <span className="text-xs text-purple-500 shrink-0">{uploadFileIndex} / {uploadFileTotal}</span>
+                )}
+              </div>
+              <div className="w-full rounded-full h-2.5 overflow-hidden bg-purple-200">
+                {compressionProgress < 5 ? (
+                  <div className="h-full w-1/3 bg-purple-500 rounded-full animate-[slide_1.4s_ease-in-out_infinite]" />
+                ) : (
+                  <div
+                    className="h-full rounded-full bg-purple-600 transition-all duration-300"
+                    style={{ width: `${compressionProgress}%` }}
+                  />
+                )}
+              </div>
+              <p className="text-xs text-purple-500 mt-1.5 text-center">
+                {compressionProgress < 5
+                  ? 'מוריד FFmpeg WASM (~31 MB) — פעם ראשונה בלבד, ייקח דקה-שתיים'
+                  : `דוחס וידאו ל-720p... ${compressionProgress}%`}
+              </p>
+              <p className="text-xs text-purple-400 mt-1 text-center">השאר את המסך דלוק</p>
+            </div>
+          ) : uploadProgress >= 0 ? (
+            /* ── Upload phase ── */
             <div className="border-2 border-blue-300 rounded-xl p-5 bg-blue-50">
               <div className="flex items-center justify-between mb-2">
                 <p className="text-sm font-medium text-blue-800 truncate ml-3" title={uploadFileName}>
