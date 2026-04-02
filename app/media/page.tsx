@@ -350,7 +350,7 @@ function MediaContent() {
     uploadUrl: string,
     onProgress: (pct: number) => void
   ): Promise<{ driveFileId: string; fileSize: number }> {
-    const CHUNK = 25 * 1024 * 1024 // 25 MB (multiple of 256 KB — fewer round-trips on fast connections)
+    const CHUNK = 10 * 1024 * 1024 // 10 MB — better for slow connections (~1.3 Mbps = ~60s per chunk)
     const total = file.size
     const mime = file.type || 'application/octet-stream'
 
@@ -430,11 +430,23 @@ function MediaContent() {
   }
 
   // ── Upload handler ────────────────────────────────────────────
+  const MAX_FILE_SIZE = 300 * 1024 * 1024 // 300 MB hard limit
+
   const handleFiles = async (fileList: FileList) => {
     if (!token || !selectedEmail) return
     setUploadError('')
 
     const allFiles = Array.from(fileList)
+
+    // 300 MB hard limit check
+    const tooBig = allFiles.find(f => f.size > MAX_FILE_SIZE)
+    if (tooBig) {
+      setUploadError(
+        `שגיאה: הקובץ גדול מדי (מעל 300MB). כדי להעלות בהצלחה: גזרו את הקצוות המיותרים בגלריה, או השתמשו בטיפ הכיווץ דרך הוואטסאפ.`
+      )
+      return
+    }
+
     setUploadFileTotal(allFiles.length)
 
     // Keep screen on during upload (Wake Lock API — silently ignored if unsupported)
@@ -561,6 +573,19 @@ function MediaContent() {
         </div>
       )}
 
+      {/* ── Upload tips card (coach/admin only) ── */}
+      {isCoachOrAdmin && (
+        <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 mb-4 text-sm text-blue-900" dir="rtl">
+          <p className="font-semibold mb-1.5">🎥 דגשים להעלאת סרטון לניתוח:</p>
+          <ul className="space-y-1 text-xs text-blue-800 list-disc list-inside">
+            <li><span className="font-medium">חיתוך הסרטון (Trim):</span> מומלץ לחתוך בגלריה את תחילת וסוף הסרטון כך שיכיל רק את הטיפוס עצמו. זה יחסוך זמן העלאה ויאפשר ניתוח מדויק יותר.</li>
+            <li><span className="font-medium">מגבלת זמן:</span> המערכת מותאמת לניתוח של עד 6 דקות טיפוס נטו.</li>
+            <li><span className="font-medium">הגדרות מומלצות:</span> צלמו ב-1080p (30fps). הימנעו מ-4K כדי למנוע העלאות איטיות מאוד.</li>
+            <li><span className="font-medium">טיפ לכיווץ מהיר:</span> אם הסרטון גדול מדי, שלחו אותו לעצמכם בוואטסאפ ושמרו חזרה לגלריה. זה יקטין את הקובץ משמעותית וישמור על איכות מעולה.</li>
+          </ul>
+        </div>
+      )}
+
       {/* ── Upload zone (coach/admin only) ── */}
       {isCoachOrAdmin && (
         <div className="mb-6">
@@ -588,7 +613,9 @@ function MediaContent() {
                   style={{ width: `${uploadProgress}%` }}
                 />
               </div>
-              <p className="text-xs text-blue-500 mt-1.5 text-center">{uploadProgress}%</p>
+              <p className="text-xs text-blue-500 mt-1.5 text-center">
+                {uploadProgress < 100 ? `מעלה לשרת... ${uploadProgress}%` : 'מעבד את הוידאו...'}
+              </p>
               <p className="text-xs text-blue-400 mt-1 text-center">השאר את המסך דלוק עד סיום ההעלאה</p>
             </div>
           ) : (
