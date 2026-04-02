@@ -656,9 +656,40 @@ export default function AnalysisPage() {
   const [deleting, setDeleting] = useState(false)
 
   const videoRef = useRef<HTMLVideoElement>(null)
+  const videoContainerRef = useRef<HTMLDivElement>(null)
+  const [isFullscreen, setIsFullscreen] = useState(false)
   const seekTo = useCallback((t: number) => {
     if (videoRef.current) videoRef.current.currentTime = t
   }, [])
+
+  // Track fullscreen state only — no async requestFullscreen calls here
+  useEffect(() => {
+    const onFSChange = () => setIsFullscreen(!!document.fullscreenElement)
+    document.addEventListener('fullscreenchange', onFSChange)
+    document.addEventListener('webkitfullscreenchange', onFSChange)
+    return () => {
+      document.removeEventListener('fullscreenchange', onFSChange)
+      document.removeEventListener('webkitfullscreenchange', onFSChange)
+    }
+  }, [])
+
+  // Must be called synchronously from a click handler (user-gesture requirement)
+  function handleFullscreen() {
+    try {
+      if (document.fullscreenElement) {
+        document.exitFullscreen()
+      } else {
+        const el = videoContainerRef.current
+        if (el) {
+          el.requestFullscreen().then(() => {
+            el.focus()
+          }).catch(() => {})
+        }
+      }
+    } catch {
+      // Browser rejected — ignore silently
+    }
+  }
 
   const isCoachOrAdmin = currentUser?.Role === 'coach' || currentUser?.Role === 'admin'
   const canCapture = !!isCoachOrAdmin
@@ -810,8 +841,9 @@ export default function AnalysisPage() {
       else if (e.code === 'ArrowUp' || e.code === 'ArrowDown') { e.preventDefault(); handleSpace() }
       else if (e.code === 'KeyC') { e.preventDefault(); handleClip() }
     }
-    window.addEventListener('keydown', handler)
-    return () => window.removeEventListener('keydown', handler)
+    // capture:true — intercepts before the video element handles arrow keys / space
+    window.addEventListener('keydown', handler, { capture: true })
+    return () => window.removeEventListener('keydown', handler, { capture: true })
   }, [canCapture, recordMove, handleSpace, handleClip])
 
   // ── Save ──────────────────────────────────────────────────────
@@ -951,14 +983,19 @@ export default function AnalysisPage() {
         {/* ── LEFT: Video + capture controls ── */}
         <div className="lg:w-1/2 lg:sticky lg:top-20 lg:self-start">
           {/* Video */}
-          <div className="relative bg-black rounded-xl overflow-hidden">
+          <div
+            ref={videoContainerRef}
+            tabIndex={-1}
+            className={`relative bg-black outline-none ${isFullscreen ? 'rounded-none' : 'rounded-xl overflow-hidden'}`}
+          >
             {streamUrl ? (
               <video
                 ref={videoRef}
                 src={streamUrl}
                 controls
                 preload="metadata"
-                className="w-full max-h-[55vh] object-contain"
+                controlsList="nofullscreen"
+                className={`w-full object-contain ${isFullscreen ? 'h-screen' : 'max-h-[55vh]'}`}
               />
             ) : (
               <div className="flex items-center justify-center h-48 text-gray-400">
@@ -997,10 +1034,71 @@ export default function AnalysisPage() {
                 />
               </div>
             )}
+            {/* Capture buttons overlay — fullscreen only */}
+            {isFullscreen && canCapture && sessionState !== 'ended' && (
+              <div
+                className="absolute bottom-0 left-0 right-0 flex gap-1.5 p-4"
+                style={{ background: 'rgba(0,0,0,0.65)', zIndex: 20 }}
+                dir="ltr"
+              >
+                <button
+                  onPointerDown={e => { e.preventDefault(); recordMove('L') }}
+                  disabled={sessionState === 'idle'}
+                  className="flex-1 py-4 bg-blue-500 hover:bg-blue-600 active:bg-blue-700 disabled:opacity-25 disabled:pointer-events-none text-white rounded-xl font-bold text-sm shadow select-none touch-none"
+                >
+                  יד שמאל
+                  <span className="block text-xs opacity-60 font-normal">←</span>
+                </button>
+                <button
+                  onPointerDown={e => { e.preventDefault(); handleClip() }}
+                  disabled={sessionState === 'idle'}
+                  className={`px-3 py-4 text-white rounded-xl font-bold shadow select-none touch-none transition-colors disabled:opacity-25 disabled:pointer-events-none ${
+                    clipInProgress
+                      ? 'bg-yellow-500 hover:bg-yellow-600 active:bg-yellow-700 ring-2 ring-yellow-300'
+                      : 'bg-yellow-400 hover:bg-yellow-500 active:bg-yellow-600'
+                  }`}
+                >
+                  קליפ
+                  <span className="block text-xs opacity-70 font-normal">[C]</span>
+                </button>
+                <button
+                  onPointerDown={e => { e.preventDefault(); handleSpace() }}
+                  className={`px-3 py-4 text-white rounded-xl font-bold shadow select-none touch-none transition-colors ${
+                    sessionState === 'idle'
+                      ? 'bg-green-500 hover:bg-green-600 active:bg-green-700'
+                      : 'bg-gray-400 hover:bg-gray-500 active:bg-gray-600'
+                  }`}
+                >
+                  {sessionState === 'idle' ? 'התחל' : 'סיום'}
+                  <span className="block text-xs opacity-60 font-normal">{sessionState === 'idle' ? '↑' : '↓'}</span>
+                </button>
+                <button
+                  onPointerDown={e => { e.preventDefault(); recordMove('R') }}
+                  disabled={sessionState === 'idle'}
+                  className="flex-1 py-4 bg-red-500 hover:bg-red-600 active:bg-red-700 disabled:opacity-25 disabled:pointer-events-none text-white rounded-xl font-bold text-sm shadow select-none touch-none"
+                >
+                  יד ימין
+                  <span className="block text-xs opacity-60 font-normal">→</span>
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Capture buttons — coach/admin, session not ended */}
-          {canCapture && sessionState !== 'ended' && (
+          {/* Video control bar — fullscreen always visible when video loaded */}
+          {streamUrl && (
+            <div className="flex items-center justify-end mt-1.5">
+              <button
+                onClick={handleFullscreen}
+                className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-800 border border-gray-200 hover:border-gray-400 bg-white rounded-lg px-2.5 py-1 transition-colors"
+                title={isFullscreen ? 'צא ממסך מלא' : 'מסך מלא'}
+              >
+                {isFullscreen ? '⛶ צא' : '⤢ מסך מלא'}
+              </button>
+            </div>
+          )}
+
+          {canCapture && sessionState !== 'ended' && !isFullscreen && (
             <div className="flex gap-1.5 mt-3" dir="ltr">
               <button
                 onPointerDown={e => { e.preventDefault(); recordMove('L') }}
