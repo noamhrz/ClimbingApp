@@ -343,36 +343,76 @@ function MediaContent() {
     return json.uploadUrl
   }
 
-  function xhrUploadDirect(
+  // Chunked resumable upload — 5 MB per chunk, resumes from server-acknowledged offset.
+  // Each chunk is a separate XHR so mobile connection drops only lose the current chunk.
+  async function xhrUploadChunked(
     file: File,
     uploadUrl: string,
     onProgress: (pct: number) => void
   ): Promise<{ driveFileId: string; fileSize: number }> {
-    return new Promise((resolve, reject) => {
+    const CHUNK = 5 * 1024 * 1024 // 5 MB (must be a multiple of 256 KB per Drive spec)
+    const total = file.size
+    const mime = file.type || 'application/octet-stream'
+
+    // Query session to resume any partially-uploaded bytes
+    let offset = await new Promise<number>(resolve => {
       const xhr = new XMLHttpRequest()
-      xhrRef.current = xhr
-      xhr.upload.addEventListener('progress', e => {
-        if (e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100))
-      })
       xhr.addEventListener('load', () => {
-        xhrRef.current = null
-        if (xhr.status === 200 || xhr.status === 201) {
-          try {
-            const data = JSON.parse(xhr.responseText)
-            resolve({ driveFileId: data.id, fileSize: Number(data.size ?? file.size) })
-          } catch {
-            reject(new Error('Invalid Drive response'))
-          }
+        if (xhr.status === 308) {
+          const range = xhr.getResponseHeader('Range')
+          resolve(range ? parseInt(range.split('-')[1]) + 1 : 0)
         } else {
-          reject(new Error(`Drive upload failed: ${xhr.status}`))
+          resolve(0) // session fresh or expired — start from 0
         }
       })
-      xhr.addEventListener('error', () => { xhrRef.current = null; reject(new Error('שגיאת רשת')) })
-      xhr.addEventListener('abort', () => { xhrRef.current = null; reject(new Error('__cancelled__')) })
+      xhr.addEventListener('error', () => resolve(0))
       xhr.open('PUT', uploadUrl)
-      xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream')
-      xhr.send(file)
+      xhr.setRequestHeader('Content-Range', `bytes */${total}`)
+      xhr.send()
     })
+
+    while (offset < total) {
+      const end = Math.min(offset + CHUNK, total)
+      const chunk = file.slice(offset, end)
+
+      const result = await new Promise<{ status: number; body: string; serverRange: string | null }>(
+        (resolve, reject) => {
+          const xhr = new XMLHttpRequest()
+          xhrRef.current = xhr
+          xhr.upload.addEventListener('progress', e => {
+            if (e.lengthComputable) onProgress(Math.round(((offset + e.loaded) / total) * 100))
+          })
+          xhr.addEventListener('load', () => {
+            xhrRef.current = null
+            resolve({ status: xhr.status, body: xhr.responseText, serverRange: xhr.getResponseHeader('Range') })
+          })
+          xhr.addEventListener('error', () => { xhrRef.current = null; reject(new Error('שגיאת רשת')) })
+          xhr.addEventListener('abort', () => { xhrRef.current = null; reject(new Error('__cancelled__')) })
+          xhr.open('PUT', uploadUrl)
+          xhr.setRequestHeader('Content-Range', `bytes ${offset}-${end - 1}/${total}`)
+          xhr.setRequestHeader('Content-Type', mime)
+          xhr.send(chunk)
+        }
+      )
+
+      if (result.status === 200 || result.status === 201) {
+        // Final chunk — Drive returns file metadata
+        let data: { id?: string; size?: string | number } = {}
+        try { data = JSON.parse(result.body) } catch { /* ignore */ }
+        return { driveFileId: data.id ?? '', fileSize: Number(data.size ?? total) }
+      }
+
+      if (result.status === 308) {
+        // Chunk accepted — advance to server-acknowledged byte position
+        offset = result.serverRange ? parseInt(result.serverRange.split('-')[1]) + 1 : end
+        onProgress(Math.round((offset / total) * 100))
+        continue
+      }
+
+      throw new Error(`שגיאת העלאה: ${result.status}`)
+    }
+
+    throw new Error('ההעלאה הסתיימה ללא אישור מ-Drive')
   }
 
   async function registerFile(params: {
@@ -397,36 +437,45 @@ function MediaContent() {
     const allFiles = Array.from(fileList)
     setUploadFileTotal(allFiles.length)
 
-    for (let i = 0; i < allFiles.length; i++) {
-      const file = allFiles[i]
-      setUploadFileIndex(i + 1)
-      setUploadFileName(file.name)
-      setUploadProgress(0)
+    // Keep screen on during upload (Wake Lock API — silently ignored if unsupported)
+    let wakeLock: WakeLockSentinel | null = null
+    try {
+      if ('wakeLock' in navigator) wakeLock = await navigator.wakeLock.request('screen')
+    } catch { /* not supported or denied */ }
 
-      try {
-        const mimeType = file.type || 'application/octet-stream'
+    try {
+      for (let i = 0; i < allFiles.length; i++) {
+        const file = allFiles[i]
+        setUploadFileIndex(i + 1)
+        setUploadFileName(file.name)
+        setUploadProgress(0)
 
-        // Step 1: get resumable upload URL from our server
-        const uploadUrl = await initUpload({
-          email: selectedEmail, fileName: file.name, mimeType, fileSize: file.size,
-        })
+        try {
+          const mimeType = file.type || 'application/octet-stream'
 
-        // Step 2: upload directly from browser to Google Drive (no Vercel in the loop)
-        const { driveFileId, fileSize } = await xhrUploadDirect(file, uploadUrl, pct => setUploadProgress(pct))
+          // Step 1: create resumable session URL on our server
+          const uploadUrl = await initUpload({
+            email: selectedEmail, fileName: file.name, mimeType, fileSize: file.size,
+          })
 
-        // Step 3: save metadata to Supabase via our server
-        await registerFile({ email: selectedEmail, driveFileId, fileName: file.name, mimeType, fileSize })
-      } catch (err: any) {
-        if (err.message !== '__cancelled__') {
-          setUploadError(err.message || 'שגיאה בהעלאה')
+          // Step 2: upload in 5 MB chunks directly to Google Drive (no Vercel in the loop)
+          const { driveFileId, fileSize } = await xhrUploadChunked(file, uploadUrl, pct => setUploadProgress(pct))
+
+          // Step 3: save metadata to Supabase via our server
+          await registerFile({ email: selectedEmail, driveFileId, fileName: file.name, mimeType, fileSize })
+        } catch (err: any) {
+          if (err.message !== '__cancelled__') {
+            setUploadError(err.message || 'שגיאה בהעלאה')
+          }
+          break
         }
-        break
       }
+    } finally {
+      wakeLock?.release().catch(() => {})
+      setUploadProgress(-1)
+      setUploadFileName('')
+      loadFiles()
     }
-
-    setUploadProgress(-1)
-    setUploadFileName('')
-    loadFiles()
   }
 
   const handleCancel = () => {
@@ -540,6 +589,7 @@ function MediaContent() {
                 />
               </div>
               <p className="text-xs text-blue-500 mt-1.5 text-center">{uploadProgress}%</p>
+              <p className="text-xs text-blue-400 mt-1 text-center">השאר את המסך דלוק עד סיום ההעלאה</p>
             </div>
           ) : (
             <DropZone onFiles={handleFiles} />

@@ -19,9 +19,12 @@ function getDriveAuth() {
     )
   }
 
+  // Strip surrounding quotes that Vercel/some env tools add, then expand \n
+  const cleanKey = key.replace(/^["']|["']$/g, '').replace(/\\n/g, '\n')
+
   return new google.auth.JWT({
     email,
-    key: key.replace(/\\n/g, '\n'),
+    key: cleanKey,
     scopes: ['https://www.googleapis.com/auth/drive'],
   })
 }
