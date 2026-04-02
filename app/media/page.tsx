@@ -350,7 +350,7 @@ function MediaContent() {
     uploadUrl: string,
     onProgress: (pct: number) => void
   ): Promise<{ driveFileId: string; fileSize: number }> {
-    const CHUNK = 5 * 1024 * 1024 // 5 MB (must be a multiple of 256 KB per Drive spec)
+    const CHUNK = 25 * 1024 * 1024 // 25 MB (multiple of 256 KB — fewer round-trips on fast connections)
     const total = file.size
     const mime = file.type || 'application/octet-stream'
 
