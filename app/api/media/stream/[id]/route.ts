@@ -51,7 +51,13 @@ export async function GET(
       headers: responseHeaders,
     })
   } catch (err: any) {
-    console.error('Stream error:', err)
-    return NextResponse.json({ error: err.message }, { status: 500 })
+    console.error('[stream] error:', {
+      message: err.message,
+      code: err.code,
+      status: err.status,
+    })
+    // Surface Drive 403 as 403 (not 500) so the client can distinguish auth errors
+    const status = err.message?.includes('Drive returned 403') ? 403 : 500
+    return NextResponse.json({ error: err.message }, { status })
   }
 }

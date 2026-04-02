@@ -6,9 +6,22 @@ import { google } from 'googleapis'
 const ROOT_FOLDER_ID = process.env.GOOGLE_DRIVE_ROOT_FOLDER_ID!
 
 function getDriveAuth() {
+  const email = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL
+  const key = process.env.GOOGLE_PRIVATE_KEY
+  const rootFolder = process.env.GOOGLE_DRIVE_ROOT_FOLDER_ID
+
+  if (!email || !key || !rootFolder) {
+    throw new Error(
+      `Missing Google Drive env vars — ` +
+      `GOOGLE_SERVICE_ACCOUNT_EMAIL:${email ? 'ok' : 'MISSING'}, ` +
+      `GOOGLE_PRIVATE_KEY:${key ? 'ok' : 'MISSING'}, ` +
+      `GOOGLE_DRIVE_ROOT_FOLDER_ID:${rootFolder ? 'ok' : 'MISSING'}`
+    )
+  }
+
   return new google.auth.JWT({
-    email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL!,
-    key: process.env.GOOGLE_PRIVATE_KEY!.replace(/\\n/g, '\n'),
+    email,
+    key: key.replace(/\\n/g, '\n'),
     scopes: ['https://www.googleapis.com/auth/drive'],
   })
 }
@@ -133,13 +146,22 @@ export async function fetchDriveFile(
   const auth = getDriveAuth()
   const { token } = await auth.getAccessToken()
 
+  if (!token) throw new Error('Service account failed to obtain an access token')
+
   const headers: Record<string, string> = {
     Authorization: `Bearer ${token}`,
   }
   if (rangeHeader) headers['Range'] = rangeHeader
 
-  return fetch(
+  const driveRes = await fetch(
     `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&supportsAllDrives=true`,
     { headers }
   )
+
+  if (!driveRes.ok && driveRes.status !== 206) {
+    const body = await driveRes.text()
+    throw new Error(`Drive returned ${driveRes.status} for file ${fileId}: ${body}`)
+  }
+
+  return driveRes
 }

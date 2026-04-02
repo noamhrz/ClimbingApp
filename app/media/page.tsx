@@ -221,6 +221,7 @@ function MediaContent() {
   const [uploadFileTotal, setUploadFileTotal] = useState(0)
   const xhrRef = useRef<XMLHttpRequest | null>(null)
   const [syncing, setSyncing] = useState(false)
+  const [syncError, setSyncError] = useState('')
 
   // ── Load users & set URL default ─────────────────────────────
   useEffect(() => {
@@ -280,13 +281,25 @@ function MediaContent() {
   const loadFiles = useCallback(async () => {
     if (!selectedEmail || !token) return
     setFilesLoading(true)
+    setSyncError('')
     try {
       // Auto-sync with Drive before listing (best-effort — won't block if Drive is unavailable)
-      await fetch('/api/media/sync', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ email: selectedEmail }),
-      }).catch(() => {})
+      try {
+        const syncRes = await fetch('/api/media/sync', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ email: selectedEmail }),
+        })
+        if (!syncRes.ok) {
+          const syncJson = await syncRes.json().catch(() => ({}))
+          const msg = syncJson.error || `Drive sync failed (${syncRes.status})`
+          console.warn('[media] sync error:', msg)
+          setSyncError(msg)
+        }
+      } catch (syncErr: any) {
+        console.warn('[media] sync network error:', syncErr.message)
+        setSyncError('לא ניתן להתחבר ל-Drive')
+      }
 
       const res = await fetch(`/api/media/list?email=${encodeURIComponent(selectedEmail)}`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -534,6 +547,14 @@ function MediaContent() {
           {uploadError && (
             <p className="text-red-500 text-sm mt-2 text-center">{uploadError}</p>
           )}
+        </div>
+      )}
+
+      {/* ── Drive sync error banner ── */}
+      {syncError && (
+        <div className="flex items-start justify-between gap-2 bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 mb-3 text-sm">
+          <span>⚠️ שגיאת Drive: {syncError}</span>
+          <button onClick={() => setSyncError('')} className="shrink-0 text-red-400 hover:text-red-600 font-bold leading-none">✕</button>
         </div>
       )}
 

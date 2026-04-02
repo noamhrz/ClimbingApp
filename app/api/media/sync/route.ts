@@ -63,7 +63,12 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ inserted, deleted })
   } catch (err: any) {
-    console.error('[sync] error:', err)
+    console.error('[sync] error:', {
+      message: err.message,
+      code: err.code,
+      status: err.status,
+      errors: err.errors,
+    })
     return NextResponse.json({ error: err.message }, { status: 500 })
   }
 }
