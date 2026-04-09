@@ -222,6 +222,12 @@ function MediaContent() {
   const xhrRef = useRef<XMLHttpRequest | null>(null)
   const [syncing, setSyncing] = useState(false)
   const [syncError, setSyncError] = useState('')
+  const [toast, setToast] = useState<string | null>(null)
+
+  function showToast(msg: string) {
+    setToast(msg)
+    setTimeout(() => setToast(null), 3000)
+  }
 
   // ── Load users & set URL default ─────────────────────────────
   useEffect(() => {
@@ -518,11 +524,17 @@ function MediaContent() {
 
   // ── Delete ────────────────────────────────────────────────────
   const handleDelete = async (fileId: number) => {
-    await fetch(`/api/media/${fileId}`, {
+    const res = await fetch(`/api/media/${fileId}`, {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${token}` },
     })
-    setFiles(prev => prev.filter(f => f.FileID !== fileId))
+    if (res.ok) {
+      setFiles(prev => prev.filter(f => f.FileID !== fileId))
+      showToast('הקובץ נמחק בהצלחה')
+    } else {
+      const json = await res.json().catch(() => ({}))
+      setUploadError(json.error || 'שגיאה במחיקת הקובץ')
+    }
   }
 
   // ── Can delete? ───────────────────────────────────────────────
@@ -573,59 +585,55 @@ function MediaContent() {
         </div>
       )}
 
-      {/* ── Upload tips card (coach/admin only) ── */}
-      {isCoachOrAdmin && (
-        <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 mb-4 text-sm text-blue-900" dir="rtl">
-          <p className="font-semibold mb-1.5">🎥 דגשים להעלאת סרטון לניתוח:</p>
-          <ul className="space-y-1 text-xs text-blue-800 list-disc list-inside">
-            <li><span className="font-medium">חיתוך הסרטון (Trim):</span> מומלץ לחתוך בגלריה את תחילת וסוף הסרטון כך שיכיל רק את הטיפוס עצמו. זה יחסוך זמן העלאה ויאפשר ניתוח מדויק יותר.</li>
-            <li><span className="font-medium">מגבלת זמן:</span> המערכת מותאמת לניתוח של עד 6 דקות טיפוס נטו.</li>
-            <li><span className="font-medium">הגדרות מומלצות:</span> צלמו ב-1080p (30fps). הימנעו מ-4K כדי למנוע העלאות איטיות מאוד.</li>
-            <li><span className="font-medium">טיפ לכיווץ מהיר:</span> אם הסרטון גדול מדי, שלחו אותו לעצמכם בוואטסאפ ושמרו חזרה לגלריה. זה יקטין את הקובץ משמעותית וישמור על איכות מעולה.</li>
-          </ul>
-        </div>
-      )}
+      {/* ── Upload tips card ── */}
+      <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 mb-4 text-sm text-blue-900" dir="rtl">
+        <p className="font-semibold mb-1.5">🎥 דגשים להעלאת סרטון לניתוח:</p>
+        <ul className="space-y-1 text-xs text-blue-800 list-disc list-inside">
+          <li><span className="font-medium">חיתוך הסרטון (Trim):</span> מומלץ לחתוך בגלריה את תחילת וסוף הסרטון כך שיכיל רק את הטיפוס עצמו. זה יחסוך זמן העלאה ויאפשר ניתוח מדויק יותר.</li>
+          <li><span className="font-medium">מגבלת זמן:</span> המערכת מותאמת לניתוח של עד 6 דקות טיפוס נטו.</li>
+          <li><span className="font-medium">הגדרות מומלצות:</span> צלמו ב-1080p (30fps). הימנעו מ-4K כדי למנוע העלאות איטיות מאוד.</li>
+          <li><span className="font-medium">טיפ לכיווץ מהיר:</span> אם הסרטון גדול מדי, שלחו אותו לעצמכם בוואטסאפ ושמרו חזרה לגלריה. זה יקטין את הקובץ משמעותית וישמור על איכות מעולה.</li>
+        </ul>
+      </div>
 
-      {/* ── Upload zone (coach/admin only) ── */}
-      {isCoachOrAdmin && (
-        <div className="mb-6">
-          {uploadProgress >= 0 ? (
-            <div className="border-2 border-blue-300 rounded-xl p-5 bg-blue-50">
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-sm font-medium text-blue-800 truncate ml-3" title={uploadFileName}>
-                  {uploadFileName}
-                </p>
-                <div className="flex items-center gap-2 shrink-0">
-                  {uploadFileTotal > 1 && (
-                    <span className="text-xs text-blue-500">{uploadFileIndex} / {uploadFileTotal}</span>
-                  )}
-                  <button
-                    onClick={handleCancel}
-                    className="text-xs text-red-500 hover:text-red-700 font-medium px-2 py-0.5 rounded border border-red-300 hover:border-red-500 transition-colors"
-                  >
-                    ביטול
-                  </button>
-                </div>
-              </div>
-              <div className="w-full bg-blue-200 rounded-full h-2.5 overflow-hidden">
-                <div
-                  className="bg-blue-600 h-2.5 rounded-full transition-all duration-100"
-                  style={{ width: `${uploadProgress}%` }}
-                />
-              </div>
-              <p className="text-xs text-blue-500 mt-1.5 text-center">
-                {uploadProgress < 100 ? `מעלה לשרת... ${uploadProgress}%` : 'מעבד את הוידאו...'}
+      {/* ── Upload zone ── */}
+      <div className="mb-6">
+        {uploadProgress >= 0 ? (
+          <div className="border-2 border-blue-300 rounded-xl p-5 bg-blue-50">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-sm font-medium text-blue-800 truncate ml-3" title={uploadFileName}>
+                {uploadFileName}
               </p>
-              <p className="text-xs text-blue-400 mt-1 text-center">השאר את המסך דלוק עד סיום ההעלאה</p>
+              <div className="flex items-center gap-2 shrink-0">
+                {uploadFileTotal > 1 && (
+                  <span className="text-xs text-blue-500">{uploadFileIndex} / {uploadFileTotal}</span>
+                )}
+                <button
+                  onClick={handleCancel}
+                  className="text-xs text-red-500 hover:text-red-700 font-medium px-2 py-0.5 rounded border border-red-300 hover:border-red-500 transition-colors"
+                >
+                  ביטול
+                </button>
+              </div>
             </div>
-          ) : (
-            <DropZone onFiles={handleFiles} />
-          )}
-          {uploadError && (
-            <p className="text-red-500 text-sm mt-2 text-center">{uploadError}</p>
-          )}
-        </div>
-      )}
+            <div className="w-full bg-blue-200 rounded-full h-2.5 overflow-hidden">
+              <div
+                className="bg-blue-600 h-2.5 rounded-full transition-all duration-100"
+                style={{ width: `${uploadProgress}%` }}
+              />
+            </div>
+            <p className="text-xs text-blue-500 mt-1.5 text-center">
+              {uploadProgress < 100 ? `מעלה לשרת... ${uploadProgress}%` : 'מעבד את הוידאו...'}
+            </p>
+            <p className="text-xs text-blue-400 mt-1 text-center">השאר את המסך דלוק עד סיום ההעלאה</p>
+          </div>
+        ) : (
+          <DropZone onFiles={handleFiles} />
+        )}
+        {uploadError && (
+          <p className="text-red-500 text-sm mt-2 text-center">{uploadError}</p>
+        )}
+      </div>
 
       {/* ── Drive sync error banner ── */}
       {syncError && (
@@ -656,9 +664,7 @@ function MediaContent() {
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-10 text-center">
           <p className="text-4xl mb-3">📂</p>
           <p className="text-gray-500">אין קבצים עדיין</p>
-          {isCoachOrAdmin && (
-            <p className="text-gray-400 text-sm mt-1">גרור קבצים לאזור ההעלאה למעלה</p>
-          )}
+          <p className="text-gray-400 text-sm mt-1">גרור קבצים לאזור ההעלאה למעלה</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -674,6 +680,13 @@ function MediaContent() {
               hasAnalysis={analysedFileIds.has(file.FileID)}
             />
           ))}
+        </div>
+      )}
+
+      {/* ── Toast ── */}
+      {toast && (
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 bg-gray-900 text-white text-sm px-4 py-2.5 rounded-xl shadow-lg animate-toast whitespace-nowrap">
+          {toast}
         </div>
       )}
     </div>

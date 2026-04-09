@@ -36,14 +36,36 @@ export async function DELETE(
       return NextResponse.json({ error: 'Forbidden — can only delete your own uploads' }, { status: 403 })
     }
 
-    // Delete from Drive (best-effort — don't fail the whole request if Drive errors)
+    // Delete from Drive first. Only proceed to DB delete if Drive confirms success.
+    // A Drive failure here means the file would survive in Drive and get re-synced
+    // back into Supabase on the next loadFiles call.
     try {
       await deleteFileFromDrive(fileRecord.GoogleDriveFileId)
-    } catch (driveErr) {
-      console.error('Drive delete failed (continuing):', driveErr)
+    } catch (driveErr: any) {
+      // Normalise the HTTP status from googleapis GaxiosError
+      const httpStatus: number = driveErr?.status ?? driveErr?.response?.status ?? driveErr?.code ?? 0
+      // 404 means Drive already doesn't have it — safe to remove the DB record
+      if (httpStatus === 404) {
+        console.warn('[delete] Drive file not found (already deleted), removing DB record only')
+      } else {
+        console.error('[delete] Drive delete failed:', {
+          httpStatus,
+          message: driveErr?.message,
+          errors: driveErr?.errors ?? driveErr?.response?.data,
+          driveFileId: fileRecord.GoogleDriveFileId,
+        })
+        return NextResponse.json(
+          { error: `Drive error ${httpStatus}: ${driveErr?.message ?? 'unknown'}` },
+          { status: 500 }
+        )
+      }
     }
 
-    await supabase.from('MediaFiles').delete().eq('FileID', id)
+    const { error: dbErr } = await supabase.from('MediaFiles').delete().eq('FileID', id)
+    if (dbErr) {
+      console.error('Supabase delete failed:', dbErr)
+      return NextResponse.json({ error: 'שגיאה במחיקה מהמסד — נסה שוב' }, { status: 500 })
+    }
 
     return NextResponse.json({ success: true })
   } catch (err: any) {
