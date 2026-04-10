@@ -39,9 +39,9 @@ export async function GET(request: NextRequest) {
   // Step 1: Get active WhatsApp profiles
   const { data: profiles, error: profilesError } = await supabase
     .from('Profiles')
-    .select('Email, Phone, Users(Name)')
-    .eq('WhatsAppActive', true)
-    .not('Phone', 'is', null)
+    .select('"Email", "Phone"')
+    .eq('"WhatsAppActive"', true)
+    .not('"Phone"', 'is', null)
 
   if (profilesError) {
     console.error('Error fetching profiles:', profilesError)
@@ -53,6 +53,12 @@ export async function GET(request: NextRequest) {
   }
 
   const activeEmails = profiles.map((p) => p.Email)
+
+  // Step 2: Get names from Users
+  const { data: users } = await supabase
+    .from('Users')
+    .select('"Email", "Name"')
+    .in('"Email"', activeEmails)
 
   // Step 2: Get today's incomplete calendar entries for these users
   const { data: calendarEntries, error: calendarError } = await supabase
@@ -108,7 +114,12 @@ export async function GET(request: NextRequest) {
     .in('ExerciseID', exerciseIds)
 
   // Build lookup maps
-  const profileByEmail = Object.fromEntries(profiles.map((p) => [p.Email, p]))
+  const profileByEmail = Object.fromEntries(
+    profiles.map((p) => {
+      const user = users?.find((u) => u.Email === p.Email)
+      return [p.Email, { ...p, Name: user?.Name ?? 'מתאמן' }]
+    })
+  )
   const workoutById = Object.fromEntries((workouts || []).map((w) => [w.WorkoutID, w]))
   const exerciseById = Object.fromEntries((exercises || []).map((e) => [e.ExerciseID, e]))
 
@@ -125,8 +136,7 @@ export async function GET(request: NextRequest) {
     const profile = profileByEmail[email]
     if (!profile) continue
 
-    const name = (profile.Users as any)?.Name ?? 'מתאמן'
-    const { Phone: phone } = profile
+    const { Name: name, Phone: phone } = profile as { Name: string; Phone: string; Email: string }
 
     // Send daily_summary if 2+ workouts
     if (userWorkouts.length >= 2) {
