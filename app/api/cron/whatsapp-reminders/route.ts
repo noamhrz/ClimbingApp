@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
   // Step 1: Get active WhatsApp profiles
   const { data: profiles, error: profilesError } = await supabase
     .from('Profiles')
-    .select('Email, Name, Phone')
+    .select('Email, Phone, Users(Name)')
     .eq('WhatsAppActive', true)
     .not('Phone', 'is', null)
 
@@ -125,7 +125,8 @@ export async function GET(request: NextRequest) {
     const profile = profileByEmail[email]
     if (!profile) continue
 
-    const { Name: name, Phone: phone } = profile
+    const name = (profile.Users as any)?.Name ?? 'מתאמן'
+    const { Phone: phone } = profile
 
     // Send daily_summary if 2+ workouts
     if (userWorkouts.length >= 2) {
