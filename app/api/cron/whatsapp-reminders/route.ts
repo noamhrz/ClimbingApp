@@ -39,9 +39,9 @@ export async function GET(request: NextRequest) {
   // Step 1: Get active WhatsApp profiles
   const { data: profiles, error: profilesError } = await supabase
     .from('Profiles')
-    .select('"Email", "Phone"')
-    .eq('"WhatsAppActive"', true)
-    .not('"Phone"', 'is', null)
+    .select('Email, Phone')
+    .eq('WhatsAppActive', true)
+    .not('Phone', 'is', null)
 
   if (profilesError) {
     console.error('Error fetching profiles:', profilesError)
@@ -57,8 +57,8 @@ export async function GET(request: NextRequest) {
   // Step 2: Get names from Users
   const { data: users } = await supabase
     .from('Users')
-    .select('"Email", "Name"')
-    .in('"Email"', activeEmails)
+    .select('Email, Name')
+    .in('Email', activeEmails)
 
   // Step 2: Get today's incomplete calendar entries for these users
   const { data: calendarEntries, error: calendarError } = await supabase
