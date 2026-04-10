@@ -197,7 +197,7 @@ export async function GET(request: NextRequest) {
               .join('\n')
           : 'ללא תרגילים'
 
-      const workoutLink = `https://app.noam-herz-climbing.com/calendar/${entry.CalendarID}`
+      const workoutLink = `https://app.noam-herz-climbing.com/calendar-edit/${entry.CalendarID}`
 
       try {
         const msg = await twilioClient.messages.create({
