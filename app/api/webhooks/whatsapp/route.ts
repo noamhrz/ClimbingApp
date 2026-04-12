@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import twilio from 'twilio'
 import { createClient } from '@supabase/supabase-js'
+import { copyPreviousWorkout } from '@/utils/copyPreviousWorkout'
 
 const TEMPLATES = {
   workout_completed: 'HX95eef29ebe8b504bc07dacc9b1495e83',
@@ -48,89 +49,44 @@ export async function POST(request: NextRequest) {
 
     const { Email: email, CalendarID: calendarId } = logEntry
 
-    // Mark workout as completed
-    const { error: updateError } = await supabase
-      .from('Calendar')
-      .update({ Completed: true })
-      .eq('CalendarID', calendarId)
+    // Mark as completed and copy previous exercise logs using the shared utility
+    const result = await copyPreviousWorkout(calendarId, email)
+    console.log('copyPreviousWorkout result:', result.message)
 
-    if (updateError) {
-      console.error('Error updating Calendar:', updateError)
-      return NextResponse.json({ received: true }, { status: 200 })
-    }
+    const exercisesNote = result.success ? 'לפי הסטטיסטיקה של האימון הקודם' : ''
 
-    // Get workout details
+    // Get workout name for the confirmation message
     const { data: calendarEntry } = await supabase
       .from('Calendar')
       .select('WorkoutID')
       .eq('CalendarID', calendarId)
       .single()
 
-    const workoutId = calendarEntry?.WorkoutID
-
-    // Get workout info
     const { data: workout } = await supabase
       .from('Workouts')
-      .select('Name, containExercise')
-      .eq('WorkoutID', workoutId)
+      .select('Name')
+      .eq('WorkoutID', calendarEntry?.WorkoutID)
       .single()
 
-    let exercisesNote = ''
-
-    if (workout?.containExercise) {
-      // Find the most recent previous completed calendar entry for this workout
-      const { data: prevCalendar } = await supabase
-        .from('Calendar')
-        .select('CalendarID')
-        .eq('WorkoutID', workoutId)
-        .eq('Email', email)
-        .eq('Completed', true)
-        .neq('CalendarID', calendarId)
-        .order('StartTime', { ascending: false })
-        .limit(1)
-        .single()
-
-      if (prevCalendar) {
-        const prevCalendarId = prevCalendar.CalendarID
-
-        // Copy exercise logs from previous session to current
-        const { data: prevLogs } = await supabase
-          .from('ExerciseLogs')
-          .select(
-            'Email, WorkoutID, ExerciseID, SetNumber, RepsPlanned, RepsDone, WeightKG, DurationSec, HandSide'
-          )
-          .eq('CalendarID', prevCalendarId)
-
-        if (prevLogs && prevLogs.length > 0) {
-          const newLogs = prevLogs.map((log) => ({
-            ...log,
-            CalendarID: calendarId,
-          }))
-
-          const { error: insertError } = await supabase.from('ExerciseLogs').insert(newLogs)
-
-          if (insertError) {
-            console.error('Error copying exercise logs:', insertError)
-          } else {
-            exercisesNote = 'לפי הסטטיסטיקה של האימון הקודם'
-          }
-        }
-      }
-    }
-
-    // Fetch user profile for name and phone
+    // Fetch user name and phone
     const { data: profile } = await supabase
       .from('Profiles')
-      .select('Name, Phone')
+      .select('Phone')
       .eq('Email', email)
       .single()
 
-    if (!profile) {
-      console.error('Profile not found for email:', email)
+    const { data: user } = await supabase
+      .from('Users')
+      .select('Name')
+      .eq('Email', email)
+      .single()
+
+    if (!profile?.Phone) {
+      console.error('Phone not found for email:', email)
       return NextResponse.json({ received: true }, { status: 200 })
     }
 
-    const workoutLink = `https://app.noam-herz-climbing.com/calendar/${calendarId}`
+    const workoutLink = `https://app.noam-herz-climbing.com/calendar-edit/${calendarId}`
 
     // Send workout_completed template
     try {
@@ -139,20 +95,20 @@ export async function POST(request: NextRequest) {
         to: `whatsapp:${profile.Phone}`,
         contentSid: TEMPLATES.workout_completed,
         contentVariables: JSON.stringify({
-          '1': profile.Name,
+          '1': user?.Name ?? 'מתאמן',
           '2': workout?.Name ?? 'האימון',
           '3': exercisesNote,
           '4': workoutLink,
         }),
       })
 
-      // Update WhatsAppLog status
+      // Update original log status
       await supabase
         .from('WhatsAppLog')
         .update({ Status: 'completed' })
         .eq('LogID', logEntry.LogID)
 
-      // Log the new completed message
+      // Log the confirmation message
       await supabase.from('WhatsAppLog').insert({
         Email: email,
         CalendarID: calendarId,
