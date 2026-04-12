@@ -25,8 +25,8 @@ export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData()
 
-    const smsSid = formData.get('SmsSid') as string
     const buttonPayload = formData.get('ButtonPayload') as string
+    const originalMessageSid = formData.get('OriginalRepliedMessageSid') as string
 
     // Log all incoming Twilio data for diagnostics
     const allFields: Record<string, string> = {}
@@ -40,15 +40,15 @@ export async function POST(request: NextRequest) {
     const supabase = getSupabaseAdmin()
     const twilioClient = getTwilioClient()
 
-    // Find the original outbound message in WhatsAppLog
+    // Find the original outbound message in WhatsAppLog using the replied-to MessageSid
     const { data: logEntry, error: logError } = await supabase
       .from('WhatsAppLog')
       .select('LogID, Email, CalendarID')
-      .eq('MessageSid', smsSid)
+      .eq('MessageSid', originalMessageSid)
       .single()
 
     if (logError || !logEntry) {
-      console.error('WhatsAppLog entry not found for SmsSid:', smsSid, logError)
+      console.error('WhatsAppLog entry not found for OriginalRepliedMessageSid:', originalMessageSid, logError)
       return NextResponse.json({ received: true }, { status: 200 })
     }
 
