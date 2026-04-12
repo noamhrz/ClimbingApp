@@ -95,6 +95,13 @@ export async function POST(request: NextRequest) {
 
     // Send workout_completed template
     try {
+      console.log('Sending workout_completed vars:', JSON.stringify({
+        '1': user?.Name,
+        '2': workout?.Name,
+        '3': exercisesNote,
+        '4': workoutLink,
+      }))
+
       const msg = await twilioClient.messages.create({
         from: TWILIO_FROM,
         to: `whatsapp:${profile.Phone}`,
