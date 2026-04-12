@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
     const { Email: email, CalendarID: calendarId } = logEntry
 
     // Mark as completed and copy previous exercise logs using the shared utility
-    const result = await copyPreviousWorkout(calendarId, email)
+    const result = await copyPreviousWorkout(calendarId, email, getSupabaseAdmin())
     console.log('copyPreviousWorkout result:', result.message)
 
     const exercisesNote = result.success ? 'לפי הסטטיסטיקה של האימון הקודם' : '-'

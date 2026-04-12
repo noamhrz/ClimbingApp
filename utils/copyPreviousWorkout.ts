@@ -1,5 +1,6 @@
 // utils/copyPreviousWorkout.ts
-import { supabase } from '@/lib/supabaseClient'
+import { SupabaseClient } from '@supabase/supabase-js'
+import { supabase as defaultSupabase } from '@/lib/supabaseClient'
 
 export interface CopyPreviousWorkoutResult {
   success: boolean
@@ -18,8 +19,11 @@ export interface CopyPreviousWorkoutResult {
  */
 export async function copyPreviousWorkout(
   calendarId: number,
-  email: string
+  email: string,
+  client?: SupabaseClient
 ): Promise<CopyPreviousWorkoutResult> {
+  const supabase = client ?? defaultSupabase
+
   // Step 1: Get the WorkoutID for this calendar entry
   const { data: currentEntry, error: entryError } = await supabase
     .from('Calendar')
