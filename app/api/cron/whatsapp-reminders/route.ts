@@ -199,7 +199,7 @@ export async function GET(request: NextRequest) {
                 if (e.Rest) line += `, מנוחה ${e.Rest} שניות`
                 return line
               })
-              .join(' • ')
+              .join('  •  ')
           : 'ללא תרגילים'
 
       const workoutLink = `https://app.noam-herz-climbing.com/calendar-edit/${entry.CalendarID}`
