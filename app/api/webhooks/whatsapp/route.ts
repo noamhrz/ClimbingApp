@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
     const result = await copyPreviousWorkout(calendarId, email)
     console.log('copyPreviousWorkout result:', result.message)
 
-    const exercisesNote = result.success ? 'לפי הסטטיסטיקה של האימון הקודם' : ''
+    const exercisesNote = result.success ? 'לפי הסטטיסטיקה של האימון הקודם' : '-'
 
     // Get workout name for the confirmation message
     const { data: calendarEntry } = await supabase
