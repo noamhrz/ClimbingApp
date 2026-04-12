@@ -208,7 +208,7 @@ export async function GET(request: NextRequest) {
         console.log('Sending workout reminder:', JSON.stringify({
           '1': String(i + 1),
           '2': String(userWorkouts.length),
-          '3': workout?.Name,
+          '3': (workout?.Name ?? 'אימון').trim(),
           '4': exerciseList,
           '5': coachNote,
           '6': workoutLink,
@@ -221,7 +221,7 @@ export async function GET(request: NextRequest) {
           contentVariables: JSON.stringify({
             '1': String(i + 1),
             '2': String(userWorkouts.length),
-            '3': sanitize(workout?.Name ?? 'אימון'),
+            '3': sanitize((workout?.Name ?? 'אימון').trim()),
             '4': exerciseList,
             '5': sanitize(coachNote),
             '6': workoutLink,

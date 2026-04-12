@@ -97,7 +97,7 @@ export async function POST(request: NextRequest) {
     try {
       console.log('Sending workout_completed vars:', JSON.stringify({
         '1': user?.Name,
-        '2': workout?.Name,
+        '2': (workout?.Name ?? 'אימון').trim(),
         '3': exercisesNote,
         '4': workoutLink,
       }))
@@ -107,9 +107,9 @@ export async function POST(request: NextRequest) {
         to: `whatsapp:${profile.Phone}`,
         contentSid: TEMPLATES.workout_completed,
         contentVariables: JSON.stringify({
-          '1': user?.Name ?? 'מתאמן',
-          '2': workout?.Name ?? 'האימון',
-          '3': exercisesNote,
+          '1': (user?.Name ?? 'מתאמן').trim(),
+          '2': (workout?.Name ?? 'האימון').trim(),
+          '3': exercisesNote.trim(),
           '4': workoutLink,
         }),
       })
