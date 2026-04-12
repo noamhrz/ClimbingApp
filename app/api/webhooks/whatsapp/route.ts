@@ -102,14 +102,16 @@ export async function POST(request: NextRequest) {
         '4': workoutLink,
       }))
 
+      const cleanName = (workout?.Name ?? 'האימון').trim().replace(/\\/g, '').replace(/"/g, '')
+
       const msg = await twilioClient.messages.create({
         from: TWILIO_FROM,
         to: `whatsapp:${profile.Phone}`,
         contentSid: TEMPLATES.workout_completed,
         contentVariables: JSON.stringify({
           '1': (user?.Name ?? 'מתאמן').trim(),
-          '2': (workout?.Name ?? 'האימון').trim(),
-          '3': exercisesNote.trim(),
+          '2': cleanName,
+          '3': exercisesNote,
           '4': workoutLink,
         }),
       })
