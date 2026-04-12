@@ -20,6 +20,11 @@ function getTwilioClient() {
   return twilio(process.env.TWILIO_ACCOUNT_SID!, process.env.TWILIO_AUTH_TOKEN!)
 }
 
+// Twilio contentVariables must not contain raw newlines — replace with separator
+function sanitize(val: string): string {
+  return val.replace(/\n/g, ' | ')
+}
+
 export async function GET(request: NextRequest) {
   const secret = request.headers.get('authorization')?.replace('Bearer ', '')
     || request.nextUrl.searchParams.get('secret')
@@ -150,9 +155,9 @@ export async function GET(request: NextRequest) {
           to: `whatsapp:${phone}`,
           contentSid: TEMPLATES.daily_summary,
           contentVariables: JSON.stringify({
-            '1': name,
+            '1': sanitize(name),
             '2': String(userWorkouts.length),
-            '3': workoutList,
+            '3': sanitize(workoutList),
           }),
         })
 
@@ -207,9 +212,9 @@ export async function GET(request: NextRequest) {
           contentVariables: JSON.stringify({
             '1': String(i + 1),
             '2': String(userWorkouts.length),
-            '3': workout?.Name ?? 'אימון',
-            '4': exerciseList,
-            '5': coachNote,
+            '3': sanitize(workout?.Name ?? 'אימון'),
+            '4': sanitize(exerciseList),
+            '5': sanitize(coachNote),
             '6': workoutLink,
           }),
         })
