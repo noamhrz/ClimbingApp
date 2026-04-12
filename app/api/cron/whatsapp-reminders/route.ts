@@ -205,6 +205,15 @@ export async function GET(request: NextRequest) {
       const workoutLink = `https://app.noam-herz-climbing.com/calendar-edit/${entry.CalendarID}`
 
       try {
+        console.log('Sending workout reminder:', JSON.stringify({
+          '1': String(i + 1),
+          '2': String(userWorkouts.length),
+          '3': workout?.Name,
+          '4': exerciseList,
+          '5': coachNote,
+          '6': workoutLink,
+        }))
+
         const msg = await twilioClient.messages.create({
           from: TWILIO_FROM,
           to: `whatsapp:${phone}`,
