@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
     formData.forEach((value, key) => { allFields[key] = value as string })
     console.log('[WhatsApp Webhook] Incoming data:', JSON.stringify(allFields, null, 2))
 
-    if (buttonPayload !== 'completed') {
+    if (buttonPayload !== 'completed' && buttonPayload !== 'daily_workout_status') {
       return NextResponse.json({ received: true }, { status: 200 })
     }
 
