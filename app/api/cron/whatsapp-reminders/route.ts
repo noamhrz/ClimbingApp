@@ -213,7 +213,7 @@ export async function GET(request: NextRequest) {
             '1': String(i + 1),
             '2': String(userWorkouts.length),
             '3': sanitize(workout?.Name ?? 'אימון'),
-            '4': sanitize(exerciseList),
+            '4': exerciseList,
             '5': sanitize(coachNote),
             '6': workoutLink,
           }),

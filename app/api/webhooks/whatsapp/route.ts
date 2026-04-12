@@ -28,6 +28,11 @@ export async function POST(request: NextRequest) {
     const smsSid = formData.get('SmsSid') as string
     const buttonPayload = formData.get('ButtonPayload') as string
 
+    // Log all incoming Twilio data for diagnostics
+    const allFields: Record<string, string> = {}
+    formData.forEach((value, key) => { allFields[key] = value as string })
+    console.log('[WhatsApp Webhook] Incoming data:', JSON.stringify(allFields, null, 2))
+
     if (buttonPayload !== 'completed') {
       return NextResponse.json({ received: true }, { status: 200 })
     }
