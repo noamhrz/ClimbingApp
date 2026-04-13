@@ -424,7 +424,7 @@ export default function CalendarEditClient() {
     Lead: routes.filter(r => r.climbType === 'Lead')
   }), [routes])
 
-  const containsClimbing = routes.length > 0
+  const containsClimbing = workout?.containClimbing === true || workout?.containClimbing === 'true'
 
   // ✅ FIXED: Save function with proper async handling
   const handleSave = async () => {
