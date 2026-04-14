@@ -9,27 +9,33 @@ interface ProfileData {
   Email: string
   BodyWeightKG: number
   Phone: string | null
+  WhatsAppActive: boolean | null
 }
 
 export default function UserProfilePage() {
   const { currentUser, activeUser, isImpersonating } = useAuth()
   const router = useRouter()
-  
+
   // Profile data
   const [bodyWeight, setBodyWeight] = useState<number>(70)
   const [phone, setPhone] = useState<string>('')
+  const [whatsappActive, setWhatsappActive] = useState<boolean>(false)
   const [profileExists, setProfileExists] = useState<boolean>(false)
-  
+
   // UI states
   const [loading, setLoading] = useState(false)
   const [loadingProfile, setLoadingProfile] = useState(true)
+  const [savingWhatsapp, setSavingWhatsapp] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null)
   const [isEditingProfile, setIsEditingProfile] = useState(false)
-  
+
   // Password states
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [showPasswordForm, setShowPasswordForm] = useState(false)
+
+  // Coach/admin can edit trainee's profile even while impersonating
+  const canEdit = !isImpersonating || currentUser?.Role === 'coach' || currentUser?.Role === 'admin'
 
   // Load profile data
   useEffect(() => {
@@ -57,10 +63,12 @@ export default function UserProfilePage() {
         setProfileExists(true)
         setBodyWeight(data.BodyWeightKG)
         setPhone(data.Phone || '')
+        setWhatsappActive(data.WhatsAppActive ?? false)
       } else {
         setProfileExists(false)
         setBodyWeight(70)
         setPhone('')
+        setWhatsappActive(false)
       }
     } catch (err: any) {
       console.error('Error loading profile:', err)
@@ -69,9 +77,28 @@ export default function UserProfilePage() {
     }
   }
 
+  // Helper: update Profiles via service-role API route (used when impersonating to bypass RLS)
+  const updateProfileViaApi = async (payload: Record<string, unknown>) => {
+    const { data: { session } } = await supabase.auth.getSession()
+    const token = session?.access_token
+    if (!token) throw new Error('No auth session')
+
+    const res = await fetch('/api/profile/update', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ email: activeUser!.Email, ...payload })
+    })
+
+    const json = await res.json()
+    if (!res.ok) throw new Error(json.error || 'API error')
+    return json
+  }
+
   const handleSaveProfile = async () => {
     if (!activeUser?.Email) return
-    if (isImpersonating) return
 
     // Validation
     if (bodyWeight < 30 || bodyWeight > 200) {
@@ -82,43 +109,82 @@ export default function UserProfilePage() {
     setLoading(true)
     setMessage(null)
 
+    const cleanPhone = phone.replace(/[^\d+\s-]/g, '').trim() || null
+
     try {
-      if (profileExists) {
-        // Update existing profile
+      if (isImpersonating) {
+        // Bypass RLS via admin API route
+        await updateProfileViaApi({
+          bodyWeight,
+          phone: cleanPhone,
+          whatsAppActive: whatsappActive
+        })
+      } else if (profileExists) {
         const { error } = await supabase
           .from('Profiles')
           .update({
             BodyWeightKG: bodyWeight,
-            Phone: phone.trim() || null,
+            Phone: cleanPhone,
+            WhatsAppActive: whatsappActive,
             UpdatedAt: new Date().toISOString()
           })
           .eq('Email', activeUser.Email)
-
         if (error) throw error
       } else {
-        // Insert new profile
         const { error } = await supabase
           .from('Profiles')
           .insert({
             Email: activeUser.Email,
             BodyWeightKG: bodyWeight,
-            Phone: phone.trim() || null
+            Phone: cleanPhone,
+            WhatsAppActive: whatsappActive
           })
-
         if (error) throw error
         setProfileExists(true)
       }
 
       setMessage({ type: 'success', text: '✅ הפרופיל נשמר בהצלחה!' })
       setIsEditingProfile(false)
-      
-      // Clear message after 3 seconds
+
       setTimeout(() => setMessage(null), 3000)
 
     } catch (error: any) {
       setMessage({ type: 'error', text: `❌ שגיאה: ${error.message}` })
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleToggleWhatsApp = async () => {
+    if (!activeUser?.Email) return
+    const newValue = !whatsappActive
+    setSavingWhatsapp(true)
+    try {
+      if (isImpersonating) {
+        // Bypass RLS via admin API route
+        await updateProfileViaApi({ whatsAppActive: newValue })
+      } else if (profileExists) {
+        const { error } = await supabase
+          .from('Profiles')
+          .update({ WhatsAppActive: newValue })
+          .eq('Email', activeUser.Email)
+        if (error) throw error
+      } else {
+        const { error } = await supabase
+          .from('Profiles')
+          .insert({
+            Email: activeUser.Email,
+            BodyWeightKG: bodyWeight,
+            WhatsAppActive: newValue
+          })
+        if (error) throw error
+        setProfileExists(true)
+      }
+      setWhatsappActive(newValue)
+    } catch (err: any) {
+      setMessage({ type: 'error', text: `❌ שגיאה: ${err.message}` })
+    } finally {
+      setSavingWhatsapp(false)
     }
   }
 
@@ -153,12 +219,10 @@ export default function UserProfilePage() {
         text: '✅ הסיסמה עודכנה בהצלחה!'
       })
 
-      // Reset form
       setNewPassword('')
       setConfirmPassword('')
       setShowPasswordForm(false)
 
-      // Refresh session
       setTimeout(() => {
         window.location.reload()
       }, 1500)
@@ -201,12 +265,12 @@ export default function UserProfilePage() {
 
       {/* Main Content */}
       <div className="max-w-2xl mx-auto px-4 py-6">
-        
+
         {/* Message */}
         {message && (
           <div className={`mb-4 p-4 rounded-lg ${
-            message.type === 'success' 
-              ? 'bg-green-50 text-green-800 border border-green-200' 
+            message.type === 'success'
+              ? 'bg-green-50 text-green-800 border border-green-200'
               : 'bg-red-50 text-red-800 border border-red-200'
           }`}>
             {message.text}
@@ -270,7 +334,7 @@ export default function UserProfilePage() {
               <span className="text-2xl">⚖️</span>
               <h3 className="text-xl font-bold text-gray-800">נתוני מתאמן</h3>
             </div>
-            {!isEditingProfile && !isImpersonating && (
+            {!isEditingProfile && canEdit && (
               <button
                 onClick={() => setIsEditingProfile(true)}
                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
@@ -311,11 +375,38 @@ export default function UserProfilePage() {
                 </div>
               </div>
 
+              {/* WhatsApp Toggle */}
+              <div className="flex items-center justify-between py-3 border-b">
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">💬</span>
+                  <div>
+                    <p className="text-sm text-gray-500">תזכורות WhatsApp</p>
+                    <p className={`font-medium text-sm ${whatsappActive ? 'text-green-600' : 'text-gray-400'}`}>
+                      {whatsappActive ? 'פעיל' : 'כבוי'}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={handleToggleWhatsApp}
+                  disabled={savingWhatsapp}
+                  className={`relative inline-flex h-7 w-14 items-center rounded-full transition-colors focus:outline-none disabled:opacity-50 ${
+                    whatsappActive ? 'bg-green-500' : 'bg-gray-300'
+                  }`}
+                  aria-label="Toggle WhatsApp reminders"
+                >
+                  <span
+                    className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
+                      whatsappActive ? 'translate-x-8' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
+              </div>
+
               {/* Info Box */}
               <div className="bg-blue-50 rounded-lg p-4 border border-blue-200 mt-4">
                 <p className="text-sm text-blue-800">
                   <strong>💡 למה צריך משקל גוף?</strong><br/>
-                  משקל הגוף משמש לחישוב מדויק של סטטיסטיקות תרגילים שכוללים משקל גוף 
+                  משקל הגוף משמש לחישוב מדויק של סטטיסטיקות תרגילים שכוללים משקל גוף
                   (כמו מתחים, שכיבות סמיכה וכו').
                 </p>
               </div>
@@ -357,6 +448,32 @@ export default function UserProfilePage() {
                 />
               </div>
 
+              {/* WhatsApp Toggle in edit mode */}
+              <div className="flex items-center justify-between py-3 border rounded-lg px-4">
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">💬</span>
+                  <div>
+                    <p className="font-medium text-gray-700">תזכורות WhatsApp</p>
+                    <p className={`text-sm ${whatsappActive ? 'text-green-600' : 'text-gray-400'}`}>
+                      {whatsappActive ? 'פעיל' : 'כבוי'}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setWhatsappActive(v => !v)}
+                  type="button"
+                  className={`relative inline-flex h-7 w-14 items-center rounded-full transition-colors focus:outline-none ${
+                    whatsappActive ? 'bg-green-500' : 'bg-gray-300'
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
+                      whatsappActive ? 'translate-x-8' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
+              </div>
+
               {/* Action Buttons */}
               <div className="flex gap-2 pt-2">
                 <button
@@ -369,7 +486,7 @@ export default function UserProfilePage() {
                 <button
                   onClick={() => {
                     setIsEditingProfile(false)
-                    loadProfile() // Reset to original values
+                    loadProfile()
                     setMessage(null)
                   }}
                   disabled={loading}
@@ -440,7 +557,6 @@ export default function UserProfilePage() {
                 />
               </div>
 
-              {/* Password strength indicator */}
               {newPassword && (
                 <div className="bg-gray-50 rounded-lg p-3">
                   <p className="text-xs font-medium text-gray-700 mb-2">חוזק סיסמה:</p>

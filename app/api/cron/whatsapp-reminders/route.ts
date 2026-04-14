@@ -142,6 +142,7 @@ export async function GET(request: NextRequest) {
     if (!profile) continue
 
     const { Name: name, Phone: phone } = profile as { Name: string; Phone: string; Email: string }
+    const cleanPhone = '+' + phone.replace(/[^\d]/g, '')
 
     // Send daily_summary if 2+ workouts
     if (userWorkouts.length >= 2) {
@@ -152,7 +153,7 @@ export async function GET(request: NextRequest) {
       try {
         const msg = await twilioClient.messages.create({
           from: TWILIO_FROM,
-          to: `whatsapp:${phone}`,
+          to: `whatsapp:${cleanPhone}`,
           contentSid: TEMPLATES.daily_summary,
           contentVariables: JSON.stringify({
             '1': sanitize(name),
@@ -216,7 +217,7 @@ export async function GET(request: NextRequest) {
 
         const msg = await twilioClient.messages.create({
           from: TWILIO_FROM,
-          to: `whatsapp:${phone}`,
+          to: `whatsapp:${cleanPhone}`,
           contentSid: TEMPLATES.daily_wokout_reminder,
           contentVariables: JSON.stringify({
             '1': String(i + 1),
