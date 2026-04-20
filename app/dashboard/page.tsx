@@ -189,8 +189,8 @@ export default function DashboardPage() {
         return {
           date: dateKey,
           sleep: existingData?.sleep || 0,
-          energy: existingData?.energy || 0,
-          soreness: existingData?.soreness || 0
+          energy: existingData ? (existingData.energy ?? null) : null,
+          soreness: existingData ? (existingData.soreness ?? null) : null,
         }
       })
       
@@ -285,81 +285,46 @@ export default function DashboardPage() {
   const loadExerciseData = async ({ start, end }: { start: Date, end: Date }) => {
     try {
       const { data, error } = await supabase
-        .from('ExerciseLogs')
-        .select('CreatedAt, RepsDone, WeightKG, DurationSec')
+        .from('Calendar')
+        .select('StartTime')
         .eq('Email', userToShow?.Email)
-        .gte('CreatedAt', start.toISOString())
-        .lte('CreatedAt', end.toISOString())
-        .order('CreatedAt')
-      
+        .eq('Completed', true)
+        .gte('StartTime', start.toISOString())
+        .lte('StartTime', end.toISOString())
+        .order('StartTime')
+
       if (error) return
-      
-      // ✅ CHANGED: Always group by days for 10 days, by weeks for longer periods
+
       const groupByDays = timeRange === '10days'
       const now = new Date()
-      
+
       if (groupByDays) {
-        const volumeMap = new Map<string, number>()
-        
-        data?.forEach(log => {
-          const dateKey = format(new Date(log.CreatedAt), 'dd/MM')
-          let volume = 0
-          
-          if (log.DurationSec) {
-            volume = log.DurationSec
-          } else {
-            const reps = log.RepsDone || 0
-            const weight = log.WeightKG || 0
-            volume = weight === 0 ? reps : reps * weight
-          }
-          
-          volumeMap.set(dateKey, (volumeMap.get(dateKey) || 0) + volume)
+        const countMap = new Map<string, number>()
+        data?.forEach(w => {
+          const dateKey = format(new Date(w.StartTime), 'dd/MM')
+          countMap.set(dateKey, (countMap.get(dateKey) || 0) + 1)
         })
-        
         const allDays = eachDayOfInterval({ start, end })
-        const chartData = allDays.map(day => {
-          const dateKey = format(day, 'dd/MM')
-          return {
-            date: dateKey,
-            volume: Math.round(volumeMap.get(dateKey) || 0)
-          }
-        })
-        
-        setExerciseData(chartData)
+        setExerciseData(allDays.map(day => ({
+          date: format(day, 'dd/MM'),
+          count: countMap.get(format(day, 'dd/MM')) || 0,
+        })))
       } else {
-        const volumeMap = new Map<string, { volume: number, weekStart: Date }>()
-        
-        data?.forEach(log => {
-          const logDate = new Date(log.CreatedAt)
-          const weekStart = startOfWeek(logDate, { weekStartsOn: WEEK_STARTS_ON })
+        const countMap = new Map<string, { count: number, weekStart: Date }>()
+        data?.forEach(w => {
+          const weekStart = startOfWeek(new Date(w.StartTime), { weekStartsOn: WEEK_STARTS_ON })
           const weekKey = format(weekStart, 'yyyy-MM-dd')
-          
-          let volume = 0
-          if (log.DurationSec) {
-            volume = log.DurationSec
-          } else {
-            const reps = log.RepsDone || 0
-            const weight = log.WeightKG || 0
-            volume = weight === 0 ? reps : reps * weight
-          }
-          
-          if (!volumeMap.has(weekKey)) {
-            volumeMap.set(weekKey, { volume: 0, weekStart })
-          }
-          volumeMap.get(weekKey)!.volume += volume
+          if (!countMap.has(weekKey)) countMap.set(weekKey, { count: 0, weekStart })
+          countMap.get(weekKey)!.count += 1
         })
-        
         const allWeeks = eachWeekOfInterval({ start, end }, { weekStartsOn: WEEK_STARTS_ON })
-        const chartData = allWeeks.map(weekStart => {
+        setExerciseData(allWeeks.map(weekStart => {
           const weekKey = format(weekStart, 'yyyy-MM-dd')
-          const data = volumeMap.get(weekKey)
           return {
             date: getWeekLabel(weekStart, now),
-            volume: Math.round(data?.volume || 0)
+            count: countMap.get(weekKey)?.count || 0,
           }
-        })
-        
-        setExerciseData(chartData)
+        }))
       }
     } catch (error) {
       setExerciseData([])
@@ -428,18 +393,27 @@ export default function DashboardPage() {
         </div>
 
         <div className="bg-white rounded-xl shadow-sm border p-6">
-          <h2 className="text-xl font-bold text-gray-800 mb-2">
-            💚 Wellness
-          </h2>
-          <p className="text-xs text-gray-500 mb-4">
-            🔵 שינה  •  🟢 אנרגיה  •  🔴 כאב
-          </p>
+          <div className="flex items-start justify-between mb-4" dir="rtl">
+            <h2 className="text-xl font-bold text-gray-800">💚 Wellness</h2>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 text-xs text-gray-500 text-right">
+              <span className="font-semibold text-red-500 col-span-1">🤕 כאב</span>
+              <span className="font-semibold text-amber-500 col-span-1">⚡ אנרגיה</span>
+              <span>0 — ללא כאב 🟢</span>
+              <span>0 — אין כוח לכלום 😴</span>
+              <span>1 — כאב קל, להתאמן 🟡</span>
+              <span>1 — תנועה קלה 🐢</span>
+              <span>2 — בינוני, התאוששות 🟠</span>
+              <span>2 — אימון משמעותי 💪</span>
+              <span>3 — חזק, לטפל ולנוח 🔴</span>
+              <span>3 — לפרק את הקיר! 🔥</span>
+            </div>
+          </div>
           <WellnessChart data={wellnessData} />
         </div>
 
         <div className="bg-white rounded-xl shadow-sm border p-6">
           <h2 className="text-xl font-bold text-gray-800 mb-4">
-            🏋️ Exercise Volume
+            ✅ אימונים שבוצעו
           </h2>
           <ExerciseAmountChart data={exerciseData} />
         </div>

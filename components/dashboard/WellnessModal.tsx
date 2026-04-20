@@ -14,7 +14,7 @@ interface WellnessModalProps {
 export default function WellnessModal({ isOpen, onClose, currentUser, onSave }: WellnessModalProps) {
   const [selectedDate, setSelectedDate] = useState<string>(format(new Date(), 'yyyy-MM-dd'))
   const [sleepHours, setSleepHours] = useState<number>(7)
-  const [energy, setEnergy] = useState<number>(5)
+  const [energy, setEnergy] = useState<number>(2)
   const [soreness, setSoreness] = useState<number>(0)
   const [painArea, setPainArea] = useState('')
   const [comments, setComments] = useState('')
@@ -40,7 +40,7 @@ export default function WellnessModal({ isOpen, onClose, currentUser, onSave }: 
       if (data) {
         // Load existing values
         setSleepHours(data.SleepHours || 7)
-        setEnergy(data.VitalityLevel || 5)
+        setEnergy(data.VitalityLevel ?? 2)
         setSoreness(data.PainLevel || 0)
         setPainArea(data.PainArea || '')
         setComments(data.Comments || '')
@@ -48,7 +48,7 @@ export default function WellnessModal({ isOpen, onClose, currentUser, onSave }: 
       } else {
         // Reset to defaults for new entry
         setSleepHours(7)
-        setEnergy(5)
+        setEnergy(2)
         setSoreness(0)
         setPainArea('')
         setComments('')
@@ -115,11 +115,11 @@ export default function WellnessModal({ isOpen, onClose, currentUser, onSave }: 
       // Reset form
       setSelectedDate(format(new Date(), 'yyyy-MM-dd'))
       setSleepHours(7)
-      setEnergy(5)
+      setEnergy(2)
       setSoreness(0)
       setPainArea('')
       setComments('')
-      
+
       if (onSave) onSave()
       onClose()
     } catch (error: any) {
@@ -199,48 +199,58 @@ export default function WellnessModal({ isOpen, onClose, currentUser, onSave }: 
           {/* Energy Level */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2 text-right">
-              ⚡ רמת אנרגיה: <span className="text-green-600 font-bold">{energy}/10</span>
+              ⚡ רמת אנרגיה
             </label>
-            <input
-              type="range"
-              min="0"
-              max="10"
-              value={energy}
-              onChange={(e) => setEnergy(Number(e.target.value))}
-              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-              dir="ltr"
-              style={{
-                background: `linear-gradient(to right, #10b981 0%, #10b981 ${energy * 10}%, #e5e7eb ${energy * 10}%, #e5e7eb 100%)`
-              }}
-            />
-            <div className="mt-2 flex justify-between text-xs text-gray-500" dir="ltr">
-              <span>0 - מותש</span>
-              <span>5 - בסדר</span>
-              <span>10 - מלא אנרגיה</span>
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                { value: 0, emoji: '😴', label: 'אין כוח לכלום' },
+                { value: 1, emoji: '🐢', label: 'כוח לתנועה קלה' },
+                { value: 2, emoji: '💪', label: 'מוכן לאימון משמעותי' },
+                { value: 3, emoji: '🔥', label: 'בא לפרק את הקיר!' },
+              ].map(({ value, emoji, label }) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setEnergy(value)}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg border-2 text-right transition-colors ${
+                    energy === value
+                      ? 'border-green-500 bg-green-50 text-green-800 font-semibold'
+                      : 'border-gray-200 bg-white text-gray-700 hover:border-green-300'
+                  }`}
+                >
+                  <span className="text-xl flex-shrink-0">{emoji}</span>
+                  <span className="text-xs leading-tight">{value} — {label}</span>
+                </button>
+              ))}
             </div>
           </div>
 
           {/* Soreness/Pain Level */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2 text-right">
-              🤕 רמת כאב/עייפות: <span className="text-red-600 font-bold">{soreness}/10</span>
+              🤕 רמת כאב
             </label>
-            <input
-              type="range"
-              min="0"
-              max="10"
-              value={soreness}
-              onChange={(e) => setSoreness(Number(e.target.value))}
-              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-              dir="ltr"
-              style={{
-                background: `linear-gradient(to right, #ef4444 0%, #ef4444 ${soreness * 10}%, #e5e7eb ${soreness * 10}%, #e5e7eb 100%)`
-              }}
-            />
-            <div className="mt-2 flex justify-between text-xs text-gray-500" dir="ltr">
-              <span>0 - ללא כאב</span>
-              <span>5 - כאב בינוני</span>
-              <span>10 - כאב חזק</span>
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                { value: 0, emoji: '🟢', label: 'ללא כאב' },
+                { value: 1, emoji: '🟡', label: 'כאב קל, אפשר להתאמן' },
+                { value: 2, emoji: '🟠', label: 'כאב בינוני, אימון מכוון התאוששות' },
+                { value: 3, emoji: '🔴', label: 'כאב חזק, לטפל ולנוח' },
+              ].map(({ value, emoji, label }) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setSoreness(value)}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg border-2 text-right transition-colors ${
+                    soreness === value
+                      ? 'border-red-500 bg-red-50 text-red-800 font-semibold'
+                      : 'border-gray-200 bg-white text-gray-700 hover:border-red-300'
+                  }`}
+                >
+                  <span className="text-xl flex-shrink-0">{emoji}</span>
+                  <span className="text-xs leading-tight">{value} — {label}</span>
+                </button>
+              ))}
             </div>
           </div>
 
