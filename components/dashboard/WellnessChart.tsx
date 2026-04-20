@@ -79,7 +79,7 @@ export default function WellnessChart({ data }: Props) {
     <div className="space-y-6">
       {/* Chart 1: Pain & Energy */}
       <div>
-        <p className="text-sm font-medium text-gray-600 mb-2 text-right">🔴 כאב  •  🟡 אנרגיה</p>
+        <p className="text-sm font-medium text-gray-600 mb-2 text-right">🔴 כאב  •  🟢 אנרגיה</p>
         <ResponsiveContainer width="100%" height={220}>
           <LineChart data={processedData}>
             <CartesianGrid strokeDasharray="3 3" />
@@ -95,7 +95,7 @@ export default function WellnessChart({ data }: Props) {
             <Line
               type="monotone"
               dataKey="energy"
-              stroke="#f59e0b"
+              stroke="#22c55e"
               strokeWidth={2}
               name="⚡ אנרגיה"
               dot={{ r: 4 }}

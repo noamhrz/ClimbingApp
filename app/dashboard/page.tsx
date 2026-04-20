@@ -397,7 +397,7 @@ export default function DashboardPage() {
             <h2 className="text-xl font-bold text-gray-800">💚 Wellness</h2>
             <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 text-xs text-gray-500 text-right">
               <span className="font-semibold text-red-500 col-span-1">🤕 כאב</span>
-              <span className="font-semibold text-amber-500 col-span-1">⚡ אנרגיה</span>
+              <span className="font-semibold text-green-500 col-span-1">⚡ אנרגיה</span>
               <span>0 — ללא כאב 🟢</span>
               <span>0 — אין כוח לכלום 😴</span>
               <span>1 — כאב קל, להתאמן 🟡</span>
