@@ -272,6 +272,7 @@ function WorkoutTimelineRow({ workout, rank, maxSessions, email, dateRange }: {
             <WorkoutExercisesPanel
               workoutId={workout.workoutId}
               lastCalendarId={workout.lastCalendarId}
+              containClimbing={workout.containClimbing}
               email={email}
               dateRange={dateRange}
             />
@@ -316,9 +317,24 @@ interface SessionEntry {
   sets: SetEntry[]
 }
 
-function WorkoutExercisesPanel({ workoutId, lastCalendarId, email, dateRange }: {
+interface ClimbEntry {
+  climbType: string
+  grade: string       // FrenchGrade for Lead, VGrade for Boulder/Board
+  gradeId: number     // numeric ID for finding max grade
+  successful: boolean
+  attempts: number | null
+}
+
+interface ClimbSession {
+  calendarId: number
+  date: string
+  entries: ClimbEntry[]
+}
+
+function WorkoutExercisesPanel({ workoutId, lastCalendarId, containClimbing, email, dateRange }: {
   workoutId: number
   lastCalendarId: number | null
+  containClimbing: boolean
   email: string
   dateRange: { start: string; end: string }
 }) {
@@ -327,6 +343,7 @@ function WorkoutExercisesPanel({ workoutId, lastCalendarId, email, dateRange }: 
   const [historyMap, setHistoryMap] = useState<Map<number, SessionEntry[]>>(new Map())
   const [exerciseNames, setExerciseNames] = useState<Map<number, string>>(new Map())
   const [sessionCount, setSessionCount] = useState(0)
+  const [climbSessions, setClimbSessions] = useState<ClimbSession[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -420,6 +437,60 @@ function WorkoutExercisesPanel({ workoutId, lastCalendarId, email, dateRange }: 
         })
       }
 
+      // Q_climb: ClimbingLog + grades (only for climbing workouts)
+      let climbSessionsResult: ClimbSession[] = []
+      if (containClimbing && allCalendarIds.length > 0) {
+        const { data: climbData } = await supabase
+          .from('ClimbingLog')
+          .select('CalendarID, ClimbType, GradeID, Successful, Attempts')
+          .in('CalendarID', allCalendarIds)
+
+        const climbRows = climbData || []
+
+        const leadGradeIds = [...new Set(climbRows.filter((r: any) => r.ClimbType === 'Lead').map((r: any) => r.GradeID).filter(Boolean))]
+        const boulderGradeIds = [...new Set(climbRows.filter((r: any) => r.ClimbType !== 'Lead').map((r: any) => r.GradeID).filter(Boolean))]
+
+        const [leadGradesRes, boulderGradesRes] = await Promise.all([
+          leadGradeIds.length > 0
+            ? supabase.from('LeadGrades').select('LeadGradeID, FrenchGrade').in('LeadGradeID', leadGradeIds)
+            : Promise.resolve({ data: [] }),
+          boulderGradeIds.length > 0
+            ? supabase.from('BoulderGrades').select('BoulderGradeID, VGrade').in('BoulderGradeID', boulderGradeIds)
+            : Promise.resolve({ data: [] })
+        ])
+
+        const leadGradeMap = new Map<number, string>()
+        for (const g of leadGradesRes.data || []) leadGradeMap.set(g.LeadGradeID, g.FrenchGrade)
+
+        const boulderGradeMap = new Map<number, string>()
+        for (const g of boulderGradesRes.data || []) boulderGradeMap.set(g.BoulderGradeID, g.VGrade)
+
+        // Group entries by CalendarID
+        const sessionMap = new Map<number, ClimbEntry[]>()
+        for (const row of climbRows) {
+          if (!sessionMap.has(row.CalendarID)) sessionMap.set(row.CalendarID, [])
+          const grade = row.ClimbType === 'Lead'
+            ? (leadGradeMap.get(row.GradeID) ?? '?')
+            : (boulderGradeMap.get(row.GradeID) ?? '?')
+          sessionMap.get(row.CalendarID)!.push({
+            climbType: row.ClimbType,
+            grade,
+            gradeId: row.GradeID ?? 0,
+            successful: row.Successful ?? false,
+            attempts: row.Attempts ?? null
+          })
+        }
+
+        // Build sorted sessions (chronological order from allCalendarIds which is already sorted)
+        climbSessionsResult = allCalendarIds
+          .filter(id => sessionMap.has(id))
+          .map(id => ({
+            calendarId: id,
+            date: dateMap.get(id) ?? '?',
+            entries: sessionMap.get(id)!
+          }))
+      }
+
       if (!cancelled) {
         setPlanned(
           weRows
@@ -445,6 +516,7 @@ function WorkoutExercisesPanel({ workoutId, lastCalendarId, email, dateRange }: 
         setHistoryMap(histMap)
         setExerciseNames(nameMap)
         setSessionCount(sessionRows.length)
+        setClimbSessions(climbSessionsResult)
         setLoading(false)
       }
     }
@@ -453,11 +525,7 @@ function WorkoutExercisesPanel({ workoutId, lastCalendarId, email, dateRange }: 
   }, [workoutId, lastCalendarId, email, dateRange.start, dateRange.end])
 
   if (loading) {
-    return <div className="p-4 text-sm text-gray-500 text-center">טוען תרגילים...</div>
-  }
-
-  if (planned.length === 0) {
-    return <div className="p-4 text-sm text-gray-400 text-center">אין תרגילים מתוכננים לאימון זה</div>
+    return <div className="p-4 text-sm text-gray-500 text-center">טוען...</div>
   }
 
   // Group performed logs by exerciseId
@@ -494,13 +562,13 @@ function WorkoutExercisesPanel({ workoutId, lastCalendarId, email, dateRange }: 
   }
 
   function formatSet(s: SetEntry): string {
-    if (s.reps && s.weight) return `${s.reps}×${s.weight}KG`
+    if (s.reps && s.weight) return `${s.weight}KG×${s.reps}`
     if (s.reps) return `${s.reps} חז׳`
     if (s.duration) return `${s.duration}s`
     return '✓'
   }
 
-  // All exercises that have history (union of planned + extras with history)
+  // All exercises that have history, preserving planned order then extras
   const allExerciseIds = [...new Set([
     ...planned.map(p => p.exerciseId),
     ...extraMap.keys(),
@@ -514,8 +582,92 @@ function WorkoutExercisesPanel({ workoutId, lastCalendarId, email, dateRange }: 
         <p className="text-xs text-amber-600">⚠️ האימון לא בוצע — מציג תוכנית בלבד</p>
       )}
 
-      {/* Planned vs performed table */}
-      <table className="w-full text-xs">
+      {/* Climbing logbook */}
+      {climbSessions.length > 0 && (
+        <div>
+          <div className="flex items-center gap-3 mb-2">
+            <h4 className="text-xs font-bold text-gray-700">🧗 לוג טיפוס</h4>
+            <span className="text-xs text-gray-500 bg-gray-100 rounded-full px-2 py-0.5">
+              {sessionCount} אימונים בטווח
+            </span>
+          </div>
+          <div className="space-y-3">
+            {climbSessions.map(session => {
+              // Group entries by climbType
+              const byType = new Map<string, ClimbEntry[]>()
+              for (const entry of session.entries) {
+                if (!byType.has(entry.climbType)) byType.set(entry.climbType, [])
+                byType.get(entry.climbType)!.push(entry)
+              }
+              const TYPE_ORDER = ['Lead', 'Boulder', 'Board']
+              const types = TYPE_ORDER.filter(t => byType.has(t))
+
+              const typeLabel: Record<string, string> = {
+                Lead: '🧗 הובלה',
+                Boulder: '🪨 בולדר',
+                Board: '🏋️ בורד',
+              }
+
+              return (
+                <div key={session.calendarId} className="bg-gray-50 rounded border border-gray-200 p-2">
+                  <div className="text-xs font-semibold text-gray-500 font-mono mb-1.5">{session.date}</div>
+                  <div className="space-y-1.5">
+                    {types.map(type => {
+                      const entries = byType.get(type)!
+                      const isLead = type === 'Lead'
+
+                      // Summary: highest successful gradeId
+                      const successful = entries.filter(e => e.successful)
+                      const maxEntry = successful.length > 0
+                        ? successful.reduce((a, b) => b.gradeId > a.gradeId ? b : a)
+                        : null
+
+                      return (
+                        <div key={type} className="flex items-start gap-2">
+                          <span className="text-xs text-gray-500 shrink-0 w-20 pt-0.5">{typeLabel[type]}</span>
+                          <div className="flex flex-wrap items-center gap-1">
+                                {(() => {
+                              // Group by gradeId → count successes & fails
+                              const gradeMap = new Map<number, { grade: string; success: number; fail: number }>()
+                              for (const entry of entries) {
+                                if (!gradeMap.has(entry.gradeId)) {
+                                  gradeMap.set(entry.gradeId, { grade: entry.grade, success: 0, fail: 0 })
+                                }
+                                const g = gradeMap.get(entry.gradeId)!
+                                if (entry.successful) g.success++
+                                else g.fail++
+                              }
+                              const sorted = [...gradeMap.entries()].sort(([a], [b]) => a - b)
+
+                              return sorted.map(([gradeId, g]) => (
+                                <span key={gradeId} className="inline-flex items-center gap-0.5 text-xs font-mono bg-white border border-gray-200 rounded px-1.5 py-0.5">
+                                  <span className="font-semibold text-gray-800">{g.grade}</span>
+                                  {g.success > 0 && <span className="text-green-700 font-bold"> ✅{g.success}</span>}
+                                  {g.fail > 0 && <span className="text-red-600 font-bold"> ❌{g.fail}</span>}
+                                </span>
+                              ))
+                            })()}
+                            {maxEntry && (
+                              <span className="text-xs text-gray-400 mr-1">| 🏆 {maxEntry.grade}</span>
+                            )}
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Planned vs performed table — skip if no exercises */}
+      {planned.length === 0 && climbSessions.length === 0 && (
+        <div className="text-sm text-gray-400 text-center">אין נתונים לאימון זה</div>
+      )}
+
+      {planned.length > 0 && <table className="w-full text-xs">
         <thead>
           <tr className="border-b border-gray-300 text-gray-500">
             <th className="text-right py-1 pr-2 font-semibold">תרגיל</th>
@@ -573,44 +725,87 @@ function WorkoutExercisesPanel({ workoutId, lastCalendarId, email, dateRange }: 
             )
           })}
         </tbody>
-      </table>
+      </table>}
 
-      {/* Performance history */}
+      {/* Performance history — horizontal table: rows=exercises, columns=dates */}
       {exercisesWithHistory.length > 0 && (
-        <div className="border-t border-gray-200 pt-3">
-          <div className="flex items-center gap-3 mb-2">
+        <div className="border-t border-gray-200 pt-3" dir="ltr">
+          <div className="flex items-center gap-3 mb-2" dir="rtl">
             <h4 className="text-xs font-bold text-gray-700">📈 היסטוריית ביצועים</h4>
             <span className="text-xs text-gray-500 bg-gray-100 rounded-full px-2 py-0.5">
               בוצע {sessionCount} פעמים בטווח
             </span>
           </div>
-          <div className="space-y-2">
+          <div className="space-y-2 overflow-x-auto">
             {exercisesWithHistory.map(exId => {
               const sessions = historyMap.get(exId)!
-              // Sort by calendarId (ascending = chronological, since we ordered Calendar by StartTime asc)
-              const sorted = [...sessions].sort((a, b) => a.calendarId - b.calendarId)
               const name = exerciseNames.get(exId) ?? `#${exId}`
+
+              // Unique calendarIds in chronological order (oldest→newest = left→right)
+              const calendarIds = [...new Set(
+                [...sessions].sort((a, b) => a.calendarId - b.calendarId).map(s => s.calendarId)
+              )]
+
+              // calendarId → date label
+              const calIdToDate = new Map<number, string>()
+              for (const s of sessions) calIdToDate.set(s.calendarId, s.date)
+
+              // lookup: `${calendarId}-${handSide|'null'}` → formatted sets string
+              const lookup = new Map<string, string>()
+              for (const s of sessions) {
+                const key = `${s.calendarId}-${s.handSide ?? 'null'}`
+                lookup.set(key, s.sets.map(formatSet).join(' • '))
+              }
+
+              const isSided = sessions.some(s => s.handSide !== null)
+
               return (
-                <div key={exId} className="bg-white rounded border border-gray-200 p-2">
-                  <div className="text-xs font-semibold text-gray-800 mb-1">{name}</div>
-                  <div className="space-y-0.5">
-                    {sorted.map((session, i) => {
-                      const setsStr = session.sets.map(formatSet).join(' • ')
-                      const sideLabel = session.handSide
-                        ? (session.handSide === 'Right' ? 'ימין' : 'שמאל') + ':'
-                        : null
-                      return (
-                        <div key={`${session.calendarId}-${session.handSide ?? 'both'}-${i}`}
-                             className="text-xs text-gray-600 font-mono flex gap-2">
-                          <span className="text-gray-400 shrink-0">{session.date}</span>
-                          {sideLabel && (
-                            <span className="text-blue-600 shrink-0">{sideLabel}</span>
-                          )}
-                          <span>{setsStr}</span>
-                        </div>
-                      )
-                    })}
-                  </div>
+                <div key={exId} className="bg-white rounded border border-gray-200 overflow-x-auto">
+                  <table className="text-xs min-w-full">
+                    <thead>
+                      <tr className="border-b border-gray-200 bg-gray-50">
+                        <th className="text-right py-1 px-2 font-semibold text-gray-700 whitespace-nowrap min-w-[100px]" dir="rtl">
+                          {name}
+                        </th>
+                        {calendarIds.map(calId => (
+                          <th key={calId} className="text-center py-1 px-2 font-mono text-gray-500 whitespace-nowrap">
+                            {calIdToDate.get(calId)}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {isSided ? (
+                        <>
+                          <tr className="border-b border-gray-100">
+                            <td className="py-1.5 px-2 text-blue-700 font-medium bg-gray-50 whitespace-nowrap" dir="rtl">ימין</td>
+                            {calendarIds.map(calId => (
+                              <td key={calId} className="text-center py-1.5 px-2 font-mono text-gray-700 whitespace-nowrap">
+                                {lookup.get(`${calId}-Right`) ?? <span className="text-gray-300">—</span>}
+                              </td>
+                            ))}
+                          </tr>
+                          <tr>
+                            <td className="py-1.5 px-2 text-purple-700 font-medium bg-gray-50 whitespace-nowrap" dir="rtl">שמאל</td>
+                            {calendarIds.map(calId => (
+                              <td key={calId} className="text-center py-1.5 px-2 font-mono text-gray-700 whitespace-nowrap">
+                                {lookup.get(`${calId}-Left`) ?? <span className="text-gray-300">—</span>}
+                              </td>
+                            ))}
+                          </tr>
+                        </>
+                      ) : (
+                        <tr>
+                          <td className="py-1.5 px-2 text-gray-500 bg-gray-50 whitespace-nowrap" dir="rtl">ביצוע</td>
+                          {calendarIds.map(calId => (
+                            <td key={calId} className="text-center py-1.5 px-2 font-mono text-gray-700 whitespace-nowrap">
+                              {lookup.get(`${calId}-null`) ?? <span className="text-gray-300">—</span>}
+                            </td>
+                          ))}
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
                 </div>
               )
             })}
