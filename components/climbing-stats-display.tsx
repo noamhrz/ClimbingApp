@@ -3,8 +3,8 @@
 
 'use client'
 
+import { useState } from 'react'
 import type { ClimbingPerformance, ClimbTypeStats, GradeStats } from '@/lib/climbing-stats-metrics'
-import { getSuccessRateColor, getSuccessRateLabel } from '@/lib/climbing-stats-metrics'
 
 interface ClimbingStatsDisplayProps {
   performance: ClimbingPerformance
@@ -123,87 +123,76 @@ function combineBoulderAndBoard(
 // ═══════════════════════════════════════════════════════════════════
 
 function ClimbTypeCardCombined({ stats }: { stats: ClimbTypeStats }) {
+  const [open, setOpen] = useState(true)
+  const [tableOpen, setTableOpen] = useState(false)
+
   return (
     <div className="bg-white rounded-lg shadow-lg border-2 border-gray-200">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-orange-100 via-yellow-100 to-orange-100 p-4 border-b-2 border-gray-200 rounded-t-lg">
+      {/* Card header — toggles pyramid + table wrapper */}
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        className="w-full text-right bg-gradient-to-r from-orange-100 via-yellow-100 to-orange-100 p-4 border-b-2 border-gray-200 rounded-t-lg focus:outline-none"
+      >
         <div className="flex items-center justify-between">
           <h3 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
             <span>🧗</span>
             <span>בולדר + בורד</span>
           </h3>
-          <div className="text-right">
-            <div className="text-sm text-gray-600">אחוז הצלחה</div>
-            <div className={`text-2xl font-bold ${getSuccessRateColor(stats.overallSuccessRate)}`}>
-              {stats.overallSuccessRate.toFixed(1)}%
+          <div className="flex items-center gap-4">
+            <div className="text-sm text-gray-600 flex gap-4">
+              <span>מסלולים: <strong>{stats.totalRoutes}</strong></span>
+              <span>הצלחות: <strong>{stats.totalSuccesses}</strong></span>
             </div>
+            <span className="text-gray-400 text-xl">{open ? '▲' : '▼'}</span>
           </div>
         </div>
-        <div className="mt-2 flex gap-4 text-sm text-gray-600">
-          <div>מסלולים: <strong>{stats.totalRoutes}</strong></div>
-          <div>הצלחות: <strong>{stats.totalSuccesses}</strong></div>
-          <div>ניסיונות: <strong>{stats.totalAttempts}</strong></div>
-        </div>
-      </div>
+      </button>
 
-      {/* Content: Pyramid (1/3) + Table (2/3) */}
-      <div className="p-4">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Mini Pyramid */}
-          <div className="lg:col-span-1">
-            <div className="bg-gray-50 rounded-lg p-4 border border-gray-200 h-full">
-              <h4 className="text-sm font-bold text-gray-700 mb-3 text-center">📊 פירמידת מסלולים</h4>
-              <MiniPyramidCombined grades={stats.grades} />
+      {open && (
+        <div className="p-4">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Mini Pyramid */}
+            <div className="lg:col-span-1">
+              <div className="bg-gray-50 rounded-lg p-4 border border-gray-200 h-full">
+                <h4 className="text-sm font-bold text-gray-700 mb-3 text-center">📊 פירמידת מסלולים</h4>
+                <MiniPyramidCombined grades={stats.grades} />
+              </div>
             </div>
-          </div>
 
-          {/* Table */}
-          <div className="lg:col-span-2">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b-2 border-gray-200 text-gray-700">
-                    <th className="text-right p-2 font-bold">דירוג</th>
-                    <th className="text-center p-2 font-bold">✅ הצלחות</th>
-                    <th className="text-center p-2 font-bold">🔄 ניסיונות+</th>
-                    <th className="text-center p-2 font-bold">❌ ניסיונות-</th>
-                    <th className="text-center p-2 font-bold">📊 סה"כ</th>
-                    <th className="text-center p-2 font-bold">📈 ממוצע</th>
-                    <th className="text-center p-2 font-bold">% הצלחה</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {stats.grades.map((grade, idx) => (
-                    <GradeRowCombined key={`${grade.gradeId}-${grade.climbType}-${idx}`} grade={grade} />
-                  ))}
-                </tbody>
-                <tfoot>
-                  <tr className="border-t-2 border-gray-300 font-bold bg-gray-50">
-                    <td className="text-right p-2">סה"כ</td>
-                    <td className="text-center p-2">{stats.totalSuccesses}</td>
-                    <td className="text-center p-2">
-                      {stats.grades.reduce((sum, g) => sum + g.attemptsWithSuccess, 0)}
-                    </td>
-                    <td className="text-center p-2">
-                      {stats.grades.reduce((sum, g) => sum + g.attemptsWithoutSuccess, 0)}
-                    </td>
-                    <td className="text-center p-2">{stats.totalAttempts}</td>
-                    <td className="text-center p-2 text-purple-700">
-                      {stats.totalSuccesses > 0 
-                        ? (stats.grades.reduce((sum, g) => sum + g.attemptsWithSuccess, 0) / stats.totalSuccesses).toFixed(1)
-                        : '—'
-                      }
-                    </td>
-                    <td className={`text-center p-2 ${getSuccessRateColor(stats.overallSuccessRate)}`}>
-                      {stats.overallSuccessRate.toFixed(1)}%
-                    </td>
-                  </tr>
-                </tfoot>
-              </table>
+            {/* Table — sub-accordion */}
+            <div className="lg:col-span-2">
+              <button
+                type="button"
+                onClick={() => setTableOpen(t => !t)}
+                className="w-full text-right flex items-center justify-between px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg border border-gray-200 transition mb-2 focus:outline-none"
+              >
+                <span className="text-sm font-bold text-gray-700">📋 טבלה מפורטת</span>
+                <span className="text-gray-400 text-sm">{tableOpen ? '▲' : '▼'}</span>
+              </button>
+              {tableOpen && (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b-2 border-gray-200 text-gray-700">
+                        <th className="text-right p-2 font-bold">דירוג</th>
+                        <th className="text-center p-2 font-bold">✅ הצלחות</th>
+                        <th className="text-center p-2 font-bold">🔄 ניסיונות+</th>
+                        <th className="text-center p-2 font-bold">📈 ממוצע</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {stats.grades.map((grade, idx) => (
+                        <GradeRowCombined key={`${grade.gradeId}-${grade.climbType}-${idx}`} grade={grade} />
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }
@@ -213,85 +202,75 @@ function ClimbTypeCardCombined({ stats }: { stats: ClimbTypeStats }) {
 // ═══════════════════════════════════════════════════════════════════
 
 function ClimbTypeCard({ stats, icon, title }: { stats: ClimbTypeStats; icon: string; title: string }) {
+  const [open, setOpen] = useState(true)
+  const [tableOpen, setTableOpen] = useState(false)
+
   return (
     <div className="bg-white rounded-lg shadow-lg border-2 border-gray-200">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-gray-100 to-gray-50 p-4 border-b-2 border-gray-200 rounded-t-lg">
+      {/* Card header — toggles pyramid + table wrapper */}
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        className="w-full text-right bg-gradient-to-r from-gray-100 to-gray-50 p-4 border-b-2 border-gray-200 rounded-t-lg focus:outline-none"
+      >
         <div className="flex items-center justify-between">
           <h3 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
             <span>{icon}</span>
             <span>{title}</span>
           </h3>
-          <div className="text-right">
-            <div className="text-sm text-gray-600">אחוז הצלחה</div>
-            <div className={`text-2xl font-bold ${getSuccessRateColor(stats.overallSuccessRate)}`}>
-              {stats.overallSuccessRate.toFixed(1)}%
+          <div className="flex items-center gap-4">
+            <div className="text-sm text-gray-600 flex gap-4">
+              <span>מסלולים: <strong>{stats.totalRoutes}</strong></span>
+              <span>הצלחות: <strong>{stats.totalSuccesses}</strong></span>
             </div>
+            <span className="text-gray-400 text-xl">{open ? '▲' : '▼'}</span>
           </div>
         </div>
-        <div className="mt-2 flex gap-4 text-sm text-gray-600">
-          <div>מסלולים: <strong>{stats.totalRoutes}</strong></div>
-          <div>הצלחות: <strong>{stats.totalSuccesses}</strong></div>
-          <div>ניסיונות: <strong>{stats.totalAttempts}</strong></div>
-        </div>
-      </div>
+      </button>
 
-      {/* Content */}
-      <div className="p-4">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-1">
-            <div className="bg-gray-50 rounded-lg p-4 border border-gray-200 h-full">
-              <h4 className="text-sm font-bold text-gray-700 mb-3 text-center">📊 פירמידת מסלולים</h4>
-              <MiniPyramid grades={stats.grades} />
+      {open && (
+        <div className="p-4">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-1">
+              <div className="bg-gray-50 rounded-lg p-4 border border-gray-200 h-full">
+                <h4 className="text-sm font-bold text-gray-700 mb-3 text-center">📊 פירמידת מסלולים</h4>
+                <MiniPyramid grades={stats.grades} />
+              </div>
             </div>
-          </div>
 
-          <div className="lg:col-span-2">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b-2 border-gray-200 text-gray-700">
-                    <th className="text-right p-2 font-bold">דירוג</th>
-                    <th className="text-center p-2 font-bold">✅ הצלחות</th>
-                    <th className="text-center p-2 font-bold">🔄 ניסיונות+</th>
-                    <th className="text-center p-2 font-bold">❌ ניסיונות-</th>
-                    <th className="text-center p-2 font-bold">📊 סה"כ</th>
-                    <th className="text-center p-2 font-bold">📈 ממוצע</th>
-                    <th className="text-center p-2 font-bold">% הצלחה</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {stats.grades.map((grade) => (
-                    <GradeRow key={grade.gradeId} grade={grade} />
-                  ))}
-                </tbody>
-                <tfoot>
-                  <tr className="border-t-2 border-gray-300 font-bold bg-gray-50">
-                    <td className="text-right p-2">סה"כ</td>
-                    <td className="text-center p-2">{stats.totalSuccesses}</td>
-                    <td className="text-center p-2">
-                      {stats.grades.reduce((sum, g) => sum + g.attemptsWithSuccess, 0)}
-                    </td>
-                    <td className="text-center p-2">
-                      {stats.grades.reduce((sum, g) => sum + g.attemptsWithoutSuccess, 0)}
-                    </td>
-                    <td className="text-center p-2">{stats.totalAttempts}</td>
-                    <td className="text-center p-2 text-purple-700">
-                      {stats.totalSuccesses > 0 
-                        ? (stats.grades.reduce((sum, g) => sum + g.attemptsWithSuccess, 0) / stats.totalSuccesses).toFixed(1)
-                        : '—'
-                      }
-                    </td>
-                    <td className={`text-center p-2 ${getSuccessRateColor(stats.overallSuccessRate)}`}>
-                      {stats.overallSuccessRate.toFixed(1)}%
-                    </td>
-                  </tr>
-                </tfoot>
-              </table>
+            {/* Table — sub-accordion */}
+            <div className="lg:col-span-2">
+              <button
+                type="button"
+                onClick={() => setTableOpen(t => !t)}
+                className="w-full text-right flex items-center justify-between px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg border border-gray-200 transition mb-2 focus:outline-none"
+              >
+                <span className="text-sm font-bold text-gray-700">📋 טבלה מפורטת</span>
+                <span className="text-gray-400 text-sm">{tableOpen ? '▲' : '▼'}</span>
+              </button>
+              {tableOpen && (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b-2 border-gray-200 text-gray-700">
+                        <th className="text-right p-2 font-bold">דירוג</th>
+                        <th className="text-center p-2 font-bold">✅ הצלחות</th>
+                        <th className="text-center p-2 font-bold">🔄 ניסיונות+</th>
+                        <th className="text-center p-2 font-bold">📈 ממוצע</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {stats.grades.map((grade) => (
+                        <GradeRow key={grade.gradeId} grade={grade} />
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }
@@ -308,7 +287,7 @@ function GradeRowCombined({ grade }: { grade: GradeStats }) {
                    grade.climbType === 'Board' ? 'border-l-4 border-l-yellow-500' : ''
   
   return (
-    <tr className={`border-b border-gray-100 hover:bg-gray-50 transition ${successBgColor} ${typeColor}`}>
+    <tr className={`border-b border-gray-100 hover:bg-gray-50 transition ${typeColor}`}>
       <td className="text-right p-2 font-bold text-gray-900">
         <div className="flex items-center gap-2">
           <span>{grade.gradeName}</span>
@@ -325,24 +304,8 @@ function GradeRowCombined({ grade }: { grade: GradeStats }) {
       <td className="text-center p-2 text-blue-700">
         {grade.attemptsWithSuccess}
       </td>
-      <td className="text-center p-2 text-red-700">
-        {grade.attemptsWithoutSuccess}
-      </td>
-      <td className="text-center p-2 font-medium">
-        {grade.totalAttempts}
-      </td>
       <td className="text-center p-2 font-medium text-purple-700">
         {grade.avgAttemptsToSuccess > 0 ? grade.avgAttemptsToSuccess.toFixed(1) : '—'}
-      </td>
-      <td className="text-center p-2">
-        <div className="flex flex-col items-center gap-1">
-          <span className={`font-bold ${getSuccessRateColor(grade.successRate)}`}>
-            {grade.successRate.toFixed(1)}%
-          </span>
-          <span className="text-xs">
-            {getSuccessRateLabel(grade.successRate)}
-          </span>
-        </div>
       </td>
     </tr>
   )
@@ -357,7 +320,7 @@ function GradeRow({ grade }: { grade: GradeStats }) {
                   grade.successRate >= 50 ? 'bg-yellow-50' : 'bg-red-50'
   
   return (
-    <tr className={`border-b border-gray-100 hover:bg-gray-50 transition ${bgColor}`}>
+    <tr className="border-b border-gray-100 hover:bg-gray-50 transition">
       <td className="text-right p-2 font-bold text-gray-900">
         {grade.gradeName}
       </td>
@@ -367,24 +330,8 @@ function GradeRow({ grade }: { grade: GradeStats }) {
       <td className="text-center p-2 text-blue-700">
         {grade.attemptsWithSuccess}
       </td>
-      <td className="text-center p-2 text-red-700">
-        {grade.attemptsWithoutSuccess}
-      </td>
-      <td className="text-center p-2 font-medium">
-        {grade.totalAttempts}
-      </td>
       <td className="text-center p-2 font-medium text-purple-700">
         {grade.avgAttemptsToSuccess > 0 ? grade.avgAttemptsToSuccess.toFixed(1) : '—'}
-      </td>
-      <td className="text-center p-2">
-        <div className="flex flex-col items-center gap-1">
-          <span className={`font-bold ${getSuccessRateColor(grade.successRate)}`}>
-            {grade.successRate.toFixed(1)}%
-          </span>
-          <span className="text-xs">
-            {getSuccessRateLabel(grade.successRate)}
-          </span>
-        </div>
       </td>
     </tr>
   )

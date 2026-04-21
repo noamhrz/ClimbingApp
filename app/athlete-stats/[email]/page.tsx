@@ -19,7 +19,6 @@ import type { WorkoutPerformance } from '@/lib/workout-stats-metrics'
 import { WorkoutStatsDisplay } from '@/components/workout-stats-display'
 import { getExercisePerformance } from '@/lib/exercise-stats-metrics'
 import type { ExercisePerformance } from '@/lib/exercise-stats-metrics'
-import { ExerciseStatsDisplay } from '@/components/exercise-stats-display'
 
 export default function ProfilePage() {
   const params = useParams()
@@ -361,17 +360,7 @@ export default function ProfilePage() {
       {/* Workout Performance Stats */}
       {workoutPerformance && (
         <div className="mb-8">
-          <WorkoutStatsDisplay performance={workoutPerformance} />
-        </div>
-      )}
-
-      {/* Exercise Performance Stats - ✅ FIXED: Pass selectedEmail */}
-      {exercisePerformance && (
-        <div className="mb-8">
-          <ExerciseStatsDisplay 
-            performance={exercisePerformance}
-            selectedEmail={selectedEmail}
-          />
+          <WorkoutStatsDisplay performance={workoutPerformance} email={selectedEmail} />
         </div>
       )}
 

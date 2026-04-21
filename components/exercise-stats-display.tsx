@@ -194,7 +194,7 @@ function CategorySection({
 // Exercise Card
 // ═══════════════════════════════════════════════════════════════════
 
-function ExerciseCard({ 
+export function ExerciseCard({
   exercise,
   bodyWeightKG,
   maxScaleKG,
