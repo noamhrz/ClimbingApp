@@ -18,6 +18,7 @@ export interface WorkoutStats {
   completedSessions: number    // כמה פעמים בוצע
   completionRate: number       // אחוז השלמה (0-100)
   averageRPE: number | null    // ממוצע RPE (רק של מה שבוצע)
+  firstCompleted: string | null // תאריך ראשון שבוצע
   lastCompleted: string | null // תאריך אחרון שבוצע
   lastCalendarId: number | null // CalendarID של הסשן האחרון שבוצע
   totalWithRPE: number         // כמה אימונים יש להם RPE
@@ -140,6 +141,7 @@ export async function getWorkoutPerformance(
       (a, b) => new Date(b.StartTime).getTime() - new Date(a.StartTime).getTime()
     )
     const lastCompleted = sortedCompleted[0]?.StartTime || null
+    const firstCompleted = sortedCompleted[sortedCompleted.length - 1]?.StartTime || null
     const lastCalendarId = sortedCompleted[0]?.CalendarID ?? null
 
     workouts.push({
@@ -152,6 +154,7 @@ export async function getWorkoutPerformance(
       completedSessions,
       completionRate,
       averageRPE,
+      firstCompleted,
       lastCompleted,
       lastCalendarId,
       totalWithRPE: sessionsWithRPE.length

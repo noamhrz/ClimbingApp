@@ -198,8 +198,8 @@ export default function ProfilePage() {
           )}
         </div>
 
-        {/* Date Range Picker */}
-        <div className="bg-white rounded-lg shadow-md p-4 border border-gray-300">
+        {/* Date Range Picker - only for admin/coach */}
+        {canViewOthers && <div className="bg-white rounded-lg shadow-md p-4 border border-gray-300">
           <div className="flex items-center gap-4 flex-wrap">
             <div className="flex-1 min-w-[200px]">
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -245,7 +245,7 @@ export default function ProfilePage() {
               </button>
             </div>
           </div>
-        </div>
+        </div>}
       </div>
 
       {/* Error State */}
@@ -375,15 +375,6 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* Back Button */}
-      <div className="mt-8 flex gap-3">
-        <button
-          onClick={() => router.back()}
-          className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition font-medium"
-        >
-          ← חזרה
-        </button>
-      </div>
     </div>
   )
 }

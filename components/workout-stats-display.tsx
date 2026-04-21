@@ -175,7 +175,7 @@ function CategorySection({
           <table className="w-full text-sm" dir="rtl">
             <thead>
               <tr className="border-b-2 border-gray-200 text-gray-700 text-xs">
-                <th className="text-center p-2 font-bold w-16">תאריך</th>
+                <th className="text-center p-2 font-bold">טווח</th>
                 <th className="text-center p-2 font-bold w-32">ציר זמן</th>
                 <th className="text-center p-2 font-bold w-12">#</th>
                 <th className="text-right p-2 font-bold">שם אימון</th>
@@ -223,9 +223,10 @@ function WorkoutTimelineRow({ workout, rank, maxSessions, email, dateRange }: {
 
   const timelineWidth = maxSessions > 0 ? (workout.totalSessions / maxSessions) * 100 : 0
 
-  const lastDate = workout.lastCompleted
-    ? new Date(workout.lastCompleted).toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit' })
-    : '—'
+  const fmt = (d: string) => new Date(d).toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit' })
+  const firstDate = workout.firstCompleted ? fmt(workout.firstCompleted) : null
+  const lastDate = workout.lastCompleted ? fmt(workout.lastCompleted) : '—'
+  const dateLabel = firstDate && firstDate !== lastDate ? `${firstDate} – ${lastDate}` : lastDate
 
   const rankBadge = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `#${rank}`
 
@@ -235,7 +236,7 @@ function WorkoutTimelineRow({ workout, rank, maxSessions, email, dateRange }: {
         className={`border-b border-gray-100 cursor-pointer hover:brightness-95 transition ${bgColor}`}
         onClick={() => setOpen(o => !o)}
       >
-        <td className="text-center p-2 text-xs text-gray-600 font-mono">{lastDate}</td>
+        <td className="text-center p-2 text-xs text-gray-600 font-mono whitespace-nowrap">{dateLabel}</td>
         <td className="p-2">
           <div className="w-full bg-gray-200 rounded-full h-2">
             <div
@@ -323,12 +324,14 @@ interface ClimbEntry {
   gradeId: number     // numeric ID for finding max grade
   successful: boolean
   attempts: number | null
+  volumeScore: number
 }
 
 interface ClimbSession {
   calendarId: number
   date: string
   entries: ClimbEntry[]
+  totalVolumeScore: number
 }
 
 function WorkoutExercisesPanel({ workoutId, lastCalendarId, containClimbing, email, dateRange }: {
@@ -442,7 +445,7 @@ function WorkoutExercisesPanel({ workoutId, lastCalendarId, containClimbing, ema
       if (containClimbing && allCalendarIds.length > 0) {
         const { data: climbData } = await supabase
           .from('ClimbingLog')
-          .select('CalendarID, ClimbType, GradeID, Successful, Attempts')
+          .select('CalendarID, ClimbType, GradeID, Successful, Attempts, VolumeScore')
           .in('CalendarID', allCalendarIds)
 
         const climbRows = climbData || []
@@ -477,18 +480,24 @@ function WorkoutExercisesPanel({ workoutId, lastCalendarId, containClimbing, ema
             grade,
             gradeId: row.GradeID ?? 0,
             successful: row.Successful ?? false,
-            attempts: row.Attempts ?? null
+            attempts: row.Attempts ?? null,
+            volumeScore: row.VolumeScore ?? 0
           })
         }
 
         // Build sorted sessions (chronological order from allCalendarIds which is already sorted)
         climbSessionsResult = allCalendarIds
           .filter(id => sessionMap.has(id))
-          .map(id => ({
-            calendarId: id,
-            date: dateMap.get(id) ?? '?',
-            entries: sessionMap.get(id)!
-          }))
+          .map(id => {
+            const entries = sessionMap.get(id)!
+            const totalVolumeScore = entries.reduce((sum, e) => sum + e.volumeScore, 0)
+            return {
+              calendarId: id,
+              date: dateMap.get(id) ?? '?',
+              entries,
+              totalVolumeScore
+            }
+          })
       }
 
       if (!cancelled) {
@@ -591,6 +600,33 @@ function WorkoutExercisesPanel({ workoutId, lastCalendarId, containClimbing, ema
               {sessionCount} אימונים בטווח
             </span>
           </div>
+          {/* volume scale bar - only when scores exist */}
+          {climbSessions.some(s => s.totalVolumeScore > 0) && (() => {
+            const maxVol = Math.max(...climbSessions.map(s => s.totalVolumeScore))
+            return (
+              <div className="mb-3 space-y-1">
+                <div className="text-xs text-gray-500 font-semibold mb-1">📊 נפח טיפוס — נקודות</div>
+                {climbSessions.map(s => {
+                  const pct = maxVol > 0 ? (s.totalVolumeScore / maxVol) * 100 : 0
+                  return (
+                    <div key={s.calendarId} className="flex items-center gap-2">
+                      <span className="text-xs font-mono text-gray-400 w-10 shrink-0">{s.date}</span>
+                      <div className="flex-1 bg-gray-200 rounded-full h-3">
+                        <div
+                          className="h-3 rounded-full bg-purple-500 transition-all"
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                      <span className="text-xs font-semibold text-purple-700 w-10 text-left shrink-0">
+                        {s.totalVolumeScore.toFixed(1)}
+                      </span>
+                    </div>
+                  )
+                })}
+              </div>
+            )
+          })()}
+
           <div className="space-y-3">
             {climbSessions.map(session => {
               // Group entries by climbType
