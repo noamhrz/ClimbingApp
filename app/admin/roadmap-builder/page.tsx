@@ -1,9 +1,11 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { useAuth, useActiveUserEmail } from '@/context/AuthContext'
 import { useRouter } from 'next/navigation'
+import { DndProvider, useDrag, useDrop } from 'react-dnd'
+import { HTML5Backend } from 'react-dnd-html5-backend'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -450,6 +452,96 @@ function EditCategoryModal({ cat, onClose, onSave, saving }: EditCategoryModalPr
   )
 }
 
+// ─── Draggable Level Row ──────────────────────────────────────────────────────
+
+const LEVEL_DRAG_TYPE = 'ROADMAP_LEVEL'
+
+interface DragItem { index: number }
+
+interface DraggableLevelRowProps {
+  level: RoadmapLevel
+  index: number
+  categories: RoadmapCategory[]
+  onEdit: (level: RoadmapLevel) => void
+  onDelete: (level: RoadmapLevel) => void
+  onMove: (from: number, to: number) => void
+}
+
+function DraggableLevelRow({ level, index, categories, onEdit, onDelete, onMove }: DraggableLevelRowProps) {
+  const ref = useRef<HTMLDivElement>(null)
+  const onMoveRef = useRef(onMove)
+  useEffect(() => { onMoveRef.current = onMove }, [onMove])
+
+  const [{ isDragging }, drag, preview] = useDrag<DragItem, void, { isDragging: boolean }>({
+    type: LEVEL_DRAG_TYPE,
+    item: { index },
+    collect: monitor => ({ isDragging: monitor.isDragging() }),
+  })
+
+  const [{ isOver }, drop] = useDrop<DragItem, void, { isOver: boolean }>({
+    accept: LEVEL_DRAG_TYPE,
+    hover(item) {
+      if (item.index === index) return
+      onMoveRef.current(item.index, index)
+      item.index = index
+    },
+    collect: monitor => ({ isOver: monitor.isOver() }),
+  })
+
+  preview(drop(ref))
+
+  return (
+    <div
+      ref={ref}
+      className={`px-5 py-4 flex items-start gap-4 transition-colors ${
+        isDragging ? 'opacity-30' : isOver ? 'bg-blue-50' : 'hover:bg-gray-50'
+      }`}
+    >
+      <div
+        ref={drag as unknown as React.RefCallback<HTMLDivElement>}
+        className="self-center cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-500 shrink-0 select-none text-xl leading-none"
+        title="גרור לשינוי סדר"
+      >
+        ⠿
+      </div>
+      <div className="w-9 h-9 rounded-full bg-blue-100 text-blue-700 font-bold text-sm flex items-center justify-center shrink-0">
+        {level.LevelNumber}
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="font-medium text-gray-800">{level.Name}</p>
+        {level.Description && (
+          <p className="text-sm text-gray-500 mt-0.5 line-clamp-2">{level.Description}</p>
+        )}
+        {level.Prerequisites?.length > 0 && (
+          <div className="flex flex-wrap gap-1 mt-1.5">
+            {level.Prerequisites.map(p => (
+              <span key={p.categoryId} className="text-xs bg-yellow-50 border border-yellow-200 text-yellow-700 rounded px-2 py-0.5">
+                {categories.find(c => getCatId(c) === p.categoryId)?.Icon} {p.categoryName} ≥{p.minLevel}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+      <div className="flex gap-2 shrink-0">
+        <button
+          onClick={() => onEdit(level)}
+          className="px-2.5 py-1.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600 text-sm"
+          title="ערוך"
+        >
+          ✏️
+        </button>
+        <button
+          onClick={() => onDelete(level)}
+          className="px-2.5 py-1.5 bg-red-500 text-white rounded-lg hover:bg-red-600 text-sm"
+          title="מחק"
+        >
+          🗑
+        </button>
+      </div>
+    </div>
+  )
+}
+
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function RoadmapBuilderPage() {
@@ -492,7 +584,6 @@ export default function RoadmapBuilderPage() {
       const headers = await getAuthHeaders()
       const res = await fetch('/api/admin/roadmap/categories', { headers })
       const data = await res.json()
-      console.log('[roadmap] fetchCategories — first item keys:', data?.[0] ? Object.keys(data[0]) : 'empty', data?.[0])
       setCategories(data ?? [])
     } finally {
       setLoadingCats(false)
@@ -504,10 +595,10 @@ export default function RoadmapBuilderPage() {
     setLoadingLevels(true)
     try {
       const headers = await getAuthHeaders()
-      console.log('[roadmap] fetchLevels — catId:', catId, typeof catId)
       const res = await fetch(`/api/admin/roadmap/levels?categoryId=${catId}`, { headers })
-      const data = await res.json()
+      const data: RoadmapLevel[] = await res.json()
       setLevels(data ?? [])
+      setSavedLevelIds((data ?? []).map(l => getLevelId(l) as number))
     } finally {
       setLoadingLevels(false)
     }
@@ -531,11 +622,11 @@ export default function RoadmapBuilderPage() {
       const payload = { ...form, CategoryID: selectedCatId, LevelNumber: nextNumber }
       const url = isNew ? '/api/admin/roadmap/levels' : `/api/admin/roadmap/levels/${levelId}`
       const method = isNew ? 'POST' : 'PUT'
-      console.log('[roadmap] handleSaveLevel — payload:', payload)
+
 
       const res = await fetch(url, { method, headers, body: JSON.stringify(payload) })
       const resBody = await res.json()
-      console.log('[roadmap] level save response:', res.status, resBody)
+
       if (!res.ok) throw new Error(resBody.error ?? JSON.stringify(resBody))
 
       setEditingLevel(null)
@@ -560,7 +651,7 @@ export default function RoadmapBuilderPage() {
         body: JSON.stringify({ CategoryID: selectedCatId, LevelNumber: nextNumber, Name: newLevelName, Description: '' })
       })
       const resBody = await res.json()
-      console.log('[roadmap] levels POST response:', res.status, resBody)
+
       if (!res.ok) throw new Error(resBody.error ?? JSON.stringify(resBody))
       setNewLevelName('')
       setShowNewLevelRow(false)
@@ -640,6 +731,42 @@ export default function RoadmapBuilderPage() {
     }
   }
 
+  // ── Drag-and-drop reorder ───────────────────────────────────────────────────
+  const [savedLevelIds, setSavedLevelIds] = useState<number[]>([])
+
+  const moveLevel = useCallback((from: number, to: number) => {
+    setLevels(prev => {
+      const next = [...prev]
+      const [removed] = next.splice(from, 1)
+      next.splice(to, 0, removed)
+      return next
+    })
+  }, [])
+
+  const orderChanged = levels.length > 0 &&
+    levels.map(l => getLevelId(l)).join() !== savedLevelIds.join()
+
+  const handleSaveOrder = async () => {
+    const renumbered = levels.map((l, i) => ({ ...l, LevelNumber: i + 1 }))
+    setSaving(true)
+    try {
+      const headers = await getAuthHeaders()
+      const res = await fetch('/api/admin/roadmap/levels', {
+        method: 'PATCH',
+        headers,
+        body: JSON.stringify({ updates: renumbered.map(l => ({ id: getLevelId(l), levelNumber: l.LevelNumber })) }),
+      })
+      const resBody = await res.json()
+      if (!res.ok) throw new Error(resBody.error ?? JSON.stringify(resBody))
+      setLevels(renumbered)
+      setSavedLevelIds(renumbered.map(l => getLevelId(l) as number))
+    } catch (err: any) {
+      alert(`שגיאה בשמירת סדר: ${err.message}`)
+    } finally {
+      setSaving(false)
+    }
+  }
+
   // ─────────────────────────────────────────────────────────────────────────────
 
   const selectedCat = categories.find(c => getCatId(c) === selectedCatId)
@@ -658,6 +785,7 @@ export default function RoadmapBuilderPage() {
   }
 
   return (
+    <DndProvider backend={HTML5Backend}>
     <div dir="rtl" className="min-h-screen bg-gray-50 pb-20">
       {/* Header */}
       <div className="bg-white shadow-sm border-b sticky top-0 z-30">
@@ -774,6 +902,15 @@ export default function RoadmapBuilderPage() {
                   </div>
                 </div>
                 <div className="flex gap-2">
+                  {orderChanged && (
+                    <button
+                      onClick={handleSaveOrder}
+                      disabled={saving}
+                      className="px-3 py-1.5 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 font-medium"
+                    >
+                      {saving ? '⏳ שומר...' : '💾 שמור סדר'}
+                    </button>
+                  )}
                   <button
                     onClick={() => handleDeleteCategory(selectedCat!)}
                     className="px-3 py-1.5 text-sm text-red-600 border border-red-200 rounded-lg hover:bg-red-50"
@@ -794,42 +931,15 @@ export default function RoadmapBuilderPage() {
                   )}
 
                   {levels.map((level, idx) => (
-                    <div key={getLevelId(level) ?? idx} className="px-5 py-4 flex items-start gap-4 hover:bg-gray-50">
-                      <div className="w-9 h-9 rounded-full bg-blue-100 text-blue-700 font-bold text-sm flex items-center justify-center shrink-0">
-                        {level.LevelNumber}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-gray-800">{level.Name}</p>
-                        {level.Description && (
-                          <p className="text-sm text-gray-500 mt-0.5 line-clamp-2">{level.Description}</p>
-                        )}
-                        {level.Prerequisites?.length > 0 && (
-                          <div className="flex flex-wrap gap-1 mt-1.5">
-                            {level.Prerequisites.map(p => (
-                              <span key={p.categoryId} className="text-xs bg-yellow-50 border border-yellow-200 text-yellow-700 rounded px-2 py-0.5">
-                                {categories.find(c => getCatId(c) === p.categoryId)?.Icon} {p.categoryName} ≥{p.minLevel}
-                              </span>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex gap-2 shrink-0">
-                        <button
-                          onClick={() => setEditingLevel(level)}
-                          className="px-2.5 py-1.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600 text-sm"
-                          title="ערוך"
-                        >
-                          ✏️
-                        </button>
-                        <button
-                          onClick={() => handleDeleteLevel(level)}
-                          className="px-2.5 py-1.5 bg-red-500 text-white rounded-lg hover:bg-red-600 text-sm"
-                          title="מחק"
-                        >
-                          🗑
-                        </button>
-                      </div>
-                    </div>
+                    <DraggableLevelRow
+                      key={getLevelId(level) ?? idx}
+                      level={level}
+                      index={idx}
+                      categories={categories}
+                      onEdit={setEditingLevel}
+                      onDelete={handleDeleteLevel}
+                      onMove={moveLevel}
+                    />
                   ))}
 
                   {/* Quick add row */}
@@ -915,5 +1025,6 @@ export default function RoadmapBuilderPage() {
         />
       )}
     </div>
+    </DndProvider>
   )
 }

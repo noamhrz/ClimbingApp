@@ -55,6 +55,51 @@ export async function GET(request: Request) {
   }
 }
 
+export async function PATCH(request: Request) {
+  try {
+    const user = await verifyAdminOrCoach(request)
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    const body = await request.json()
+    const { updates } = body
+
+    if (!Array.isArray(updates)) {
+      return NextResponse.json({ error: 'updates array required' }, { status: 400 })
+    }
+
+    const supabaseAdmin = getAdminClient()
+
+    // Pass 1: move to temp numbers (10000+) to avoid unique constraint conflicts
+    const pass1 = await Promise.all(
+      updates.map(({ id, levelNumber }: { id: number; levelNumber: number }) =>
+        supabaseAdmin.from('RoadmapLevels').update({ LevelNumber: 10000 + levelNumber }).eq('LevelID', id)
+      )
+    )
+    const err1 = pass1.find(r => r.error)
+    if (err1) {
+      console.error('[PATCH levels] pass1 error:', err1.error)
+      return NextResponse.json({ error: err1.error?.message }, { status: 500 })
+    }
+
+    // Pass 2: set final numbers
+    const pass2 = await Promise.all(
+      updates.map(({ id, levelNumber }: { id: number; levelNumber: number }) =>
+        supabaseAdmin.from('RoadmapLevels').update({ LevelNumber: levelNumber }).eq('LevelID', id)
+      )
+    )
+    const err2 = pass2.find(r => r.error)
+    if (err2) {
+      console.error('[PATCH levels] pass2 error:', err2.error)
+      return NextResponse.json({ error: err2.error?.message }, { status: 500 })
+    }
+
+    return NextResponse.json({ success: true })
+  } catch (error: any) {
+    console.error('[PATCH levels] caught error:', error)
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+}
+
 export async function POST(request: Request) {
   try {
     const user = await verifyAdminOrCoach(request)
