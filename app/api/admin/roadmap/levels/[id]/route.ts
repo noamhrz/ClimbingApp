@@ -48,7 +48,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       .select()
       .single()
 
-    if (error) { console.error('[roadmap] levels PUT error:', error); throw error }
+    if (error) throw error
     return NextResponse.json(data)
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 })
@@ -68,7 +68,7 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
       .delete()
       .eq('LevelID', id)
 
-    if (error) { console.error('[roadmap] levels DELETE error:', error); throw error }
+    if (error) throw error
     return NextResponse.json({ success: true })
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 })

@@ -70,7 +70,6 @@ export async function GET(request: Request) {
     if (error) throw error
     return NextResponse.json(data ?? [])
   } catch (error: any) {
-    console.error('[roadmap/progress GET]', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }
@@ -112,7 +111,6 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true })
   } catch (error: any) {
-    console.error('[roadmap/progress POST]', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }

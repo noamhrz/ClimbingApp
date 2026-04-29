@@ -76,10 +76,7 @@ export async function PATCH(request: Request) {
       )
     )
     const err1 = pass1.find(r => r.error)
-    if (err1) {
-      console.error('[PATCH levels] pass1 error:', err1.error)
-      return NextResponse.json({ error: err1.error?.message }, { status: 500 })
-    }
+    if (err1) return NextResponse.json({ error: err1.error?.message }, { status: 500 })
 
     // Pass 2: set final numbers
     const pass2 = await Promise.all(
@@ -88,14 +85,10 @@ export async function PATCH(request: Request) {
       )
     )
     const err2 = pass2.find(r => r.error)
-    if (err2) {
-      console.error('[PATCH levels] pass2 error:', err2.error)
-      return NextResponse.json({ error: err2.error?.message }, { status: 500 })
-    }
+    if (err2) return NextResponse.json({ error: err2.error?.message }, { status: 500 })
 
     return NextResponse.json({ success: true })
   } catch (error: any) {
-    console.error('[PATCH levels] caught error:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }
@@ -116,14 +109,13 @@ export async function POST(request: Request) {
     const insertPayload: Record<string, unknown> = { CategoryID, LevelNumber, Name, Description }
     if (Prerequisites !== undefined) insertPayload.Prerequisites = Prerequisites
 
-    console.log('[roadmap] levels POST insert payload:', insertPayload)
     const { data, error } = await supabaseAdmin
       .from('RoadmapLevels')
       .insert(insertPayload)
       .select()
       .single()
 
-    if (error) { console.error('[roadmap] levels POST error:', error); throw error }
+    if (error) throw error
     return NextResponse.json(data, { status: 201 })
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 })

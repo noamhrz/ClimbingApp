@@ -48,25 +48,7 @@ export default function Footer() {
                 </div>
               </div>
 
-              {/* Quick Link: Assign Workouts */}
-              <Link
-                href="/admin/assign-workouts"
-                className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
-              >
-                <span>🏋️</span>
-                <span className="hidden md:inline">הקצאת אימונים</span>
-                <span className="md:hidden">אימונים</span>
-              </Link>
 
-              {/* Quick Link: Roadmap Builder */}
-              <Link
-                href="/admin/roadmap-builder"
-                className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
-              >
-                <span>🗺️</span>
-                <span className="hidden md:inline">בניית Roadmap</span>
-                <span className="md:hidden">Roadmap</span>
-              </Link>
             </div>
 
             {/* Center: Impersonation Status */}
