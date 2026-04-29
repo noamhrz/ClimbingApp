@@ -13,6 +13,7 @@ interface RoadmapCategory {
   Icon: string
   Color: string
   Order: number
+  Group: string
 }
 
 interface Prerequisite {
@@ -272,9 +273,11 @@ function LevelModal({ level, categories, onClose, onSave, saving }: LevelModalPr
 
 // ─── Category Modal ───────────────────────────────────────────────────────────
 
+const GROUP_OPTIONS = ['כח ספציפי', 'כח כללי', 'מוביליות', 'כללי']
+
 interface CategoryModalProps {
   onClose: () => void
-  onSave: (cat: { Name: string; Icon: string; Color: string }) => Promise<void>
+  onSave: (cat: { Name: string; Icon: string; Color: string; Group: string }) => Promise<void>
   saving: boolean
 }
 
@@ -282,6 +285,7 @@ function CategoryModal({ onClose, onSave, saving }: CategoryModalProps) {
   const [name, setName] = useState('')
   const [icon, setIcon] = useState('🧗')
   const [color, setColor] = useState('blue')
+  const [group, setGroup] = useState('כללי')
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -327,13 +331,111 @@ function CategoryModal({ onClose, onSave, saving }: CategoryModalProps) {
             </div>
           </div>
 
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">קבוצה</label>
+            <select
+              value={group}
+              onChange={e => setGroup(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+            >
+              {GROUP_OPTIONS.map(g => <option key={g} value={g}>{g}</option>)}
+            </select>
+          </div>
+
           <div className="flex gap-2 pt-4">
             <button
-              onClick={() => onSave({ Name: name, Icon: icon, Color: color })}
+              onClick={() => onSave({ Name: name, Icon: icon, Color: color, Group: group })}
               disabled={saving || !name.trim()}
               className="flex-1 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 font-medium"
             >
               {saving ? '⏳ שומר...' : '✅ צור קטגוריה'}
+            </button>
+            <button
+              onClick={onClose}
+              className="px-5 py-2.5 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+            >
+              ביטול
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Edit Category Modal ──────────────────────────────────────────────────────
+
+interface EditCategoryModalProps {
+  cat: RoadmapCategory
+  onClose: () => void
+  onSave: (cat: RoadmapCategory) => Promise<void>
+  saving: boolean
+}
+
+function EditCategoryModal({ cat, onClose, onSave, saving }: EditCategoryModalProps) {
+  const [form, setForm] = useState({ ...cat })
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-bold text-gray-800">✏️ עריכת קטגוריה</h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">×</button>
+        </div>
+
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">שם הקטגוריה *</label>
+            <input
+              type="text"
+              value={form.Name}
+              onChange={e => setForm(f => ({ ...f, Name: e.target.value }))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              autoFocus
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">אייקון</label>
+            <EmojiPicker value={form.Icon} onChange={v => setForm(f => ({ ...f, Icon: v }))} />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">צבע</label>
+            <div className="flex gap-2 flex-wrap">
+              {COLOR_OPTIONS.map(opt => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setForm(f => ({ ...f, Color: opt.value }))}
+                  className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-all ${
+                    COLOR_CLASSES[opt.value]
+                  } ${form.Color === opt.value ? 'ring-2 ring-offset-1 ring-blue-500' : 'opacity-60 hover:opacity-100'}`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">קבוצה</label>
+            <select
+              value={form.Group || 'כללי'}
+              onChange={e => setForm(f => ({ ...f, Group: e.target.value }))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+            >
+              {GROUP_OPTIONS.map(g => <option key={g} value={g}>{g}</option>)}
+            </select>
+          </div>
+
+          <div className="flex gap-2 pt-4">
+            <button
+              onClick={() => onSave(form)}
+              disabled={saving || !form.Name.trim()}
+              className="flex-1 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 font-medium"
+            >
+              {saving ? '⏳ שומר...' : '💾 שמור'}
             </button>
             <button
               onClick={onClose}
@@ -364,6 +466,7 @@ export default function RoadmapBuilderPage() {
   const [saving, setSaving] = useState(false)
 
   const [editingLevel, setEditingLevel] = useState<Partial<RoadmapLevel> | null>(null)
+  const [editingCat, setEditingCat] = useState<RoadmapCategory | null>(null)
   const [showNewCatModal, setShowNewCatModal] = useState(false)
   const [showNewLevelRow, setShowNewLevelRow] = useState(false)
   const [newLevelName, setNewLevelName] = useState('')
@@ -497,8 +600,28 @@ export default function RoadmapBuilderPage() {
     }
   }
 
+  // ── Update category ─────────────────────────────────────────────────────────
+  const handleUpdateCategory = async (cat: RoadmapCategory) => {
+    setSaving(true)
+    try {
+      const headers = await getAuthHeaders()
+      const res = await fetch(`/api/admin/roadmap/categories/${getCatId(cat)}`, {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify(cat),
+      })
+      if (!res.ok) throw new Error((await res.json()).error)
+      setEditingCat(null)
+      await fetchCategories()
+    } catch (err: any) {
+      alert(`שגיאה בעדכון: ${err.message}`)
+    } finally {
+      setSaving(false)
+    }
+  }
+
   // ── Save new category ───────────────────────────────────────────────────────
-  const handleSaveCategory = async (cat: { Name: string; Icon: string; Color: string }) => {
+  const handleSaveCategory = async (cat: { Name: string; Icon: string; Color: string; Group: string }) => {
     setSaving(true)
     try {
       const headers = await getAuthHeaders()
@@ -555,45 +678,72 @@ export default function RoadmapBuilderPage() {
 
             {categories.length === 0 ? (
               <p className="text-center text-gray-400 text-sm py-8">אין קטגוריות עדיין</p>
-            ) : (
-              <ul className="divide-y">
-                {categories.map((cat, idx) => {
-                  const catId = getCatId(cat)
-                  const colorClass = COLOR_CLASSES[cat.Color] ?? COLOR_CLASSES.gray
-                  const isSelected = selectedCatId === catId
-                  const levelCount = isSelected ? levels.length : '...'
-
-                  return (
-                    <li key={catId ?? idx} className="group">
-                      <div
-                        className={`w-full text-right px-4 py-3 flex items-center gap-3 cursor-pointer hover:bg-gray-50 transition-colors ${
-                          isSelected ? 'bg-blue-50 border-r-4 border-blue-500' : ''
-                        }`}
-                        onClick={() => setSelectedCatId(catId ?? null)}
-                      >
-                        <span className={`text-xl rounded-lg p-1.5 border ${colorClass}`}>{cat.Icon}</span>
-                        <div className="flex-1 min-w-0">
-                          <p className={`font-medium text-sm truncate ${isSelected ? 'text-blue-700' : 'text-gray-800'}`}>
-                            {cat.Name}
-                          </p>
-                          {isSelected && (
-                            <p className="text-xs text-gray-500">{levelCount} רמות</p>
-                          )}
-                        </div>
-                        <button
-                          type="button"
-                          onClick={e => { e.stopPropagation(); handleDeleteCategory(cat) }}
-                          className="text-gray-300 hover:text-red-500 transition-colors text-lg leading-none opacity-0 group-hover:opacity-100"
-                          title="מחק קטגוריה"
-                        >
-                          🗑
-                        </button>
-                      </div>
-                    </li>
-                  )
-                })}
-              </ul>
-            )}
+            ) : (() => {
+              const GROUP_ORDER = ['כח ספציפי', 'כח כללי', 'מוביליות', 'כללי']
+              const grouped: Record<string, RoadmapCategory[]> = {}
+              for (const cat of categories) {
+                const g = cat.Group || 'כללי'
+                if (!grouped[g]) grouped[g] = []
+                grouped[g].push(cat)
+              }
+              const groupKeys = [
+                ...GROUP_ORDER.filter(g => grouped[g]),
+                ...Object.keys(grouped).filter(g => !GROUP_ORDER.includes(g)),
+              ]
+              return (
+                <div className="divide-y">
+                  {groupKeys.map(groupName => (
+                    <div key={groupName}>
+                      <p className="px-4 py-1.5 text-xs font-semibold text-gray-400 bg-gray-50 border-b">
+                        {groupName}
+                      </p>
+                      {grouped[groupName].map((cat, idx) => {
+                        const catId = getCatId(cat)
+                        const colorClass = COLOR_CLASSES[cat.Color] ?? COLOR_CLASSES.gray
+                        const isSelected = selectedCatId === catId
+                        const levelCount = isSelected ? levels.length : '...'
+                        return (
+                          <div key={catId ?? idx} className="group border-b last:border-b-0">
+                            <div
+                              className={`w-full text-right px-4 py-3 flex items-center gap-3 cursor-pointer hover:bg-gray-50 transition-colors ${
+                                isSelected ? 'bg-blue-50 border-r-4 border-blue-500' : ''
+                              }`}
+                              onClick={() => setSelectedCatId(catId ?? null)}
+                            >
+                              <span className={`text-xl rounded-lg p-1.5 border ${colorClass}`}>{cat.Icon}</span>
+                              <div className="flex-1 min-w-0">
+                                <p className={`font-medium text-sm truncate ${isSelected ? 'text-blue-700' : 'text-gray-800'}`}>
+                                  {cat.Name}
+                                </p>
+                                {isSelected && (
+                                  <p className="text-xs text-gray-500">{levelCount} רמות</p>
+                                )}
+                              </div>
+                              <button
+                                type="button"
+                                onClick={e => { e.stopPropagation(); setEditingCat(cat) }}
+                                className="text-gray-300 hover:text-blue-500 transition-colors text-lg leading-none opacity-0 group-hover:opacity-100"
+                                title="ערוך קטגוריה"
+                              >
+                                ✏️
+                              </button>
+                              <button
+                                type="button"
+                                onClick={e => { e.stopPropagation(); handleDeleteCategory(cat) }}
+                                className="text-gray-300 hover:text-red-500 transition-colors text-lg leading-none opacity-0 group-hover:opacity-100"
+                                title="מחק קטגוריה"
+                              >
+                                🗑
+                              </button>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  ))}
+                </div>
+              )
+            })()}
           </div>
 
           <button
@@ -751,6 +901,16 @@ export default function RoadmapBuilderPage() {
         <CategoryModal
           onClose={() => setShowNewCatModal(false)}
           onSave={handleSaveCategory}
+          saving={saving}
+        />
+      )}
+
+      {/* Edit Category Modal */}
+      {editingCat && (
+        <EditCategoryModal
+          cat={editingCat}
+          onClose={() => setEditingCat(null)}
+          onSave={handleUpdateCategory}
           saving={saving}
         />
       )}

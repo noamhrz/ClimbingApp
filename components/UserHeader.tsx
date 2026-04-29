@@ -152,6 +152,7 @@ export default function UserHeader() {
             <DropdownItem href="/climbing-log">📖 לוג</DropdownItem>
             <DropdownItem href={statsHref}>📊 סטטיסטיקות</DropdownItem>
             <DropdownItem href="/exercise-analytics">💪 ניתוח תרגילים</DropdownItem>
+            <DropdownItem href="/roadmap-progress">🗺️ התקדמות Roadmap</DropdownItem>
           </NavDropdown>
 
           {/* ניהול — coach / admin only */}
@@ -161,6 +162,8 @@ export default function UserHeader() {
               <DropdownItem href="/admin/assign-workouts">📋 הקצאה</DropdownItem>
               <DropdownItem href="/exercises">💪 תרגילים</DropdownItem>
               <DropdownItem href="/workouts-editor">🏋️ עורך אימונים</DropdownItem>
+              {isAdmin && <DropdownItem href="/admin/roadmap-builder">🗺️ בניית Roadmap</DropdownItem>}
+              {isAdmin && <DropdownItem href="/admin/roadmap-progress">📊 התקדמות Roadmap</DropdownItem>}
             </NavDropdown>
           )}
 

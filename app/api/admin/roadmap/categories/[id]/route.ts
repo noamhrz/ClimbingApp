@@ -38,12 +38,12 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 
     const { id } = await params
     const body = await request.json()
-    const { Name, Icon, Color, Order } = body
+    const { Name, Icon, Color, Order, Group } = body
 
     const supabaseAdmin = getAdminClient()
     const { data, error } = await supabaseAdmin
       .from('RoadmapCategories')
-      .update({ Name, Icon, Color, Order })
+      .update({ Name, Icon, Color, Order, Group })
       .eq('CategoryID', id)
       .select()
       .single()

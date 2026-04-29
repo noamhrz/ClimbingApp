@@ -55,7 +55,7 @@ export async function POST(request: Request) {
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const body = await request.json()
-    const { Name, Icon, Color, Order } = body
+    const { Name, Icon, Color, Order, Group } = body
 
     if (!Name) return NextResponse.json({ error: 'Name is required' }, { status: 400 })
 
@@ -73,7 +73,7 @@ export async function POST(request: Request) {
 
     const { data, error } = await supabaseAdmin
       .from('RoadmapCategories')
-      .insert({ Name, Icon, Color, Order: nextOrder })
+      .insert({ Name, Icon, Color, Order: nextOrder, Group: Group ?? 'כללי' })
       .select()
       .single()
 
