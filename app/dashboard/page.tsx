@@ -39,6 +39,11 @@ export default function DashboardPage() {
   useEffect(() => {
     if (userToShow?.Email) {
       checkTodayWellness()
+    }
+  }, [userToShow?.Email])
+
+  useEffect(() => {
+    if (userToShow?.Email) {
       loadAllData()
     }
   }, [userToShow?.Email, timeRange])
