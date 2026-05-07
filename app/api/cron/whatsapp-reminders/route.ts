@@ -144,6 +144,9 @@ export async function GET(request: NextRequest) {
     const { Name: name, Phone: phone } = profile as { Name: string; Phone: string; Email: string }
     const cleanPhone = '+' + phone.replace(/[^\d]/g, '')
 
+    // Sort by StartTime ascending before sending
+    userWorkouts.sort((a, b) => new Date(a.StartTime).getTime() - new Date(b.StartTime).getTime())
+
     // Send daily_summary if 2+ workouts
     if (userWorkouts.length >= 2) {
       const workoutList = userWorkouts
@@ -172,6 +175,7 @@ export async function GET(request: NextRequest) {
         })
 
         results.sent++
+        await new Promise(resolve => setTimeout(resolve, 2000))
       } catch (err) {
         console.error(`Error sending daily_summary to ${email}:`, err)
         results.errors++
@@ -239,6 +243,7 @@ export async function GET(request: NextRequest) {
         })
 
         results.sent++
+        await new Promise(resolve => setTimeout(resolve, 2000))
       } catch (err) {
         console.error(`Error sending workout reminder to ${email} (CalendarID ${entry.CalendarID}):`, err)
         results.errors++
