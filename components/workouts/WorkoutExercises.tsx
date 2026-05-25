@@ -32,6 +32,7 @@ const WorkoutExercises = forwardRef<WorkoutExercisesHandle, Props>(function Work
   ref
 ) {
   const [localExercises, setLocalExercises] = useState<WorkoutExerciseWithDetails[]>(exercises)
+  const [additionalBlocks, setAdditionalBlocks] = useState<number[]>([])
   const [showSidebar, setShowSidebar] = useState(true)
   const [saving, setSaving] = useState(false)
   const [activeId, setActiveId] = useState<number | null>(null)
@@ -46,6 +47,7 @@ const WorkoutExercises = forwardRef<WorkoutExercisesHandle, Props>(function Work
   // Sync from parent only on initial load / after explicit DB reload
   useEffect(() => {
     setLocalExercises(exercises)
+    setAdditionalBlocks([])
   }, [exercises])
 
   const sensors = useSensors(
@@ -59,7 +61,8 @@ const WorkoutExercises = forwardRef<WorkoutExercisesHandle, Props>(function Work
   }, {} as Record<number, WorkoutExerciseWithDetails[]>)
 
   const blockNumbers = Object.keys(blockMap).map(Number).sort((a, b) => a - b)
-  const nextBlock = blockNumbers.length > 0 ? Math.max(...blockNumbers) + 1 : 1
+  const allBlockNumbers = [...new Set([...blockNumbers, ...additionalBlocks])].sort((a, b) => a - b)
+  const nextBlock = allBlockNumbers.length > 0 ? Math.max(...allBlockNumbers) + 1 : 1
 
   const handleAddExercise = (exercise: Exercise, blockNumber?: number) => {
     const targetBlock = blockNumber ?? nextBlock
@@ -104,9 +107,14 @@ const WorkoutExercises = forwardRef<WorkoutExercisesHandle, Props>(function Work
     })
   }
 
+  const handleAddBlock = () => {
+    setAdditionalBlocks(prev => [...prev, nextBlock])
+  }
+
   const handleDeleteBlock = (blockNumber: number) => {
     if (!confirm(`האם למחוק את בלוק ${blockNumber} עם כל התרגילים?`)) return
     setLocalExercises(prev => prev.filter(e => e.Block !== blockNumber))
+    setAdditionalBlocks(prev => prev.filter(b => b !== blockNumber))
   }
 
   const handleDragStart = (event: DragStartEvent) => {
@@ -281,33 +289,34 @@ const WorkoutExercises = forwardRef<WorkoutExercisesHandle, Props>(function Work
             </div>
           </div>
 
-          {blockNumbers.length === 0 ? (
-            <div className="bg-gray-50 rounded-lg p-12 text-center border-2 border-dashed border-gray-300">
-              <p className="text-gray-600 mb-2 text-lg font-medium">עדיין אין תרגילים באימון</p>
-              <p className="text-sm text-gray-500">👉 לחץ על תרגיל מהצד כדי להתחיל</p>
-            </div>
-          ) : (
-            <div className="space-y-6">
-              {blockNumbers.map(blockNum => (
-                <BlockContainer
-                  key={blockNum}
-                  blockNumber={blockNum}
-                  exercises={blockMap[blockNum]}
-                  onUpdateExercise={handleUpdateExercise}
-                  onRemoveExercise={handleRemoveExercise}
-                  onDeleteBlock={() => handleDeleteBlock(blockNum)}
-                  onAddExercise={() => setSelectedBlock(blockNum)}
-                  isSelectedForAdd={selectedBlock === blockNum}
-                />
-              ))}
-
-              <div className="bg-blue-50 border-2 border-dashed border-blue-300 rounded-lg p-6 text-center">
-                <p className="text-sm text-gray-600">
-                  לחץ על תרגיל מהסיידבר להוספה לבלוק חדש ({nextBlock})
-                </p>
+          <div className="space-y-6">
+            {allBlockNumbers.length === 0 && (
+              <div className="bg-gray-50 rounded-lg p-12 text-center border-2 border-dashed border-gray-300">
+                <p className="text-gray-600 mb-2 text-lg font-medium">עדיין אין תרגילים באימון</p>
+                <p className="text-sm text-gray-500">👉 הוסף בלוק או לחץ על תרגיל מהצד כדי להתחיל</p>
               </div>
-            </div>
-          )}
+            )}
+
+            {allBlockNumbers.map(blockNum => (
+              <BlockContainer
+                key={blockNum}
+                blockNumber={blockNum}
+                exercises={blockMap[blockNum] ?? []}
+                onUpdateExercise={handleUpdateExercise}
+                onRemoveExercise={handleRemoveExercise}
+                onDeleteBlock={() => handleDeleteBlock(blockNum)}
+                onAddExercise={() => setSelectedBlock(blockNum)}
+                isSelectedForAdd={selectedBlock === blockNum}
+              />
+            ))}
+
+            <button
+              onClick={handleAddBlock}
+              className="w-full border-2 border-dashed border-gray-300 rounded-lg py-4 text-gray-500 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 font-medium transition-colors"
+            >
+              + הוסף בלוק חדש
+            </button>
+          </div>
         </div>
 
         {/* Sidebar */}
