@@ -1,8 +1,9 @@
-// components/workouts/BlockContainer.tsx
 'use client'
 
+import { useDroppable } from '@dnd-kit/core'
+import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { WorkoutExerciseWithDetails } from '@/types/workouts'
-import ExerciseForm from './ExerciseForm'
+import SortableExerciseItem from './SortableExerciseItem'
 
 interface Props {
   blockNumber: number
@@ -11,12 +12,7 @@ interface Props {
   onRemoveExercise: (exerciseId: number) => void
   onDeleteBlock: () => void
   onAddExercise: () => void
-  onMoveBlockUp?: () => void      // NEW
-  onMoveBlockDown?: () => void    // NEW
-  onMoveExerciseUp?: (exerciseId: number) => void    // NEW
-  onMoveExerciseDown?: (exerciseId: number) => void  // NEW
-  isFirstBlock?: boolean          // NEW
-  isLastBlock?: boolean           // NEW
+  isSelectedForAdd?: boolean
 }
 
 export default function BlockContainer({
@@ -26,89 +22,67 @@ export default function BlockContainer({
   onRemoveExercise,
   onDeleteBlock,
   onAddExercise,
-  onMoveBlockUp,       // NEW
-  onMoveBlockDown,     // NEW
-  onMoveExerciseUp,    // NEW
-  onMoveExerciseDown,  // NEW
-  isFirstBlock,        // NEW
-  isLastBlock,         // NEW
+  isSelectedForAdd,
 }: Props) {
-  // Sort exercises by Order
   const sortedExercises = [...exercises].sort((a, b) => a.Order - b.Order)
 
+  const { setNodeRef, isOver } = useDroppable({ id: `block-${blockNumber}` })
+
   return (
-    <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+    <div
+      ref={setNodeRef}
+      className={`rounded-lg p-4 border-2 transition-colors ${
+        isOver || isSelectedForAdd
+          ? 'border-blue-400 bg-blue-50'
+          : 'border-gray-200 bg-gray-50'
+      }`}
+    >
       {/* Block Header */}
       <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <h3 className="text-lg font-bold">📌 בלוק {blockNumber}</h3>
-          
-          {/* NEW: Block Move Buttons */}
-          {(onMoveBlockUp || onMoveBlockDown) && (
-            <div className="flex gap-1">
-              <button
-                onClick={onMoveBlockUp}
-                disabled={isFirstBlock}
-                className="p-1 text-gray-600 hover:text-blue-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                title="הזז בלוק למעלה"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-                </svg>
-              </button>
-              <button
-                onClick={onMoveBlockDown}
-                disabled={isLastBlock}
-                className="p-1 text-gray-600 hover:text-blue-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                title="הזז בלוק למטה"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
-            </div>
-          )}
-        </div>
-        
+        <h3 className="text-lg font-bold">📌 בלוק {blockNumber}</h3>
         <button
           onClick={onDeleteBlock}
           className="text-red-600 hover:text-red-700 text-sm font-medium"
-          title="מחק בלוק"
         >
           🗑️ מחק בלוק
         </button>
       </div>
 
       {/* Exercises */}
-      <div className="space-y-3">
-        {sortedExercises.map((ex, index) => (
-          <div key={ex.WorkoutExerciseID} className="relative">
-            {/* Order Badge */}
-            <div className="absolute -right-2 -top-2 bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold z-10">
-              {index + 1}
+      <SortableContext
+        items={sortedExercises.map(e => e.WorkoutExerciseID)}
+        strategy={verticalListSortingStrategy}
+      >
+        <div className="space-y-3">
+          {sortedExercises.length === 0 && (
+            <div className="py-6 text-center text-gray-400 text-sm border border-dashed border-gray-300 rounded-lg">
+              גרור תרגיל לכאן
             </div>
-            
-            <ExerciseForm
+          )}
+
+          {sortedExercises.map((ex, index) => (
+            <SortableExerciseItem
+              key={ex.WorkoutExerciseID}
               workoutExercise={ex}
               exercise={ex.Exercise}
+              index={index}
               onChange={(updates) => onUpdateExercise(ex.WorkoutExerciseID, updates)}
               onRemove={() => onRemoveExercise(ex.WorkoutExerciseID)}
-              onMoveUp={onMoveExerciseUp ? () => onMoveExerciseUp(ex.WorkoutExerciseID) : undefined}
-              onMoveDown={onMoveExerciseDown ? () => onMoveExerciseDown(ex.WorkoutExerciseID) : undefined}
-              isFirst={index === 0}
-              isLast={index === sortedExercises.length - 1}
             />
-          </div>
-        ))}
+          ))}
 
-        {/* Add Exercise Button */}
-        <button
-          onClick={onAddExercise}
-          className="w-full border-2 border-dashed border-gray-300 rounded-lg py-3 text-gray-500 hover:border-blue-500 hover:text-blue-600 transition-colors"
-        >
-          + הוסף תרגיל
-        </button>
-      </div>
+          <button
+            onClick={onAddExercise}
+            className={`w-full border-2 border-dashed rounded-lg py-3 text-sm transition-colors ${
+              isSelectedForAdd
+                ? 'border-blue-500 text-blue-600 bg-blue-50'
+                : 'border-gray-300 text-gray-500 hover:border-blue-500 hover:text-blue-600'
+            }`}
+          >
+            {isSelectedForAdd ? '👉 בחר תרגיל מהסיידבר' : `+ הוסף תרגיל לבלוק ${blockNumber}`}
+          </button>
+        </div>
+      </SortableContext>
     </div>
   )
 }

@@ -10,10 +10,6 @@ interface Props {
   exercise: Exercise
   onChange: (updates: Partial<WorkoutExercise>) => void
   onRemove: () => void
-  onMoveUp?: () => void    // NEW
-  onMoveDown?: () => void  // NEW
-  isFirst?: boolean        // NEW
-  isLast?: boolean         // NEW
   dragHandleProps?: any
 }
 
@@ -22,10 +18,6 @@ export default function ExerciseForm({
   exercise,
   onChange,
   onRemove,
-  onMoveUp,      // NEW
-  onMoveDown,    // NEW
-  isFirst,       // NEW
-  isLast,        // NEW
   dragHandleProps,
 }: Props) {
   const [localData, setLocalData] = useState(workoutExercise)
@@ -44,66 +36,38 @@ export default function ExerciseForm({
 
   return (
     <div className="bg-white border border-gray-200 rounded-lg p-3 hover:shadow-md transition-shadow group">
-      {/* Header with drag handle */}
+      {/* Header — drag handle covers icon + name, not the remove button */}
       <div className="flex items-center gap-2 mb-3">
-        {/* Drag Handle */}
         <div
           {...dragHandleProps}
-          className="cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600"
+          className="flex items-center gap-2 flex-1 min-w-0 cursor-grab active:cursor-grabbing"
         >
-          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+          <svg className="w-5 h-5 shrink-0 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
             <path d="M7 2a2 2 0 00-2 2v12a2 2 0 002 2h6a2 2 0 002-2V4a2 2 0 00-2-2H7zm3 14a1 1 0 100-2 1 1 0 000 2zm0-4a1 1 0 100-2 1 1 0 000 2zm0-4a1 1 0 100-2 1 1 0 000 2z" />
           </svg>
-        </div>
-
-        {/* NEW: Move Up/Down Buttons */}
-        {(onMoveUp || onMoveDown) && (
-          <div className="flex flex-col gap-0.5">
-            <button
-              onClick={onMoveUp}
-              disabled={isFirst}
-              className="text-gray-600 hover:text-blue-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-              title="הזז למעלה"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
-              </svg>
-            </button>
-            <button
-              onClick={onMoveDown}
-              disabled={isLast}
-              className="text-gray-600 hover:text-blue-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-              title="הזז למטה"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
-          </div>
-        )}
-
-        {/* Exercise Name */}
-        <div className="flex-1">
-          <div className="font-medium text-sm">{exercise.Name}</div>
-          <div className="text-xs text-gray-500">
-            {exercise.Category}
-            {exercise.IsSingleHand && (
-              <span className="ml-2 bg-purple-100 text-purple-700 px-2 py-0.5 rounded">
-                Single Hand
-              </span>
-            )}
-            {exercise.isDuration && (
-              <span className="ml-2 bg-blue-100 text-blue-700 px-2 py-0.5 rounded">
-                Duration
-              </span>
-            )}
+          <div className="flex-1 min-w-0">
+            <div className="font-medium text-sm truncate">{exercise.Name}</div>
+            <div className="text-xs text-gray-500">
+              {exercise.Category}
+              {exercise.IsSingleHand && (
+                <span className="ml-2 bg-purple-100 text-purple-700 px-2 py-0.5 rounded">
+                  Single Hand
+                </span>
+              )}
+              {exercise.isDuration && (
+                <span className="ml-2 bg-blue-100 text-blue-700 px-2 py-0.5 rounded">
+                  Duration
+                </span>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* Remove Button */}
+        {/* Remove button — stops pointer propagation so it doesn't start a drag */}
         <button
           onClick={onRemove}
-          className="opacity-0 group-hover:opacity-100 text-red-600 hover:text-red-700 transition-opacity"
+          onPointerDown={e => e.stopPropagation()}
+          className="opacity-0 group-hover:opacity-100 text-red-600 hover:text-red-700 transition-opacity shrink-0"
           title="הסר תרגיל"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

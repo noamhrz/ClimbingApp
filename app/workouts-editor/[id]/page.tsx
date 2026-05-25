@@ -8,7 +8,7 @@ import { useAuth, useActiveUserEmail } from '@/context/AuthContext'
 import { WorkoutFormData, WorkoutWithExercises } from '@/types/workouts'
 import { fetchWorkoutWithExercises, updateWorkout } from '@/lib/workout-api'
 import WorkoutForm from '@/components/workouts/WorkoutForm'
-import WorkoutExercises from '@/components/workouts/WorkoutExercises'
+import WorkoutExercises, { WorkoutExercisesHandle } from '@/components/workouts/WorkoutExercises'
 
 export default function EditWorkoutPage() {
   const params = useParams()
@@ -24,6 +24,7 @@ export default function EditWorkoutPage() {
   const [autoSaving, setAutoSaving] = useState(false)
   const [userRole, setUserRole] = useState<'admin' | 'coach' | null>(null)
   const autoSaveTimeout = useRef<NodeJS.Timeout | null>(null)
+  const exercisesRef = useRef<WorkoutExercisesHandle>(null)
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -122,7 +123,6 @@ export default function EditWorkoutPage() {
   const handleSave = async () => {
     if (!formData) return
 
-    // Validation
     if (!formData.Name.trim()) {
       alert('שם האימון חובה')
       return
@@ -131,6 +131,15 @@ export default function EditWorkoutPage() {
     setSaving(true)
     try {
       await updateWorkout(workoutId, formData)
+
+      if (formData.containExercise && exercisesRef.current) {
+        const ok = await exercisesRef.current.saveExercises()
+        if (!ok) {
+          alert('שגיאה בשמירת תרגילים')
+          return
+        }
+      }
+
       alert('האימון נשמר בהצלחה!')
       router.push('/workouts-editor')
     } catch (error) {
@@ -202,6 +211,7 @@ export default function EditWorkoutPage() {
       {formData.containExercise && (
         <div className="mb-6">
           <WorkoutExercises
+            ref={exercisesRef}
             workoutId={workoutId}
             exercises={workout.exercises}
             onUpdate={handleExercisesUpdate}

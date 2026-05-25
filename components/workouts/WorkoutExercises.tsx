@@ -1,20 +1,25 @@
-// components/workouts/WorkoutExercises.tsx
 'use client'
 
-import { useState } from 'react'
-import { WorkoutExerciseWithDetails, Exercise, DEFAULT_WORKOUT_EXERCISE } from '@/types/workouts'
+import { useState, useEffect, useCallback, useRef, forwardRef, useImperativeHandle } from 'react'
 import {
-  addExerciseToWorkout,
-  updateWorkoutExercise,
-  removeExerciseFromWorkout,
-  deleteBlock,
-  moveExerciseUp,      // NEW
-  moveExerciseDown,    // NEW
-  moveBlockUp,         // NEW
-  moveBlockDown,       // NEW
-} from '@/lib/workout-api'
+  DndContext,
+  DragEndEvent,
+  DragStartEvent,
+  DragOverlay,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  closestCenter,
+} from '@dnd-kit/core'
+import { arrayMove } from '@dnd-kit/sortable'
+import { WorkoutExerciseWithDetails, Exercise, DEFAULT_WORKOUT_EXERCISE } from '@/types/workouts'
+import { supabase } from '@/lib/supabaseClient'
 import BlockContainer from './BlockContainer'
 import ExerciseSidebar from './ExerciseSidebar'
+
+export interface WorkoutExercisesHandle {
+  saveExercises: () => Promise<boolean>
+}
 
 interface Props {
   workoutId: number
@@ -22,253 +27,311 @@ interface Props {
   onUpdate: () => void
 }
 
-export default function WorkoutExercises({ workoutId, exercises, onUpdate }: Props) {
+const WorkoutExercises = forwardRef<WorkoutExercisesHandle, Props>(function WorkoutExercises(
+  { workoutId, exercises, onUpdate },
+  ref
+) {
+  const [localExercises, setLocalExercises] = useState<WorkoutExerciseWithDetails[]>(exercises)
   const [showSidebar, setShowSidebar] = useState(true)
-  const [loading, setLoading] = useState(false)
-  const [selectedBlockForAdd, setSelectedBlockForAdd] = useState<number | null>(null)
+  const [saving, setSaving] = useState(false)
+  const [activeId, setActiveId] = useState<number | null>(null)
+  const [selectedBlock, setSelectedBlock] = useState<number | null>(null)
 
-  // Group exercises by block
-  const blocks = exercises.reduce((acc, ex) => {
+  // Always-current ref — avoids stale closure inside saveExercises
+  const localExercisesRef = useRef<WorkoutExerciseWithDetails[]>(localExercises)
+  useEffect(() => {
+    localExercisesRef.current = localExercises
+  }, [localExercises])
+
+  // Sync from parent only on initial load / after explicit DB reload
+  useEffect(() => {
+    setLocalExercises(exercises)
+  }, [exercises])
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
+  )
+
+  const blockMap = localExercises.reduce((acc, ex) => {
     if (!acc[ex.Block]) acc[ex.Block] = []
     acc[ex.Block].push(ex)
     return acc
   }, {} as Record<number, WorkoutExerciseWithDetails[]>)
 
-  const blockNumbers = Object.keys(blocks)
-    .map(Number)
-    .sort((a, b) => a - b)
+  const blockNumbers = Object.keys(blockMap).map(Number).sort((a, b) => a - b)
+  const nextBlock = blockNumbers.length > 0 ? Math.max(...blockNumbers) + 1 : 1
 
-  const handleAddExercise = async (exercise: Exercise, blockNumber?: number) => {
-    setLoading(true)
-    try {
-      // Determine target block
-      let targetBlock: number
-      if (blockNumber !== undefined) {
-        targetBlock = blockNumber
-      } else if (selectedBlockForAdd !== null) {
-        targetBlock = selectedBlockForAdd
-        setSelectedBlockForAdd(null) // Reset after adding
-      } else {
-        targetBlock = blockNumbers.length > 0 ? Math.max(...blockNumbers) + 1 : 1
-      }
-      
-      // Get next order number in block
-      const blockExercises = blocks[targetBlock] || []
-      const nextOrder = blockExercises.length + 1
+  const handleAddExercise = (exercise: Exercise, blockNumber?: number) => {
+    const targetBlock = blockNumber ?? nextBlock
+    setSelectedBlock(null)
+    const blockExes = blockMap[targetBlock] ?? []
 
-      // Determine defaults based on exercise type
-      const duration = exercise.isDuration ? DEFAULT_WORKOUT_EXERCISE.Duration : null
-      const reps = exercise.isDuration ? 1 : DEFAULT_WORKOUT_EXERCISE.Reps
-
-      await addExerciseToWorkout(
-        workoutId,
-        exercise.ExerciseID,
-        targetBlock,
-        nextOrder,
-        DEFAULT_WORKOUT_EXERCISE.Sets,
-        reps,
-        duration,
-        DEFAULT_WORKOUT_EXERCISE.Rest
-      )
-
-      onUpdate()
-    } catch (error) {
-      console.error('Error adding exercise:', error)
-      alert('שגיאה בהוספת תרגיל')
-    } finally {
-      setLoading(false)
-    }
+    setLocalExercises(prev => [
+      ...prev,
+      {
+        WorkoutExerciseID: -(Date.now()),
+        WorkoutID: workoutId,
+        ExerciseID: exercise.ExerciseID,
+        Sets: DEFAULT_WORKOUT_EXERCISE.Sets,
+        Reps: exercise.isDuration ? 1 : DEFAULT_WORKOUT_EXERCISE.Reps,
+        Duration: exercise.isDuration ? DEFAULT_WORKOUT_EXERCISE.Duration : null,
+        Rest: DEFAULT_WORKOUT_EXERCISE.Rest,
+        Order: blockExes.length + 1,
+        Block: targetBlock,
+        Exercise: exercise,
+      },
+    ])
   }
 
-  const handleUpdateExercise = async (exerciseId: number, updates: any) => {
-    try {
-      await updateWorkoutExercise(exerciseId, updates)
-      // Don't need to call onUpdate for every change - too many requests
-      // The local state updates via ExerciseForm onChange
-    } catch (error) {
-      console.error('Error updating exercise:', error)
-      alert('שגיאה בעדכון תרגיל')
-      onUpdate() // Refresh on error
-    }
+  const handleUpdateExercise = (exerciseId: number, updates: Partial<WorkoutExerciseWithDetails>) => {
+    setLocalExercises(prev =>
+      prev.map(e => e.WorkoutExerciseID === exerciseId ? { ...e, ...updates } : e)
+    )
   }
 
-  const handleRemoveExercise = async (exerciseId: number) => {
+  const handleRemoveExercise = (exerciseId: number) => {
     if (!confirm('האם להסיר תרגיל זה?')) return
-    
-    setLoading(true)
-    try {
-      await removeExerciseFromWorkout(exerciseId)
-      onUpdate()
-    } catch (error) {
-      console.error('Error removing exercise:', error)
-      alert('שגיאה בהסרת תרגיל')
-    } finally {
-      setLoading(false)
-    }
+    setLocalExercises(prev => {
+      const removedEx = prev.find(e => e.WorkoutExerciseID === exerciseId)
+      if (!removedEx) return prev
+      const filtered = prev.filter(e => e.WorkoutExerciseID !== exerciseId)
+      const block = removedEx.Block
+      const blockExes = filtered.filter(e => e.Block === block).sort((a, b) => a.Order - b.Order)
+      return filtered.map(e => {
+        if (e.Block !== block) return e
+        return { ...e, Order: blockExes.findIndex(b => b.WorkoutExerciseID === e.WorkoutExerciseID) + 1 }
+      })
+    })
   }
 
-  const handleDeleteBlock = async (blockNumber: number) => {
+  const handleDeleteBlock = (blockNumber: number) => {
     if (!confirm(`האם למחוק את בלוק ${blockNumber} עם כל התרגילים?`)) return
-    
-    setLoading(true)
+    setLocalExercises(prev => prev.filter(e => e.Block !== blockNumber))
+  }
+
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveId(event.active.id as number)
+  }
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event
+    setActiveId(null)
+    if (!over || active.id === over.id) return
+
+    const activeId = active.id as number
+    const overId = over.id
+
+    // Dropped on a block droppable (empty area between exercises or block padding)
+    if (typeof overId === 'string' && overId.startsWith('block-')) {
+      const targetBlock = parseInt(overId.replace('block-', ''))
+      setLocalExercises(prev => {
+        const activeEx = prev.find(e => e.WorkoutExerciseID === activeId)
+        if (!activeEx || activeEx.Block === targetBlock) return prev
+
+        const targetBlockExes = prev
+          .filter(e => e.Block === targetBlock)
+          .sort((a, b) => a.Order - b.Order)
+
+        let result = prev.map(e =>
+          e.WorkoutExerciseID === activeId
+            ? { ...e, Block: targetBlock, Order: targetBlockExes.length + 1 }
+            : e
+        )
+
+        // Renumber source block
+        const sourceBlock = activeEx.Block
+        const sourceExes = result.filter(e => e.Block === sourceBlock).sort((a, b) => a.Order - b.Order)
+        sourceExes.forEach((e, i) => {
+          const idx = result.findIndex(r => r.WorkoutExerciseID === e.WorkoutExerciseID)
+          if (idx !== -1) result[idx] = { ...result[idx], Order: i + 1 }
+        })
+
+        return [...result]
+      })
+      return
+    }
+
+    // Dropped on another exercise — all reads from prev to avoid stale closure
+    setLocalExercises(prev => {
+      const activeEx = prev.find(e => e.WorkoutExerciseID === activeId)
+      const overEx = prev.find(e => e.WorkoutExerciseID === Number(overId))
+      if (!activeEx || !overEx) return prev
+
+      if (activeEx.Block === overEx.Block) {
+        // Same block — reorder
+        const block = activeEx.Block
+        const blockExes = prev.filter(e => e.Block === block).sort((a, b) => a.Order - b.Order)
+        const oldIdx = blockExes.findIndex(e => e.WorkoutExerciseID === activeId)
+        const newIdx = blockExes.findIndex(e => e.WorkoutExerciseID === Number(overId))
+        if (oldIdx === newIdx) return prev
+
+        const reordered = arrayMove(blockExes, oldIdx, newIdx).map((e, i) => ({ ...e, Order: i + 1 }))
+        return prev.map(e => reordered.find(r => r.WorkoutExerciseID === e.WorkoutExerciseID) || e)
+      }
+
+      // Cross-block — move to target block at specific position
+      const targetBlock = overEx.Block
+      const targetBlockExes = prev
+        .filter(e => e.Block === targetBlock && e.WorkoutExerciseID !== activeId)
+        .sort((a, b) => a.Order - b.Order)
+      const overIdx = targetBlockExes.findIndex(e => e.WorkoutExerciseID === Number(overId))
+      const insertAt = overIdx === -1 ? targetBlockExes.length : overIdx
+
+      const newTargetBlock = [
+        ...targetBlockExes.slice(0, insertAt),
+        { ...activeEx, Block: targetBlock },
+        ...targetBlockExes.slice(insertAt),
+      ].map((e, i) => ({ ...e, Order: i + 1 }))
+
+      const sourceExes = prev
+        .filter(e => e.Block === activeEx.Block && e.WorkoutExerciseID !== activeId)
+        .sort((a, b) => a.Order - b.Order)
+        .map((e, i) => ({ ...e, Order: i + 1 }))
+
+      return [
+        ...prev.filter(e => e.Block !== targetBlock && e.Block !== activeEx.Block),
+        ...newTargetBlock,
+        ...sourceExes,
+      ]
+    })
+  }
+
+  // Reads from ref so it's always up-to-date regardless of render cycle
+  const saveExercises = useCallback(async (): Promise<boolean> => {
+    const exs = localExercisesRef.current
+    console.log('Saving exercises:', JSON.stringify(exs.map(e => ({ id: e.ExerciseID, block: e.Block, order: e.Order }))))
+    setSaving(true)
     try {
-      await deleteBlock(workoutId, blockNumber)
-      onUpdate()
+      const { error: deleteError } = await supabase
+        .from('WorkoutsExercises')
+        .delete()
+        .eq('WorkoutID', workoutId)
+
+      if (deleteError) throw deleteError
+
+      if (exs.length > 0) {
+        const { error: insertError } = await supabase
+          .from('WorkoutsExercises')
+          .insert(
+            exs.map(e => ({
+              WorkoutID: workoutId,
+              ExerciseID: e.ExerciseID,
+              Sets: e.Sets,
+              Reps: e.Reps,
+              Rest: e.Rest,
+              Order: e.Order,
+              Block: e.Block,
+              Duration: e.Duration,
+            }))
+          )
+
+        if (insertError) throw insertError
+      }
+
+      return true
     } catch (error) {
-      console.error('Error deleting block:', error)
-      alert('שגיאה במחיקת בלוק')
+      console.error('Error saving exercises:', error)
+      return false
     } finally {
-      setLoading(false)
+      setSaving(false)
+    }
+  }, [workoutId])
+
+  useImperativeHandle(ref, () => ({ saveExercises }), [saveExercises])
+
+  // Standalone green button — save + reload IDs from DB
+  const handleSaveClick = async () => {
+    const ok = await saveExercises()
+    if (ok) {
+      onUpdate()
+    } else {
+      alert('שגיאה בשמירת תרגילים')
     }
   }
 
-  // NEW: Move Exercise Up
-  const handleMoveExerciseUp = async (exerciseId: number) => {
-    setLoading(true)
-    try {
-      await moveExerciseUp(exerciseId)
-      onUpdate()
-    } catch (error) {
-      console.error('Error moving exercise up:', error)
-      alert('שגיאה בהזזת תרגיל')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  // NEW: Move Exercise Down
-  const handleMoveExerciseDown = async (exerciseId: number) => {
-    setLoading(true)
-    try {
-      await moveExerciseDown(exerciseId)
-      onUpdate()
-    } catch (error) {
-      console.error('Error moving exercise down:', error)
-      alert('שגיאה בהזזת תרגיל')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  // NEW: Move Block Up
-  const handleMoveBlockUp = async (blockNumber: number) => {
-    setLoading(true)
-    try {
-      await moveBlockUp(workoutId, blockNumber)
-      onUpdate()
-    } catch (error) {
-      console.error('Error moving block up:', error)
-      alert('שגיאה בהזזת בלוק')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  // NEW: Move Block Down
-  const handleMoveBlockDown = async (blockNumber: number) => {
-    setLoading(true)
-    try {
-      await moveBlockDown(workoutId, blockNumber)
-      onUpdate()
-    } catch (error) {
-      console.error('Error moving block down:', error)
-      alert('שגיאה בהזזת בלוק')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleAddNewBlock = () => {
-    const newBlockNumber = blockNumbers.length > 0 ? Math.max(...blockNumbers) + 1 : 1
-    setSelectedBlockForAdd(newBlockNumber)
-    // Highlight sidebar or show message
-    alert(`בלוק ${newBlockNumber} יווצר כשתוסיף תרגיל ראשון מהסיידבר 👉`)
-  }
+  const activeExercise = activeId != null
+    ? localExercises.find(e => e.WorkoutExerciseID === activeId)
+    : null
 
   return (
-    <div className="flex gap-6 relative">
-      {/* Loading Overlay */}
-      {loading && (
-        <div className="absolute inset-0 bg-white/50 z-50 flex items-center justify-center">
-          <div className="bg-white rounded-lg shadow-lg p-6">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            <p className="mt-2 text-gray-600">עובד...</p>
-          </div>
-        </div>
-      )}
-
-      {/* Main Content */}
-      <div className="flex-1">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold">תרגילים באימון</h2>
-          <button
-            onClick={() => setShowSidebar(!showSidebar)}
-            className="text-sm text-blue-600 hover:underline md:hidden"
-          >
-            {showSidebar ? 'הסתר' : 'הצג'} תרגילים זמינים
-          </button>
-        </div>
-
-        {blockNumbers.length === 0 ? (
-          <div className="bg-gray-50 rounded-lg p-12 text-center border-2 border-dashed border-gray-300">
-            <p className="text-gray-600 mb-2 text-lg font-medium">עדיין אין תרגילים באימון</p>
-            <p className="text-sm text-gray-500 mb-4">
-              👉 לחץ על תרגיל מהצד כדי להתחיל
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-6">
-            {blockNumbers.map((blockNum, index) => (
-              <BlockContainer
-                key={blockNum}
-                blockNumber={blockNum}
-                exercises={blocks[blockNum]}
-                onUpdateExercise={handleUpdateExercise}
-                onRemoveExercise={handleRemoveExercise}
-                onDeleteBlock={() => handleDeleteBlock(blockNum)}
-                onAddExercise={() => {
-                  setSelectedBlockForAdd(blockNum)
-                  alert(`לחץ על תרגיל מהסיידבר כדי להוסיף לבלוק ${blockNum} 👉`)
-                }}
-                onMoveBlockUp={() => handleMoveBlockUp(blockNum)}
-                onMoveBlockDown={() => handleMoveBlockDown(blockNum)}
-                onMoveExerciseUp={handleMoveExerciseUp}
-                onMoveExerciseDown={handleMoveExerciseDown}
-                isFirstBlock={index === 0}
-                isLastBlock={index === blockNumbers.length - 1}
-              />
-            ))}
-
-            {/* Add New Block */}
-            <div className="bg-blue-50 border-2 border-dashed border-blue-300 rounded-lg p-8 text-center">
-              <p className="text-gray-700 mb-3">
-                💡 <strong>רוצה להוסיף בלוק חדש?</strong>
-              </p>
-              <p className="text-sm text-gray-600 mb-4">
-                פשוט לחץ על תרגיל מהצד והוא יתווסף לבלוק {blockNumbers.length > 0 ? Math.max(...blockNumbers) + 1 : 1} החדש
-              </p>
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+    >
+      <div className="flex gap-6 relative">
+        {/* Main Content */}
+        <div className="flex-1">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold">תרגילים באימון</h2>
+            <div className="flex items-center gap-3">
               <button
-                onClick={handleAddNewBlock}
-                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium disabled:opacity-50"
-                disabled={loading}
+                onClick={() => setShowSidebar(!showSidebar)}
+                className="text-sm text-blue-600 hover:underline md:hidden"
               >
-                + מוכן להוסיף בלוק {blockNumbers.length > 0 ? Math.max(...blockNumbers) + 1 : 1}
+                {showSidebar ? 'הסתר' : 'הצג'} תרגילים זמינים
+              </button>
+              <button
+                onClick={handleSaveClick}
+                disabled={saving}
+                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium disabled:opacity-50 text-sm"
+              >
+                {saving ? '💾 שומר...' : '💾 שמור תרגילים'}
               </button>
             </div>
+          </div>
+
+          {blockNumbers.length === 0 ? (
+            <div className="bg-gray-50 rounded-lg p-12 text-center border-2 border-dashed border-gray-300">
+              <p className="text-gray-600 mb-2 text-lg font-medium">עדיין אין תרגילים באימון</p>
+              <p className="text-sm text-gray-500">👉 לחץ על תרגיל מהצד כדי להתחיל</p>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {blockNumbers.map(blockNum => (
+                <BlockContainer
+                  key={blockNum}
+                  blockNumber={blockNum}
+                  exercises={blockMap[blockNum]}
+                  onUpdateExercise={handleUpdateExercise}
+                  onRemoveExercise={handleRemoveExercise}
+                  onDeleteBlock={() => handleDeleteBlock(blockNum)}
+                  onAddExercise={() => setSelectedBlock(blockNum)}
+                  isSelectedForAdd={selectedBlock === blockNum}
+                />
+              ))}
+
+              <div className="bg-blue-50 border-2 border-dashed border-blue-300 rounded-lg p-6 text-center">
+                <p className="text-sm text-gray-600">
+                  לחץ על תרגיל מהסיידבר להוספה לבלוק חדש ({nextBlock})
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Sidebar */}
+        {showSidebar && (
+          <div className={`hidden md:block ${selectedBlock !== null ? 'ring-4 ring-blue-500 rounded-lg' : ''}`}>
+            <ExerciseSidebar
+              onAddExercise={(exercise) =>
+                handleAddExercise(exercise, selectedBlock ?? undefined)
+              }
+            />
           </div>
         )}
       </div>
 
-      {/* Sidebar */}
-      {showSidebar && (
-        <div className={`hidden md:block ${selectedBlockForAdd !== null ? 'ring-4 ring-blue-500 rounded-lg' : ''}`}>
-          <ExerciseSidebar
-            onAddExercise={(exercise) => {
-              handleAddExercise(exercise, selectedBlockForAdd || undefined)
-            }}
-          />
-        </div>
-      )}
-    </div>
+      <DragOverlay>
+        {activeExercise && (
+          <div className="bg-white border-2 border-blue-500 rounded-lg p-3 shadow-xl opacity-90 cursor-grabbing">
+            <span className="font-medium text-sm">{activeExercise.Exercise.Name}</span>
+          </div>
+        )}
+      </DragOverlay>
+    </DndContext>
   )
-}
+})
+
+export default WorkoutExercises
