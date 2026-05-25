@@ -199,7 +199,6 @@ const WorkoutExercises = forwardRef<WorkoutExercisesHandle, Props>(function Work
   // Reads from ref so it's always up-to-date regardless of render cycle
   const saveExercises = useCallback(async (): Promise<boolean> => {
     const exs = localExercisesRef.current
-    console.log('Saving exercises:', JSON.stringify(exs.map(e => ({ id: e.ExerciseID, block: e.Block, order: e.Order }))))
     setSaving(true)
     try {
       const { error: deleteError } = await supabase
@@ -260,7 +259,7 @@ const WorkoutExercises = forwardRef<WorkoutExercisesHandle, Props>(function Work
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      <div className="flex gap-6 relative">
+      <div className="flex gap-6 items-start relative">
         {/* Main Content */}
         <div className="flex-1">
           <div className="flex items-center justify-between mb-4">
@@ -313,7 +312,7 @@ const WorkoutExercises = forwardRef<WorkoutExercisesHandle, Props>(function Work
 
         {/* Sidebar */}
         {showSidebar && (
-          <div className={`hidden md:block ${selectedBlock !== null ? 'ring-4 ring-blue-500 rounded-lg' : ''}`}>
+          <div className={`hidden md:block sticky top-4 self-start ${selectedBlock !== null ? 'ring-4 ring-blue-500 rounded-lg' : ''}`}>
             <ExerciseSidebar
               onAddExercise={(exercise) =>
                 handleAddExercise(exercise, selectedBlock ?? undefined)

@@ -181,22 +181,17 @@ export default function ExerciseSidebar({ onAddExercise }: Props) {
   }
 
   return (
-    <div className="w-80 bg-gray-50 border-l border-gray-200 p-4 overflow-y-auto">
-      <h3 className="text-lg font-bold mb-4">תרגילים זמינים</h3>
-
-      {/* Search */}
-      <div className="mb-3">
+    <div className="w-80 bg-gray-50 border border-gray-200 rounded-lg flex flex-col" style={{ maxHeight: 'calc(100vh - 6rem)' }}>
+      {/* Fixed header — title, search, filter */}
+      <div className="p-4 border-b border-gray-200 shrink-0">
+        <h3 className="text-lg font-bold mb-3">תרגילים זמינים</h3>
         <input
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="🔍 חפש תרגיל..."
-          className="w-full border rounded-lg px-3 py-2 text-sm"
+          className="w-full border rounded-lg px-3 py-2 text-sm mb-2"
         />
-      </div>
-
-      {/* Category Filter */}
-      <div className="mb-4">
         <select
           value={selectedCategory}
           onChange={(e) => setSelectedCategory(e.target.value)}
@@ -211,25 +206,27 @@ export default function ExerciseSidebar({ onAddExercise }: Props) {
         </select>
       </div>
 
-      {/* Exercises List */}
-      {loading ? (
-        <div className="text-center py-8">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          <p className="mt-2 text-sm text-gray-600">טוען תרגילים...</p>
-        </div>
-      ) : filteredExercises.length === 0 ? (
-        <div className="text-center py-8 text-gray-500 text-sm">לא נמצאו תרגילים</div>
-      ) : (
-        <div className="space-y-2">
-          {filteredExercises.map((exercise) => (
-            <ExerciseCard
-              key={exercise.ExerciseID}
-              exercise={exercise}
-              onAddExercise={onAddExercise}
-            />
-          ))}
-        </div>
-      )}
+      {/* Scrollable exercise list */}
+      <div className="flex-1 overflow-y-auto p-4">
+        {loading ? (
+          <div className="text-center py-8">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <p className="mt-2 text-sm text-gray-600">טוען תרגילים...</p>
+          </div>
+        ) : filteredExercises.length === 0 ? (
+          <div className="text-center py-8 text-gray-500 text-sm">לא נמצאו תרגילים</div>
+        ) : (
+          <div className="space-y-2">
+            {filteredExercises.map((exercise) => (
+              <ExerciseCard
+                key={exercise.ExerciseID}
+                exercise={exercise}
+                onAddExercise={onAddExercise}
+              />
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   )
 }
