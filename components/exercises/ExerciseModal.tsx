@@ -6,6 +6,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { Exercise, ExerciseFormData } from '@/types/exercises'
+import { RoadmapCategory } from '@/types/dynamic-exercise'
 
 interface Props {
   exercise: Exercise | null
@@ -16,6 +17,7 @@ interface Props {
 
 export default function ExerciseModal({ exercise, onSave, onClose, isDuplicate = false }: Props) {
   const [categories, setCategories] = useState<string[]>([])
+  const [roadmapCategories, setRoadmapCategories] = useState<RoadmapCategory[]>([])
   const STORAGE_KEY = 'exercise-modal-draft'
   
   // ✨ Load from localStorage if creating new exercise
@@ -31,6 +33,7 @@ export default function ExerciseModal({ exercise, onSave, onClose, isDuplicate =
         IsSingleHand: false,
         isDuration: false,
         is_dynamic: false,
+        RoadmapCategoryID: null,
       }
     }
 
@@ -54,6 +57,7 @@ export default function ExerciseModal({ exercise, onSave, onClose, isDuplicate =
       IsSingleHand: false,
       isDuration: false,
       is_dynamic: false,
+      RoadmapCategoryID: null,
     }
   })
 
@@ -76,6 +80,7 @@ export default function ExerciseModal({ exercise, onSave, onClose, isDuplicate =
   // Load categories from DB
   useEffect(() => {
     loadCategories()
+    loadRoadmapCategories()
   }, [])
 
   // Load exercise data when editing or duplicating
@@ -91,6 +96,7 @@ export default function ExerciseModal({ exercise, onSave, onClose, isDuplicate =
         IsSingleHand: exercise.IsSingleHand,
         isDuration: exercise.isDuration || false,
         is_dynamic: exercise.is_dynamic || false,
+        RoadmapCategoryID: exercise.RoadmapCategoryID ?? null,
       })
     }
   }, [exercise, isDuplicate])
@@ -114,6 +120,19 @@ export default function ExerciseModal({ exercise, onSave, onClose, isDuplicate =
     }
   }
 
+  const loadRoadmapCategories = async () => {
+    try {
+      const { data } = await supabase
+        .from('RoadmapCategories')
+        .select('*')
+        .eq('IsActive', true)
+        .order('Order')
+      setRoadmapCategories(data || [])
+    } catch (err) {
+      console.error('Error loading roadmap categories:', err)
+    }
+  }
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     
@@ -129,6 +148,11 @@ export default function ExerciseModal({ exercise, onSave, onClose, isDuplicate =
 
     if (!formData.Category.trim()) {
       alert('⚠️ קטגוריה היא שדה חובה')
+      return
+    }
+
+    if (formData.is_dynamic && !formData.RoadmapCategoryID) {
+      alert('⚠️ יש לבחור קטגוריית רודמאפ לתרגיל דינמי')
       return
     }
 
@@ -313,7 +337,7 @@ export default function ExerciseModal({ exercise, onSave, onClose, isDuplicate =
               <input
                 type="checkbox"
                 checked={formData.is_dynamic}
-                onChange={(e) => setFormData({ ...formData, is_dynamic: e.target.checked })}
+                onChange={(e) => setFormData({ ...formData, is_dynamic: e.target.checked, RoadmapCategoryID: e.target.checked ? formData.RoadmapCategoryID : null })}
                 className="w-5 h-5 text-purple-600 rounded focus:ring-2 focus:ring-purple-500"
               />
               <div>
@@ -325,6 +349,26 @@ export default function ExerciseModal({ exercise, onSave, onClose, isDuplicate =
                 </p>
               </div>
             </label>
+
+            {formData.is_dynamic && (
+              <div className="mt-3 border-t border-purple-200 pt-3">
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  קטגוריית רודמאפ <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={formData.RoadmapCategoryID ?? ''}
+                  onChange={(e) => setFormData({ ...formData, RoadmapCategoryID: e.target.value ? Number(e.target.value) : null })}
+                  className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 bg-white"
+                >
+                  <option value="">-- בחר קטגוריה --</option>
+                  {roadmapCategories.map((cat) => (
+                    <option key={cat.CategoryID} value={cat.CategoryID}>
+                      {cat.Icon ? `${cat.Icon} ` : ''}{cat.Name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
 
           {/* Single Hand Checkbox */}

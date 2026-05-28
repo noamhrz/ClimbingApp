@@ -142,7 +142,6 @@ export default function DynamicExerciseEditorPage() {
 
   const [dynamicExercise, setDynamicExercise] = useState<Exercise | null>(null)
   const [categories, setCategories] = useState<RoadmapCategory[]>([])
-  const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null)
   const [levels, setLevels] = useState<RoadmapLevel[]>([])
   const [activeLevelId, setActiveLevelId] = useState<number | null>(null)
   const [allItems, setAllItems] = useState<Record<number, LocalItem[]>>({})
@@ -181,6 +180,13 @@ export default function DynamicExerciseEditorPage() {
       setCategories(cats || [])
       setAvailableExercises(availExs || [])
 
+      // Load levels from the exercise's RoadmapCategoryID
+      if (exData.RoadmapCategoryID) {
+        const lvls = await loadLevels(exData.RoadmapCategoryID)
+        setLevels(lvls)
+        if (lvls.length > 0) setActiveLevelId(lvls[0].LevelID)
+      }
+
       // Load existing items for this dynamic exercise
       const { data: items } = await supabase
         .from('dynamic_exercise_items')
@@ -189,39 +195,24 @@ export default function DynamicExerciseEditorPage() {
         .order('Order')
 
       if (items && items.length > 0) {
-        const levelIds = [...new Set(items.map((i: any) => i.LevelID as number))]
-        const { data: levelData } = await supabase
-          .from('RoadmapLevels')
-          .select('*')
-          .in('LevelID', levelIds)
-
-        if (levelData && levelData.length > 0) {
-          const catId = levelData[0].CategoryID
-          setSelectedCategoryId(catId)
-
-          const lvls = await loadLevels(catId)
-          setLevels(lvls)
-          if (lvls.length > 0) setActiveLevelId(lvls[0].LevelID)
-
-          const grouped: Record<number, LocalItem[]> = {}
-          for (const item of items as any[]) {
-            if (!grouped[item.LevelID]) grouped[item.LevelID] = []
-            grouped[item.LevelID].push({
-              id: item.DynamicExerciseItemID,
-              ExerciseID: item.ExerciseID,
-              Sets: item.Sets,
-              Reps: item.Reps,
-              Duration: item.Duration,
-              Rest: item.Rest,
-              Order: item.Order,
-              exercise: item.exercise,
-            })
-          }
-          for (const lvlId of Object.keys(grouped)) {
-            grouped[Number(lvlId)].sort((a, b) => a.Order - b.Order)
-          }
-          setAllItems(grouped)
+        const grouped: Record<number, LocalItem[]> = {}
+        for (const item of items as any[]) {
+          if (!grouped[item.LevelID]) grouped[item.LevelID] = []
+          grouped[item.LevelID].push({
+            id: item.DynamicExerciseItemID,
+            ExerciseID: item.ExerciseID,
+            Sets: item.Sets,
+            Reps: item.Reps,
+            Duration: item.Duration,
+            Rest: item.Rest,
+            Order: item.Order,
+            exercise: item.exercise,
+          })
         }
+        for (const lvlId of Object.keys(grouped)) {
+          grouped[Number(lvlId)].sort((a, b) => a.Order - b.Order)
+        }
+        setAllItems(grouped)
       }
     } catch (err) {
       console.error('Error loading dynamic exercise:', err)
@@ -288,14 +279,6 @@ export default function DynamicExerciseEditorPage() {
     return created?.LevelID ?? null
   }
 
-  const handleCategoryChange = async (catId: number) => {
-    setSelectedCategoryId(catId)
-    setAllItems({})
-    const levelList = await loadLevels(catId)
-    setLevels(levelList)
-    setActiveLevelId(levelList.length > 0 ? levelList[0].LevelID : null)
-  }
-
   const activeItems = activeLevelId ? (allItems[activeLevelId] || []) : []
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -357,6 +340,8 @@ export default function DynamicExerciseEditorPage() {
   const handleSave = async () => {
     setSaving(true)
     try {
+      const catId = dynamicExercise?.RoadmapCategoryID
+
       const { error: deleteError } = await supabase
         .from('dynamic_exercise_items')
         .delete()
@@ -367,8 +352,8 @@ export default function DynamicExerciseEditorPage() {
       // Resolve virtual level 0 to a real DB LevelID before saving
       let realLevel0Id: number | null = null
       const hasVirtualLevel0Items = (allItems[VIRTUAL_LEVEL0_ID] || []).length > 0
-      if (selectedCategoryId && hasVirtualLevel0Items) {
-        realLevel0Id = await resolveVirtualLevel0(selectedCategoryId)
+      if (catId && hasVirtualLevel0Items) {
+        realLevel0Id = await resolveVirtualLevel0(catId)
         if (!realLevel0Id) {
           alert('רמה 0 לא קיימת ב-DB. הרץ את ה-SQL migration ב-Supabase כדי ליצור אותה, ואז שמור שוב.')
           setSaving(false)
@@ -451,22 +436,24 @@ export default function DynamicExerciseEditorPage() {
         </div>
       </div>
 
-      {/* Category select */}
-      <div className="bg-white border border-gray-200 rounded-xl p-5 mb-4">
-        <label className="block text-sm font-medium text-gray-700 mb-2">קטגוריית רודמאפ</label>
-        <select
-          value={selectedCategoryId ?? ''}
-          onChange={(e) => handleCategoryChange(Number(e.target.value))}
-          className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"
-        >
-          <option value="">-- בחר קטגוריה --</option>
-          {categories.map((cat) => (
-            <option key={cat.CategoryID} value={cat.CategoryID}>
-              {cat.Icon ? `${cat.Icon} ` : ''}{cat.Name}
-            </option>
-          ))}
-        </select>
-      </div>
+      {/* Category read-only */}
+      {dynamicExercise.RoadmapCategoryID ? (() => {
+        const cat = categories.find(c => c.CategoryID === dynamicExercise.RoadmapCategoryID)
+        return (
+          <div className="bg-white border border-gray-200 rounded-xl p-5 mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">קטגוריית רודמאפ</label>
+            <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700">
+              {cat?.Icon && <span>{cat.Icon}</span>}
+              <span className="font-medium">{cat?.Name ?? `קטגוריה ${dynamicExercise.RoadmapCategoryID}`}</span>
+              <span className="text-gray-400 text-xs mr-auto">(מוגדר בתרגיל)</span>
+            </div>
+          </div>
+        )
+      })() : (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-5 mb-4 text-sm text-yellow-700">
+          ⚠️ לתרגיל זה אין קטגוריית רודמאפ. ערוך את התרגיל מדף התרגילים כדי להוסיף קטגוריה.
+        </div>
+      )}
 
       {/* Level tabs + content */}
       {levels.length > 0 && (
@@ -595,7 +582,7 @@ export default function DynamicExerciseEditorPage() {
         </button>
         <button
           onClick={handleSave}
-          disabled={saving || !selectedCategoryId}
+          disabled={saving || !dynamicExercise?.RoadmapCategoryID}
           className="px-5 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
         >
           {saving ? 'שומר...' : '💾 שמור'}

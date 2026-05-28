@@ -13,6 +13,7 @@ export interface Exercise {
   isDuration: boolean
   is_dynamic: boolean
   dynamic_exercise_id?: number | null
+  RoadmapCategoryID?: number | null
   CreatedBy?: string
   CreatedAt?: string
   UpdatedAt?: string
@@ -27,6 +28,7 @@ export interface ExerciseFormData {
   IsSingleHand: boolean
   isDuration: boolean
   is_dynamic: boolean
+  RoadmapCategoryID?: number | null
 }
 
 export interface ExerciseLog {
