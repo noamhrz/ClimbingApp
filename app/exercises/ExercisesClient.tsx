@@ -137,9 +137,9 @@ export default function ExercisesClient() {
 
   const handleCreate = async (formData: ExerciseFormData) => {
     if (!activeEmail) return
-    
+
     try {
-      const { error } = await supabase
+      const { data: created, error } = await supabase
         .from('Exercises')
         .insert({
           ...formData,
@@ -147,17 +147,22 @@ export default function ExercisesClient() {
           CreatedBy: activeEmail,
           CreatedAt: new Date().toISOString(),
         })
+        .select()
+        .single()
 
       if (error) throw error
 
-      await loadExercises()
-      await loadCategories()
-      
-      // ✨ Clear state
       setShowModal(false)
       setIsDuplicating(false)
       sessionStorage.removeItem('exercise-modal-open')
-      
+
+      if (formData.is_dynamic && created) {
+        router.push(`/exercises/dynamic/${created.ExerciseID}`)
+        return
+      }
+
+      await loadExercises()
+      await loadCategories()
       alert('✅ התרגיל נוצר בהצלחה!')
     } catch (err) {
       console.error('Error creating exercise:', err)
@@ -365,6 +370,11 @@ export default function ExercisesClient() {
               }}
               onDelete={() => handleDelete(exercise.ExerciseID, exercise.Name)}
               onDuplicate={() => handleDuplicate(exercise)}
+              onOpenDynamicEditor={
+                exercise.is_dynamic
+                  ? () => router.push(`/exercises/dynamic/${exercise.ExerciseID}`)
+                  : undefined
+              }
             />
           ))}
         </div>

@@ -30,9 +30,10 @@ export default function ExerciseModal({ exercise, onSave, onClose, isDuplicate =
         ImageURL: '',
         IsSingleHand: false,
         isDuration: false,
+        is_dynamic: false,
       }
     }
-    
+
     // Load draft for new exercises
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem(STORAGE_KEY)
@@ -52,6 +53,7 @@ export default function ExerciseModal({ exercise, onSave, onClose, isDuplicate =
       ImageURL: '',
       IsSingleHand: false,
       isDuration: false,
+      is_dynamic: false,
     }
   })
 
@@ -88,6 +90,7 @@ export default function ExerciseModal({ exercise, onSave, onClose, isDuplicate =
         ImageURL: exercise.ImageURL || '',
         IsSingleHand: exercise.IsSingleHand,
         isDuration: exercise.isDuration || false,
+        is_dynamic: exercise.is_dynamic || false,
       })
     }
   }, [exercise, isDuplicate])
@@ -299,6 +302,26 @@ export default function ExerciseModal({ exercise, onSave, onClose, isDuplicate =
                 </span>
                 <p className="text-xs text-gray-600 mt-0.5">
                   סמן אם התרגיל נמדד בשניות (למשל: פלאנק, הנג, מתיחה) במקום חזרות
+                </p>
+              </div>
+            </label>
+          </div>
+
+          {/* is_dynamic Checkbox */}
+          <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={formData.is_dynamic}
+                onChange={(e) => setFormData({ ...formData, is_dynamic: e.target.checked })}
+                className="w-5 h-5 text-purple-600 rounded focus:ring-2 focus:ring-purple-500"
+              />
+              <div>
+                <span className="text-sm font-medium text-gray-900">
+                  🧩 תרגיל דינמי (לפי רמות)
+                </span>
+                <p className="text-xs text-gray-600 mt-0.5">
+                  לאחר יצירה תועבר לעורך הדינמי להגדרת תרגילים לפי רמות רודמאפ
                 </p>
               </div>
             </label>

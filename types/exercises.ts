@@ -10,7 +10,9 @@ export interface Exercise {
   ImageURL?: string | null
   Status: 'Active' | 'Inactive'
   IsSingleHand: boolean
-  isDuration: boolean  // ✨ NEW: If true, measured in seconds instead of reps
+  isDuration: boolean
+  is_dynamic: boolean
+  dynamic_exercise_id?: number | null
   CreatedBy?: string
   CreatedAt?: string
   UpdatedAt?: string
@@ -23,7 +25,8 @@ export interface ExerciseFormData {
   VideoURL?: string
   ImageURL?: string
   IsSingleHand: boolean
-  isDuration: boolean  // ✨ NEW
+  isDuration: boolean
+  is_dynamic: boolean
 }
 
 export interface ExerciseLog {

@@ -161,6 +161,7 @@ export default function UserHeader() {
               <DropdownItem href="/coach/urgency">🚨 דחיפות</DropdownItem>
               <DropdownItem href="/admin/assign-workouts">📋 הקצאה</DropdownItem>
               <DropdownItem href="/exercises">💪 תרגילים</DropdownItem>
+              <DropdownItem href="/exercises/dynamic">🧩 תרגילים דינמיים</DropdownItem>
               <DropdownItem href="/workouts-editor">🏋️ עורך אימונים</DropdownItem>
               {isAdmin && <DropdownItem href="/admin/roadmap-builder">🗺️ בניית Roadmap</DropdownItem>}
               {isAdmin && <DropdownItem href="/admin/roadmap-progress">📊 התקדמות Roadmap</DropdownItem>}

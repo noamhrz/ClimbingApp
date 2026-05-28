@@ -10,10 +10,11 @@ interface Props {
   canEdit: boolean
   onEdit: () => void
   onDelete: () => void
-  onDuplicate: () => void  // ✨ NEW
+  onDuplicate: () => void
+  onOpenDynamicEditor?: () => void
 }
 
-export default function ExerciseCard({ exercise, canEdit, onEdit, onDelete, onDuplicate }: Props) {
+export default function ExerciseCard({ exercise, canEdit, onEdit, onDelete, onDuplicate, onOpenDynamicEditor }: Props) {
   // Helper function to get emoji by category
   const getCategoryEmoji = (category: string): string => {
     switch (category) {
@@ -64,6 +65,11 @@ export default function ExerciseCard({ exercise, canEdit, onEdit, onDelete, onDu
             {exercise.isDuration && (
               <span className="inline-block px-2 py-0.5 text-xs rounded-full bg-purple-100 text-purple-800">
                 ⏱️ זמן
+              </span>
+            )}
+            {exercise.is_dynamic && (
+              <span className="inline-block px-2 py-0.5 text-xs rounded-full bg-green-100 text-green-800">
+                🧩 דינמי
               </span>
             )}
             {exercise.Status === 'Inactive' && (
@@ -134,17 +140,24 @@ export default function ExerciseCard({ exercise, canEdit, onEdit, onDelete, onDu
         </div>
 
         {canEdit && (
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
+            {exercise.is_dynamic && onOpenDynamicEditor && (
+              <button
+                onClick={onOpenDynamicEditor}
+                className="text-xs px-3 py-1 bg-green-50 text-green-700 rounded hover:bg-green-100 transition font-medium"
+              >
+                🧩 עורך דינמי
+              </button>
+            )}
             <button
               onClick={onEdit}
               className="text-xs px-3 py-1 bg-blue-50 text-blue-600 rounded hover:bg-blue-100 transition font-medium"
             >
               ✏️ ערוך
             </button>
-            {/* ✨ NEW: Duplicate button */}
             <button
               onClick={onDuplicate}
-              className="text-xs px-3 py-1 bg-green-50 text-green-600 rounded hover:bg-green-100 transition font-medium"
+              className="text-xs px-3 py-1 bg-gray-50 text-gray-600 rounded hover:bg-gray-100 transition font-medium"
               title="שכפל תרגיל"
             >
               📋
