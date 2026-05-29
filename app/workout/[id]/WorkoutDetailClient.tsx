@@ -151,7 +151,35 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
   }), [exerciseForms, routes, selectedLocation, selectedBoardType, climberNotes, deloading, deloadingPercentage])
 
   const onDraftRestore = useCallback((draft: typeof draftState) => {
-    if (draft.exerciseForms?.length > 0) setExerciseForms(draft.exerciseForms)
+    if (draft.exerciseForms?.length > 0) {
+      setExerciseForms(prev => {
+        // If exercises are already loaded from server, merge only user-entered performance
+        // data into them — never replace the exercise structure (prevents stale level from overriding)
+        if (prev.length > 0) {
+          return prev.map(ex => {
+            const saved = draft.exerciseForms.find((d: any) => d.ExerciseID === ex.ExerciseID)
+            if (!saved) return ex
+            return {
+              ...ex,
+              RepsDone: saved.RepsDone,
+              DurationSec: saved.DurationSec,
+              WeightKG: saved.WeightKG,
+              RPE: saved.RPE,
+              Notes: saved.Notes,
+              Completed: saved.Completed,
+              RepsDoneLeft: saved.RepsDoneLeft,
+              DurationSecLeft: saved.DurationSecLeft,
+              WeightKGLeft: saved.WeightKGLeft,
+              RPELeft: saved.RPELeft,
+              NotesLeft: saved.NotesLeft,
+              CompletedLeft: saved.CompletedLeft,
+            }
+          })
+        }
+        // Exercises not loaded yet — restore fully
+        return draft.exerciseForms
+      })
+    }
     if (draft.routes) setRoutes(draft.routes)
     if (draft.selectedLocation !== undefined) setSelectedLocation(draft.selectedLocation)
     if (draft.selectedBoardType !== undefined) setSelectedBoardType(draft.selectedBoardType)
@@ -208,7 +236,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
           w.containClimbing = w?.containClimbing === true || w?.containClimbing === 'true'
         }
 
-        // ✨ UPDATED: Load WorkoutsExercises with Block, Sets, Reps, Duration, Rest
+        // Load WorkoutsExercises with Block, Sets, Reps, Duration, Rest
         const { data: rels } = await supabase
           .from('WorkoutsExercises')
           .select('ExerciseID, Block, Sets, Reps, Duration, Rest, Order')
@@ -220,14 +248,12 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
           const ids = rels.map((r: any) => r.ExerciseID)
           const { data: exs } = await supabase
             .from('Exercises')
-            .select('ExerciseID, Name, Description, IsSingleHand, isDuration, ImageURL, VideoURL')
+            .select('ExerciseID, Name, Description, IsSingleHand, isDuration, ImageURL, VideoURL, is_dynamic, RoadmapCategoryID')
             .in('ExerciseID', ids)
-          
+
           if (exs?.length) {
             mapped = exs.map((x) => {
-              // Find WorkoutsExercises data for this exercise
               const weData = rels.find(r => r.ExerciseID === x.ExerciseID)
-              
               return {
                 ExerciseID: x.ExerciseID,
                 Name: x.Name,
@@ -236,14 +262,13 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
                 isDuration: x.isDuration,
                 ImageURL: x.ImageURL,
                 VideoURL: x.VideoURL,
-                
-                // ✨ NEW: Exercise Goals from WorkoutsExercises
+                is_dynamic: x.is_dynamic || false,
+                RoadmapCategoryID: x.RoadmapCategoryID || null,
                 Block: weData?.Block || 1,
                 Sets: weData?.Sets || null,
                 Reps: weData?.Reps || null,
                 Duration: weData?.Duration || null,
                 Rest: weData?.Rest || null,
-                
                 RepsDone: null,
                 DurationSec: null,
                 WeightKG: null,
@@ -258,6 +283,113 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
                 CompletedLeft: false,
               }
             })
+          }
+
+          // Expand dynamic exercises into their concrete exercises for this user's level
+          const dynamicExs = mapped.filter(m => m.is_dynamic && m.RoadmapCategoryID)
+          if (dynamicExs.length > 0) {
+            const catIds = [...new Set(dynamicExs.map(m => m.RoadmapCategoryID as number))]
+
+            // Fetch user's current level via API route (uses service role, bypasses RLS)
+            const { data: { session } } = await supabase.auth.getSession()
+            let progressRows: { CategoryID: number; CurrentLevel: number }[] = []
+            if (session && email) {
+              try {
+                const res = await fetch(`/api/admin/roadmap/progress?email=${encodeURIComponent(email)}`, {
+                  headers: { Authorization: `Bearer ${session.access_token}` },
+                })
+                if (res.ok) progressRows = await res.json()
+              } catch {
+                // fallback: level 0
+              }
+            }
+
+            const levelNumByCategory: Record<number, number> = {}
+            for (const catId of catIds) levelNumByCategory[catId] = 0
+            for (const row of progressRows) levelNumByCategory[row.CategoryID] = row.CurrentLevel
+            // Fetch all RoadmapLevels for relevant categories
+            const { data: levelsRows } = await supabase
+              .from('RoadmapLevels')
+              .select('LevelID, CategoryID, LevelNumber')
+              .in('CategoryID', catIds)
+            const levelIdByCategory: Record<number, number | null> = {}
+            for (const catId of catIds) {
+              const targetNum = levelNumByCategory[catId]
+              const found = (levelsRows || []).find(l => l.CategoryID === catId && l.LevelNumber === targetNum)
+              levelIdByCategory[catId] = found?.LevelID ?? null
+            }
+            // Fetch dynamic_exercise_items for all dynamic exercises at the resolved levels
+            const dynamicExIds = dynamicExs.map(m => m.ExerciseID)
+            const resolvedLevelIds = Object.values(levelIdByCategory).filter(Boolean) as number[]
+
+            let concreteItemMap: Record<number, any[]> = {}
+            if (resolvedLevelIds.length > 0) {
+              const { data: itemRows } = await supabase
+                .from('dynamic_exercise_items')
+                .select('DynamicExerciseID, ExerciseID, LevelID, Sets, Reps, Duration, Rest, Order')
+                .in('DynamicExerciseID', dynamicExIds)
+                .in('LevelID', resolvedLevelIds)
+                .order('Order')
+
+              if (itemRows?.length) {
+                const concreteIds = [...new Set(itemRows.map(i => i.ExerciseID as number))]
+                const { data: concreteExsRows } = await supabase
+                  .from('Exercises')
+                  .select('ExerciseID, Name, IsSingleHand, isDuration, ImageURL, VideoURL')
+                  .in('ExerciseID', concreteIds)
+
+                const concreteExMap: Record<number, any> = {}
+                for (const ex of concreteExsRows || []) concreteExMap[ex.ExerciseID] = ex
+
+                for (const item of itemRows) {
+                  if (!concreteItemMap[item.DynamicExerciseID]) concreteItemMap[item.DynamicExerciseID] = []
+                  concreteItemMap[item.DynamicExerciseID].push({ ...item, exercise: concreteExMap[item.ExerciseID] })
+                }
+              }
+            }
+
+            // Replace each dynamic exercise entry with its concrete exercises
+            const expandedMapped: any[] = []
+            for (const m of mapped) {
+              if (!m.is_dynamic || !m.RoadmapCategoryID) {
+                expandedMapped.push(m)
+                continue
+              }
+              const levelId = levelIdByCategory[m.RoadmapCategoryID]
+              const items = (levelId ? concreteItemMap[m.ExerciseID] : []) || []
+              for (const item of items) {
+                if (!item.exercise) continue
+                expandedMapped.push({
+                  ExerciseID: item.exercise.ExerciseID,
+                  Name: item.exercise.Name,
+                  Description: null,
+                  IsSingleHand: item.exercise.IsSingleHand,
+                  isDuration: item.exercise.isDuration,
+                  ImageURL: item.exercise.ImageURL,
+                  VideoURL: item.exercise.VideoURL,
+                  is_dynamic: false,
+                  RoadmapCategoryID: null,
+                  Block: m.Block,
+                  Sets: item.Sets || null,
+                  Reps: item.Reps || null,
+                  Duration: item.Duration || null,
+                  Rest: item.Rest || null,
+                  RepsDone: null,
+                  DurationSec: null,
+                  WeightKG: null,
+                  RPE: null,
+                  Notes: '',
+                  Completed: false,
+                  RepsDoneLeft: null,
+                  DurationSecLeft: null,
+                  WeightKGLeft: null,
+                  RPELeft: null,
+                  NotesLeft: '',
+                  CompletedLeft: false,
+                })
+              }
+            }
+            mapped = expandedMapped
           }
         }
 
@@ -292,7 +424,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
     return () => {
       isMounted = false
     }
-  }, [id, calendarIdNum])
+  }, [id, calendarIdNum, email])
 
   // ✨ NEW: Group exercises by Block
   const exercisesByBlock = useMemo(() => {
