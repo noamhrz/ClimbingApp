@@ -206,6 +206,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
 
     const load = async () => {
       if (!id) return
+      if (!email) return  // wait for auth/email — needed for dynamic exercise level lookup
       try {
         if (calendarIdNum) {
           const { data: c } = await supabase
