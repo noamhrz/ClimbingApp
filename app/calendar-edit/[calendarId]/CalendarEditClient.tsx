@@ -118,7 +118,35 @@ export default function CalendarEditClient() {
   }), [exerciseForms, routes, selectedLocation, selectedBoardType, climberNotes])
 
   const onDraftRestore = useCallback((draft: typeof draftState) => {
-    if (draft.exerciseForms?.length > 0) setExerciseForms(draft.exerciseForms)
+    if (draft.exerciseForms?.length > 0) {
+      setExerciseForms(prev => {
+        // When exercises are already loaded from DB, only merge performance fields
+        // from the draft — never replace the exercise structure (which may differ
+        // from stale draft after dynamic expansion resolves to concrete exercises).
+        if (prev.length > 0) {
+          return prev.map(ex => {
+            const saved = draft.exerciseForms.find((d: any) => d.ExerciseID === ex.ExerciseID)
+            if (!saved) return ex
+            return {
+              ...ex,
+              RepsDone: saved.RepsDone,
+              DurationSec: saved.DurationSec,
+              WeightKG: saved.WeightKG,
+              RPE: saved.RPE,
+              Notes: saved.Notes,
+              Completed: saved.Completed,
+              RepsDoneLeft: saved.RepsDoneLeft,
+              DurationSecLeft: saved.DurationSecLeft,
+              WeightKGLeft: saved.WeightKGLeft,
+              RPELeft: saved.RPELeft,
+              NotesLeft: saved.NotesLeft,
+              CompletedLeft: saved.CompletedLeft,
+            }
+          })
+        }
+        return draft.exerciseForms
+      })
+    }
     if (draft.routes) setRoutes(draft.routes)
     if (draft.selectedLocation !== undefined) setSelectedLocation(draft.selectedLocation)
     if (draft.selectedBoardType !== undefined) setSelectedBoardType(draft.selectedBoardType)
@@ -188,10 +216,10 @@ export default function CalendarEditClient() {
 
         const ids = rels?.map((r) => r.ExerciseID) || []
 
-        // Load Exercises
+        // Load Exercises (including is_dynamic to detect dynamic placeholders)
         const { data: exs } = await supabase
           .from('Exercises')
-          .select('ExerciseID, Name, Description, IsSingleHand, isDuration, ImageURL, VideoURL')
+          .select('ExerciseID, Name, Description, IsSingleHand, isDuration, ImageURL, VideoURL, is_dynamic')
           .in('ExerciseID', ids)
 
         // Load existing logs
@@ -200,72 +228,103 @@ export default function CalendarEditClient() {
           .select('*')
           .eq('CalendarID', calendarId)
 
-        const mappedExercises =
-          exs?.map((ex) => {
-            const weData = rels?.find(r => r.ExerciseID === ex.ExerciseID)
-            
-            if (ex.IsSingleHand) {
-              const logRight = logs?.find((l) => l.ExerciseID === ex.ExerciseID && l.HandSide === 'Right')
-              const logLeft = logs?.find((l) => l.ExerciseID === ex.ExerciseID && l.HandSide === 'Left')
-              
-              return {
-                ExerciseLogID: logRight?.ExerciseLogID || null,
-                ExerciseLogIDLeft: logLeft?.ExerciseLogID || null,
-                ExerciseID: ex.ExerciseID,
-                Name: ex.Name,
-                Description: ex.Description,
-                IsSingleHand: ex.IsSingleHand,
-                isDuration: ex.isDuration,
-                ImageURL: ex.ImageURL,
-                VideoURL: ex.VideoURL,
-                
-                Block: weData?.Block || 1,
-                Sets: weData?.Sets || null,
-                Reps: weData?.Reps || null,
-                Duration: weData?.Duration || null,
-                Rest: weData?.Rest || null,
-                
-                RepsDone: logRight?.RepsDone ?? null,
-                DurationSec: logRight?.DurationSec ?? null,
-                WeightKG: logRight?.WeightKG ?? null,
-                RPE: logRight?.RPE ?? null,
-                Notes: logRight?.Notes ?? '',
-                Completed: logRight?.Completed ?? false,
-                
-                RepsDoneLeft: logLeft?.RepsDone ?? null,
-                DurationSecLeft: logLeft?.DurationSec ?? null,
-                WeightKGLeft: logLeft?.WeightKG ?? null,
-                RPELeft: logLeft?.RPE ?? null,
-                NotesLeft: logLeft?.Notes ?? '',
-                CompletedLeft: logLeft?.Completed ?? false,
-              }
-            } else {
-              const log = logs?.find((l) => l.ExerciseID === ex.ExerciseID && l.HandSide === 'Both')
-              return {
-                ExerciseLogID: log?.ExerciseLogID || null,
-                ExerciseID: ex.ExerciseID,
-                Name: ex.Name,
-                Description: ex.Description,
-                IsSingleHand: ex.IsSingleHand,
-                isDuration: ex.isDuration,
-                ImageURL: ex.ImageURL,
-                VideoURL: ex.VideoURL,
-                
-                Block: weData?.Block || 1,
-                Sets: weData?.Sets || null,
-                Reps: weData?.Reps || null,
-                Duration: weData?.Duration || null,
-                Rest: weData?.Rest || null,
-                
-                RepsDone: log?.RepsDone ?? null,
-                DurationSec: log?.DurationSec ?? null,
-                WeightKG: log?.WeightKG ?? null,
-                RPE: log?.RPE ?? null,
-                Notes: log?.Notes ?? '',
-                Completed: log?.Completed ?? false,
-              }
+        // Detect concrete exercise logs from dynamic expansion:
+        // log ExerciseIDs that are NOT in WorkoutsExercises are concrete exercises
+        // stored when a dynamic exercise was expanded at workout time.
+        const idsSet = new Set(ids)
+        const extraLogExIds = [
+          ...new Set((logs || []).map(l => l.ExerciseID).filter(id => !idsSet.has(id))),
+        ]
+
+        let concreteExMap: Record<number, any> = {}
+        if (extraLogExIds.length > 0) {
+          const { data: concreteExs } = await supabase
+            .from('Exercises')
+            .select('ExerciseID, Name, Description, IsSingleHand, isDuration, ImageURL, VideoURL')
+            .in('ExerciseID', extraLogExIds)
+          for (const ex of concreteExs || []) concreteExMap[ex.ExerciseID] = ex
+        }
+
+        const buildFormEntry = (ex: any, weData: any) => {
+          if (ex.IsSingleHand) {
+            const logRight = logs?.find(l => l.ExerciseID === ex.ExerciseID && l.HandSide === 'Right')
+            const logLeft  = logs?.find(l => l.ExerciseID === ex.ExerciseID && l.HandSide === 'Left')
+            return {
+              ExerciseLogID: logRight?.ExerciseLogID || null,
+              ExerciseLogIDLeft: logLeft?.ExerciseLogID || null,
+              ExerciseID: ex.ExerciseID,
+              Name: ex.Name,
+              Description: ex.Description,
+              IsSingleHand: ex.IsSingleHand,
+              isDuration: ex.isDuration,
+              ImageURL: ex.ImageURL,
+              VideoURL: ex.VideoURL,
+              Block: weData?.Block || 1,
+              Sets: weData?.Sets || null,
+              Reps: weData?.Reps || null,
+              Duration: weData?.Duration || null,
+              Rest: weData?.Rest || null,
+              RepsDone: logRight?.RepsDone ?? null,
+              DurationSec: logRight?.DurationSec ?? null,
+              WeightKG: logRight?.WeightKG ?? null,
+              RPE: logRight?.RPE ?? null,
+              Notes: logRight?.Notes ?? '',
+              Completed: logRight?.Completed ?? false,
+              RepsDoneLeft: logLeft?.RepsDone ?? null,
+              DurationSecLeft: logLeft?.DurationSec ?? null,
+              WeightKGLeft: logLeft?.WeightKG ?? null,
+              RPELeft: logLeft?.RPE ?? null,
+              NotesLeft: logLeft?.Notes ?? '',
+              CompletedLeft: logLeft?.Completed ?? false,
             }
-          }) || []
+          } else {
+            const log = logs?.find(l => l.ExerciseID === ex.ExerciseID && l.HandSide === 'Both')
+            return {
+              ExerciseLogID: log?.ExerciseLogID || null,
+              ExerciseID: ex.ExerciseID,
+              Name: ex.Name,
+              Description: ex.Description,
+              IsSingleHand: ex.IsSingleHand,
+              isDuration: ex.isDuration,
+              ImageURL: ex.ImageURL,
+              VideoURL: ex.VideoURL,
+              Block: weData?.Block || 1,
+              Sets: weData?.Sets || null,
+              Reps: weData?.Reps || null,
+              Duration: weData?.Duration || null,
+              Rest: weData?.Rest || null,
+              RepsDone: log?.RepsDone ?? null,
+              DurationSec: log?.DurationSec ?? null,
+              WeightKG: log?.WeightKG ?? null,
+              RPE: log?.RPE ?? null,
+              Notes: log?.Notes ?? '',
+              Completed: log?.Completed ?? false,
+            }
+          }
+        }
+
+        const mappedExercises: any[] = []
+
+        // Non-dynamic exercises: map normally.
+        // Dynamic exercises: skip when concrete logs exist (expanded exercise was logged).
+        for (const ex of exs || []) {
+          if (ex.is_dynamic && extraLogExIds.length > 0) continue
+          const weData = rels?.find(r => r.ExerciseID === ex.ExerciseID)
+          mappedExercises.push(buildFormEntry(ex, weData))
+        }
+
+        // Append concrete exercises from dynamic expansion using Block from the
+        // dynamic placeholder entry in WorkoutsExercises.
+        if (extraLogExIds.length > 0) {
+          const dynamicRel = rels?.find(r => exs?.find(e => e.ExerciseID === r.ExerciseID)?.is_dynamic)
+          const dynamicBlock = dynamicRel?.Block || 1
+          for (const concreteId of extraLogExIds) {
+            const ex = concreteExMap[concreteId]
+            if (!ex) continue
+            mappedExercises.push(buildFormEntry(ex, { Block: dynamicBlock }))
+          }
+        }
+
         setExerciseForms(mappedExercises)
 
         // Load Grades & Locations
