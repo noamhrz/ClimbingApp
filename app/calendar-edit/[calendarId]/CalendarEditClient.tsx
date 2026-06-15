@@ -873,6 +873,8 @@ export default function CalendarEditClient() {
                             isOpen={openExercises.has(ex.ExerciseID)}
                             onToggle={() => toggleExercise(ex.ExerciseID)}
                             onNext={() => handleNextExercise(ex.ExerciseID)}
+                            isLast={globalIndex === exerciseForms.length - 1}
+                            onSave={handleSave}
                           />
                         )
                       })}

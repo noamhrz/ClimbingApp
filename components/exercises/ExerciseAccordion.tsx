@@ -39,6 +39,8 @@ interface Props {
   isOpen?: boolean
   onToggle?: () => void
   onNext?: () => void   // close current, open + scroll to next exercise
+  isLast?: boolean      // true for the last exercise in the workout
+  onSave?: () => void   // called instead of onNext when isLast is true
 }
 
 export default function ExerciseAccordion({
@@ -48,6 +50,8 @@ export default function ExerciseAccordion({
   isOpen = false,
   onToggle,
   onNext,
+  isLast = false,
+  onSave,
 }: Props) {
   const [localExpanded, setLocalExpanded] = useState(false)
 
@@ -218,10 +222,10 @@ export default function ExerciseAccordion({
           {/* Close / next button */}
           <div className="mt-4 flex justify-center">
             <button
-              onClick={onNext ?? handleToggle}
+              onClick={isLast ? onSave : (onNext ?? handleToggle)}
               className="px-6 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-lg text-sm font-medium transition-colors"
             >
-              ✓ סיום והבא ←
+              {isLast ? '✓ סיום ושמירה' : '✓ סיום והבא ←'}
             </button>
           </div>
         </div>

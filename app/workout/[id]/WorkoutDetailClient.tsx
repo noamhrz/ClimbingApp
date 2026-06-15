@@ -970,6 +970,8 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
                             isOpen={openExercises.has(ex.ExerciseID)}
                             onToggle={() => toggleExercise(ex.ExerciseID)}
                             onNext={() => handleNextExercise(ex.ExerciseID)}
+                            isLast={globalIndex === exerciseForms.length - 1}
+                            onSave={onComplete}
                           />
                         )
                       })}
