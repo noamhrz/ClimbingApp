@@ -242,6 +242,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
           .from('WorkoutsExercises')
           .select('ExerciseID, Block, Sets, Reps, Duration, Rest, Order')
           .eq('WorkoutID', id)
+          .order('Block')
           .order('Order')
 
         let mapped: any[] = []
@@ -253,8 +254,11 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
             .in('ExerciseID', ids)
 
           if (exs?.length) {
-            mapped = exs.map((x) => {
-              const weData = rels.find(r => r.ExerciseID === x.ExerciseID)
+            const exsById: Record<number, any> = {}
+            for (const x of exs) exsById[x.ExerciseID] = x
+            mapped = rels.map((rel) => {
+              const x = exsById[rel.ExerciseID]
+              if (!x) return null
               return {
                 ExerciseID: x.ExerciseID,
                 Name: x.Name,
@@ -265,11 +269,11 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
                 VideoURL: x.VideoURL,
                 is_dynamic: x.is_dynamic || false,
                 RoadmapCategoryID: x.RoadmapCategoryID || null,
-                Block: weData?.Block || 1,
-                Sets: weData?.Sets || null,
-                Reps: weData?.Reps || null,
-                Duration: weData?.Duration || null,
-                Rest: weData?.Rest || null,
+                Block: rel.Block || 1,
+                Sets: rel.Sets || null,
+                Reps: rel.Reps || null,
+                Duration: rel.Duration || null,
+                Rest: rel.Rest || null,
                 RepsDone: null,
                 DurationSec: null,
                 WeightKG: null,
@@ -283,7 +287,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
                 NotesLeft: '',
                 CompletedLeft: false,
               }
-            })
+            }).filter(Boolean)
           }
 
           // Expand dynamic exercises into their concrete exercises for this user's level

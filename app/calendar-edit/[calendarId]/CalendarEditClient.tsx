@@ -212,6 +212,7 @@ export default function CalendarEditClient() {
           .from('WorkoutsExercises')
           .select('ExerciseID, Block, Sets, Reps, Duration, Rest, Order')
           .eq('WorkoutID', cal.WorkoutID)
+          .order('Block')
           .order('Order')
 
         const ids = rels?.map((r) => r.ExerciseID) || []
@@ -305,24 +306,30 @@ export default function CalendarEditClient() {
 
         const mappedExercises: any[] = []
 
-        // Non-dynamic exercises: map normally.
-        // Dynamic exercises: skip when concrete logs exist (expanded exercise was logged).
-        for (const ex of exs || []) {
-          if (ex.is_dynamic && extraLogExIds.length > 0) continue
-          const weData = rels?.find(r => r.ExerciseID === ex.ExerciseID)
-          mappedExercises.push(buildFormEntry(ex, weData))
-        }
+        // Build lookup map for O(1) access
+        const exsMap: Record<number, any> = {}
+        for (const ex of exs || []) exsMap[ex.ExerciseID] = ex
 
-        // Append concrete exercises from dynamic expansion using Block from the
-        // dynamic placeholder entry in WorkoutsExercises.
-        if (extraLogExIds.length > 0) {
-          const dynamicRel = rels?.find(r => exs?.find(e => e.ExerciseID === r.ExerciseID)?.is_dynamic)
-          const dynamicBlock = dynamicRel?.Block || 1
-          for (const concreteId of extraLogExIds) {
-            const ex = concreteExMap[concreteId]
-            if (!ex) continue
-            mappedExercises.push(buildFormEntry(ex, { Block: dynamicBlock }))
+        // Iterate rels (already sorted by Block then Order) to preserve correct exercise sequence.
+        // When a dynamic exercise slot has concrete logs, insert the concrete exercises at that
+        // position (sorted by ExerciseLogID as proxy for execution order).
+        for (const rel of rels || []) {
+          const ex = exsMap[rel.ExerciseID]
+          if (!ex) continue
+          if (ex.is_dynamic && extraLogExIds.length > 0) {
+            const sortedConcreteIds = [...extraLogExIds].sort((a, b) => {
+              const logA = logs?.find(l => l.ExerciseID === a)
+              const logB = logs?.find(l => l.ExerciseID === b)
+              return (logA?.ExerciseLogID || 0) - (logB?.ExerciseLogID || 0)
+            })
+            for (const concreteId of sortedConcreteIds) {
+              const concreteEx = concreteExMap[concreteId]
+              if (!concreteEx) continue
+              mappedExercises.push(buildFormEntry(concreteEx, { Block: rel.Block || 1 }))
+            }
+            continue
           }
+          mappedExercises.push(buildFormEntry(ex, rel))
         }
 
         setExerciseForms(mappedExercises)
