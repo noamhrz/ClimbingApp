@@ -106,9 +106,9 @@ export default function DayListView({ events, date, onEventClick, onNavigate, on
       // Horizontal swipe (more than vertical)
       if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 50) {
         if (diffX > 0) {
-          goToNextDay() // Swipe left = next day
+          goToPrevDay() // Swipe right-to-left = prev day
         } else {
-          goToPrevDay() // Swipe right = prev day
+          goToNextDay() // Swipe left-to-right = next day
         }
       }
       
