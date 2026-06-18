@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '@/lib/supabaseClient'
 import moment from 'moment-timezone'
@@ -35,6 +35,8 @@ export default function AddWorkoutModal({
   const [isLoadingExisting, setIsLoadingExisting] = useState(false)
   const [orderedWorkouts, setOrderedWorkouts] = useState<{id: number, name: string}[]>([])
   const [draggedId, setDraggedId] = useState<number | null>(null)
+  const draggedIdRef = useRef<number | null>(null)
+  const dragOrderRef = useRef<{id: number, name: string}[]>([])
   // workoutId → calendarId for entries already saved on this day
   const [existingCalendarMap, setExistingCalendarMap] = useState<Map<number, number>>(new Map())
 
@@ -114,23 +116,32 @@ export default function AddWorkoutModal({
     })
   }
 
-  const handleDragStart = (id: number) => setDraggedId(id)
-
-  const handleDragOver = (e: React.DragEvent, targetId: number) => {
-    e.preventDefault()
-    if (draggedId === null || draggedId === targetId) return
-    setOrderedWorkouts(prev => {
-      const from = prev.findIndex(w => w.id === draggedId)
-      const to = prev.findIndex(w => w.id === targetId)
-      if (from === -1 || to === -1) return prev
-      const next = [...prev]
-      const [item] = next.splice(from, 1)
-      next.splice(to, 0, item)
-      return next
-    })
+  const handleDragStart = (id: number) => {
+    draggedIdRef.current = id
+    dragOrderRef.current = [...orderedWorkouts]
+    setDraggedId(id)
   }
 
-  const handleDragEnd = () => setDraggedId(null)
+  const handleDragOver = (e: React.DragEvent) => e.preventDefault()
+
+  const handleDragEnter = (targetId: number) => {
+    const sourceId = draggedIdRef.current
+    if (sourceId === null || sourceId === targetId) return
+    const current = dragOrderRef.current
+    const from = current.findIndex(w => w.id === sourceId)
+    const to = current.findIndex(w => w.id === targetId)
+    if (from === -1 || to === -1) return
+    const next = [...current]
+    const [item] = next.splice(from, 1)
+    next.splice(to, 0, item)
+    dragOrderRef.current = next
+    setOrderedWorkouts(next)
+  }
+
+  const handleDragEnd = () => {
+    draggedIdRef.current = null
+    setDraggedId(null)
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -148,17 +159,14 @@ export default function AddWorkoutModal({
       if (selectedTime === 'afternoon') hour = 14
       else if (selectedTime === 'evening') hour = 18
 
-      // Fetch durations only for newly-added workouts
-      const newWorkoutIds = orderedWorkouts
-        .filter(w => !existingCalendarMap.has(w.id))
-        .map(w => w.id)
-
+      // Fetch durations for all ordered workouts (needed for StartTime/EndTime sync)
+      const allWorkoutIds = orderedWorkouts.map(w => w.id)
       let durationMap = new Map<number, number>()
-      if (newWorkoutIds.length > 0) {
+      if (allWorkoutIds.length > 0) {
         const { data: workoutsData, error: workoutsError } = await supabase
           .from('Workouts')
           .select('WorkoutID, EstimatedTotalTime')
-          .in('WorkoutID', newWorkoutIds)
+          .in('WorkoutID', allWorkoutIds)
 
         if (workoutsError) {
           console.error('Error fetching workout durations:', workoutsError)
@@ -172,19 +180,21 @@ export default function AddWorkoutModal({
       }
 
       // Split into updates (existing) and inserts (new), preserving full orderedWorkouts order
-      const updates: { calendarId: number; order: number }[] = []
+      // StartTime encodes Order via minute offset (hour:00, hour:01, hour:02...) so
+      // StartTime sort always matches the intended Order — no display logic change needed.
+      const updates: { calendarId: number; order: number; startTime: Date; endTime: Date }[] = []
       const inserts: object[] = []
 
       orderedWorkouts.forEach((workout, index) => {
         const order = index + 1
+        const startTime = baseDate.clone().hour(hour).minute(index).second(0).toDate()
+        const durationMinutes = durationMap.get(workout.id) || 60
+        const endTime = moment(startTime).add(durationMinutes, 'minutes').toDate()
         const calendarId = existingCalendarMap.get(workout.id)
 
         if (calendarId !== undefined) {
-          updates.push({ calendarId, order })
+          updates.push({ calendarId, order, startTime, endTime })
         } else {
-          const startTime = baseDate.clone().hour(hour).minute(0).second(0).toDate()
-          const durationMinutes = durationMap.get(workout.id) || 60
-          const endTime = moment(startTime).add(durationMinutes, 'minutes').toDate()
           inserts.push({
             Email: email,
             WorkoutID: workout.id,
@@ -221,7 +231,7 @@ export default function AddWorkoutModal({
         ops.push(
           supabase
             .from('Calendar')
-            .update({ Order: upd.order })
+            .update({ Order: upd.order, StartTime: upd.startTime, EndTime: upd.endTime })
             .eq('CalendarID', upd.calendarId)
         )
       }
@@ -452,7 +462,8 @@ export default function AddWorkoutModal({
                             key={workout.id}
                             draggable
                             onDragStart={() => handleDragStart(workout.id)}
-                            onDragOver={(e) => handleDragOver(e, workout.id)}
+                            onDragOver={handleDragOver}
+                            onDragEnter={() => handleDragEnter(workout.id)}
                             onDragEnd={handleDragEnd}
                             className={`flex items-center gap-3 px-4 py-3 border-2 rounded-lg select-none transition-all ${
                               draggedId === workout.id
