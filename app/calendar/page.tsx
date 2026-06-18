@@ -37,6 +37,7 @@ interface CalendarEvent {
   Deloading?: boolean
   DeloadingPercentage?: number | null
   StartTime?: string | Date
+  Order?: number | null
 }
 
 interface Workout {
@@ -130,7 +131,7 @@ export default function CalendarPage() {
 
     const { data, error } = await supabase
       .from('Calendar')
-      .select('CalendarID, WorkoutID, StartTime, EndTime, Completed, Deloading, DeloadingPercentage')
+      .select('CalendarID, WorkoutID, StartTime, EndTime, Completed, Deloading, DeloadingPercentage, Order')
       .eq('Email', activeEmail)
 
     if (error) {
@@ -171,6 +172,7 @@ export default function CalendarPage() {
         Deloading: item.Deloading,
         DeloadingPercentage: item.DeloadingPercentage,
         StartTime: item.StartTime,
+        Order: item.Order ?? null,
       }
     })
 

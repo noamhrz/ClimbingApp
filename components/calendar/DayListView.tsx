@@ -17,6 +17,7 @@ interface CalendarEvent {
   Deloading?: boolean
   DeloadingPercentage?: number | null
   StartTime?: string | Date
+  Order?: number | null
 }
 
 interface Props {
@@ -34,7 +35,12 @@ export default function DayListView({ events, date, onEventClick, onNavigate, on
       const selectedDate = moment(date).format('YYYY-MM-DD')
       return eventDate === selectedDate
     })
-    .sort((a, b) => a.start.getTime() - b.start.getTime())
+    .sort((a, b) => {
+      const aOrder = a.Order ?? 0
+      const bOrder = b.Order ?? 0
+      if (aOrder !== bOrder) return aOrder - bOrder
+      return a.start.getTime() - b.start.getTime()
+    })
 
   const getEventColor = (event: CalendarEvent) => {
     const now = new Date()

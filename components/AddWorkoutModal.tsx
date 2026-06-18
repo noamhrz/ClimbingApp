@@ -29,24 +29,78 @@ export default function AddWorkoutModal({
   initialDate,
 }: AddWorkoutModalProps) {
   const [selectedDate, setSelectedDate] = useState<string>('')
-  const [selectedWorkoutIds, setSelectedWorkoutIds] = useState<number[]>([]) // CHANGED: Array
+  const [selectedWorkoutIds, setSelectedWorkoutIds] = useState<number[]>([])
   const [selectedTime, setSelectedTime] = useState<'morning' | 'afternoon' | 'evening'>('morning')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isLoadingExisting, setIsLoadingExisting] = useState(false)
   const [orderedWorkouts, setOrderedWorkouts] = useState<{id: number, name: string}[]>([])
   const [draggedId, setDraggedId] = useState<number | null>(null)
+  // workoutId → calendarId for entries already saved on this day
+  const [existingCalendarMap, setExistingCalendarMap] = useState<Map<number, number>>(new Map())
 
-  // Initialize date when modal opens
+  const loadExistingForDate = async (dateStr: string) => {
+    if (!dateStr || !email) return
+    setIsLoadingExisting(true)
+    try {
+      const base = moment.tz(dateStr, 'Asia/Jerusalem')
+      const dayStart = base.clone().startOf('day').toISOString()
+      const dayEnd = base.clone().endOf('day').toISOString()
+
+      const { data, error } = await supabase
+        .from('Calendar')
+        .select('CalendarID, WorkoutID, Order')
+        .eq('Email', email)
+        .gte('StartTime', dayStart)
+        .lte('StartTime', dayEnd)
+        .order('Order', { ascending: true })
+
+      if (error || !data || data.length === 0) {
+        setExistingCalendarMap(new Map())
+        setSelectedWorkoutIds([])
+        setOrderedWorkouts([])
+        return
+      }
+
+      const calMap = new Map<number, number>()
+      const ids: number[] = []
+      const ordered: { id: number; name: string }[] = []
+
+      for (const row of data) {
+        calMap.set(row.WorkoutID, row.CalendarID)
+        ids.push(row.WorkoutID)
+        const workout = availableWorkouts.find(w => w.id === row.WorkoutID)
+        ordered.push({ id: row.WorkoutID, name: workout?.name || `אימון #${row.WorkoutID}` })
+      }
+
+      setExistingCalendarMap(calMap)
+      setSelectedWorkoutIds(ids)
+      setOrderedWorkouts(ordered)
+    } finally {
+      setIsLoadingExisting(false)
+    }
+  }
+
+  // Initialize when modal opens
   useEffect(() => {
     if (isOpen) {
       const dateToUse = initialDate || new Date()
-      setSelectedDate(moment(dateToUse).format('YYYY-MM-DD'))
-      setSelectedWorkoutIds([]) // CHANGED: Reset to empty array
-      setOrderedWorkouts([])
+      const dateStr = moment(dateToUse).format('YYYY-MM-DD')
+      setSelectedDate(dateStr)
       setSelectedTime('morning')
+      setDraggedId(null)
+      loadExistingForDate(dateStr)
     }
   }, [isOpen, initialDate])
 
-  // CHANGED: Toggle workout selection — also keeps orderedWorkouts in sync
+  // Reload when user picks a different date
+  const handleDateChange = (dateStr: string) => {
+    setSelectedDate(dateStr)
+    setExistingCalendarMap(new Map())
+    setSelectedWorkoutIds([])
+    setOrderedWorkouts([])
+    loadExistingForDate(dateStr)
+  }
+
   const toggleWorkoutSelection = (workoutId: number) => {
     setSelectedWorkoutIds(prev => {
       if (prev.includes(workoutId)) return prev.filter(id => id !== workoutId)
@@ -78,13 +132,9 @@ export default function AddWorkoutModal({
 
   const handleDragEnd = () => setDraggedId(null)
 
-  // ═══════════════════════════════════════════════════════════════════
-  // ✅ FIXED: handleSubmit with EstimatedTotalTime
-  // ═══════════════════════════════════════════════════════════════════
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    // CHANGED: Check for multiple workouts
     if (!selectedDate || selectedWorkoutIds.length === 0) {
       alert('אנא בחר תאריך ולפחות אימון אחד')
       return
@@ -93,76 +143,105 @@ export default function AddWorkoutModal({
     setIsSubmitting(true)
 
     try {
-      // ✅ FIX: Fetch EstimatedTotalTime for selected workouts
-      const { data: workoutsData, error: workoutsError } = await supabase
-        .from('Workouts')
-        .select('WorkoutID, EstimatedTotalTime')
-        .in('WorkoutID', selectedWorkoutIds)
-
-      if (workoutsError) {
-        console.error('❌ Error fetching workout durations:', workoutsError)
-        alert('שגיאה בטעינת פרטי אימונים')
-        setIsSubmitting(false)
-        return
-      }
-
-      // Create duration map
-      const durationMap = new Map(
-        (workoutsData || []).map(w => [w.WorkoutID, w.EstimatedTotalTime || 60])
-      )
-
-      // Calculate time based on selection
       const baseDate = moment.tz(selectedDate, 'Asia/Jerusalem')
-      let hour = 9 // morning default
-      
+      let hour = 9
       if (selectedTime === 'afternoon') hour = 14
       else if (selectedTime === 'evening') hour = 18
 
-      // Query max Order for this day to avoid conflicts with existing entries
-      const dayStart = baseDate.clone().startOf('day').toISOString()
-      const dayEnd   = baseDate.clone().endOf('day').toISOString()
+      // Fetch durations only for newly-added workouts
+      const newWorkoutIds = orderedWorkouts
+        .filter(w => !existingCalendarMap.has(w.id))
+        .map(w => w.id)
 
-      const { data: existingEntries } = await supabase
-        .from('Calendar')
-        .select('Order')
-        .eq('Email', email)
-        .gte('StartTime', dayStart)
-        .lte('StartTime', dayEnd)
+      let durationMap = new Map<number, number>()
+      if (newWorkoutIds.length > 0) {
+        const { data: workoutsData, error: workoutsError } = await supabase
+          .from('Workouts')
+          .select('WorkoutID, EstimatedTotalTime')
+          .in('WorkoutID', newWorkoutIds)
 
-      const maxOrder = existingEntries?.length
-        ? Math.max(...existingEntries.map((r: any) => Number(r.Order) || 0))
-        : 0
+        if (workoutsError) {
+          console.error('Error fetching workout durations:', workoutsError)
+          alert('שגיאה בטעינת פרטי אימונים')
+          setIsSubmitting(false)
+          return
+        }
+        durationMap = new Map(
+          (workoutsData || []).map(w => [w.WorkoutID, w.EstimatedTotalTime || 60])
+        )
+      }
 
-      // Build entries from orderedWorkouts (final order after any drag)
-      const calendarEntries = orderedWorkouts.map((workout, index) => {
-        const startTime = baseDate.clone().hour(hour).minute(0).second(0).toDate()
-        const durationMinutes = durationMap.get(workout.id) || 60
-        const endTime = moment(startTime).add(durationMinutes, 'minutes').toDate()
+      // Split into updates (existing) and inserts (new), preserving full orderedWorkouts order
+      const updates: { calendarId: number; order: number }[] = []
+      const inserts: object[] = []
 
-        return {
-          Email: email,
-          WorkoutID: workout.id,
-          StartTime: startTime,
-          EndTime: endTime,
-          Completed: false,
-          Deloading: false,
-          Color: '#3b82f6',
-          Order: maxOrder + index + 1,
+      orderedWorkouts.forEach((workout, index) => {
+        const order = index + 1
+        const calendarId = existingCalendarMap.get(workout.id)
+
+        if (calendarId !== undefined) {
+          updates.push({ calendarId, order })
+        } else {
+          const startTime = baseDate.clone().hour(hour).minute(0).second(0).toDate()
+          const durationMinutes = durationMap.get(workout.id) || 60
+          const endTime = moment(startTime).add(durationMinutes, 'minutes').toDate()
+          inserts.push({
+            Email: email,
+            WorkoutID: workout.id,
+            StartTime: startTime,
+            EndTime: endTime,
+            Completed: false,
+            Deloading: false,
+            Color: '#3b82f6',
+            Order: order,
+          })
         }
       })
 
-      const { error } = await supabase.from('Calendar').insert(calendarEntries)
+      // Also delete entries for workouts that were deselected (existed before but removed)
+      const deselectedCalendarIds: number[] = []
+      for (const [workoutId, calendarId] of existingCalendarMap.entries()) {
+        if (!selectedWorkoutIds.includes(workoutId)) {
+          deselectedCalendarIds.push(calendarId)
+        }
+      }
 
-      if (error) {
-        console.error('❌ Error adding workouts:', error)
-        alert(`שגיאה בהוספת אימונים: ${error.message}`)
+      const ops: Promise<any>[] = []
+
+      if (deselectedCalendarIds.length > 0) {
+        ops.push(
+          supabase
+            .from('Calendar')
+            .delete()
+            .in('CalendarID', deselectedCalendarIds)
+        )
+      }
+
+      for (const upd of updates) {
+        ops.push(
+          supabase
+            .from('Calendar')
+            .update({ Order: upd.order })
+            .eq('CalendarID', upd.calendarId)
+        )
+      }
+
+      if (inserts.length > 0) {
+        ops.push(supabase.from('Calendar').insert(inserts))
+      }
+
+      const results = await Promise.all(ops)
+      const failed = results.find(r => r.error)
+      if (failed?.error) {
+        console.error('Error saving workouts:', failed.error)
+        alert(`שגיאה בשמירת אימונים: ${failed.error.message}`)
       } else {
         onSuccess()
         onClose()
       }
     } catch (err) {
-      console.error('❌ Unexpected error:', err)
-      alert('שגיאה בהוספת אימונים')
+      console.error('Unexpected error:', err)
+      alert('שגיאה בשמירת אימונים')
     } finally {
       setIsSubmitting(false)
     }
@@ -177,6 +256,8 @@ export default function AddWorkoutModal({
     if (lower.includes('flexibility') || lower.includes('גמישות')) return '🤸'
     return '🏋️'
   }
+
+  const isExistingWorkout = (id: number) => existingCalendarMap.has(id)
 
   return (
     <AnimatePresence>
@@ -221,16 +302,24 @@ export default function AddWorkoutModal({
                     <input
                       type="date"
                       value={selectedDate}
-                      onChange={(e) => setSelectedDate(e.target.value)}
+                      onChange={(e) => handleDateChange(e.target.value)}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                       required
                     />
+                    {isLoadingExisting && (
+                      <div className="mt-2 text-xs text-gray-400 text-center">טוען אימונים קיימים...</div>
+                    )}
+                    {!isLoadingExisting && existingCalendarMap.size > 0 && (
+                      <div className="mt-2 text-xs text-blue-600 text-center">
+                        נמצאו {existingCalendarMap.size} אימונים קיימים ביום זה
+                      </div>
+                    )}
                   </div>
 
                   {/* Step 2: Time Selector */}
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      🕐 זמן אימון (יחול על כל האימונים)
+                      🕐 זמן אימון (יחול על אימונים חדשים בלבד)
                     </label>
                     <div className="grid grid-cols-3 gap-2">
                       <button
@@ -288,6 +377,7 @@ export default function AddWorkoutModal({
                       ) : (
                         availableWorkouts.map((workout) => {
                           const isSelected = selectedWorkoutIds.includes(workout.id)
+                          const isExisting = isExistingWorkout(workout.id)
                           return (
                             <button
                               key={workout.id}
@@ -295,16 +385,23 @@ export default function AddWorkoutModal({
                               onClick={() => toggleWorkoutSelection(workout.id)}
                               className={`w-full text-right px-4 py-3 rounded-lg border-2 transition-all ${
                                 isSelected
-                                  ? 'border-blue-500 bg-blue-500 text-white'
+                                  ? isExisting
+                                    ? 'border-green-500 bg-green-500 text-white'
+                                    : 'border-blue-500 bg-blue-500 text-white'
                                   : 'border-gray-200 bg-white hover:border-blue-300 hover:bg-gray-50'
                               }`}
                             >
                               <div className="flex items-center justify-between">
-                                <span className="font-medium">{workout.name}</span>
+                                <div className="flex items-center gap-2">
+                                  <span className="font-medium">{workout.name}</span>
+                                  {isExisting && isSelected && (
+                                    <span className="text-xs bg-white/30 px-1.5 py-0.5 rounded">קיים</span>
+                                  )}
+                                </div>
                                 <span className="text-2xl">{getCategoryEmoji(workout.category)}</span>
                               </div>
                               {workout.category && (
-                                <div className={`text-sm mt-1 ${isSelected ? 'text-blue-100' : 'text-gray-500'}`}>
+                                <div className={`text-sm mt-1 ${isSelected ? 'text-white/80' : 'text-gray-500'}`}>
                                   {workout.category}
                                 </div>
                               )}
@@ -316,11 +413,25 @@ export default function AddWorkoutModal({
 
                     {/* Counter */}
                     {selectedWorkoutIds.length > 0 && (
-                      <div className="mt-3 text-center">
-                        <span className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-lg font-medium">
-                          <span>✅</span>
-                          <span>נבחרו {selectedWorkoutIds.length} אימונים</span>
-                        </span>
+                      <div className="mt-3 text-center flex gap-2 justify-center flex-wrap">
+                        {existingCalendarMap.size > 0 && (
+                          <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-green-50 text-green-700 rounded-lg text-sm font-medium">
+                            <span>📌</span>
+                            <span>{[...existingCalendarMap.keys()].filter(id => selectedWorkoutIds.includes(id)).length} קיימים</span>
+                          </span>
+                        )}
+                        {selectedWorkoutIds.filter(id => !existingCalendarMap.has(id)).length > 0 && (
+                          <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg text-sm font-medium">
+                            <span>✨</span>
+                            <span>{selectedWorkoutIds.filter(id => !existingCalendarMap.has(id)).length} חדשים</span>
+                          </span>
+                        )}
+                        {[...existingCalendarMap.keys()].filter(id => !selectedWorkoutIds.includes(id)).length > 0 && (
+                          <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-red-50 text-red-700 rounded-lg text-sm font-medium">
+                            <span>🗑️</span>
+                            <span>{[...existingCalendarMap.keys()].filter(id => !selectedWorkoutIds.includes(id)).length} יוסרו</span>
+                          </span>
+                        )}
                       </div>
                     )}
                   </div>
@@ -352,6 +463,9 @@ export default function AddWorkoutModal({
                             <span className="text-gray-400 text-xl leading-none">≡</span>
                             <span className="text-blue-600 font-bold text-sm w-6">{index + 1}.</span>
                             <span className="font-medium text-gray-800 flex-1">{workout.name}</span>
+                            {isExistingWorkout(workout.id) && (
+                              <span className="text-xs text-green-600 font-medium">📌</span>
+                            )}
                           </div>
                         ))}
                       </div>
@@ -376,10 +490,10 @@ export default function AddWorkoutModal({
                     className="flex-1 px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isSubmitting
-                      ? 'מוסיף...'
+                      ? 'שומר...'
                       : selectedWorkoutIds.length > 1
-                        ? `הוסף ${selectedWorkoutIds.length} אימונים`
-                        : 'אישור'
+                        ? `שמור ${selectedWorkoutIds.length} אימונים`
+                        : 'שמור'
                     }
                   </button>
                 </div>
