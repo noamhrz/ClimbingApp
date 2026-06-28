@@ -292,11 +292,15 @@ export default function CalendarPage() {
         const existingPending = prev.get(id)
         const ev = currentEvents.find(e => e.id === id)
         if (!ev) return
+        const baseStart = existingPending?.newStartTime ?? ev.start
+        const newStartTime = moment(baseStart).minute(index).second(0).millisecond(0).toDate()
+        const duration = ev.end.getTime() - ev.start.getTime()
+        const newEndTime = new Date(newStartTime.getTime() + duration)
         next.set(id, {
-          newDate: moment(existingPending?.newStartTime ?? ev.start).format('YYYY-MM-DD'),
+          newDate: moment(baseStart).format('YYYY-MM-DD'),
           newOrder: index,
-          newStartTime: existingPending?.newStartTime ?? ev.start,
-          newEndTime: existingPending?.newEndTime ?? ev.end,
+          newStartTime,
+          newEndTime,
         })
       })
       return next
@@ -305,7 +309,9 @@ export default function CalendarPage() {
     setEvents(prev => prev.map(e => {
       const newIndex = orderedIds.indexOf(e.id)
       if (newIndex === -1) return e
-      return { ...e, Order: newIndex }
+      const newStartTime = moment(e.start).minute(newIndex).second(0).millisecond(0).toDate()
+      const duration = e.end.getTime() - e.start.getTime()
+      return { ...e, Order: newIndex, start: newStartTime, end: new Date(newStartTime.getTime() + duration) }
     }))
   }
 
