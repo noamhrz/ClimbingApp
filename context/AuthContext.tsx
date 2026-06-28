@@ -26,6 +26,7 @@ interface User {
   Email: string
   Name: string
   Role: Role
+  Status?: string
 }
 
 interface AuthContextType {
@@ -160,6 +161,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe()
   }, [])
 
+  // ═══════════════════════════════════════════════════════════════════
+  // ✅ PART 4: Poll Status — force logout when current user becomes Inactive
+  // ═══════════════════════════════════════════════════════════════════
+  useEffect(() => {
+    if (!currentUser) return
+
+    const email = currentUser.Email
+
+    const checkStatus = async () => {
+      const { data } = await supabase
+        .from('Users')
+        .select('Status')
+        .eq('Email', email)
+        .single()
+
+      if (data?.Status === 'Inactive') {
+        setCurrentUser(null)
+        setActiveUser(null)
+        setAvailableUsers([])
+        setTraineeEmails(new Set())
+        localStorage.removeItem('activeUserEmail')
+        await supabase.auth.signOut()
+      }
+    }
+
+    const interval = setInterval(checkStatus, 30000)
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') checkStatus()
+    }
+    document.addEventListener('visibilitychange', handleVisibility)
+
+    return () => {
+      clearInterval(interval)
+      document.removeEventListener('visibilitychange', handleVisibility)
+    }
+  }, [currentUser?.Email])
+
   /**
    * Load user data from Users table
    */
@@ -234,11 +273,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Admin sees ALL users
         const { data, error } = await supabase
           .from('Users')
-          .select('Email, Name, Role')
+          .select('Email, Name, Role, Status')
           .order('Name')
-        
+
         if (!error && data) {
-          setAvailableUsers(data)
+          const sorted = [...data].sort((a, b) => {
+            const aActive = a.Status === 'Active' ? 0 : 1
+            const bActive = b.Status === 'Active' ? 0 : 1
+            return aActive - bActive
+          })
+          setAvailableUsers(sorted)
         }
       } else if (user.Role === 'coach') {
         // Coach sees their trainees + themselves
@@ -246,14 +290,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .from('CoachTraineesActiveView')
           .select('TraineeEmail, TraineeName, TraineeRole')
           .eq('CoachEmail', user.Email)
-        
+
         if (!traineesError && traineesData) {
+          const emails = traineesData.map(t => t.TraineeEmail)
+          const { data: statusData } = emails.length > 0
+            ? await supabase.from('Users').select('Email, Status').in('Email', emails)
+            : { data: [] }
+          const statusMap = new Map((statusData || []).map(u => [u.Email, u.Status]))
+
           const trainees = traineesData.map(t => ({
             Email: t.TraineeEmail,
             Name: t.TraineeName,
-            Role: (t.TraineeRole || 'user') as Role
-          }))
-          
+            Role: (t.TraineeRole || 'user') as Role,
+            Status: statusMap.get(t.TraineeEmail) as string | undefined
+          })).sort((a, b) => {
+            const aActive = a.Status === 'Active' ? 0 : 1
+            const bActive = b.Status === 'Active' ? 0 : 1
+            return aActive - bActive
+          })
+
           setTraineeEmails(new Set(trainees.map(t => t.Email)))
           setAvailableUsers([user, ...trainees])
         } else {
