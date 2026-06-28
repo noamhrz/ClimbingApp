@@ -26,7 +26,7 @@ export default function ProfilePage() {
   const router = useRouter()
 
   const [selectedEmail, setSelectedEmail] = useState<string>('')
-  const [users, setUsers] = useState<Array<{ Email: string; Name: string }>>([])
+  const [users, setUsers] = useState<Array<{ Email: string; Name: string; Status?: string }>>([])
   const [metrics, setMetrics] = useState<ProfileMetrics | null>(null)
   const [climbingPerformance, setClimbingPerformance] = useState<ClimbingPerformance | null>(null)
   const [workoutPerformance, setWorkoutPerformance] = useState<WorkoutPerformance | null>(null)
@@ -73,17 +73,19 @@ export default function ProfilePage() {
   const loadUsers = async () => {
     try {
       if (currentUser?.Role === 'admin') {
-        // Admin sees ALL users
         const { data, error } = await supabase
           .from('Users')
-          .select('Email, Name')
-          .eq('IsActive', true)
+          .select('Email, Name, Status')
           .order('Name')
 
         if (error) throw error
-        setUsers(data || [])
+        const sorted = (data || []).sort((a, b) => {
+          const aActive = a.Status === 'Active' ? 0 : 1
+          const bActive = b.Status === 'Active' ? 0 : 1
+          return aActive - bActive
+        })
+        setUsers(sorted)
       } else if (currentUser?.Role === 'coach') {
-        // Coach sees only their assigned trainees
         const { data, error } = await supabase
           .from('CoachTraineesActiveView')
           .select('TraineeEmail, TraineeName')
@@ -91,13 +93,23 @@ export default function ProfilePage() {
           .order('TraineeName')
 
         if (error) throw error
-        
-        // Map to User format
+
+        const emails = (data || []).map(t => t.TraineeEmail)
+        const { data: statusData } = emails.length > 0
+          ? await supabase.from('Users').select('Email, Status').in('Email', emails)
+          : { data: [] }
+        const statusMap = new Map((statusData || []).map(u => [u.Email, u.Status]))
+
         const trainees = (data || []).map(t => ({
           Email: t.TraineeEmail,
-          Name: t.TraineeName
-        }))
-        
+          Name: t.TraineeName,
+          Status: statusMap.get(t.TraineeEmail) as string | undefined
+        })).sort((a, b) => {
+          const aActive = a.Status === 'Active' ? 0 : 1
+          const bActive = b.Status === 'Active' ? 0 : 1
+          return aActive - bActive
+        })
+
         setUsers(trainees)
       }
     } catch (error) {
@@ -189,8 +201,12 @@ export default function ProfilePage() {
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
                 {users.map((user) => (
-                  <option key={user.Email} value={user.Email}>
-                    {user.Name} ({user.Email})
+                  <option
+                    key={user.Email}
+                    value={user.Email}
+                    style={user.Status === 'Inactive' ? { color: 'gray' } : undefined}
+                  >
+                    {user.Name}{user.Status === 'Inactive' ? ' (לא פעיל)' : ''} ({user.Email})
                   </option>
                 ))}
               </select>
