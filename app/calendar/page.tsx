@@ -188,7 +188,31 @@ export default function CalendarPage() {
       }
     })
 
-    setEvents(mapped)
+    // Normalize start times to encode Order via minute offset,
+    // so month view (sorted by time) matches day view (sorted by Order).
+    const dayGroups = new Map<string, typeof mapped>()
+    mapped.forEach(ev => {
+      const key = moment(ev.start).format('YYYY-MM-DD')
+      if (!dayGroups.has(key)) dayGroups.set(key, [])
+      dayGroups.get(key)!.push(ev)
+    })
+
+    const normalized: typeof mapped = []
+    dayGroups.forEach(dayEvents => {
+      dayEvents.sort((a, b) => {
+        const aOrder = a.Order ?? 0
+        const bOrder = b.Order ?? 0
+        if (aOrder !== bOrder) return aOrder - bOrder
+        return a.start.getTime() - b.start.getTime()
+      })
+      dayEvents.forEach((ev, i) => {
+        const newStart = moment(ev.start).startOf('day').minute(i).second(0).millisecond(0).toDate()
+        const duration = ev.end.getTime() - ev.start.getTime()
+        normalized.push({ ...ev, start: newStart, end: new Date(newStart.getTime() + duration) })
+      })
+    })
+
+    setEvents(normalized)
     setLoading(false)
   }
 
@@ -274,7 +298,6 @@ export default function CalendarPage() {
 
   const handleDayReorder = (orderedIds: number[]) => {
     const currentEvents = events
-
     setOriginalSnapshot(prev => {
       const next = new Map(prev)
       orderedIds.forEach(id => {
@@ -293,7 +316,7 @@ export default function CalendarPage() {
         const ev = currentEvents.find(e => e.id === id)
         if (!ev) return
         const baseStart = existingPending?.newStartTime ?? ev.start
-        const newStartTime = moment(baseStart).minute(index).second(0).millisecond(0).toDate()
+        const newStartTime = moment(baseStart).startOf('day').minute(index).second(0).millisecond(0).toDate()
         const duration = ev.end.getTime() - ev.start.getTime()
         const newEndTime = new Date(newStartTime.getTime() + duration)
         next.set(id, {
@@ -309,7 +332,7 @@ export default function CalendarPage() {
     setEvents(prev => prev.map(e => {
       const newIndex = orderedIds.indexOf(e.id)
       if (newIndex === -1) return e
-      const newStartTime = moment(e.start).minute(newIndex).second(0).millisecond(0).toDate()
+      const newStartTime = moment(e.start).startOf('day').minute(newIndex).second(0).millisecond(0).toDate()
       const duration = e.end.getTime() - e.start.getTime()
       return { ...e, Order: newIndex, start: newStartTime, end: new Date(newStartTime.getTime() + duration) }
     }))
@@ -706,7 +729,12 @@ export default function CalendarPage() {
             <ActiveCalendar
               localizer={localizer}
               rtl={true}
-              events={events}
+              events={[...events].sort((a, b) => {
+                const dateA = a.start.toDateString()
+                const dateB = b.start.toDateString()
+                if (dateA !== dateB) return a.start.getTime() - b.start.getTime()
+                return (a.Order ?? 999) - (b.Order ?? 999)
+              })}
               startAccessor={"start" as any}
               endAccessor={"end" as any}
               style={{ height: 'calc(100vh - 150px)', minHeight: '600px' }}
