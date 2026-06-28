@@ -70,6 +70,18 @@ export default function CalendarPage() {
   const [deloadingMode, setDeloadingMode] = useState<'apply' | 'remove'>('apply')
   const [showDuplicateModal, setShowDuplicateModal] = useState(false)
   const [showDeleteRangeModal, setShowDeleteRangeModal] = useState(false)
+  const [pendingChanges, setPendingChanges] = useState<Map<number, {
+    newDate: string
+    newOrder: number
+    newStartTime: Date
+    newEndTime: Date
+  }>>(new Map())
+  const [originalSnapshot, setOriginalSnapshot] = useState<Map<number, {
+    StartTime: Date
+    EndTime: Date
+    Order: number | null
+  }>>(new Map())
+  const hasPendingChanges = pendingChanges.size > 0
 
   // Mobile detection
   useEffect(() => {
@@ -216,47 +228,125 @@ export default function CalendarPage() {
     await fetchCalendar()
   }
 
-  const handleEventDrop = async ({ event, start, end }: any) => {
+  const handleEventDrop = ({ event, start }: any) => {
+    if (isMobile || isSelectingDate) return
+
+    const isSameDay = moment(start).format('YYYY-MM-DD') === moment(event.start).format('YYYY-MM-DD')
+    if (view === 'month' && isSameDay) return
+
     const originalStart = moment(event.start)
-    const newDate = moment(start)
-    const newStart = newDate.hour(originalStart.hour()).minute(originalStart.minute()).second(0).toDate()
-    
-    const { data: workoutData } = await supabase
-      .from('Workouts')
-      .select('EstimatedTotalTime')
-      .eq('WorkoutID', event.WorkoutID)
-      .single()
-    
-    const durationMinutes = workoutData?.EstimatedTotalTime || 60
-    const newEnd = moment(newStart).add(durationMinutes, 'minutes').toDate()
+    const newStart = moment(start)
+      .hour(originalStart.hour())
+      .minute(originalStart.minute())
+      .second(0)
+      .millisecond(0)
+      .toDate()
 
-    try {
-      const { error: calendarError } = await supabase
-        .from('Calendar')
-        .update({ StartTime: newStart, EndTime: newEnd })
-        .eq('CalendarID', event.id)
+    const durationMs = event.end.getTime() - event.start.getTime()
+    const newEnd = new Date(newStart.getTime() + durationMs)
 
-      if (calendarError) throw calendarError
+    const targetDateStr = moment(start).format('YYYY-MM-DD')
+    const eventsOnTargetDay = events
+      .filter(e => e.id !== event.id && moment(e.start).format('YYYY-MM-DD') === targetDateStr)
+      .sort((a, b) => (a.Order ?? 0) - (b.Order ?? 0))
+    const newOrder = eventsOnTargetDay.length
 
-      const { error: climbingError } = await supabase
-        .from('ClimbingLog')
-        .update({ 
-          LogDateTime: moment(newStart).format('YYYY-MM-DD HH:mm:ss'),
-          UpdatedAt: moment().format('YYYY-MM-DD HH:mm:ss')
+    setOriginalSnapshot(prev => {
+      if (prev.has(event.id)) return prev
+      return new Map(prev).set(event.id, {
+        StartTime: event.start,
+        EndTime: event.end,
+        Order: event.Order ?? null,
+      })
+    })
+
+    setPendingChanges(prev => new Map(prev).set(event.id, {
+      newDate: targetDateStr,
+      newOrder,
+      newStartTime: newStart,
+      newEndTime: newEnd,
+    }))
+
+    setEvents(prev => prev.map(e =>
+      e.id === event.id ? { ...e, start: newStart, end: newEnd, Order: newOrder } : e
+    ))
+  }
+
+  const handleDayReorder = (orderedIds: number[]) => {
+    const currentEvents = events
+
+    setOriginalSnapshot(prev => {
+      const next = new Map(prev)
+      orderedIds.forEach(id => {
+        if (!next.has(id)) {
+          const ev = currentEvents.find(e => e.id === id)
+          if (ev) next.set(id, { StartTime: ev.start, EndTime: ev.end, Order: ev.Order ?? null })
+        }
+      })
+      return next
+    })
+
+    setPendingChanges(prev => {
+      const next = new Map(prev)
+      orderedIds.forEach((id, index) => {
+        const existingPending = prev.get(id)
+        const ev = currentEvents.find(e => e.id === id)
+        if (!ev) return
+        next.set(id, {
+          newDate: moment(existingPending?.newStartTime ?? ev.start).format('YYYY-MM-DD'),
+          newOrder: index,
+          newStartTime: existingPending?.newStartTime ?? ev.start,
+          newEndTime: existingPending?.newEndTime ?? ev.end,
         })
-        .eq('CalendarID', event.id)
+      })
+      return next
+    })
 
-      if (climbingError) {
-        console.error('⚠️ Error updating climbing logs:', climbingError)
+    setEvents(prev => prev.map(e => {
+      const newIndex = orderedIds.indexOf(e.id)
+      if (newIndex === -1) return e
+      return { ...e, Order: newIndex }
+    }))
+  }
+
+  const handleSavePendingChanges = async () => {
+    try {
+      for (const [calendarId, change] of pendingChanges) {
+        const { error } = await supabase
+          .from('Calendar')
+          .update({
+            StartTime: change.newStartTime.toISOString(),
+            EndTime: change.newEndTime.toISOString(),
+            Order: change.newOrder,
+          })
+          .eq('CalendarID', calendarId)
+        if (error) throw error
       }
 
-      const updated = events.map((e) =>
-        e.id === event.id ? { ...e, start: newStart, end: newEnd } : e
-      )
-      setEvents(updated)
+      setOriginalSnapshot(prev => {
+        const next = new Map(prev)
+        for (const [id, change] of pendingChanges) {
+          next.set(id, { StartTime: change.newStartTime, EndTime: change.newEndTime, Order: change.newOrder })
+        }
+        return next
+      })
+      setPendingChanges(new Map())
     } catch (error) {
-      console.error('❌ Error updating event:', error)
+      console.error('❌ Error saving pending changes:', error)
+      alert('שגיאה בשמירת השינויים')
     }
+  }
+
+  const handleCancelPendingChanges = () => {
+    setEvents(prev => prev.map(event => {
+      const snapshot = originalSnapshot.get(event.id)
+      if (snapshot && pendingChanges.has(event.id)) {
+        return { ...event, start: snapshot.StartTime, end: snapshot.EndTime, Order: snapshot.Order }
+      }
+      return event
+    }))
+    setPendingChanges(new Map())
+    setOriginalSnapshot(new Map())
   }
 
   const handleSelectEvent = (event: CalendarEvent, e?: React.SyntheticEvent) => {
@@ -387,7 +477,7 @@ export default function CalendarPage() {
     setView('month')
   }
 
-  const ActiveCalendar = (isMobile || view === 'month') ? BigCalendar : DnDCalendar
+  const ActiveCalendar = isMobile ? BigCalendar : DnDCalendar
 
   if (authLoading) {
     return (
@@ -575,6 +665,24 @@ export default function CalendarPage() {
         </div>
       )}
 
+      {!isMobile && hasPendingChanges && (
+        <div className="fixed top-14 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 bg-amber-50 border border-amber-300 text-amber-800 px-6 py-3 rounded-xl shadow-lg whitespace-nowrap">
+          <span className="font-medium text-sm">יש שינויים שלא נשמרו</span>
+          <button
+            onClick={handleSavePendingChanges}
+            className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-all"
+          >
+            💾 שמור שינויים
+          </button>
+          <button
+            onClick={handleCancelPendingChanges}
+            className="px-4 py-1.5 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg text-sm font-medium transition-all"
+          >
+            ✕ בטל
+          </button>
+        </div>
+      )}
+
       <div className="max-w-7xl mx-auto p-4">
         <div className="bg-white rounded-xl shadow-sm p-4 overflow-hidden">
           {view === 'day' ? (
@@ -584,6 +692,9 @@ export default function CalendarPage() {
               onEventClick={handleSelectEvent}
               onNavigate={handleNavigate}
               onBackToMonth={handleBackToMonth}
+              onReorder={!isMobile ? handleDayReorder : undefined}
+              pendingIds={new Set(pendingChanges.keys())}
+              isDesktop={!isMobile}
             />
           ) : (
             <ActiveCalendar
@@ -608,9 +719,9 @@ export default function CalendarPage() {
               }}
               selectable={true}
               onSelectSlot={handleSelectSlot}
-              resizable={!isMobile && !isSelectingDate && view !== 'month'}
-              draggableAccessor={() => !isMobile && !isSelectingDate && view !== 'month'}
-              onEventDrop={!isSelectingDate && view !== 'month' ? handleEventDrop : undefined}
+              resizable={false}
+              draggableAccessor={() => !isSelectingDate}
+              onEventDrop={!isSelectingDate ? handleEventDrop : undefined}
               components={{
                 toolbar: CalendarToolbar as any,
                 event: (props: any) => (
