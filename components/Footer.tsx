@@ -10,6 +10,7 @@ interface User {
   Email: string
   Name: string
   Role: Role
+  Status?: string
 }
 
 export default function Footer() {
@@ -158,22 +159,32 @@ function UserSelectionMenu({
                 const config = getRoleConfig(user.Role)
                 const isActive = user.Email === activeUserEmail
                 const isSelf = user.Email === currentUserEmail
+                const isInactive = user.Status === 'Inactive'
 
                 return (
                   <button
                     key={user.Email}
                     onClick={() => onSelectUser(user.Email)}
                     className={`p-4 rounded-lg border-2 transition-all text-right ${
-                      isActive
-                        ? 'border-blue-500 bg-blue-50 shadow-md'
-                        : 'border-gray-200 hover:border-blue-300 hover:bg-blue-50'
+                      isInactive
+                        ? 'border-gray-200 bg-gray-50 opacity-60'
+                        : isActive
+                          ? 'border-blue-500 bg-blue-50 shadow-md'
+                          : 'border-gray-200 hover:border-blue-300 hover:bg-blue-50'
                     }`}
                   >
                     <div className="flex items-start gap-3">
                       <span className="text-3xl">{config.icon}</span>
                       <div className="flex-1 min-w-0">
-                        <div className="font-semibold text-gray-900 truncate">
-                          {user.Name}
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-gray-900 truncate">
+                            {user.Name}
+                          </span>
+                          {isInactive && (
+                            <span className="text-xs bg-gray-200 text-gray-500 px-2 py-0.5 rounded shrink-0">
+                              לא פעיל
+                            </span>
+                          )}
                         </div>
                         <div className="text-xs text-gray-500 truncate">
                           {user.Email}
