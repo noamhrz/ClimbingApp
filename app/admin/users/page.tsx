@@ -12,6 +12,7 @@ interface User {
   Name: string
   Role: 'admin' | 'coach' | 'user'
   IsActive?: boolean
+  Status?: string
   CreatedAt?: string
 }
 
@@ -219,18 +220,19 @@ export default function UserManagementPage() {
   // TOGGLE ACTIVE/INACTIVE
   // ========================================
   const handleToggleActive = async (user: User) => {
-    const newStatus = !user.IsActive
+    const newStatus = user.Status === 'Active' ? 'Inactive' : 'Active'
 
     try {
       const { error } = await supabase
         .from('Users')
-        .update({ IsActive: newStatus })
+        .update({ Status: newStatus })
         .eq('UserID', user.UserID)
 
       if (error) throw error
 
-      alert(`✅ המשתמש ${user.Name} ${newStatus ? 'הופעל' : 'הושבת'}`)
-      fetchUsers()
+      setUsers(prev => prev.map(u =>
+        u.UserID === user.UserID ? { ...u, Status: newStatus } : u
+      ))
     } catch (error) {
       console.error('Error toggling user status:', error)
       alert('שגיאה בעדכון סטטוס')
@@ -289,9 +291,9 @@ export default function UserManagementPage() {
     
     const matchesRole = roleFilter === 'all' || user.Role === roleFilter
     
-    const matchesStatus = statusFilter === 'all' || 
-      (statusFilter === 'active' && user.IsActive !== false) ||
-      (statusFilter === 'inactive' && user.IsActive === false)
+    const matchesStatus = statusFilter === 'all' ||
+      (statusFilter === 'active' && user.Status === 'Active') ||
+      (statusFilter === 'inactive' && user.Status !== 'Active')
 
     return matchesSearch && matchesRole && matchesStatus
   })
@@ -397,7 +399,6 @@ export default function UserManagementPage() {
             <table className="w-full">
               <thead className="bg-gray-50 border-b">
                 <tr>
-                  <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700">סטטוס</th>
                   <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700">משתמש</th>
                   <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700">תפקיד</th>
                   <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700">פעולות</th>
@@ -405,28 +406,33 @@ export default function UserManagementPage() {
               </thead>
               <tbody className="divide-y">
                 {filteredUsers.map(user => (
-                  <tr key={user.UserID} className={`hover:bg-gray-50 ${user.IsActive === false ? 'opacity-50 bg-gray-100' : ''}`}>
+                  <tr
+                    key={user.UserID}
+                    className={`transition-colors ${
+                      user.Status === 'Inactive'
+                        ? 'bg-gray-100 hover:bg-gray-150'
+                        : 'bg-white hover:bg-gray-50'
+                    }`}
+                  >
                     <td className="px-4 py-3">
-                      <button
-                        onClick={() => handleToggleActive(user)}
-                        className={`px-3 py-1 rounded-full text-xs font-medium ${
-                          user.IsActive !== false
-                            ? 'bg-green-100 text-green-800 hover:bg-green-200'
-                            : 'bg-red-100 text-red-800 hover:bg-red-200'
-                        }`}
-                        title={user.IsActive !== false ? 'השבת משתמש' : 'הפעל משתמש'}
-                      >
-                        {user.IsActive !== false ? '✅ פעיל' : '❌ לא פעיל'}
-                      </button>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div>
-                        <p className="font-medium text-gray-900">{user.Name}</p>
-                        <p className="text-sm text-gray-500">{user.Email}</p>
+                      <div className="flex items-center gap-2">
+                        <span className={`w-2 h-2 rounded-full flex-shrink-0 ${
+                          user.Status === 'Active' ? 'bg-green-500' : 'bg-gray-400'
+                        }`} />
+                        <div>
+                          <p className={`font-medium ${user.Status === 'Inactive' ? 'text-gray-400' : 'text-gray-900'}`}>
+                            {user.Name}
+                          </p>
+                          <p className={`text-sm ${user.Status === 'Inactive' ? 'text-gray-400' : 'text-gray-500'}`}>
+                            {user.Email}
+                          </p>
+                        </div>
                       </div>
                     </td>
                     <td className="px-4 py-3">
-                      <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                      <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${
+                        user.Status === 'Inactive' ? 'bg-gray-100 text-gray-400' : 'bg-blue-100 text-blue-800'
+                      }`}>
                         {getRoleIcon(user.Role)} {getRoleName(user.Role)}
                       </span>
                     </td>
@@ -455,6 +461,16 @@ export default function UserManagementPage() {
                             🗑️
                           </button>
                         )}
+                        <button
+                          onClick={() => handleToggleActive(user)}
+                          className={`px-3 py-1 rounded text-xs font-medium ${
+                            user.Status === 'Active'
+                              ? 'bg-red-100 text-red-700 hover:bg-red-200'
+                              : 'bg-green-100 text-green-700 hover:bg-green-200'
+                          }`}
+                        >
+                          {user.Status === 'Active' ? 'השבת' : 'הפעל'}
+                        </button>
                       </div>
                     </td>
                   </tr>
