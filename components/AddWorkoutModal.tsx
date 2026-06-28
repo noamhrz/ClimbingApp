@@ -216,7 +216,7 @@ export default function AddWorkoutModal({
         }
       }
 
-      const ops: Promise<any>[] = []
+      const ops: PromiseLike<any>[] = []
 
       if (deselectedCalendarIds.length > 0) {
         ops.push(
@@ -224,6 +224,7 @@ export default function AddWorkoutModal({
             .from('Calendar')
             .delete()
             .in('CalendarID', deselectedCalendarIds)
+            .then()
         )
       }
 
@@ -233,11 +234,12 @@ export default function AddWorkoutModal({
             .from('Calendar')
             .update({ Order: upd.order, StartTime: upd.startTime, EndTime: upd.endTime })
             .eq('CalendarID', upd.calendarId)
+            .then()
         )
       }
 
       if (inserts.length > 0) {
-        ops.push(supabase.from('Calendar').insert(inserts))
+        ops.push(supabase.from('Calendar').insert(inserts).then())
       }
 
       const results = await Promise.all(ops)
