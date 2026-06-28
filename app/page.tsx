@@ -14,13 +14,14 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [pendingStatusCheck, setPendingStatusCheck] = useState(false)
 
   // ✅ Redirect if already logged in
   useEffect(() => {
-    if (!authLoading && currentUser) {
+    if (!authLoading && currentUser && !pendingStatusCheck) {
       router.push('/dashboard')
     }
-  }, [currentUser, authLoading, router])
+  }, [currentUser, authLoading, router, pendingStatusCheck])
 
   // ✅ FIXED: Simpler login - let AuthContext handle the Users table
   const handleLogin = async (e: React.FormEvent) => {
@@ -28,6 +29,7 @@ export default function LoginPage() {
     setLoading(true)
     setError('')
 
+    setPendingStatusCheck(true)
     try {
       // Sign in with Supabase Auth
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
@@ -40,13 +42,24 @@ export default function LoginPage() {
         throw authError
       }
 
-      // AuthContext will automatically load the user from Users table
-      // Just redirect to dashboard
+      const { data: userData } = await supabase
+        .from('Users')
+        .select('Status')
+        .eq('Email', email)
+        .single()
+
+      if (userData?.Status === 'Inactive') {
+        await supabase.auth.signOut()
+        setError('החשבון שלך אינו פעיל. לפרטים פנה למאמן.')
+        return
+      }
+
       router.push('/dashboard')
     } catch (err: any) {
       console.error('❌ Login error:', err)
       setError(err.message || 'שגיאה בהתחברות')
     } finally {
+      setPendingStatusCheck(false)
       setLoading(false)
     }
   }
