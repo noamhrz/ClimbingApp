@@ -30,7 +30,7 @@ export default function ExerciseAnalyticsPage() {
   // ✅ EMAIL HIERARCHY: URL param > Manual selection > UserContext > AuthContext
   const [targetEmail, setTargetEmail] = useState<string>('')
   const [bodyWeight, setBodyWeight] = useState<number | null>(null)
-  const [users, setUsers] = useState<Array<{ Email: string; Name: string }>>([])
+  const [users, setUsers] = useState<Array<{ Email: string; Name: string; Status?: string }>>([])
   const [initialUrlParamsLoaded, setInitialUrlParamsLoaded] = useState(false)
 
   // Check permissions
@@ -87,17 +87,19 @@ export default function ExerciseAnalyticsPage() {
   const loadUsers = async () => {
     try {
       if (activeUser?.Role === 'admin') {
-        // Admin sees ALL users
         const { data, error } = await supabase
           .from('Users')
-          .select('Email, Name')
-          .eq('IsActive', true)
+          .select('Email, Name, Status')
           .order('Name')
 
         if (error) throw error
-        setUsers(data || [])
+        const sorted = (data || []).sort((a, b) => {
+          const aActive = a.Status === 'Active' ? 0 : 1
+          const bActive = b.Status === 'Active' ? 0 : 1
+          return aActive - bActive
+        })
+        setUsers(sorted)
       } else if (activeUser?.Role === 'coach') {
-        // Coach sees only their assigned trainees
         const { data, error } = await supabase
           .from('CoachTraineesActiveView')
           .select('TraineeEmail, TraineeName')
@@ -105,13 +107,23 @@ export default function ExerciseAnalyticsPage() {
           .order('TraineeName')
 
         if (error) throw error
-        
-        // Map to User format
+
+        const emails = (data || []).map(t => t.TraineeEmail)
+        const { data: statusData } = emails.length > 0
+          ? await supabase.from('Users').select('Email, Status').in('Email', emails)
+          : { data: [] }
+        const statusMap = new Map((statusData || []).map(u => [u.Email, u.Status]))
+
         const trainees = (data || []).map(t => ({
           Email: t.TraineeEmail,
-          Name: t.TraineeName
-        }))
-        
+          Name: t.TraineeName,
+          Status: statusMap.get(t.TraineeEmail) as string | undefined
+        })).sort((a, b) => {
+          const aActive = a.Status === 'Active' ? 0 : 1
+          const bActive = b.Status === 'Active' ? 0 : 1
+          return aActive - bActive
+        })
+
         setUsers(trainees)
       }
     } catch (error) {
@@ -555,8 +567,12 @@ export default function ExerciseAnalyticsPage() {
                 className="w-full px-4 py-3 border-2 border-purple-300 rounded-lg text-base font-medium focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white"
               >
                 {users.map((user) => (
-                  <option key={user.Email} value={user.Email}>
-                    {user.Name} • {user.Email}
+                  <option
+                    key={user.Email}
+                    value={user.Email}
+                    style={user.Status === 'Inactive' ? { color: 'gray' } : undefined}
+                  >
+                    {user.Name}{user.Status === 'Inactive' ? ' (לא פעיל)' : ''} • {user.Email}
                   </option>
                 ))}
               </select>
