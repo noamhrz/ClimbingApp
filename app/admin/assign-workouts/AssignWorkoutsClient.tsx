@@ -10,6 +10,7 @@ interface User {
   Email: string
   Name: string
   Role: string
+  Status?: string
 }
 
 interface Workout {
@@ -325,7 +326,7 @@ export default function AssignWorkoutsClient() {
               className="flex-1 max-w-md px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
               <option value="">-- בחר מתאמן --</option>
-              {trainees.map(user => (
+              {trainees.filter(u => u.Status !== 'Inactive').map(user => (
                 <option key={user.Email} value={user.Email}>
                   {user.Name} ({user.Email})
                   {user.Email === currentUser?.Email ? ' - אני' : ''}
