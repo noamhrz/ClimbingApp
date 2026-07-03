@@ -317,6 +317,23 @@ export default function DayListView({
               <span>📋</span>
               <span>{sortedEvents.length} אימונים</span>
             </span>
+            {sortedEvents.length > 0 && (() => {
+              const totalMinutes = sortedEvents.reduce((sum, e) =>
+                sum + (e.EstimatedTotalTime != null
+                  ? e.EstimatedTotalTime
+                  : Math.abs(moment(e.end).diff(moment(e.start), 'minutes'))), 0)
+              const hours = Math.floor(totalMinutes / 60)
+              const mins = totalMinutes % 60
+              const label = hours > 0
+                ? (mins > 0 ? `${hours}ש' ${mins}ד'` : `${hours}ש'`)
+                : `${mins} דק'`
+              return (
+                <span className="inline-flex items-center gap-2 px-4 py-2 bg-purple-100 text-purple-700 rounded-full text-sm font-medium">
+                  <span>⏱</span>
+                  <span>{label}</span>
+                </span>
+              )
+            })()}
             {sortedEvents.filter(e => e.completed).length > 0 && (
               <span className="inline-flex items-center gap-2 px-4 py-2 bg-green-100 text-green-700 rounded-full text-sm font-medium">
                 <span>✅</span>
