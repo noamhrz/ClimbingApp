@@ -76,6 +76,7 @@ export default function EditWorkoutPage() {
         containClimbing: data.containClimbing,
         containExercise: data.containExercise,
         EstimatedClimbingTime: data.EstimatedClimbingTime,
+        EstimatedTotalTime: data.EstimatedTotalTime,
       })
     } catch (error) {
       console.error('Error loading workout:', error)

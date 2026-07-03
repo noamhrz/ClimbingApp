@@ -30,6 +30,7 @@ interface CalendarEvent {
   DeloadingPercentage?: number | null
   StartTime?: string | Date
   Order?: number | null
+  EstimatedTotalTime?: number | null
 }
 
 interface Props {
@@ -63,15 +64,12 @@ function EventCardBody({ event, index }: { event: CalendarEvent; index: number }
       </div>
       <div className="space-y-3 pr-4">
         <h3 className="text-xl font-bold text-gray-900">{event.title}</h3>
-        <div className="flex items-center gap-3 bg-white rounded-lg p-3 border">
-          <span className="text-2xl">🕐</span>
-          <div className="flex items-center gap-2 text-lg font-semibold text-gray-700">
-            <span>{moment(event.start).format('HH:mm')}</span>
-            <span className="text-gray-400">→</span>
-            <span>{moment(event.end).format('HH:mm')}</span>
-          </div>
-          <span className="text-sm text-gray-500 mr-auto">
-            ({moment(event.end).diff(moment(event.start), 'minutes')} דק')
+        <div className="flex items-center gap-2 bg-white rounded-lg px-3 py-2 border w-fit">
+          <span className="text-lg">⏱</span>
+          <span className="text-base font-semibold text-gray-700">
+            {event.EstimatedTotalTime != null
+              ? event.EstimatedTotalTime
+              : Math.abs(moment(event.end).diff(moment(event.start), 'minutes'))} דק'
           </span>
         </div>
         <div className="flex gap-2 flex-wrap">
@@ -400,7 +398,7 @@ export default function DayListView({
                         <span>{moment(event.end).format('HH:mm')}</span>
                       </div>
                       <span className="text-sm text-gray-500 mr-auto">
-                        ({moment(event.end).diff(moment(event.start), 'minutes')} דק')
+                        ({Math.abs(moment(event.end).diff(moment(event.start), 'minutes'))} דק')
                       </span>
                     </div>
                     <div className="flex gap-2 flex-wrap">

@@ -175,7 +175,7 @@ export default function AddWorkoutModal({
           return
         }
         durationMap = new Map(
-          (workoutsData || []).map(w => [w.WorkoutID, w.EstimatedTotalTime || 60])
+          (workoutsData || []).map(w => [w.WorkoutID, w.EstimatedTotalTime ?? 0])
         )
       }
 
@@ -188,7 +188,7 @@ export default function AddWorkoutModal({
       orderedWorkouts.forEach((workout, index) => {
         const order = index + 1
         const startTime = baseDate.clone().hour(hour).minute(index).second(0).toDate()
-        const durationMinutes = durationMap.get(workout.id) || 60
+        const durationMinutes = durationMap.get(workout.id) ?? 0
         const endTime = moment(startTime).add(durationMinutes, 'minutes').toDate()
         const calendarId = existingCalendarMap.get(workout.id)
 

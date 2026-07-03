@@ -38,6 +38,7 @@ interface CalendarEvent {
   DeloadingPercentage?: number | null
   StartTime?: string | Date
   Order?: number | null
+  EstimatedTotalTime?: number | null
 }
 
 interface Workout {
@@ -154,10 +155,16 @@ export default function CalendarPage() {
 
     const { data: workoutsData } = await supabase
       .from('Workouts')
-      .select('WorkoutID, Name')
+      .select('WorkoutID, Name, EstimatedTotalTime')
 
     const workoutMap = Object.fromEntries(
       (workoutsData || []).map((w) => [w.WorkoutID, w.Name])
+    )
+    const durationMap = Object.fromEntries(
+      (workoutsData || []).map((w) => [w.WorkoutID, w.EstimatedTotalTime || 60])
+    )
+    const estimatedTimeMap = Object.fromEntries(
+      (workoutsData || []).map((w) => [w.WorkoutID, w.EstimatedTotalTime as number | null])
     )
 
     const mapped = data.map((item) => {
@@ -166,8 +173,8 @@ export default function CalendarPage() {
         ? moment.utc(item.EndTime).local()
         : moment.utc(item.StartTime).add(1, 'hours').local()
 
-      if (end.isAfter(start, 'day')) {
-        end = moment(start).add(59, 'minutes')
+      if (end.isAfter(start, 'day') || end.isBefore(start)) {
+        end = moment(start).add(durationMap[item.WorkoutID] || 60, 'minutes')
       }
 
       const startDate = start.toDate()
@@ -185,6 +192,7 @@ export default function CalendarPage() {
         DeloadingPercentage: item.DeloadingPercentage,
         StartTime: item.StartTime,
         Order: item.Order ?? null,
+        EstimatedTotalTime: estimatedTimeMap[item.WorkoutID] ?? null,
       }
     })
 
@@ -296,8 +304,23 @@ export default function CalendarPage() {
     ))
   }
 
-  const handleDayReorder = (orderedIds: number[]) => {
+  const handleDayReorder = async (orderedIds: number[]) => {
     const currentEvents = events
+
+    // Fetch EstimatedTotalTime for all affected workouts in one query
+    const workoutIds = [...new Set(
+      orderedIds
+        .map(id => currentEvents.find(e => e.id === id)?.WorkoutID)
+        .filter((wid): wid is number => wid !== undefined)
+    )]
+    const { data: workoutsData } = await supabase
+      .from('Workouts')
+      .select('WorkoutID, EstimatedTotalTime')
+      .in('WorkoutID', workoutIds)
+    const durationMap = new Map(
+      (workoutsData || []).map(w => [w.WorkoutID, w.EstimatedTotalTime || 60])
+    )
+
     setOriginalSnapshot(prev => {
       const next = new Map(prev)
       orderedIds.forEach(id => {
@@ -317,8 +340,8 @@ export default function CalendarPage() {
         if (!ev) return
         const baseStart = existingPending?.newStartTime ?? ev.start
         const newStartTime = moment(baseStart).startOf('day').minute(index).second(0).millisecond(0).toDate()
-        const duration = ev.end.getTime() - ev.start.getTime()
-        const newEndTime = new Date(newStartTime.getTime() + duration)
+        const durationMinutes = durationMap.get(ev.WorkoutID) || 60
+        const newEndTime = moment(newStartTime).add(durationMinutes, 'minutes').toDate()
         next.set(id, {
           newDate: moment(baseStart).format('YYYY-MM-DD'),
           newOrder: index,
@@ -333,8 +356,9 @@ export default function CalendarPage() {
       const newIndex = orderedIds.indexOf(e.id)
       if (newIndex === -1) return e
       const newStartTime = moment(e.start).startOf('day').minute(newIndex).second(0).millisecond(0).toDate()
-      const duration = e.end.getTime() - e.start.getTime()
-      return { ...e, Order: newIndex, start: newStartTime, end: new Date(newStartTime.getTime() + duration) }
+      const durationMinutes = durationMap.get(e.WorkoutID) || 60
+      const newEndTime = moment(newStartTime).add(durationMinutes, 'minutes').toDate()
+      return { ...e, Order: newIndex, start: newStartTime, end: newEndTime }
     }))
   }
 

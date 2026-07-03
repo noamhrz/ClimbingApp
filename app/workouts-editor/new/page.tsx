@@ -24,6 +24,7 @@ export default function NewWorkoutPage() {
     containClimbing: false,
     containExercise: false,
     EstimatedClimbingTime: 0,
+    EstimatedTotalTime: 0,
   })
   const [saving, setSaving] = useState(false)
 

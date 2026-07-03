@@ -23,6 +23,7 @@ export default function WorkoutForm({ initialData, onChange }: Props) {
     containClimbing: initialData?.containClimbing || false,
     containExercise: initialData?.containExercise || false,
     EstimatedClimbingTime: initialData?.EstimatedClimbingTime || 0,
+    EstimatedTotalTime: initialData?.EstimatedTotalTime ?? 0,
   })
 
   useEffect(() => {
@@ -198,6 +199,22 @@ export default function WorkoutForm({ initialData, onChange }: Props) {
             type="number"
             value={formData.EstimatedClimbingTime}
             onChange={(e) => handleChange('EstimatedClimbingTime', parseInt(e.target.value) || 0)}
+            min="0"
+            className="w-full border rounded-lg px-3 py-2"
+          />
+        </div>
+      )}
+
+      {/* Manual total time — only when no exercises and no climbing */}
+      {!formData.containClimbing && !formData.containExercise && (
+        <div>
+          <label className="block text-sm font-medium mb-1">
+            זמן אימון משוער (דקות)
+          </label>
+          <input
+            type="number"
+            value={formData.EstimatedTotalTime ?? 0}
+            onChange={(e) => handleChange('EstimatedTotalTime', parseInt(e.target.value) || 0)}
             min="0"
             className="w-full border rounded-lg px-3 py-2"
           />

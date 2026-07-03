@@ -62,6 +62,7 @@ export interface WorkoutFormData {
   containClimbing: boolean
   containExercise: boolean
   EstimatedClimbingTime: number
+  EstimatedTotalTime?: number
 }
 
 // Type for workout with exercises (for display)

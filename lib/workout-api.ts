@@ -107,7 +107,9 @@ export async function createWorkout(
     CreatedBy: email,
     IsActive: true,
     CalculatedExercisesTime: 0,
-    EstimatedTotalTime: formData.EstimatedClimbingTime,
+    EstimatedTotalTime: (!formData.containClimbing && !formData.containExercise)
+      ? (formData.EstimatedTotalTime ?? 0)
+      : formData.EstimatedClimbingTime,
     UpdatedAt: new Date().toISOString(),
   }
 
