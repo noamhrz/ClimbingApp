@@ -155,17 +155,26 @@ export default function CalendarPage() {
 
     const { data: workoutsData } = await supabase
       .from('Workouts')
-      .select('WorkoutID, Name, EstimatedTotalTime')
+      .select('WorkoutID, Name, EstimatedTotalTime, EstimatedClimbingTime, CalculatedExercisesTime, containClimbing, containExercise')
 
     const workoutMap = Object.fromEntries(
       (workoutsData || []).map((w) => [w.WorkoutID, w.Name])
     )
+    const workoutDetailsMap = Object.fromEntries(
+      (workoutsData || []).map((w) => [w.WorkoutID, w])
+    )
     const durationMap = Object.fromEntries(
       (workoutsData || []).map((w) => [w.WorkoutID, w.EstimatedTotalTime || 60])
     )
-    const estimatedTimeMap = Object.fromEntries(
-      (workoutsData || []).map((w) => [w.WorkoutID, w.EstimatedTotalTime as number | null])
-    )
+
+    const getDisplayTime = (workoutId: number): number | null => {
+      const w = workoutDetailsMap[workoutId]
+      if (!w) return null
+      if (w.containClimbing || w.containExercise) {
+        return (w.CalculatedExercisesTime || 0) + (w.EstimatedClimbingTime || 0)
+      }
+      return w.EstimatedTotalTime ?? null
+    }
 
     const mapped = data.map((item) => {
       const start = moment.utc(item.StartTime).local()
@@ -192,7 +201,7 @@ export default function CalendarPage() {
         DeloadingPercentage: item.DeloadingPercentage,
         StartTime: item.StartTime,
         Order: item.Order ?? null,
-        EstimatedTotalTime: estimatedTimeMap[item.WorkoutID] ?? null,
+        EstimatedTotalTime: getDisplayTime(item.WorkoutID),
       }
     })
 

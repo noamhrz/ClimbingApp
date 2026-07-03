@@ -138,12 +138,25 @@ export async function updateWorkout(
   workoutId: number,
   formData: Partial<WorkoutFormData>
 ): Promise<void> {
+  const { EstimatedTotalTime, ...rest } = formData
+
+  const updateData: Record<string, unknown> = {
+    ...rest,
+    UpdatedAt: new Date().toISOString(),
+  }
+
+  if (!formData.containClimbing && !formData.containExercise) {
+    // No-content workout: use the manually entered value
+    updateData.EstimatedTotalTime = EstimatedTotalTime ?? 0
+  } else if (formData.containClimbing && !formData.containExercise) {
+    // Climbing-only: total = climbing time (exercises add nothing)
+    updateData.EstimatedTotalTime = formData.EstimatedClimbingTime ?? 0
+  }
+  // Exercise workouts: EstimatedTotalTime is set by recalculateWorkoutTime after exercises save
+
   const { error } = await supabase
     .from('Workouts')
-    .update({
-      ...formData,
-      UpdatedAt: new Date().toISOString(),
-    })
+    .update(updateData)
     .eq('WorkoutID', workoutId)
 
   if (error) throw error
