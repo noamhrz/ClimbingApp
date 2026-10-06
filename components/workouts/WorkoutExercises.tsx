@@ -48,6 +48,8 @@ const WorkoutExercises = forwardRef<WorkoutExercisesHandle, Props>(function Work
   useEffect(() => {
     setLocalExercises(exercises)
     setAdditionalBlocks([])
+    const blocks = exercises.map(e => e.Block)
+    setSelectedBlock(blocks.length > 0 ? Math.max(...blocks) : null)
   }, [exercises])
 
   const sensors = useSensors(
@@ -66,8 +68,8 @@ const WorkoutExercises = forwardRef<WorkoutExercisesHandle, Props>(function Work
 
   const handleAddExercise = (exercise: Exercise, blockNumber?: number) => {
     const targetBlock = blockNumber ?? nextBlock
-    setSelectedBlock(null)
     const blockExes = blockMap[targetBlock] ?? []
+    const nextOrder = blockExes.length > 0 ? Math.max(...blockExes.map(e => e.Order)) + 1 : 1
 
     setLocalExercises(prev => [
       ...prev,
@@ -79,11 +81,12 @@ const WorkoutExercises = forwardRef<WorkoutExercisesHandle, Props>(function Work
         Reps: exercise.isDuration ? 1 : DEFAULT_WORKOUT_EXERCISE.Reps,
         Duration: exercise.isDuration ? DEFAULT_WORKOUT_EXERCISE.Duration : null,
         Rest: DEFAULT_WORKOUT_EXERCISE.Rest,
-        Order: blockExes.length + 1,
+        Order: nextOrder,
         Block: targetBlock,
         Exercise: exercise,
       },
     ])
+    setSelectedBlock(targetBlock)
   }
 
   const handleUpdateExercise = (exerciseId: number, updates: Partial<WorkoutExerciseWithDetails>) => {
@@ -109,12 +112,18 @@ const WorkoutExercises = forwardRef<WorkoutExercisesHandle, Props>(function Work
 
   const handleAddBlock = () => {
     setAdditionalBlocks(prev => [...prev, nextBlock])
+    setSelectedBlock(nextBlock)
   }
 
   const handleDeleteBlock = (blockNumber: number) => {
     if (!confirm(`האם למחוק את בלוק ${blockNumber} עם כל התרגילים?`)) return
     setLocalExercises(prev => prev.filter(e => e.Block !== blockNumber))
     setAdditionalBlocks(prev => prev.filter(b => b !== blockNumber))
+    setSelectedBlock(prev => {
+      if (prev !== blockNumber) return prev
+      const remaining = allBlockNumbers.filter(b => b !== blockNumber)
+      return remaining.length > 0 ? Math.max(...remaining) : null
+    })
   }
 
   const handleDragStart = (event: DragStartEvent) => {
