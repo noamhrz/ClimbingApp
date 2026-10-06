@@ -12,6 +12,7 @@ interface Props {
   onRemoveExercise: (exerciseId: number) => void
   onDeleteBlock: () => void
   onAddExercise: () => void
+  onSelectBlock: () => void
   isSelectedForAdd?: boolean
 }
 
@@ -22,6 +23,7 @@ export default function BlockContainer({
   onRemoveExercise,
   onDeleteBlock,
   onAddExercise,
+  onSelectBlock,
   isSelectedForAdd,
 }: Props) {
   const sortedExercises = [...exercises].sort((a, b) => a.Order - b.Order)
@@ -31,6 +33,7 @@ export default function BlockContainer({
   return (
     <div
       ref={setNodeRef}
+      onPointerDownCapture={onSelectBlock}
       className={`rounded-lg p-4 border-2 transition-colors ${
         isOver || isSelectedForAdd
           ? 'border-blue-400 bg-blue-50'

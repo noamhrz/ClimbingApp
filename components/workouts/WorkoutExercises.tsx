@@ -90,6 +90,8 @@ const WorkoutExercises = forwardRef<WorkoutExercisesHandle, Props>(function Work
   }
 
   const handleUpdateExercise = (exerciseId: number, updates: Partial<WorkoutExerciseWithDetails>) => {
+    const ex = localExercises.find(e => e.WorkoutExerciseID === exerciseId)
+    if (ex) setSelectedBlock(ex.Block)
     setLocalExercises(prev =>
       prev.map(e => e.WorkoutExerciseID === exerciseId ? { ...e, ...updates } : e)
     )
@@ -97,17 +99,23 @@ const WorkoutExercises = forwardRef<WorkoutExercisesHandle, Props>(function Work
 
   const handleRemoveExercise = (exerciseId: number) => {
     if (!confirm('האם להסיר תרגיל זה?')) return
+    const removedEx = localExercises.find(e => e.WorkoutExerciseID === exerciseId)
+    if (!removedEx) return
+    const block = removedEx.Block
+    const blockStillExists =
+      localExercises.some(e => e.WorkoutExerciseID !== exerciseId && e.Block === block) ||
+      additionalBlocks.includes(block)
+
     setLocalExercises(prev => {
-      const removedEx = prev.find(e => e.WorkoutExerciseID === exerciseId)
-      if (!removedEx) return prev
       const filtered = prev.filter(e => e.WorkoutExerciseID !== exerciseId)
-      const block = removedEx.Block
       const blockExes = filtered.filter(e => e.Block === block).sort((a, b) => a.Order - b.Order)
       return filtered.map(e => {
         if (e.Block !== block) return e
         return { ...e, Order: blockExes.findIndex(b => b.WorkoutExerciseID === e.WorkoutExerciseID) + 1 }
       })
     })
+
+    if (blockStillExists) setSelectedBlock(block)
   }
 
   const handleAddBlock = () => {
@@ -165,10 +173,15 @@ const WorkoutExercises = forwardRef<WorkoutExercisesHandle, Props>(function Work
 
         return [...result]
       })
+      setSelectedBlock(targetBlock)
       return
     }
 
-    // Dropped on another exercise — all reads from prev to avoid stale closure
+    // Dropped on another exercise — destination block is wherever that exercise lives
+    const overExForBlock = localExercises.find(e => e.WorkoutExerciseID === Number(overId))
+    if (overExForBlock) setSelectedBlock(overExForBlock.Block)
+
+    // All reads from prev to avoid stale closure
     setLocalExercises(prev => {
       const activeEx = prev.find(e => e.WorkoutExerciseID === activeId)
       const overEx = prev.find(e => e.WorkoutExerciseID === Number(overId))
@@ -315,6 +328,7 @@ const WorkoutExercises = forwardRef<WorkoutExercisesHandle, Props>(function Work
                 onRemoveExercise={handleRemoveExercise}
                 onDeleteBlock={() => handleDeleteBlock(blockNum)}
                 onAddExercise={() => setSelectedBlock(blockNum)}
+                onSelectBlock={() => setSelectedBlock(blockNum)}
                 isSelectedForAdd={selectedBlock === blockNum}
               />
             ))}
