@@ -64,6 +64,24 @@ const btnBase = 'bg-white/10 hover:bg-white/20 backdrop-blur-sm px-3 py-1.5 roun
 export default function UserHeader() {
   const { activeUser, currentUser, isImpersonating, switchToSelf, logout } = useAuth()
   const router = useRouter()
+  const headerRef = useRef<HTMLElement>(null)
+
+  // Exposes the header's real (possibly multi-line) height as a CSS var so
+  // sticky elements further down the page (e.g. the workout exercise picker)
+  // can offset below it instead of hiding under it.
+  useEffect(() => {
+    const el = headerRef.current
+    if (!el) return
+
+    const setHeightVar = () => {
+      document.documentElement.style.setProperty('--app-header-height', `${el.offsetHeight}px`)
+    }
+
+    setHeightVar()
+    const observer = new ResizeObserver(setHeightVar)
+    observer.observe(el)
+    return () => observer.disconnect()
+  })
 
   const displayUser = activeUser || currentUser
   if (!displayUser) return null
@@ -90,7 +108,7 @@ export default function UserHeader() {
     : `/goals/${encodeURIComponent((activeUser || currentUser)?.Email || '')}`
 
   return (
-    <header className="bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg sticky top-0 z-50">
+    <header ref={headerRef} className="bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 py-3">
 
         {/* Top Row - User Info */}

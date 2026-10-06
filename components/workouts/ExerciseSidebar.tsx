@@ -181,7 +181,10 @@ export default function ExerciseSidebar({ onAddExercise }: Props) {
   }
 
   return (
-    <div className="w-80 bg-gray-50 border border-gray-200 rounded-lg flex flex-col" style={{ maxHeight: 'calc(100vh - 6rem)' }}>
+    <div
+      className="w-80 bg-gray-50 border border-gray-200 rounded-lg flex flex-col"
+      style={{ maxHeight: 'calc(100vh - var(--app-header-height, 0px) - 8rem)' }}
+    >
       {/* Fixed header — title, search, filter */}
       <div className="p-4 border-b border-gray-200 shrink-0">
         <h3 className="text-lg font-bold mb-3">תרגילים זמינים</h3>

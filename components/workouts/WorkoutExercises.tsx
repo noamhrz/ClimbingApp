@@ -342,9 +342,12 @@ const WorkoutExercises = forwardRef<WorkoutExercisesHandle, Props>(function Work
           </div>
         </div>
 
-        {/* Sidebar */}
+        {/* Sidebar — sticky below the app header, capped so it never runs under the header or the bottom save bar */}
         {showSidebar && (
-          <div className={`hidden md:block sticky top-4 self-start ${selectedBlock !== null ? 'ring-4 ring-blue-500 rounded-lg' : ''}`}>
+          <div
+            className={`hidden md:block sticky self-start ${selectedBlock !== null ? 'ring-4 ring-blue-500 rounded-lg' : ''}`}
+            style={{ top: 'calc(var(--app-header-height, 0px) + 1rem)' }}
+          >
             <ExerciseSidebar
               onAddExercise={(exercise) =>
                 handleAddExercise(exercise, selectedBlock ?? undefined)
