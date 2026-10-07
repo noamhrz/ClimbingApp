@@ -41,6 +41,19 @@
   color-scheme: dark;
 }
 
+/* Native dropdown lists (Windows Chrome draws them white unless told otherwise) */
+select {
+  color-scheme: dark;
+}
+select option,
+select optgroup {
+  background-color: var(--color-raised);
+  color: var(--color-fg);
+}
+select option:disabled {
+  color: var(--color-faint);
+}
+
 /* Recharts defaults on dark (grid lines, axis ticks, tooltips, legends) */
 .recharts-cartesian-grid line[stroke="#ccc"] { stroke: var(--color-line); }
 .recharts-cartesian-axis-tick-value[fill="#666"] { fill: var(--color-muted); }
