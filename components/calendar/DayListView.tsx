@@ -280,7 +280,7 @@ export default function DayListView({
             <h2 className="text-2xl font-bold text-fg">{moment(date).format('dddd')}</h2>
             <p className="text-sm text-muted mt-1">{moment(date).format('MMMM YYYY')}</p>
             {isToday && (
-              <div className="mt-2 inline-block px-3 py-1 bg-warning text-warning rounded-full text-xs font-bold">
+              <div className="mt-2 inline-block px-3 py-1 bg-warning text-on-accent rounded-full text-xs font-bold">
                 היום
               </div>
             )}
