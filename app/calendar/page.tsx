@@ -5,6 +5,7 @@ import { Calendar as BigCalendar, momentLocalizer, View } from 'react-big-calend
 import withDragAndDrop from 'react-big-calendar/lib/addons/dragAndDrop'
 import 'react-big-calendar/lib/css/react-big-calendar.css'
 import 'react-big-calendar/lib/addons/dragAndDrop/styles.css'
+import './calendar-custom.css'
 import { supabase } from '@/lib/supabaseClient'
 import { useAuth, useActiveUserEmail } from '@/context/AuthContext'
 import moment from 'moment-timezone'
