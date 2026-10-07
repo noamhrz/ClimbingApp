@@ -30,12 +30,12 @@ export default function CalendarToolbar({ date, onNavigate }: ToolbarProps) {
   const years = Array.from({ length: 5 }, (_, i) => currentYearNum - 2 + i)
 
   return (
-    <div className="flex items-center justify-between mb-4 bg-white p-3 rounded-lg border border-gray-200">
+    <div className="flex items-center justify-between mb-4 bg-surface p-3 rounded-lg border border-line">
       {/* Right: Navigation Buttons */}
       <div className="flex items-center gap-2">
         <button
           onClick={goToPrev}
-          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          className="p-2 hover:bg-surface rounded-lg transition-colors"
           title="חודש קודם"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -45,14 +45,14 @@ export default function CalendarToolbar({ date, onNavigate }: ToolbarProps) {
         
         <button
           onClick={goToToday}
-          className="px-4 py-2 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-lg font-medium transition-colors"
+          className="px-4 py-2 bg-accent/15 text-accent hover:bg-accent/15 rounded-lg font-medium transition-colors"
         >
           היום
         </button>
         
         <button
           onClick={goToNext}
-          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          className="p-2 hover:bg-surface rounded-lg transition-colors"
           title="חודש הבא"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -63,7 +63,7 @@ export default function CalendarToolbar({ date, onNavigate }: ToolbarProps) {
 
       {/* Center: Month & Year Display */}
       <div className="flex items-center gap-3">
-        <h2 className="text-xl font-bold text-gray-800">
+        <h2 className="text-xl font-bold text-fg">
           {currentMonth}
         </h2>
         
@@ -71,7 +71,7 @@ export default function CalendarToolbar({ date, onNavigate }: ToolbarProps) {
         <select
           value={currentYear}
           onChange={(e) => handleYearChange(Number(e.target.value))}
-          className="px-3 py-1 border border-gray-300 rounded-lg font-medium text-gray-700 hover:border-blue-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+          className="px-3 py-1 border border-line rounded-lg font-medium text-fg-2 hover:border-accent focus:ring-2 focus:ring-accent focus:border-transparent transition-colors"
         >
           {years.map(year => (
             <option key={year} value={year}>

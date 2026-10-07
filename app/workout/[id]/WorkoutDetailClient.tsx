@@ -818,7 +818,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
   if (!workout) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-lg text-red-600">אימון לא נמצא</div>
+        <div className="text-lg text-danger">אימון לא נמצא</div>
       </div>
     )
   }
@@ -826,31 +826,31 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
   return (
     <>
       <div className="mx-auto max-w-6xl" dir="rtl">
-        <div className="bg-white rounded-lg shadow-lg p-6">
+        <div className="bg-surface rounded-lg shadow-lg p-6">
           {/* Header */}
           <div className="mb-6">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            <h1 className="text-3xl font-bold text-fg mb-2">
               {workout.Name}
             </h1>
             
             {/* Date Status */}
             {calendarRow && (
               <div className="flex items-center gap-3 text-sm">
-                <span className="text-gray-600">
+                <span className="text-fg-3">
                   📅 {formatDate(calendarRow.StartTime)}
                 </span>
                 {isPastWorkout && (
-                  <span className="bg-red-100 text-red-700 px-3 py-1 rounded-full font-medium">
+                  <span className="bg-danger/15 text-danger px-3 py-1 rounded-full font-medium">
                     ⚠️ אימון עבר
                   </span>
                 )}
                 {isFutureWorkout && (
-                  <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full font-medium">
+                  <span className="bg-accent/15 text-accent px-3 py-1 rounded-full font-medium">
                     🔮 אימון עתידי
                   </span>
                 )}
                 {isTodayWorkout && (
-                  <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full font-medium">
+                  <span className="bg-success/15 text-success px-3 py-1 rounded-full font-medium">
                     ✅ אימון היום
                   </span>
                 )}
@@ -861,7 +861,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
             {(isFutureWorkout || isPastWorkout) && (
               <button
                 onClick={handleConvertToToday}
-                className="mt-3 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition"
+                className="mt-3 bg-accent hover:bg-accent/90 text-white px-4 py-2 rounded-lg text-sm font-medium transition"
               >
                 🔄 העבר להיום
               </button>
@@ -872,15 +872,15 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
           <section className="mb-8 space-y-4">
             {/* Video */}
             {workout.VideoURL && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <h3 className="font-semibold text-blue-900 mb-2 flex items-center gap-2">
+              <div className="bg-accent/15 border border-accent rounded-lg p-4">
+                <h3 className="font-semibold text-accent mb-2 flex items-center gap-2">
                   🎥 וידאו הדרכה
                 </h3>
                 <a 
                   href={workout.VideoURL} 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="text-blue-600 hover:text-blue-800 underline"
+                  className="text-accent hover:text-accent/90 underline"
                 >
                   צפה בווידאו
                 </a>
@@ -889,31 +889,31 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
 
             {/* Description */}
             {workout.Description && (
-              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                <h3 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
+              <div className="bg-surface border border-line rounded-lg p-4">
+                <h3 className="font-semibold text-fg mb-2 flex items-center gap-2">
                   📝 תיאור האימון
                 </h3>
-                <p className="text-gray-700 whitespace-pre-wrap">{workout.Description}</p>
+                <p className="text-fg-2 whitespace-pre-wrap">{workout.Description}</p>
               </div>
             )}
 
             {/* Coach Notes */}
             {workout.WorkoutNotes && (
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                <h3 className="font-semibold text-yellow-900 mb-2 flex items-center gap-2">
+              <div className="bg-warning/15 border border-warning rounded-lg p-4">
+                <h3 className="font-semibold text-warning mb-2 flex items-center gap-2">
                   👨‍🏫 הערות מאמן
                 </h3>
-                <p className="text-yellow-900 whitespace-pre-wrap">{workout.WorkoutNotes}</p>
+                <p className="text-warning whitespace-pre-wrap">{workout.WorkoutNotes}</p>
               </div>
             )}
 
             {/* When To Practice */}
             {workout.WhenToPractice && (
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                <h3 className="font-semibold text-green-900 mb-2 flex items-center gap-2">
+              <div className="bg-success/15 border border-success rounded-lg p-4">
+                <h3 className="font-semibold text-success mb-2 flex items-center gap-2">
                   ⏰ מתי להתאמן
                 </h3>
-                <p className="text-green-900">{workout.WhenToPractice}</p>
+                <p className="text-success">{workout.WhenToPractice}</p>
               </div>
             )}
           </section>
@@ -943,7 +943,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
                   <div key={blockNum} className="mb-8">
                     {/* Block Header - Clickable Toggle */}
                     <div 
-                      className="bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-t-lg px-4 py-3 font-bold text-lg cursor-pointer hover:from-blue-600 hover:to-blue-700 transition-all flex justify-between items-center select-none"
+                      className="text-white rounded-t-lg px-4 py-3 font-bold text-lg cursor-pointer hover: hover: transition-all flex justify-between items-center select-none bg-surface border border-line"
                       onClick={() => toggleBlock(blockNum)}
                     >
                       <span>📦 בלוק {blockNum}</span>
@@ -958,7 +958,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
                     </div>
                     
                     {/* Exercises in this block */}
-                    <div className="border border-t-0 border-gray-200 rounded-b-lg p-4 space-y-4 bg-gray-50">
+                    <div className="border border-t-0 border-line rounded-b-lg p-4 space-y-4 bg-surface">
                       {exercisesByBlock[blockNum].map((ex, idx) => {
                         const globalIndex = exerciseForms.findIndex(e => e.ExerciseID === ex.ExerciseID)
                         return (
@@ -997,17 +997,17 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
                     placeholder="🔍 חפש מיקום..."
                     value={locationSearch}
                     onChange={(e) => setLocationSearch(e.target.value)}
-                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-accent text-sm"
                   />
                   
                   {/* Filtered select */}
                   <select
                     value={selectedLocation || ''}
                     onChange={(e) => setSelectedLocation(Number(e.target.value) || null)}
-                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 ${
+                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-accent ${
                       routes.length > 0 && !selectedLocation 
-                        ? 'border-red-300 bg-red-50' 
-                        : 'border-gray-300'
+                        ? 'border-danger bg-danger/15' 
+                        : 'border-line'
                     }`}
                   >
                     <option value="">בחר מיקום</option>
@@ -1020,7 +1020,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
                   
                   {/* Show count if filtering */}
                   {locationSearch && (
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-fg-3">
                       נמצאו {filteredLocations.length} מתוך {locations.length} מיקומים
                     </p>
                   )}
@@ -1029,14 +1029,14 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
                   <button
                     type="button"
                     onClick={() => setShowAddLocationModal(true)}
-                    className="w-full py-2 px-4 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 transition-all font-medium"
+                    className="w-full py-2 px-4 border-2 border-dashed border-line rounded-lg text-fg-3 hover:border-accent hover:text-accent hover:bg-accent/15 transition-all font-medium"
                   >
                     ➕ הוסף מיקום חדש
                   </button>
                 </div>
                 
                 {routes.length > 0 && !selectedLocation && (
-                  <p className="text-red-600 text-sm mt-1">
+                  <p className="text-danger text-sm mt-1">
                     ⚠️ חובה לבחור מיקום כאשר יש מסלולים
                   </p>
                 )}
@@ -1106,7 +1106,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
             <label className="block font-medium mb-2">הערות מטפס</label>
             <textarea 
               placeholder="הערות, תחושות, הישגים..." 
-              className="border border-gray-300 rounded w-full p-3 focus:border-blue-500 focus:outline-none" 
+              className="border border-line rounded w-full p-3 focus:border-accent focus:outline-none" 
               rows={3} 
               value={climberNotes} 
               onChange={(e) => setClimberNotes(e.target.value)} 
@@ -1117,7 +1117,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
           <div className="text-center mt-8">
             <button
               id="save-workout-btn"
-              className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-semibold text-lg shadow-md transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
+              className="bg-accent hover:bg-accent-hover text-white px-8 py-3 rounded-lg font-semibold text-lg shadow-md transition-colors disabled:bg-raised disabled:cursor-not-allowed"
               onClick={onComplete}
               disabled={isSaving || (workout.containClimbing && routes.length > 0 && !selectedLocation)}
             >
@@ -1131,7 +1131,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
               )}
             </button>
             {workout.containClimbing && routes.length > 0 && !selectedLocation && (
-              <p className="text-red-600 text-sm mt-2">
+              <p className="text-danger text-sm mt-2">
                 ⚠️ נא לבחור מיקום לפני שמירה
               </p>
             )}
@@ -1147,10 +1147,10 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
               exit={{ opacity: 0, y: 20 }}
               className={`fixed bottom-24 left-1/2 -translate-x-1/2 px-6 py-3 rounded-lg shadow-lg text-white text-sm z-[9999] ${
                 toast.color === 'blue'
-                  ? 'bg-blue-600'
+                  ? 'bg-accent'
                   : toast.color === 'red'
-                  ? 'bg-red-600'
-                  : 'bg-gray-700'
+                  ? 'bg-danger'
+                  : 'bg-raised'
               }`}
             >
               {toast.text}
@@ -1162,31 +1162,31 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
       {/* Add New Location Modal */}
       {showAddLocationModal && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[60] p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6" dir="rtl">
+          <div className="bg-surface rounded-xl shadow-2xl max-w-md w-full p-6" dir="rtl">
             {/* Header */}
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-bold text-gray-900">
+              <h3 className="text-xl font-bold text-fg">
                 📍 הוספת מיקום חדש
               </h3>
               <button
                 onClick={() => setShowAddLocationModal(false)}
                 disabled={savingLocation}
-                className="text-gray-400 hover:text-gray-600 text-2xl"
+                className="text-faint hover:text-fg-3 text-2xl"
               >
                 ×
               </button>
             </div>
 
             {/* Info */}
-            <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-              <p className="text-sm text-blue-900">
+            <div className="mb-4 p-3 bg-accent/15 border border-accent rounded-lg">
+              <p className="text-sm text-accent">
                 💡 הוסף מיקום חדש לרשימה. המיקום יהיה זמין לכולם.
               </p>
             </div>
 
             {/* Name Input */}
             <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-fg-2 mb-2">
                 שם המיקום *
               </label>
               <input
@@ -1194,7 +1194,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
                 value={newLocationName}
                 onChange={(e) => setNewLocationName(e.target.value)}
                 placeholder="למשל: קיר ספיידרמן"
-                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-accent"
                 disabled={savingLocation}
                 autoFocus
                 onKeyPress={(e) => {
@@ -1211,14 +1211,14 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
               <button
                 onClick={handleAddLocation}
                 disabled={savingLocation || !newLocationName.trim()}
-                className="flex-1 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition"
+                className="flex-1 py-3 bg-accent text-white rounded-lg hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed font-medium transition"
               >
                 {savingLocation ? '⏳ שומר...' : '✅ הוסף מיקום'}
               </button>
               <button
                 onClick={() => setShowAddLocationModal(false)}
                 disabled={savingLocation}
-                className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition disabled:opacity-50"
+                className="px-6 py-3 bg-raised text-fg-2 rounded-lg hover:bg-raised/90 transition disabled:opacity-50"
               >
                 ביטול
               </button>

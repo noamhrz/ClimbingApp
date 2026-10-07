@@ -52,7 +52,7 @@ export default function GoalsPyramid({
 
   if (!data || pyramidLevels.length === 0) {
     return (
-      <div className="flex items-center justify-center h-64 text-gray-500 bg-gray-50 rounded-xl">
+      <div className="flex items-center justify-center h-64 text-muted bg-surface rounded-xl">
         אין יעדים להצגה
       </div>
     )
@@ -141,7 +141,7 @@ export default function GoalsPyramid({
                 -top-10 
                 left-1/2 
                 -translate-x-1/2
-                bg-gray-900 
+                bg-bg 
                 text-white 
                 px-3 
                 py-1 
@@ -161,9 +161,9 @@ export default function GoalsPyramid({
       </div>
 
       {/* Legend */}
-      <div className="mt-8 text-center text-sm text-gray-600">
+      <div className="mt-8 text-center text-sm text-fg-3">
         <div className="flex items-center justify-center gap-2">
-          <div className="w-4 h-4 bg-gradient-to-r from-orange-200 to-red-600 rounded"></div>
+          <div className="w-4 h-4 rounded bg-surface border border-line"></div>
           <span>קל → קשה</span>
         </div>
         <div className="mt-2">

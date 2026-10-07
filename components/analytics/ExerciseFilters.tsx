@@ -53,12 +53,12 @@ export default function ExerciseFilters({
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">
+    <div className="bg-surface rounded-xl shadow-sm border border-line p-4 mb-6">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         
         {/* Exercise Autocomplete */}
         <div className="relative">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-fg-2 mb-2">
             🏋️ תרגיל
           </label>
           <div className="relative">
@@ -71,20 +71,20 @@ export default function ExerciseFilters({
               }}
               onFocus={() => setShowDropdown(true)}
               placeholder="חפש תרגיל..."
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-line rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent"
             />
             
             {/* Dropdown */}
             {showDropdown && filteredExercises.length > 0 && (
-              <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+              <div className="absolute z-50 w-full mt-1 bg-surface border border-line rounded-lg shadow-lg max-h-60 overflow-y-auto">
                 {filteredExercises.map(exercise => (
                   <button
                     key={exercise.ExerciseID}
                     onClick={() => handleExerciseSelect(exercise)}
-                    className="w-full text-right px-4 py-2 hover:bg-blue-50 transition-colors"
+                    className="w-full text-right px-4 py-2 hover:bg-accent/15 transition-colors"
                   >
-                    <div className="font-medium text-gray-900">{exercise.Name}</div>
-                    <div className="text-sm text-gray-500">{exercise.Category}</div>
+                    <div className="font-medium text-fg">{exercise.Name}</div>
+                    <div className="text-sm text-muted">{exercise.Category}</div>
                   </button>
                 ))}
               </div>
@@ -98,7 +98,7 @@ export default function ExerciseFilters({
                 onFiltersChange({ ...filters, exerciseId: null })
                 setSearchTerm('')
               }}
-              className="absolute left-3 top-10 text-gray-400 hover:text-gray-600"
+              className="absolute left-3 top-10 text-faint hover:text-fg-3"
             >
               ✕
             </button>
@@ -107,13 +107,13 @@ export default function ExerciseFilters({
 
         {/* Category Filter */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-fg-2 mb-2">
             📂 קטגוריה
           </label>
           <select
             value={filters.category || 'all'}
             onChange={(e) => handleCategoryChange(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-4 py-2 border border-line rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent"
           >
             <option value="all">הכל</option>
             {categories.map(cat => (
@@ -124,13 +124,13 @@ export default function ExerciseFilters({
 
         {/* Date Range Filter */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-fg-2 mb-2">
             📅 טווח תאריכים
           </label>
           <select
             value={filters.dateRange}
             onChange={(e) => handleDateRangeChange(e.target.value as DateRange)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-4 py-2 border border-line rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent"
           >
             <option value="week">שבוע אחרון</option>
             <option value="month">חודש אחרון</option>
@@ -147,14 +147,14 @@ export default function ExerciseFilters({
       {(filters.exerciseId || filters.category) && (
         <div className="mt-4 flex flex-wrap gap-2">
           {filters.exerciseId && selectedExercise && (
-            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-100 text-blue-700">
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-accent/15 text-accent">
               {selectedExercise.Name}
               <button
                 onClick={() => {
                   onFiltersChange({ ...filters, exerciseId: null })
                   setSearchTerm('')
                 }}
-                className="mr-2 hover:text-blue-900"
+                className="mr-2 hover:text-accent"
               >
                 ✕
               </button>

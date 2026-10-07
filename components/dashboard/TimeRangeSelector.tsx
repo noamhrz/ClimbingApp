@@ -13,8 +13,8 @@ export default function TimeRangeSelector({ selected, onChange }: Props) {
         onClick={() => onChange('10days')}
         className={`px-6 py-3 rounded-lg font-medium transition-all ${
           selected === '10days'
-            ? 'bg-blue-600 text-white shadow-lg scale-105'
-            : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            ? 'bg-accent text-white shadow-lg scale-105'
+            : 'bg-raised text-fg-2 hover:bg-raised/90'
         }`}
       >
         📅 10 ימים
@@ -24,8 +24,8 @@ export default function TimeRangeSelector({ selected, onChange }: Props) {
         onClick={() => onChange('6weeks')}
         className={`px-6 py-3 rounded-lg font-medium transition-all ${
           selected === '6weeks'
-            ? 'bg-blue-600 text-white shadow-lg scale-105'
-            : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            ? 'bg-accent text-white shadow-lg scale-105'
+            : 'bg-raised text-fg-2 hover:bg-raised/90'
         }`}
       >
         📅 6 שבועות
@@ -35,8 +35,8 @@ export default function TimeRangeSelector({ selected, onChange }: Props) {
         onClick={() => onChange('12weeks')}
         className={`px-6 py-3 rounded-lg font-medium transition-all ${
           selected === '12weeks'
-            ? 'bg-blue-600 text-white shadow-lg scale-105'
-            : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            ? 'bg-accent text-white shadow-lg scale-105'
+            : 'bg-raised text-fg-2 hover:bg-raised/90'
         }`}
       >
         📅 12 שבועות

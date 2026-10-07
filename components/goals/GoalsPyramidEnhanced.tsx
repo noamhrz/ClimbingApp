@@ -48,9 +48,9 @@ export default function GoalsPyramidEnhanced({
 
   if (!data || pyramidLevels.length === 0) {
     return (
-      <div className="bg-white rounded-xl shadow-sm p-8">
+      <div className="bg-surface rounded-xl shadow-sm p-8">
         {title && <h3 className="text-xl font-bold mb-4">{title}</h3>}
-        <div className="flex items-center justify-center h-48 text-gray-400 bg-gray-50 rounded-lg">
+        <div className="flex items-center justify-center h-48 text-faint bg-surface rounded-lg">
           <div className="text-center">
             <div className="text-4xl mb-2">🎯</div>
             <div>אין יעדים להצגה</div>
@@ -84,7 +84,7 @@ export default function GoalsPyramidEnhanced({
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-sm p-8" dir="rtl">
+    <div className="bg-surface rounded-xl shadow-sm p-8" dir="rtl">
       {/* Title */}
       {title && (
         <h3 className="text-2xl font-bold mb-6 text-center">{title}</h3>
@@ -92,17 +92,17 @@ export default function GoalsPyramidEnhanced({
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4 mb-8">
-        <div className="bg-gray-50 rounded-lg p-4 text-center">
-          <div className="text-2xl font-bold text-gray-900">{totalGoals}</div>
-          <div className="text-sm text-gray-600">סה"כ יעדים</div>
+        <div className="bg-surface rounded-lg p-4 text-center">
+          <div className="text-2xl font-bold text-fg">{totalGoals}</div>
+          <div className="text-sm text-fg-3">סה"כ יעדים</div>
         </div>
-        <div className="bg-gray-50 rounded-lg p-4 text-center">
-          <div className="text-2xl font-bold text-gray-900">{pyramidLevels.length}</div>
-          <div className="text-sm text-gray-600">דרגות</div>
+        <div className="bg-surface rounded-lg p-4 text-center">
+          <div className="text-2xl font-bold text-fg">{pyramidLevels.length}</div>
+          <div className="text-sm text-fg-3">דרגות</div>
         </div>
-        <div className="bg-gray-50 rounded-lg p-4 text-center">
-          <div className="text-2xl font-bold text-gray-900">{pyramidLevels[0]?.grade || '-'}</div>
-          <div className="text-sm text-gray-600">יעד מרבי</div>
+        <div className="bg-surface rounded-lg p-4 text-center">
+          <div className="text-2xl font-bold text-fg">{pyramidLevels[0]?.grade || '-'}</div>
+          <div className="text-sm text-fg-3">יעד מרבי</div>
         </div>
       </div>
 
@@ -184,7 +184,7 @@ export default function GoalsPyramidEnhanced({
                   -top-12
                   left-1/2 
                   -translate-x-1/2
-                  bg-gray-900 
+                  bg-bg 
                   text-white 
                   px-4
                   py-2
@@ -209,7 +209,7 @@ export default function GoalsPyramidEnhanced({
                     -translate-x-1/2 
                     w-2 
                     h-2 
-                    bg-gray-900 
+                    bg-bg 
                     rotate-45
                   "></div>
                 </div>
@@ -220,7 +220,7 @@ export default function GoalsPyramidEnhanced({
       </div>
 
       {/* Legend */}
-      <div className="mt-8 flex items-center justify-center gap-6 text-sm text-gray-600">
+      <div className="mt-8 flex items-center justify-center gap-6 text-sm text-fg-3">
         <div className="flex items-center gap-2">
           <div className={`w-6 h-6 rounded bg-gradient-to-r ${
             type === 'lead' 
@@ -229,7 +229,7 @@ export default function GoalsPyramidEnhanced({
           }`}></div>
           <span>קל → קשה</span>
         </div>
-        <div className="text-gray-400">|</div>
+        <div className="text-faint">|</div>
         <div>
           רוחב מייצג כמות יעדים
         </div>

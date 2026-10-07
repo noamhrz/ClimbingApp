@@ -297,14 +297,14 @@ const WorkoutExercises = forwardRef<WorkoutExercisesHandle, Props>(function Work
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setShowSidebar(!showSidebar)}
-                className="text-sm text-blue-600 hover:underline md:hidden"
+                className="text-sm text-accent hover:underline md:hidden"
               >
                 {showSidebar ? 'הסתר' : 'הצג'} תרגילים זמינים
               </button>
               <button
                 onClick={handleSaveClick}
                 disabled={saving}
-                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium disabled:opacity-50 text-sm"
+                className="px-4 py-2 bg-success text-white rounded-lg hover:bg-success/90 font-medium disabled:opacity-50 text-sm"
               >
                 {saving ? '💾 שומר...' : '💾 שמור תרגילים'}
               </button>
@@ -313,9 +313,9 @@ const WorkoutExercises = forwardRef<WorkoutExercisesHandle, Props>(function Work
 
           <div className="space-y-6">
             {allBlockNumbers.length === 0 && (
-              <div className="bg-gray-50 rounded-lg p-12 text-center border-2 border-dashed border-gray-300">
-                <p className="text-gray-600 mb-2 text-lg font-medium">עדיין אין תרגילים באימון</p>
-                <p className="text-sm text-gray-500">👉 הוסף בלוק או לחץ על תרגיל מהצד כדי להתחיל</p>
+              <div className="bg-surface rounded-lg p-12 text-center border-2 border-dashed border-line">
+                <p className="text-fg-3 mb-2 text-lg font-medium">עדיין אין תרגילים באימון</p>
+                <p className="text-sm text-muted">👉 הוסף בלוק או לחץ על תרגיל מהצד כדי להתחיל</p>
               </div>
             )}
 
@@ -335,7 +335,7 @@ const WorkoutExercises = forwardRef<WorkoutExercisesHandle, Props>(function Work
 
             <button
               onClick={handleAddBlock}
-              className="w-full border-2 border-dashed border-gray-300 rounded-lg py-4 text-gray-500 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 font-medium transition-colors"
+              className="w-full border-2 border-dashed border-line rounded-lg py-4 text-muted hover:border-accent hover:text-accent hover:bg-accent/15 font-medium transition-colors"
             >
               + הוסף בלוק חדש
             </button>
@@ -345,7 +345,7 @@ const WorkoutExercises = forwardRef<WorkoutExercisesHandle, Props>(function Work
         {/* Sidebar — sticky below the app header, capped so it never runs under the header or the bottom save bar */}
         {showSidebar && (
           <div
-            className={`hidden md:block sticky self-start ${selectedBlock !== null ? 'ring-4 ring-blue-500 rounded-lg' : ''}`}
+            className={`hidden md:block sticky self-start ${selectedBlock !== null ? 'ring-4 ring-accent rounded-lg' : ''}`}
             style={{ top: 'calc(var(--app-header-height, 0px) + 1rem)' }}
           >
             <ExerciseSidebar
@@ -359,7 +359,7 @@ const WorkoutExercises = forwardRef<WorkoutExercisesHandle, Props>(function Work
 
       <DragOverlay>
         {activeExercise && (
-          <div className="bg-white border-2 border-blue-500 rounded-lg p-3 shadow-xl opacity-90 cursor-grabbing">
+          <div className="bg-surface border-2 border-accent rounded-lg p-3 shadow-xl opacity-90 cursor-grabbing">
             <span className="font-medium text-sm">{activeExercise.Exercise.Name}</span>
           </div>
         )}

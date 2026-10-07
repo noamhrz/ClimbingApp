@@ -36,8 +36,8 @@ export default function BlockContainer({
       onPointerDownCapture={onSelectBlock}
       className={`rounded-lg p-4 border-2 transition-colors ${
         isOver || isSelectedForAdd
-          ? 'border-blue-400 bg-blue-50'
-          : 'border-gray-200 bg-gray-50'
+          ? 'border-accent bg-accent/15'
+          : 'border-line bg-surface'
       }`}
     >
       {/* Block Header */}
@@ -45,7 +45,7 @@ export default function BlockContainer({
         <h3 className="text-lg font-bold">📌 בלוק {blockNumber}</h3>
         <button
           onClick={onDeleteBlock}
-          className="text-red-600 hover:text-red-700 text-sm font-medium"
+          className="text-danger hover:text-danger/90 text-sm font-medium"
         >
           🗑️ מחק בלוק
         </button>
@@ -58,7 +58,7 @@ export default function BlockContainer({
       >
         <div className="space-y-3">
           {sortedExercises.length === 0 && (
-            <div className="py-6 text-center text-gray-400 text-sm border border-dashed border-gray-300 rounded-lg">
+            <div className="py-6 text-center text-faint text-sm border border-dashed border-line rounded-lg">
               גרור תרגיל לכאן
             </div>
           )}
@@ -78,8 +78,8 @@ export default function BlockContainer({
             onClick={onAddExercise}
             className={`w-full border-2 border-dashed rounded-lg py-3 text-sm transition-colors ${
               isSelectedForAdd
-                ? 'border-blue-500 text-blue-600 bg-blue-50'
-                : 'border-gray-300 text-gray-500 hover:border-blue-500 hover:text-blue-600'
+                ? 'border-accent text-accent bg-accent/15'
+                : 'border-line text-muted hover:border-accent/90 hover:text-accent/90'
             }`}
           >
             {isSelectedForAdd ? '👉 בחר תרגיל מהסיידבר' : `+ הוסף תרגיל לבלוק ${blockNumber}`}

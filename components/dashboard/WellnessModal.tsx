@@ -134,21 +134,21 @@ export default function WellnessModal({ isOpen, onClose, currentUser, onSave }: 
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 max-h-[90vh] overflow-y-auto">
+      <div className="bg-surface rounded-xl shadow-2xl max-w-md w-full p-6 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-2xl font-bold text-gray-800">
+            <h2 className="text-2xl font-bold text-fg">
               💚 Wellness Log
             </h2>
             {isExistingEntry && (
-              <p className="text-sm text-orange-600 mt-1">
+              <p className="text-sm text-warning mt-1">
                 ✏️ עריכת רשומה קיימת
               </p>
             )}
           </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 text-2xl leading-none"
+            className="text-faint hover:text-fg-3 text-2xl leading-none"
           >
             ×
           </button>
@@ -157,7 +157,7 @@ export default function WellnessModal({ isOpen, onClose, currentUser, onSave }: 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Date Selector */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2 text-right">
+            <label className="block text-sm font-medium text-fg-2 mb-2 text-right">
               📅 תאריך
             </label>
             <input
@@ -165,23 +165,23 @@ export default function WellnessModal({ isOpen, onClose, currentUser, onSave }: 
               value={selectedDate}
               onChange={(e) => setSelectedDate(e.target.value)}
               max={format(new Date(), 'yyyy-MM-dd')}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-right"
+              className="w-full px-4 py-2 border border-line rounded-lg focus:ring-2 focus:ring-accent text-right"
               dir="rtl"
             />
-            <p className="mt-1 text-xs text-gray-500 text-right">
+            <p className="mt-1 text-xs text-muted text-right">
               ניתן למלא רטרואקטיבית, אבל לא בעתיד
             </p>
           </div>
 
           {/* Sleep Hours */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2 text-right">
-              🛏️ שעות שינה: <span className="text-blue-600 font-bold">{sleepHours}</span>
+            <label className="block text-sm font-medium text-fg-2 mb-2 text-right">
+              🛏️ שעות שינה: <span className="text-accent font-bold">{sleepHours}</span>
             </label>
             <select
               value={sleepHours}
               onChange={(e) => setSleepHours(Number(e.target.value))}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-right"
+              className="w-full px-4 py-2 border border-line rounded-lg focus:ring-2 focus:ring-accent text-right"
               dir="rtl"
             >
               {sleepOptions.map(hours => (
@@ -190,7 +190,7 @@ export default function WellnessModal({ isOpen, onClose, currentUser, onSave }: 
                 </option>
               ))}
             </select>
-            <div className="mt-2 flex justify-between text-xs text-gray-500">
+            <div className="mt-2 flex justify-between text-xs text-muted">
               <span>1 שעה</span>
               <span>10 שעות</span>
             </div>
@@ -198,7 +198,7 @@ export default function WellnessModal({ isOpen, onClose, currentUser, onSave }: 
 
           {/* Energy Level */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2 text-right">
+            <label className="block text-sm font-medium text-fg-2 mb-2 text-right">
               ⚡ רמת אנרגיה
             </label>
             <div className="grid grid-cols-2 gap-2">
@@ -214,8 +214,8 @@ export default function WellnessModal({ isOpen, onClose, currentUser, onSave }: 
                   onClick={() => setEnergy(value)}
                   className={`flex items-center gap-2 px-3 py-2 rounded-lg border-2 text-right transition-colors ${
                     energy === value
-                      ? 'border-green-500 bg-green-50 text-green-800 font-semibold'
-                      : 'border-gray-200 bg-white text-gray-700 hover:border-green-300'
+                      ? 'border-success bg-success/15 text-success font-semibold'
+                      : 'border-line bg-surface text-fg-2 hover:border-success/90'
                   }`}
                 >
                   <span className="text-xl flex-shrink-0">{emoji}</span>
@@ -227,7 +227,7 @@ export default function WellnessModal({ isOpen, onClose, currentUser, onSave }: 
 
           {/* Soreness/Pain Level */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2 text-right">
+            <label className="block text-sm font-medium text-fg-2 mb-2 text-right">
               🤕 רמת כאב
             </label>
             <div className="grid grid-cols-2 gap-2">
@@ -243,8 +243,8 @@ export default function WellnessModal({ isOpen, onClose, currentUser, onSave }: 
                   onClick={() => setSoreness(value)}
                   className={`flex items-center gap-2 px-3 py-2 rounded-lg border-2 text-right transition-colors ${
                     soreness === value
-                      ? 'border-red-500 bg-red-50 text-red-800 font-semibold'
-                      : 'border-gray-200 bg-white text-gray-700 hover:border-red-300'
+                      ? 'border-danger bg-danger/15 text-danger font-semibold'
+                      : 'border-line bg-surface text-fg-2 hover:border-danger/90'
                   }`}
                 >
                   <span className="text-xl flex-shrink-0">{emoji}</span>
@@ -256,7 +256,7 @@ export default function WellnessModal({ isOpen, onClose, currentUser, onSave }: 
 
           {/* Pain Area */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2 text-right">
+            <label className="block text-sm font-medium text-fg-2 mb-2 text-right">
               📍 איזור כאב (אופציונלי)
             </label>
             <input
@@ -264,21 +264,21 @@ export default function WellnessModal({ isOpen, onClose, currentUser, onSave }: 
               value={painArea}
               onChange={(e) => setPainArea(e.target.value)}
               placeholder="למשל: כתף ימין, גב תחתון, אצבע"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-right"
+              className="w-full px-4 py-2 border border-line rounded-lg focus:ring-2 focus:ring-accent text-right"
               dir="rtl"
             />
           </div>
 
           {/* Comments */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2 text-right">
+            <label className="block text-sm font-medium text-fg-2 mb-2 text-right">
               📝 הערות (אופציונלי)
             </label>
             <textarea
               value={comments}
               onChange={(e) => setComments(e.target.value)}
               placeholder="איך הרגשת היום? משהו מיוחד?"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 resize-none text-right"
+              className="w-full px-4 py-2 border border-line rounded-lg focus:ring-2 focus:ring-accent resize-none text-right"
               rows={3}
               dir="rtl"
             />
@@ -289,14 +289,14 @@ export default function WellnessModal({ isOpen, onClose, currentUser, onSave }: 
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-colors"
+              className="flex-1 py-3 bg-success text-white rounded-lg hover:bg-success/90 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-colors"
             >
               {loading ? '⏳ שומר...' : isExistingEntry ? '💾 עדכן' : '✅ שמור'}
             </button>
             <button
               type="button"
               onClick={onClose}
-              className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+              className="px-6 py-3 bg-raised text-fg-2 rounded-lg hover:bg-raised/90 transition-colors"
             >
               ביטול
             </button>
@@ -304,8 +304,8 @@ export default function WellnessModal({ isOpen, onClose, currentUser, onSave }: 
         </form>
 
         {/* Tips */}
-        <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-          <p className="text-xs text-blue-800 text-right">
+        <div className="mt-6 p-4 bg-accent/15 rounded-lg border border-accent">
+          <p className="text-xs text-accent text-right">
             💡 <strong>טיפ:</strong> מילוי יומי של הWellness עוזר לעקוב אחר ההתקדמות ולמנוע פציעות!
           </p>
         </div>

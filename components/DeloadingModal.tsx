@@ -76,8 +76,8 @@ export default function DeloadingModal({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
-        <h2 className="text-xl font-bold mb-4 text-gray-800">
+      <div className="bg-surface rounded-xl shadow-xl max-w-md w-full p-6">
+        <h2 className="text-xl font-bold mb-4 text-fg">
           {mode === 'apply' ? '🔵 החלת דילודינג' : '❌ הסרת דילודינג'}
         </h2>
 
@@ -85,28 +85,28 @@ export default function DeloadingModal({
           <div className="space-y-4">
             {/* Start Date */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-fg-2 mb-1">
                 תאריך התחלה
               </label>
               <input
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-line rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent"
                 required
               />
             </div>
 
             {/* End Date */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-fg-2 mb-1">
                 תאריך סיום
               </label>
               <input
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-line rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent"
                 required
               />
             </div>
@@ -114,7 +114,7 @@ export default function DeloadingModal({
             {/* Percentage - only for apply mode */}
             {mode === 'apply' && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-fg-2 mb-1">
                   אחוז ביצוע (1-100)
                 </label>
                 <input
@@ -123,10 +123,10 @@ export default function DeloadingModal({
                   max="100"
                   value={percentage}
                   onChange={(e) => setPercentage(Number(e.target.value))}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-line rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent"
                   required
                 />
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-muted mt-1">
                   המתאמן יבצע רק {percentage}% מהסטים המתוכננים
                 </p>
               </div>
@@ -134,13 +134,13 @@ export default function DeloadingModal({
 
             {/* Error message */}
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-2 rounded-lg text-sm">
+              <div className="bg-danger/15 border border-danger text-danger px-4 py-2 rounded-lg text-sm">
                 {error}
               </div>
             )}
 
             {/* Info message */}
-            <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-2 rounded-lg text-sm">
+            <div className="bg-accent/15 border border-accent text-accent px-4 py-2 rounded-lg text-sm">
               {mode === 'apply'
                 ? `פעולה זו תעדכן את כל האימונים בין ${startDate || '___'} ל-${endDate || '___'}`
                 : `פעולה זו תסיר את הדילודינג מכל האימונים בין ${startDate || '___'} ל-${endDate || '___'}`}
@@ -152,7 +152,7 @@ export default function DeloadingModal({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              className="flex-1 px-4 py-2 border border-line rounded-lg hover:bg-surface transition-colors"
               disabled={loading}
             >
               ביטול
@@ -161,8 +161,8 @@ export default function DeloadingModal({
               type="submit"
               className={`flex-1 px-4 py-2 rounded-lg text-white transition-colors ${
                 mode === 'apply'
-                  ? 'bg-blue-600 hover:bg-blue-700'
-                  : 'bg-red-600 hover:bg-red-700'
+                  ? 'bg-accent hover:bg-accent-hover'
+                  : 'bg-danger hover:bg-danger/90'
               } disabled:opacity-50 disabled:cursor-not-allowed`}
               disabled={loading}
             >

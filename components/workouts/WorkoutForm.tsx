@@ -54,13 +54,13 @@ export default function WorkoutForm({ initialData, onChange }: Props) {
   }
 
   return (
-    <div className="bg-white rounded-lg shadow p-6 space-y-6">
+    <div className="bg-surface rounded-lg shadow p-6 space-y-6">
       <h2 className="text-xl font-bold">מידע בסיסי</h2>
 
       {/* Name */}
       <div>
         <label className="block text-sm font-medium mb-1">
-          שם האימון <span className="text-red-500">*</span>
+          שם האימון <span className="text-danger">*</span>
         </label>
         <input
           type="text"
@@ -103,7 +103,7 @@ export default function WorkoutForm({ initialData, onChange }: Props) {
                 setShowNewCategory(false)
                 handleChange('Category', categories[0] || '')
               }}
-              className="px-3 py-2 bg-gray-200 rounded-lg hover:bg-gray-300"
+              className="px-3 py-2 bg-raised rounded-lg hover:bg-raised/90"
             >
               ביטול
             </button>
@@ -139,7 +139,7 @@ export default function WorkoutForm({ initialData, onChange }: Props) {
       <div>
         <label className="block text-sm font-medium mb-1">
           הערות לאימון
-          <span className="text-xs text-gray-500 mr-2">
+          <span className="text-xs text-muted mr-2">
             (לדוגמה: הסבר על Repeaters)
           </span>
         </label>

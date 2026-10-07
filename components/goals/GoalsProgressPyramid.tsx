@@ -46,12 +46,12 @@ export default function GoalsProgressPyramid({
 
   if (loading) {
     return (
-      <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-8">
-        {title && <h3 className="text-2xl font-bold mb-6 text-gray-800">{title}</h3>}
+      <div className="bg-surface rounded-2xl shadow-md border border-line p-8">
+        {title && <h3 className="text-2xl font-bold mb-6 text-fg">{title}</h3>}
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <div className="text-gray-500">טוען נתונים...</div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent mx-auto mb-4"></div>
+            <div className="text-muted">טוען נתונים...</div>
           </div>
         </div>
       </div>
@@ -60,13 +60,13 @@ export default function GoalsProgressPyramid({
 
   if (progress.length === 0) {
     return (
-      <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-8">
-        {title && <h3 className="text-2xl font-bold mb-6 text-gray-800">{title}</h3>}
-        <div className="flex items-center justify-center h-64 bg-gray-50 rounded-xl">
+      <div className="bg-surface rounded-2xl shadow-md border border-line p-8">
+        {title && <h3 className="text-2xl font-bold mb-6 text-fg">{title}</h3>}
+        <div className="flex items-center justify-center h-64 bg-surface rounded-xl">
           <div className="text-center">
             <div className="text-6xl mb-4">🎯</div>
-            <div className="text-gray-500 font-medium">אין יעדים מוגדרים</div>
-            <div className="text-sm text-gray-400 mt-2">הגדר יעדים כדי לראות התקדמות</div>
+            <div className="text-muted font-medium">אין יעדים מוגדרים</div>
+            <div className="text-sm text-faint mt-2">הגדר יעדים כדי לראות התקדמות</div>
           </div>
         </div>
       </div>
@@ -111,25 +111,25 @@ export default function GoalsProgressPyramid({
   const colors = getColorClasses()
 
   return (
-    <div className="bg-white rounded-2xl shadow-md border border-gray-100 p-8" dir="rtl">
+    <div className="bg-surface rounded-2xl shadow-md border border-line p-8" dir="rtl">
       {/* Title */}
       {title && (
-        <h3 className="text-2xl font-bold mb-6 text-gray-800">{title}</h3>
+        <h3 className="text-2xl font-bold mb-6 text-fg">{title}</h3>
       )}
 
       {/* Overall Stats */}
       <div className="grid grid-cols-3 gap-4 mb-8">
         <div className={`${colors.bgLight} rounded-xl p-4 text-center border ${colors.border}`}>
           <div className={`text-3xl font-bold ${colors.text}`}>{overallPercentage}%</div>
-          <div className="text-xs text-gray-600 mt-1">התקדמות</div>
+          <div className="text-xs text-fg-3 mt-1">התקדמות</div>
         </div>
-        <div className="bg-green-50 rounded-xl p-4 text-center border border-green-300">
-          <div className="text-3xl font-bold text-green-700">{totalActual}</div>
-          <div className="text-xs text-gray-600 mt-1">הושלמו</div>
+        <div className="bg-success/15 rounded-xl p-4 text-center border border-success">
+          <div className="text-3xl font-bold text-success">{totalActual}</div>
+          <div className="text-xs text-fg-3 mt-1">הושלמו</div>
         </div>
-        <div className="bg-gray-50 rounded-xl p-4 text-center border border-gray-300">
-          <div className="text-3xl font-bold text-gray-700">{totalTarget - totalActual}</div>
-          <div className="text-xs text-gray-600 mt-1">נותרו</div>
+        <div className="bg-surface rounded-xl p-4 text-center border border-line">
+          <div className="text-3xl font-bold text-fg-2">{totalTarget - totalActual}</div>
+          <div className="text-xs text-fg-3 mt-1">נותרו</div>
         </div>
       </div>
 
@@ -164,7 +164,7 @@ export default function GoalsProgressPyramid({
                       <div className={`${colors.completed} text-white font-bold text-lg px-3 py-1 rounded-md shadow-sm`}>
                         {item.grade}
                       </div>
-                      <div className="text-sm font-semibold text-gray-700">
+                      <div className="text-sm font-semibold text-fg-2">
                         {item.actual}/{item.target}
                       </div>
                     </div>
@@ -182,7 +182,7 @@ export default function GoalsProgressPyramid({
                   -top-20
                   left-1/2 
                   -translate-x-1/2
-                  bg-gray-900 
+                  bg-bg 
                   text-white 
                   px-4
                   py-3
@@ -209,7 +209,7 @@ export default function GoalsProgressPyramid({
                     -translate-x-1/2 
                     w-2 
                     h-2 
-                    bg-gray-900 
+                    bg-bg 
                     rotate-45
                   "></div>
                 </div>
@@ -220,17 +220,17 @@ export default function GoalsProgressPyramid({
       </div>
 
       {/* Legend */}
-      <div className="flex items-center justify-center gap-6 text-sm text-gray-600 mt-6 pt-6 border-t border-gray-200">
+      <div className="flex items-center justify-center gap-6 text-sm text-fg-3 mt-6 pt-6 border-t border-line">
         <div className="flex items-center gap-2">
           <div className={`w-6 h-6 ${colors.completed} rounded`}></div>
           <span>הושלם</span>
         </div>
-        <div className="text-gray-400">|</div>
+        <div className="text-faint">|</div>
         <div className="flex items-center gap-2">
           <div className={`w-6 h-6 ${colors.remaining} rounded`}></div>
           <span>נותר</span>
         </div>
-        <div className="text-gray-400">|</div>
+        <div className="text-faint">|</div>
         <div className="text-xs">
           רוחב = כמות יעדים (רחב יותר = יותר מסלולים)
         </div>

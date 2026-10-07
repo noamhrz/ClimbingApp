@@ -171,12 +171,12 @@ export default function RoadmapProgressPage() {
   if (!authorized) return null
 
   return (
-    <div dir="rtl" className="min-h-screen bg-gray-50 pb-20">
+    <div dir="rtl" className="min-h-screen bg-surface pb-20">
       {/* Header */}
-      <div className="bg-white shadow-sm border-b sticky top-0 z-30">
+      <div className="bg-surface shadow-sm border-b sticky top-0 z-30">
         <div className="max-w-7xl mx-auto px-4 py-4">
-          <h1 className="text-2xl font-bold text-gray-800">📊 עדכון התקדמות Roadmap</h1>
-          <p className="text-sm text-gray-500 mt-0.5">עדכן את רמות ההתקדמות של המתאמנים</p>
+          <h1 className="text-2xl font-bold text-fg">📊 עדכון התקדמות Roadmap</h1>
+          <p className="text-sm text-muted mt-0.5">עדכן את רמות ההתקדמות של המתאמנים</p>
         </div>
       </div>
 
@@ -184,34 +184,34 @@ export default function RoadmapProgressPage() {
 
         {/* Left panel — Trainees list */}
         <div className="w-72 shrink-0 flex flex-col gap-3">
-          <div className="bg-white rounded-xl shadow-sm border overflow-hidden flex flex-col">
-            <div className="px-4 py-3 border-b bg-gray-50">
-              <h2 className="font-semibold text-gray-700 mb-2">מתאמנים</h2>
+          <div className="bg-surface rounded-xl shadow-sm border overflow-hidden flex flex-col">
+            <div className="px-4 py-3 border-b bg-surface">
+              <h2 className="font-semibold text-fg-2 mb-2">מתאמנים</h2>
               <input
                 type="text"
                 placeholder="חיפוש..."
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-1.5 border border-line rounded-lg text-sm focus:ring-2 focus:ring-accent"
               />
             </div>
 
             {filteredTrainees.length === 0 ? (
-              <p className="text-center text-gray-400 text-sm py-8">אין מתאמנים</p>
+              <p className="text-center text-faint text-sm py-8">אין מתאמנים</p>
             ) : (
               <ul className="divide-y overflow-y-auto max-h-[calc(100vh-220px)]">
                 {filteredTrainees.map(t => (
                   <li key={t.Email}>
                     <button
                       onClick={() => setSelectedTrainee(t)}
-                      className={`w-full text-right px-4 py-3 hover:bg-gray-50 transition-colors ${
-                        selectedTrainee?.Email === t.Email ? 'bg-blue-50 border-r-4 border-blue-500' : ''
+                      className={`w-full text-right px-4 py-3 hover:bg-surface transition-colors ${
+                        selectedTrainee?.Email === t.Email ? 'bg-accent/15 border-r-4 border-accent' : ''
                       }`}
                     >
-                      <p className={`font-medium text-sm truncate ${selectedTrainee?.Email === t.Email ? 'text-blue-700' : 'text-gray-800'}`}>
+                      <p className={`font-medium text-sm truncate ${selectedTrainee?.Email === t.Email ? 'text-accent' : 'text-fg'}`}>
                         {t.Name}
                       </p>
-                      <p className="text-xs text-gray-500 truncate">{t.Email}</p>
+                      <p className="text-xs text-muted truncate">{t.Email}</p>
                     </button>
                   </li>
                 ))}
@@ -223,8 +223,8 @@ export default function RoadmapProgressPage() {
         {/* Right panel — Progress editor */}
         <div className="flex-1">
           {!selectedTrainee ? (
-            <div className="bg-white rounded-xl shadow-sm border flex items-center justify-center h-64">
-              <div className="text-center text-gray-400">
+            <div className="bg-surface rounded-xl shadow-sm border flex items-center justify-center h-64">
+              <div className="text-center text-faint">
                 <p className="text-4xl mb-2">👈</p>
                 <p className="text-sm">בחר מתאמן כדי לעדכן את ההתקדמות שלו</p>
               </div>
@@ -232,20 +232,20 @@ export default function RoadmapProgressPage() {
           ) : (
             <div className="flex flex-col gap-4">
               {/* Trainee header */}
-              <div className="bg-white rounded-xl shadow-sm border px-5 py-4 flex items-center justify-between">
+              <div className="bg-surface rounded-xl shadow-sm border px-5 py-4 flex items-center justify-between">
                 <div>
-                  <h2 className="text-lg font-bold text-gray-800">{selectedTrainee.Name}</h2>
-                  <p className="text-sm text-gray-500">{selectedTrainee.Email}</p>
+                  <h2 className="text-lg font-bold text-fg">{selectedTrainee.Name}</h2>
+                  <p className="text-sm text-muted">{selectedTrainee.Email}</p>
                 </div>
                 <button
                   onClick={handleSave}
                   disabled={saving || !hasPendingChanges}
                   className={`px-5 py-2.5 rounded-lg font-medium text-sm transition-all ${
                     saveSuccess
-                      ? 'bg-green-500 text-white'
+                      ? 'bg-success text-white'
                       : hasPendingChanges
-                      ? 'bg-blue-600 text-white hover:bg-blue-700'
-                      : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                      ? 'bg-accent text-white hover:bg-accent-hover'
+                      : 'bg-surface text-faint cursor-not-allowed'
                   } disabled:opacity-60`}
                 >
                   {saving ? '⏳ שומר...' : saveSuccess ? '✅ נשמר!' : '💾 שמור שינויים'}
@@ -254,12 +254,12 @@ export default function RoadmapProgressPage() {
 
               {/* Categories grid */}
               {loadingData ? (
-                <div className="bg-white rounded-xl shadow-sm border flex items-center justify-center h-48">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+                <div className="bg-surface rounded-xl shadow-sm border flex items-center justify-center h-48">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent" />
                 </div>
               ) : categories.length === 0 ? (
-                <div className="bg-white rounded-xl shadow-sm border flex items-center justify-center h-48">
-                  <p className="text-gray-400 text-sm">אין קטגוריות — צור קטגוריות ב-Roadmap Builder</p>
+                <div className="bg-surface rounded-xl shadow-sm border flex items-center justify-center h-48">
+                  <p className="text-faint text-sm">אין קטגוריות — צור קטגוריות ב-Roadmap Builder</p>
                 </div>
               ) : (() => {
                 const GROUP_ORDER = ['כח ספציפי', 'כח כללי', 'מוביליות', 'כללי']
@@ -278,7 +278,7 @@ export default function RoadmapProgressPage() {
                   <div className="flex flex-col gap-6">
                     {groupKeys.map(groupName => (
                       <div key={groupName}>
-                        <h3 className="text-sm font-bold text-gray-500 mb-3 px-1 border-b border-gray-200 pb-2">
+                        <h3 className="text-sm font-bold text-muted mb-3 px-1 border-b border-line pb-2">
                           {groupName}
                         </h3>
                         <div className="grid grid-cols-1 gap-3">
@@ -292,15 +292,15 @@ export default function RoadmapProgressPage() {
                             const colors = COLOR_CLASSES[colorKey] ?? COLOR_CLASSES.gray
 
                             return (
-                              <div key={cat.CategoryID} className="bg-white rounded-xl shadow-sm border px-5 py-4">
+                              <div key={cat.CategoryID} className="bg-surface rounded-xl shadow-sm border px-5 py-4">
                                 <div className="flex items-center gap-2 mb-3">
                                   <span className="text-2xl">{cat.Icon}</span>
                                   <div>
-                                    <p className="font-semibold text-gray-800">{cat.Name}</p>
+                                    <p className="font-semibold text-fg">{cat.Name}</p>
                                     {currentLevel > 0 && currentLevelName ? (
-                                      <p className="text-xs text-gray-500">רמה נוכחית: {currentLevelName}</p>
+                                      <p className="text-xs text-muted">רמה נוכחית: {currentLevelName}</p>
                                     ) : (
-                                      <p className="text-xs text-gray-400">לא התחיל</p>
+                                      <p className="text-xs text-faint">לא התחיל</p>
                                     )}
                                   </div>
                                 </div>
@@ -310,8 +310,8 @@ export default function RoadmapProgressPage() {
                                     onClick={() => setPendingProgress(p => ({ ...p, [cat.CategoryID]: 0 }))}
                                     className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
                                       currentLevel === 0
-                                        ? 'bg-gray-700 text-white border-gray-700'
-                                        : 'bg-white text-gray-600 border-gray-300 hover:border-gray-500'
+                                        ? 'bg-raised text-white border-line-strong'
+                                        : 'bg-surface text-fg-3 border-line hover:border-line-strong/90'
                                     }`}
                                   >
                                     לא התחיל
@@ -327,7 +327,7 @@ export default function RoadmapProgressPage() {
                                         className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
                                           isActive
                                             ? `${colors.bg} ${colors.text} ${colors.border}`
-                                            : 'bg-white text-gray-600 border-gray-300 hover:border-gray-500'
+                                            : 'bg-surface text-fg-3 border-line hover:border-line-strong'
                                         }`}
                                       >
                                         L{level.LevelNumber}

@@ -67,10 +67,10 @@ export default function LoginPage() {
   // Show loading while checking auth status
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50">
+      <div className="min-h-screen flex items-center justify-center bg-surface border border-line">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600 font-medium">בודק התחברות...</p>
+          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-accent mx-auto mb-4"></div>
+          <p className="text-fg-3 font-medium">בודק התחברות...</p>
         </div>
       </div>
     )
@@ -83,8 +83,8 @@ export default function LoginPage() {
 
   // User is not logged in - show login form
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50 px-4">
-      <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full">
+    <div className="min-h-screen flex items-center justify-center px-4 bg-surface border border-line">
+      <div className="bg-surface rounded-2xl shadow-xl p-8 max-w-md w-full">
         <div className="text-center mb-8">
           {/* Logo */}
           <div className="flex justify-center mb-6">
@@ -100,21 +100,21 @@ export default function LoginPage() {
             </div>
           </div>
           
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">
+          <h1 className="text-3xl font-bold text-fg mb-2">
             Climbing Training
           </h1>
-          <p className="text-gray-600">התחבר לחשבון שלך</p>
+          <p className="text-fg-3">התחבר לחשבון שלך</p>
         </div>
 
         {error && (
-          <div className="mb-6 p-4 bg-red-50 text-red-800 rounded-lg border border-red-200">
+          <div className="mb-6 p-4 bg-danger/15 text-danger rounded-lg border border-danger">
             {error}
           </div>
         )}
 
         <form onSubmit={handleLogin} className="space-y-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2 text-right">
+            <label className="block text-sm font-medium text-fg-2 mb-2 text-right">
               אימייל
             </label>
             <input
@@ -122,14 +122,14 @@ export default function LoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="name@example.com"
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-right"
+              className="w-full px-4 py-3 border border-line rounded-lg focus:ring-2 focus:ring-accent focus:border-accent text-right"
               required
               disabled={loading}
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2 text-right">
+            <label className="block text-sm font-medium text-fg-2 mb-2 text-right">
               סיסמה
             </label>
             <input
@@ -137,7 +137,7 @@ export default function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-right"
+              className="w-full px-4 py-3 border border-line rounded-lg focus:ring-2 focus:ring-accent focus:border-accent text-right"
               required
               disabled={loading}
             />
@@ -146,7 +146,7 @@ export default function LoginPage() {
           <div className="flex items-center justify-between">
             <Link
               href="/forgot-password"
-              className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+              className="text-sm text-accent hover:text-accent/90 font-medium"
             >
               שכחתי סיסמה
             </Link>
@@ -155,22 +155,22 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+            className="w-full py-3 bg-accent text-white rounded-lg hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
           >
             {loading ? '⏳ מתחבר...' : '🚀 התחבר'}
           </button>
         </form>
 
-        <div className="mt-6 text-center text-sm text-gray-600">
+        <div className="mt-6 text-center text-sm text-fg-3">
           אין לך חשבון?{' '}
-          <span className="text-gray-800 font-medium">
+          <span className="text-fg font-medium">
             פנה למאמן שלך
           </span>
         </div>
 
         {/* Footer */}
         <div className="mt-8 pt-6 border-t text-center">
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-muted">
             © {new Date().getFullYear()} Noam Herz Climbing
           </p>
         </div>

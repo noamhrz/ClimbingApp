@@ -15,7 +15,7 @@ interface Props {
 export default function ClimbingVolumeChart({ data }: Props) {
   if (!data || data.length === 0) {
     return (
-      <div className="h-[300px] flex items-center justify-center text-gray-400">
+      <div className="h-[300px] flex items-center justify-center text-faint">
         אין נתוני טיפוס להצגה
       </div>
     )

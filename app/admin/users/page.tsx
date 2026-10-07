@@ -328,8 +328,8 @@ export default function UserManagementPage() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">טוען משתמשים...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent mx-auto mb-4"></div>
+          <p className="text-fg-3">טוען משתמשים...</p>
         </div>
       </div>
     )
@@ -339,15 +339,15 @@ export default function UserManagementPage() {
   // RENDER
   // ========================================
   return (
-    <div dir="rtl" className="min-h-screen bg-gray-50 pb-20">
+    <div dir="rtl" className="min-h-screen bg-surface pb-20">
       {/* Header */}
-      <div className="bg-white shadow-sm border-b sticky top-0 z-30">
+      <div className="bg-surface shadow-sm border-b sticky top-0 z-30">
         <div className="max-w-7xl mx-auto px-4 py-6">
           <div className="flex justify-between items-center mb-4">
             <h1 className="text-3xl font-bold text-purple-600">👥 ניהול משתמשים</h1>
             <button
               onClick={() => setShowAddUser(true)}
-              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
+              className="px-4 py-2 bg-success text-white rounded-lg hover:bg-success/90 transition-colors font-medium"
             >
               ➕ הוסף משתמש
             </button>
@@ -360,13 +360,13 @@ export default function UserManagementPage() {
               placeholder="🔍 חיפוש לפי שם או מייל..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="flex-1 min-w-[200px] px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+              className="flex-1 min-w-[200px] px-4 py-2 border border-line rounded-lg focus:ring-2 focus:ring-purple-500"
             />
             
             <select
               value={roleFilter}
               onChange={(e) => setRoleFilter(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+              className="px-4 py-2 border border-line rounded-lg focus:ring-2 focus:ring-purple-500"
             >
               <option value="all">כל התפקידים</option>
               <option value="admin">👑 מנהל</option>
@@ -377,7 +377,7 @@ export default function UserManagementPage() {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+              className="px-4 py-2 border border-line rounded-lg focus:ring-2 focus:ring-purple-500"
             >
               <option value="all">כל הסטטוסים</option>
               <option value="active">✅ פעיל</option>
@@ -385,7 +385,7 @@ export default function UserManagementPage() {
             </select>
           </div>
 
-          <div className="mt-3 flex gap-4 text-sm text-gray-600">
+          <div className="mt-3 flex gap-4 text-sm text-fg-3">
             <span>סה"כ: {users.length} משתמשים</span>
             <span>מוצג: {filteredUsers.length}</span>
           </div>
@@ -394,14 +394,14 @@ export default function UserManagementPage() {
 
       {/* Users Table */}
       <div className="max-w-7xl mx-auto px-4 py-6">
-        <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
+        <div className="bg-surface rounded-xl shadow-sm border overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-gray-50 border-b">
+              <thead className="bg-surface border-b">
                 <tr>
-                  <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700">משתמש</th>
-                  <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700">תפקיד</th>
-                  <th className="px-4 py-3 text-right text-sm font-semibold text-gray-700">פעולות</th>
+                  <th className="px-4 py-3 text-right text-sm font-semibold text-fg-2">משתמש</th>
+                  <th className="px-4 py-3 text-right text-sm font-semibold text-fg-2">תפקיד</th>
+                  <th className="px-4 py-3 text-right text-sm font-semibold text-fg-2">פעולות</th>
                 </tr>
               </thead>
               <tbody className="divide-y">
@@ -410,20 +410,20 @@ export default function UserManagementPage() {
                     key={user.UserID}
                     className={`transition-colors ${
                       user.Status === 'Inactive'
-                        ? 'bg-gray-100 hover:bg-gray-150'
-                        : 'bg-white hover:bg-gray-50'
+                        ? 'bg-surface hover:bg-surface/90'
+                        : 'bg-surface hover:bg-surface/90'
                     }`}
                   >
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         <span className={`w-2 h-2 rounded-full flex-shrink-0 ${
-                          user.Status === 'Active' ? 'bg-green-500' : 'bg-gray-400'
+                          user.Status === 'Active' ? 'bg-success' : 'bg-raised'
                         }`} />
                         <div>
-                          <p className={`font-medium ${user.Status === 'Inactive' ? 'text-gray-400' : 'text-gray-900'}`}>
+                          <p className={`font-medium ${user.Status === 'Inactive' ? 'text-faint' : 'text-fg'}`}>
                             {user.Name}
                           </p>
-                          <p className={`text-sm ${user.Status === 'Inactive' ? 'text-gray-400' : 'text-gray-500'}`}>
+                          <p className={`text-sm ${user.Status === 'Inactive' ? 'text-faint' : 'text-muted'}`}>
                             {user.Email}
                           </p>
                         </div>
@@ -431,7 +431,7 @@ export default function UserManagementPage() {
                     </td>
                     <td className="px-4 py-3">
                       <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${
-                        user.Status === 'Inactive' ? 'bg-gray-100 text-gray-400' : 'bg-blue-100 text-blue-800'
+                        user.Status === 'Inactive' ? 'bg-surface text-faint' : 'bg-accent/15 text-accent'
                       }`}>
                         {getRoleIcon(user.Role)} {getRoleName(user.Role)}
                       </span>
@@ -440,14 +440,14 @@ export default function UserManagementPage() {
                       <div className="flex gap-2">
                         <button
                           onClick={() => setEditingUser(user)}
-                          className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm"
+                          className="px-3 py-1 bg-accent text-white rounded hover:bg-accent/90 text-sm"
                           title="ערוך"
                         >
                           ✏️
                         </button>
                         <button
                           onClick={() => setResetPasswordUser(user)}
-                          className="px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600 text-sm"
+                          className="px-3 py-1 bg-warning text-white rounded hover:bg-warning/90 text-sm"
                           title="איפוס סיסמה"
                         >
                           🔐
@@ -455,7 +455,7 @@ export default function UserManagementPage() {
                         {user.Role !== 'admin' && user.Email !== currentUser?.Email && (
                           <button
                             onClick={() => handleDeleteUser(user)}
-                            className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm"
+                            className="px-3 py-1 bg-danger text-white rounded hover:bg-danger/90 text-sm"
                             title="מחק"
                           >
                             🗑️
@@ -465,8 +465,8 @@ export default function UserManagementPage() {
                           onClick={() => handleToggleActive(user)}
                           className={`px-3 py-1 rounded text-xs font-medium ${
                             user.Status === 'Active'
-                              ? 'bg-red-100 text-red-700 hover:bg-red-200'
-                              : 'bg-green-100 text-green-700 hover:bg-green-200'
+                              ? 'bg-danger/15 text-danger hover:bg-danger/15'
+                              : 'bg-success/15 text-success hover:bg-success/15'
                           }`}
                         >
                           {user.Status === 'Active' ? 'השבת' : 'הפעל'}
@@ -481,7 +481,7 @@ export default function UserManagementPage() {
 
           {filteredUsers.length === 0 && (
             <div className="text-center py-12">
-              <p className="text-gray-500">לא נמצאו משתמשים</p>
+              <p className="text-muted">לא נמצאו משתמשים</p>
             </div>
           )}
         </div>
@@ -490,12 +490,12 @@ export default function UserManagementPage() {
       {/* Add User Modal */}
       {showAddUser && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
+          <div className="bg-surface rounded-xl shadow-2xl max-w-md w-full p-6">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-gray-800">➕ הוסף משתמש חדש</h2>
+              <h2 className="text-2xl font-bold text-fg">➕ הוסף משתמש חדש</h2>
               <button
                 onClick={() => setShowAddUser(false)}
-                className="text-gray-400 hover:text-gray-600 text-2xl"
+                className="text-faint hover:text-fg-3 text-2xl"
               >
                 ×
               </button>
@@ -503,44 +503,44 @@ export default function UserManagementPage() {
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">אימייל *</label>
+                <label className="block text-sm font-medium text-fg-2 mb-2">אימייל *</label>
                 <input
                   type="email"
                   value={newUser.email}
                   onChange={(e) => setNewUser({...newUser, email: e.target.value})}
                   placeholder="user@example.com"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2 border border-line rounded-lg focus:ring-2 focus:ring-accent"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">שם מלא *</label>
+                <label className="block text-sm font-medium text-fg-2 mb-2">שם מלא *</label>
                 <input
                   type="text"
                   value={newUser.name}
                   onChange={(e) => setNewUser({...newUser, name: e.target.value})}
                   placeholder="שם המשתמש"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2 border border-line rounded-lg focus:ring-2 focus:ring-accent"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">סיסמה *</label>
+                <label className="block text-sm font-medium text-fg-2 mb-2">סיסמה *</label>
                 <input
                   type="password"
                   value={newUser.password}
                   onChange={(e) => setNewUser({...newUser, password: e.target.value})}
                   placeholder="לפחות 6 תווים"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2 border border-line rounded-lg focus:ring-2 focus:ring-accent"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">תפקיד</label>
+                <label className="block text-sm font-medium text-fg-2 mb-2">תפקיד</label>
                 <select
                   value={newUser.role}
                   onChange={(e) => setNewUser({...newUser, role: e.target.value as any})}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2 border border-line rounded-lg focus:ring-2 focus:ring-accent"
                 >
                   <option value="user">🧗 מטפס</option>
                   <option value="coach">🏋️ מאמן</option>
@@ -552,13 +552,13 @@ export default function UserManagementPage() {
                 <button
                   onClick={handleAddUser}
                   disabled={loading}
-                  className="flex-1 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 font-medium"
+                  className="flex-1 py-3 bg-success text-white rounded-lg hover:bg-success/90 disabled:opacity-50 font-medium"
                 >
                   {loading ? '⏳ מוסיף...' : '✅ הוסף משתמש'}
                 </button>
                 <button
                   onClick={() => setShowAddUser(false)}
-                  className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                  className="px-6 py-3 bg-raised text-fg-2 rounded-lg hover:bg-raised/90"
                 >
                   ביטול
                 </button>
@@ -571,12 +571,12 @@ export default function UserManagementPage() {
       {/* Edit User Modal */}
       {editingUser && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
+          <div className="bg-surface rounded-xl shadow-2xl max-w-md w-full p-6">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-gray-800">✏️ עריכת משתמש</h2>
+              <h2 className="text-2xl font-bold text-fg">✏️ עריכת משתמש</h2>
               <button
                 onClick={() => setEditingUser(null)}
-                className="text-gray-400 hover:text-gray-600 text-2xl"
+                className="text-faint hover:text-fg-3 text-2xl"
               >
                 ×
               </button>
@@ -584,32 +584,32 @@ export default function UserManagementPage() {
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">אימייל</label>
+                <label className="block text-sm font-medium text-fg-2 mb-2">אימייל</label>
                 <input
                   type="email"
                   value={editingUser.Email}
                   disabled
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-600"
+                  className="w-full px-4 py-2 border border-line rounded-lg bg-surface text-fg-3"
                 />
-                <p className="text-xs text-gray-500 mt-1">לא ניתן לשנות אימייל</p>
+                <p className="text-xs text-muted mt-1">לא ניתן לשנות אימייל</p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">שם מלא</label>
+                <label className="block text-sm font-medium text-fg-2 mb-2">שם מלא</label>
                 <input
                   type="text"
                   value={editingUser.Name}
                   onChange={(e) => setEditingUser({...editingUser, Name: e.target.value})}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2 border border-line rounded-lg focus:ring-2 focus:ring-accent"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">תפקיד</label>
+                <label className="block text-sm font-medium text-fg-2 mb-2">תפקיד</label>
                 <select
                   value={editingUser.Role}
                   onChange={(e) => setEditingUser({...editingUser, Role: e.target.value as any})}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2 border border-line rounded-lg focus:ring-2 focus:ring-accent"
                 >
                   <option value="user">🧗 מטפס</option>
                   <option value="coach">🏋️ מאמן</option>
@@ -621,13 +621,13 @@ export default function UserManagementPage() {
                 <button
                   onClick={handleUpdateUser}
                   disabled={loading}
-                  className="flex-1 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 font-medium"
+                  className="flex-1 py-3 bg-accent text-white rounded-lg hover:bg-accent-hover disabled:opacity-50 font-medium"
                 >
                   {loading ? '⏳ שומר...' : '💾 שמור שינויים'}
                 </button>
                 <button
                   onClick={() => setEditingUser(null)}
-                  className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+                  className="px-6 py-3 bg-raised text-fg-2 rounded-lg hover:bg-raised/90"
                 >
                   ביטול
                 </button>

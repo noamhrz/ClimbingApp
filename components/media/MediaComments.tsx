@@ -74,10 +74,10 @@ export default function MediaComments({ fileId, currentUser }: Props) {
   const count = loaded ? comments.length : null
 
   return (
-    <div className="border-t border-gray-100">
+    <div className="border-t border-line">
       <button
         onClick={() => setExpanded(v => !v)}
-        className="w-full text-right px-3 py-2 text-xs text-gray-500 hover:text-blue-600 transition-colors flex items-center gap-1.5"
+        className="w-full text-right px-3 py-2 text-xs text-muted hover:text-accent transition-colors flex items-center gap-1.5"
       >
         <span className="text-[10px]">{expanded ? '▲' : '▼'}</span>
         <span>תגובות{count !== null && count > 0 ? ` (${count})` : ''}</span>
@@ -86,11 +86,11 @@ export default function MediaComments({ fileId, currentUser }: Props) {
       {expanded && (
         <div className="px-3 pb-3">
           {loading ? (
-            <p className="text-xs text-gray-400 text-center py-4">טוען...</p>
+            <p className="text-xs text-faint text-center py-4">טוען...</p>
           ) : (
             <div className="flex flex-col gap-2 max-h-52 overflow-y-auto mb-2 pr-1">
               {comments.length === 0 && (
-                <p className="text-xs text-gray-400 text-center py-4">אין תגובות עדיין</p>
+                <p className="text-xs text-faint text-center py-4">אין תגובות עדיין</p>
               )}
               {comments.map(c => {
                 const style = getCommentStyle(c, currentUser)
@@ -99,12 +99,12 @@ export default function MediaComments({ fileId, currentUser }: Props) {
                   <div key={c.CommentID} className={`flex flex-col ${style.align}`}>
                     <div className={`rounded-xl px-3 py-2 max-w-[85%] relative group ${style.bubble}`}>
                       <p className={`text-[11px] font-semibold mb-0.5 ${style.name}`}>{c.AuthorName}</p>
-                      <p className="text-sm leading-snug text-gray-800">{c.Content}</p>
-                      <p className="text-[10px] text-gray-400 mt-1">{formatTime(c.CreatedAt)}</p>
+                      <p className="text-sm leading-snug text-fg">{c.Content}</p>
+                      <p className="text-[10px] text-faint mt-1">{formatTime(c.CreatedAt)}</p>
                       {isOwn && (
                         <button
                           onClick={() => handleDelete(c.CommentID)}
-                          className="absolute -top-1.5 -left-1.5 hidden group-hover:flex w-5 h-5 rounded-full bg-red-100 hover:bg-red-200 text-red-500 items-center justify-center text-[10px] border border-red-200"
+                          className="absolute -top-1.5 -left-1.5 hidden group-hover:flex w-5 h-5 rounded-full bg-danger/15 hover:bg-danger/15 text-danger items-center justify-center text-[10px] border border-danger"
                           title="מחק"
                         >
                           ✕
@@ -125,12 +125,12 @@ export default function MediaComments({ fileId, currentUser }: Props) {
               onChange={e => setNewText(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleSend()}
               placeholder="הוסף תגובה..."
-              className="flex-1 text-sm border border-gray-300 rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="flex-1 text-sm border border-line rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-accent"
             />
             <button
               onClick={handleSend}
               disabled={!newText.trim() || sending}
-              className="text-sm bg-blue-500 hover:bg-blue-600 disabled:opacity-40 text-white px-3 py-1.5 rounded-lg transition-colors shrink-0"
+              className="text-sm bg-accent hover:bg-accent/90 disabled:opacity-40 text-white px-3 py-1.5 rounded-lg transition-colors shrink-0"
             >
               שלח
             </button>

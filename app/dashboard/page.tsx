@@ -343,21 +343,21 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-surface flex items-center justify-center">
         <div className="text-center">
           <div className="text-6xl mb-4">📊</div>
-          <div className="text-xl text-gray-600">טוען Dashboard...</div>
+          <div className="text-xl text-fg-3">טוען Dashboard...</div>
         </div>
       </div>
     )
   }
 
   return (
-    <div dir="rtl" className="min-h-screen bg-gray-50 pb-20">
-      <div className="bg-white shadow-sm border-b">
+    <div dir="rtl" className="min-h-screen bg-surface pb-20">
+      <div className="bg-surface shadow-sm border-b">
         <div className="max-w-4xl mx-auto px-4 py-6">
           <div className="flex justify-between items-center mb-4">
-            <h1 className="text-3xl font-bold text-blue-600">
+            <h1 className="text-3xl font-bold text-accent">
               📊 Dashboard - {userToShow?.Name}
             </h1>
             
@@ -365,7 +365,7 @@ export default function DashboardPage() {
             {userToShow?.Email === currentUser?.Email && (
               <button
                 onClick={() => setIsWellnessModalOpen(true)}
-                className="flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                className="flex items-center gap-2 bg-success hover:bg-success/90 text-white px-4 py-2 rounded-lg font-medium transition-colors"
               >
                 <span className="text-xl">+</span>
                 <span>Wellness</span>
@@ -378,7 +378,7 @@ export default function DashboardPage() {
             onChange={setTimeRange} 
           />
           
-          <p className="text-sm text-gray-600 mt-2 text-center">
+          <p className="text-sm text-fg-3 mt-2 text-center">
             {timeRange === '10days' ? '📅 תצוגה לפי ימים' : '📅 תצוגה לפי שבועות'}
           </p>
         </div>
@@ -387,22 +387,22 @@ export default function DashboardPage() {
       <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
         <StatsCards stats={stats} />
 
-        <div className="bg-white rounded-xl shadow-sm border p-6">
-          <h2 className="text-xl font-bold text-gray-800 mb-2">
+        <div className="bg-surface rounded-xl shadow-sm border p-6">
+          <h2 className="text-xl font-bold text-fg mb-2">
             🧗 Climbing Volume
           </h2>
-          <p className="text-xs text-gray-500 mb-4">
+          <p className="text-xs text-muted mb-4">
             🟣 הובלה  •  🟡 בורד  •  🟤 בולדר
           </p>
           <ClimbingVolumeChart data={climbingData} />
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border p-6">
+        <div className="bg-surface rounded-xl shadow-sm border p-6">
           <div className="flex items-start justify-between mb-4" dir="rtl">
-            <h2 className="text-xl font-bold text-gray-800">💚 Wellness</h2>
-            <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 text-xs text-gray-500 text-right">
-              <span className="font-semibold text-red-500 col-span-1">🤕 כאב</span>
-              <span className="font-semibold text-green-500 col-span-1">⚡ אנרגיה</span>
+            <h2 className="text-xl font-bold text-fg">💚 Wellness</h2>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 text-xs text-muted text-right">
+              <span className="font-semibold text-danger col-span-1">🤕 כאב</span>
+              <span className="font-semibold text-success col-span-1">⚡ אנרגיה</span>
               <span>0 — ללא כאב 🟢</span>
               <span>0 — אין כוח לכלום 😴</span>
               <span>1 — כאב קל, להתאמן 🟡</span>
@@ -416,8 +416,8 @@ export default function DashboardPage() {
           <WellnessChart data={wellnessData} />
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border p-6">
-          <h2 className="text-xl font-bold text-gray-800 mb-4">
+        <div className="bg-surface rounded-xl shadow-sm border p-6">
+          <h2 className="text-xl font-bold text-fg mb-4">
             ✅ אימונים שבוצעו
           </h2>
           <ExerciseAmountChart data={exerciseData} />

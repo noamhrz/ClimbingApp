@@ -39,8 +39,8 @@ function ExerciseCard({ exercise, onAddExercise }: CardProps) {
     // Fixed-height wrapper keeps the list layout stable
     <div className="relative h-11">
       <div
-        className={`absolute inset-x-0 top-0 bg-white border rounded-lg cursor-pointer transition-shadow duration-150
-          ${isExpanded ? 'z-20 shadow-xl border-blue-300' : 'z-10 shadow-sm hover:shadow-md'}`}
+        className={`absolute inset-x-0 top-0 bg-surface border rounded-lg cursor-pointer transition-shadow duration-150
+          ${isExpanded ? 'z-20 shadow-xl border-accent' : 'z-10 shadow-sm hover:shadow-md'}`}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
         onClick={handleClick}
@@ -52,8 +52,8 @@ function ExerciseCard({ exercise, onAddExercise }: CardProps) {
           </div>
           {!isTouchDevice && (
             <button
-              className={`shrink-0 bg-blue-600 text-white rounded px-2 py-1 text-xs font-medium
-                hover:bg-blue-700 transition-opacity duration-150
+              className={`shrink-0 bg-accent text-white rounded px-2 py-1 text-xs font-medium
+                hover:bg-accent-hover transition-opacity duration-150
                 ${isExpanded ? 'opacity-100' : 'opacity-0'}`}
               onClick={(e) => {
                 e.stopPropagation()
@@ -74,16 +74,16 @@ function ExerciseCard({ exercise, onAddExercise }: CardProps) {
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
               transition={{ duration: 0.18, ease: 'easeOut' }}
-              className="overflow-hidden border-t border-gray-100"
+              className="overflow-hidden border-t border-line"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="px-3 py-2.5 space-y-1.5">
                 <div className="font-semibold text-sm leading-tight">{exercise.Name}</div>
                 {exercise.Category && (
-                  <div className="text-xs text-gray-500">קטגוריה: {exercise.Category}</div>
+                  <div className="text-xs text-muted">קטגוריה: {exercise.Category}</div>
                 )}
                 {exercise.Description && (
-                  <div className="text-xs text-gray-600 leading-relaxed">{exercise.Description}</div>
+                  <div className="text-xs text-fg-3 leading-relaxed">{exercise.Description}</div>
                 )}
                 <div className="flex gap-1 flex-wrap pt-0.5">
                   {exercise.IsSingleHand && (
@@ -92,14 +92,14 @@ function ExerciseCard({ exercise, onAddExercise }: CardProps) {
                     </span>
                   )}
                   {exercise.isDuration && (
-                    <span className="bg-blue-100 text-blue-700 text-xs px-2 py-0.5 rounded">
+                    <span className="bg-accent/15 text-accent text-xs px-2 py-0.5 rounded">
                       זמן
                     </span>
                   )}
                 </div>
                 {isTouchDevice && (
                   <button
-                    className="w-full mt-1 bg-blue-600 text-white rounded px-3 py-2 text-sm font-medium hover:bg-blue-700 active:bg-blue-800"
+                    className="w-full mt-1 bg-accent text-white rounded px-3 py-2 text-sm font-medium hover:bg-accent-hover active:bg-accent"
                     onClick={(e) => {
                       e.stopPropagation()
                       onAddExercise(exercise)
@@ -182,11 +182,11 @@ export default function ExerciseSidebar({ onAddExercise }: Props) {
 
   return (
     <div
-      className="w-80 bg-gray-50 border border-gray-200 rounded-lg flex flex-col"
+      className="w-80 bg-surface border border-line rounded-lg flex flex-col"
       style={{ maxHeight: 'calc(100vh - var(--app-header-height, 0px) - 8rem)' }}
     >
       {/* Fixed header — title, search, filter */}
-      <div className="p-4 border-b border-gray-200 shrink-0">
+      <div className="p-4 border-b border-line shrink-0">
         <h3 className="text-lg font-bold mb-3">תרגילים זמינים</h3>
         <input
           type="text"
@@ -213,11 +213,11 @@ export default function ExerciseSidebar({ onAddExercise }: Props) {
       <div className="flex-1 overflow-y-auto p-4">
         {loading ? (
           <div className="text-center py-8">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            <p className="mt-2 text-sm text-gray-600">טוען תרגילים...</p>
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div>
+            <p className="mt-2 text-sm text-fg-3">טוען תרגילים...</p>
           </div>
         ) : filteredExercises.length === 0 ? (
-          <div className="text-center py-8 text-gray-500 text-sm">לא נמצאו תרגילים</div>
+          <div className="text-center py-8 text-muted text-sm">לא נמצאו תרגילים</div>
         ) : (
           <div className="space-y-2">
             {filteredExercises.map((exercise) => (

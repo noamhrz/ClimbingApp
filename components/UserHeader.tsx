@@ -35,7 +35,7 @@ function NavDropdown({ label, children }: { label: string; children: React.React
         </button>
 
         {open && (
-          <div className="absolute top-full mt-1 right-0 bg-white text-gray-800 rounded-lg shadow-xl z-[200] min-w-[150px] py-1 border border-gray-100">
+          <div className="absolute top-full mt-1 right-0 bg-surface text-fg rounded-lg shadow-xl z-[200] min-w-[150px] py-1 border border-line">
             {children}
           </div>
         )}
@@ -50,7 +50,7 @@ function DropdownItem({ href, children }: { href: string; children: React.ReactN
     <Link
       href={href}
       onClick={close}
-      className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-blue-50 hover:text-blue-700 transition-colors whitespace-nowrap text-right"
+      className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-accent/15 hover:text-accent transition-colors whitespace-nowrap text-right"
     >
       {children}
     </Link>
@@ -108,13 +108,13 @@ export default function UserHeader() {
     : `/goals/${encodeURIComponent((activeUser || currentUser)?.Email || '')}`
 
   return (
-    <header ref={headerRef} className="bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg sticky top-0 z-50">
+    <header ref={headerRef} className="text-white shadow-lg sticky top-0 z-50 bg-surface border border-line">
       <div className="max-w-7xl mx-auto px-4 py-3">
 
         {/* Top Row - User Info */}
         <div className="flex justify-between items-center mb-3">
           <div className="flex items-center gap-3">
-            <div className="w-16 h-16 bg-white rounded-full p-2 shadow-lg flex items-center justify-center">
+            <div className="w-16 h-16 bg-surface rounded-full p-2 shadow-lg flex items-center justify-center">
               <img
                 src={getRoleImage(displayUser.Role)}
                 alt={displayUser.Role}
@@ -138,7 +138,7 @@ export default function UserHeader() {
             {isImpersonating && (
               <button
                 onClick={switchToSelf}
-                className="bg-yellow-500 hover:bg-yellow-600 text-white font-semibold px-4 py-2 rounded-lg transition-all shadow-md flex items-center gap-2"
+                className="bg-warning hover:bg-warning/90 text-white font-semibold px-4 py-2 rounded-lg transition-all shadow-md flex items-center gap-2"
                 title="חזור לעצמי"
               >
                 <span>👤</span>
@@ -148,7 +148,7 @@ export default function UserHeader() {
             )}
             <button
               onClick={handleLogout}
-              className="bg-red-500 hover:bg-red-600 text-white font-semibold px-4 py-2 rounded-lg transition-all shadow-md flex items-center gap-2"
+              className="bg-danger hover:bg-danger/90 text-white font-semibold px-4 py-2 rounded-lg transition-all shadow-md flex items-center gap-2"
               title="התנתק"
             >
               <span>🚪</span>
@@ -199,7 +199,7 @@ export default function UserHeader() {
 
         {/* Impersonation banner */}
         {isImpersonating && currentUser && (
-          <div className="mt-3 bg-yellow-500/20 border border-yellow-400/30 rounded-lg px-4 py-2 backdrop-blur-sm">
+          <div className="mt-3 bg-warning/20 border border-warning/30 rounded-lg px-4 py-2 backdrop-blur-sm">
             <div className="flex items-center justify-between text-sm">
               <div className="flex items-center gap-2">
                 <span>🔍</span>
@@ -210,7 +210,7 @@ export default function UserHeader() {
               </div>
               <button
                 onClick={switchToSelf}
-                className="text-yellow-200 hover:text-white underline font-medium"
+                className="text-warning hover:text-white underline font-medium"
               >
                 חזור לעצמי
               </button>

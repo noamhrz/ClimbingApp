@@ -144,26 +144,26 @@ export default function GoalsEditPage() {
       <div className="mb-8">
         <button
           onClick={() => router.push('/goals')}
-          className="mb-4 text-blue-600 hover:text-blue-800 flex items-center gap-2"
+          className="mb-4 text-accent hover:text-accent/90 flex items-center gap-2"
         >
           ← חזרה לרשימת משתמשים
         </button>
         
         <h1 className="text-4xl font-bold mb-2">🎯 הגדרת יעדים</h1>
-        <p className="text-gray-600 text-lg">{userName || targetEmail}</p>
+        <p className="text-fg-3 text-lg">{userName || targetEmail}</p>
       </div>
 
       {/* Year & Quarter Selector */}
-      <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
+      <div className="bg-surface rounded-xl shadow-sm p-6 mb-6">
         <div className="flex items-center gap-6">
           <div className="flex-1">
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
+            <label className="block text-sm font-semibold text-fg-2 mb-2">
               📅 שנה
             </label>
             <select
               value={year}
               onChange={(e) => setYear(parseInt(e.target.value))}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-3 border border-line rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent"
             >
               <option value={currentYear - 1}>{currentYear - 1}</option>
               <option value={currentYear}>{currentYear}</option>
@@ -172,13 +172,13 @@ export default function GoalsEditPage() {
           </div>
           
           <div className="flex-1">
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
+            <label className="block text-sm font-semibold text-fg-2 mb-2">
               📊 רבעון
             </label>
             <select
               value={quarter}
               onChange={(e) => setQuarter(parseInt(e.target.value))}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-3 border border-line rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent"
             >
               <option value={1}>Q1 (ינואר-מרץ)</option>
               <option value={2}>Q2 (אפריל-יוני)</option>
@@ -192,10 +192,10 @@ export default function GoalsEditPage() {
       {/* Accordion Sections */}
       <div className="space-y-4">
         {/* General Goals */}
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+        <div className="bg-surface rounded-xl shadow-sm overflow-hidden">
           <button
             onClick={() => toggleSection('general')}
-            className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition"
+            className="w-full px-6 py-4 flex items-center justify-between hover:bg-surface transition"
           >
             <div className="flex items-center gap-3">
               <span className="text-2xl">{openSection === 'general' ? '▼' : '▶'}</span>
@@ -216,10 +216,10 @@ export default function GoalsEditPage() {
         </div>
 
         {/* Boulder Goals */}
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+        <div className="bg-surface rounded-xl shadow-sm overflow-hidden">
           <button
             onClick={() => toggleSection('boulder')}
-            className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition"
+            className="w-full px-6 py-4 flex items-center justify-between hover:bg-surface transition"
           >
             <div className="flex items-center gap-3">
               <span className="text-2xl">{openSection === 'boulder' ? '▼' : '▶'}</span>
@@ -241,10 +241,10 @@ export default function GoalsEditPage() {
         </div>
 
         {/* Board Goals */}
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+        <div className="bg-surface rounded-xl shadow-sm overflow-hidden">
           <button
             onClick={() => toggleSection('board')}
-            className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition"
+            className="w-full px-6 py-4 flex items-center justify-between hover:bg-surface transition"
           >
             <div className="flex items-center gap-3">
               <span className="text-2xl">{openSection === 'board' ? '▼' : '▶'}</span>
@@ -266,10 +266,10 @@ export default function GoalsEditPage() {
         </div>
 
         {/* Lead Goals */}
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+        <div className="bg-surface rounded-xl shadow-sm overflow-hidden">
           <button
             onClick={() => toggleSection('lead')}
-            className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition"
+            className="w-full px-6 py-4 flex items-center justify-between hover:bg-surface transition"
           >
             <div className="flex items-center gap-3">
               <span className="text-2xl">{openSection === 'lead' ? '▼' : '▶'}</span>
@@ -293,8 +293,8 @@ export default function GoalsEditPage() {
 
       {/* Progress Section - 3 Separate Pyramids */}
       <div className="mt-12">
-        <h2 className="text-3xl font-bold mb-2 text-center text-gray-800">📊 התקדמות ביעדים</h2>
-        <p className="text-center text-gray-500 mb-8">
+        <h2 className="text-3xl font-bold mb-2 text-center text-fg">📊 התקדמות ביעדים</h2>
+        <p className="text-center text-muted mb-8">
           מעקב אחר ההתקדמות שלך מול היעדים שהגדרת
         </p>
         

@@ -72,13 +72,13 @@ export default function GradeGoalsForm({ type, initialData, onSave }: Props) {
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
         {grades.map((grade) => (
           <div key={grade}>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
+            <label className="block text-sm font-semibold text-fg-2 mb-2">
               {grade}
             </label>
             <select
               value={data[grade]}
               onChange={(e) => handleChange(grade, parseInt(e.target.value))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-3 py-2 border border-line rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent"
             >
               {NUMBER_OPTIONS.map((num) => (
                 <option key={num} value={num}>
@@ -95,14 +95,14 @@ export default function GradeGoalsForm({ type, initialData, onSave }: Props) {
         <button
           onClick={handleSave}
           disabled={saving}
-          className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-6 py-3 bg-accent text-white font-semibold rounded-lg hover:bg-accent-hover transition disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {saving ? '💾 שומר...' : '💾 שמור'}
         </button>
         
         {message && (
           <div className={`px-4 py-2 rounded-lg ${
-            message.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+            message.type === 'success' ? 'bg-success/15 text-success' : 'bg-danger/15 text-danger'
           }`}>
             {message.text}
           </div>

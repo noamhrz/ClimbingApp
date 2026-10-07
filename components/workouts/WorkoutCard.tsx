@@ -62,8 +62,8 @@ export default function WorkoutCard({ workout, onUpdate }: Props) {
 
   return (
     <div
-      className={`bg-white rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow ${
-        !workout.IsActive ? 'opacity-60 border-2 border-gray-300' : ''
+      className={`bg-surface rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow ${
+        !workout.IsActive ? 'opacity-60 border-2 border-line' : ''
       }`}
     >
       {/* Header */}
@@ -73,10 +73,10 @@ export default function WorkoutCard({ workout, onUpdate }: Props) {
             <span className="text-2xl">{getTypeIcon()}</span>
             <h3 className="text-lg font-bold">{workout.Name}</h3>
           </div>
-          <p className="text-sm text-gray-600">{workout.Category}</p>
+          <p className="text-sm text-fg-3">{workout.Category}</p>
         </div>
         {!workout.IsActive && (
-          <span className="bg-gray-200 text-gray-700 text-xs px-2 py-1 rounded">
+          <span className="bg-raised text-fg-2 text-xs px-2 py-1 rounded">
             לא פעיל
           </span>
         )}
@@ -84,11 +84,11 @@ export default function WorkoutCard({ workout, onUpdate }: Props) {
 
       {/* Description */}
       {workout.Description && (
-        <p className="text-sm text-gray-700 mb-3 line-clamp-2">{workout.Description}</p>
+        <p className="text-sm text-fg-2 mb-3 line-clamp-2">{workout.Description}</p>
       )}
 
       {/* Stats */}
-      <div className="flex gap-4 text-sm text-gray-600 mb-3">
+      <div className="flex gap-4 text-sm text-fg-3 mb-3">
         {workout.containExercise && (
           <div>
             <span className="font-medium">⏱️ {formatTimeMinutes(workout.CalculatedExercisesTime * 60)}</span>
@@ -102,13 +102,13 @@ export default function WorkoutCard({ workout, onUpdate }: Props) {
       </div>
 
       {/* Metadata */}
-      <div className="flex gap-3 text-xs text-gray-500 mb-4">
+      <div className="flex gap-3 text-xs text-muted mb-4">
         {workout.VideoURL && (
           <a
             href={workout.VideoURL}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1 hover:text-blue-600"
+            className="flex items-center gap-1 hover:text-accent"
             onClick={(e) => e.stopPropagation()}
           >
             🎬 וידאו
@@ -125,14 +125,14 @@ export default function WorkoutCard({ workout, onUpdate }: Props) {
       <div className="flex gap-2">
         <button
           onClick={() => router.push(`/workouts-editor/${workout.WorkoutID}`)}
-          className="flex-1 bg-blue-600 text-white px-3 py-2 rounded hover:bg-blue-700 text-sm font-medium disabled:opacity-50"
+          className="flex-1 bg-accent text-white px-3 py-2 rounded hover:bg-accent-hover text-sm font-medium disabled:opacity-50"
           disabled={loading}
         >
           ✏️ עריכה
         </button>
         <button
           onClick={handleDuplicate}
-          className="bg-gray-200 text-gray-700 px-3 py-2 rounded hover:bg-gray-300 text-sm font-medium disabled:opacity-50"
+          className="bg-raised text-fg-2 px-3 py-2 rounded hover:bg-raised/90 text-sm font-medium disabled:opacity-50"
           disabled={loading}
           title="שכפול"
         >
@@ -140,7 +140,7 @@ export default function WorkoutCard({ workout, onUpdate }: Props) {
         </button>
         <button
           onClick={handleDelete}
-          className="bg-red-100 text-red-700 px-3 py-2 rounded hover:bg-red-200 text-sm font-medium disabled:opacity-50"
+          className="bg-danger/15 text-danger px-3 py-2 rounded hover:bg-danger/15 text-sm font-medium disabled:opacity-50"
           disabled={loading}
           title={workout.IsActive ? 'מחק/השבת' : 'מחק לצמיתות'}
         >

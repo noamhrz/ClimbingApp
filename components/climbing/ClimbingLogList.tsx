@@ -48,24 +48,24 @@ export default function ClimbingLogList({ logs, boulderGrades, leadGrades, onDel
     )
 
     return (
-      <div className="border-b last:border-b-0 py-3 hover:bg-gray-50">
+      <div className="border-b last:border-b-0 py-3 hover:bg-surface">
         <div className="flex items-start justify-between">
           <div className="flex-1">
             {/* Date */}
-            <div className="text-xs text-gray-500 mb-1">
+            <div className="text-xs text-muted mb-1">
               📅 {formatDate(log.LogDateTime)}
             </div>
 
             {/* Grade & Route Name */}
             <div className="font-medium mb-1">
-              <span className="text-blue-600">{gradeDisplay}</span>
-              {log.RouteName && <span className="text-gray-700 ml-2">- {log.RouteName}</span>}
+              <span className="text-accent">{gradeDisplay}</span>
+              {log.RouteName && <span className="text-fg-2 ml-2">- {log.RouteName}</span>}
             </div>
 
             {/* Attempts & Success */}
-            <div className="flex items-center gap-3 text-sm text-gray-600 mb-1">
+            <div className="flex items-center gap-3 text-sm text-fg-3 mb-1">
               <span>🔄 {log.Attempts} ניסיונות</span>
-              <span className={log.Successful ? 'text-green-600 font-medium' : 'text-red-600'}>
+              <span className={log.Successful ? 'text-success font-medium' : 'text-danger'}>
                 {log.Successful ? '✅ הצליח' : '❌ לא הצליח'}
               </span>
               {log.ClimbType === 'Board' && (
@@ -77,7 +77,7 @@ export default function ClimbingLogList({ logs, boulderGrades, leadGrades, onDel
 
             {/* Notes */}
             {log.Notes && (
-              <div className="text-sm text-gray-600 italic mt-1">
+              <div className="text-sm text-fg-3 italic mt-1">
                 💭 {log.Notes}
               </div>
             )}
@@ -86,7 +86,7 @@ export default function ClimbingLogList({ logs, boulderGrades, leadGrades, onDel
           {/* Delete Button */}
           <button
             onClick={() => handleDelete(log)}
-            className="text-red-500 hover:text-red-700 ml-2"
+            className="text-danger hover:text-danger/90 ml-2"
             title="מחק"
             disabled={!log.ClimbingLogID}
           >
@@ -98,7 +98,7 @@ export default function ClimbingLogList({ logs, boulderGrades, leadGrades, onDel
   }
 
   return (
-    <div className="bg-white rounded-lg shadow mb-6">
+    <div className="bg-surface rounded-lg shadow mb-6">
       <div className="p-4 border-b">
         <h3 className="text-lg font-bold">📋 היסטוריית מסלולים</h3>
       </div>
@@ -106,12 +106,12 @@ export default function ClimbingLogList({ logs, boulderGrades, leadGrades, onDel
       <div className="grid grid-cols-1 lg:grid-cols-2 divide-x divide-gray-200">
         {/* Lead Column */}
         <div>
-          <div className="bg-blue-50 px-4 py-2 font-bold text-blue-900 border-b">
+          <div className="bg-accent/15 px-4 py-2 font-bold text-accent border-b">
             🧗 Lead ({leadLogs.length})
           </div>
           <div className="max-h-[600px] overflow-y-auto">
             {leadLogs.length === 0 ? (
-              <div className="p-8 text-center text-gray-500">
+              <div className="p-8 text-center text-muted">
                 <div className="text-4xl mb-2">🧗</div>
                 <p>אין מסלולי Lead עדיין</p>
               </div>
@@ -127,12 +127,12 @@ export default function ClimbingLogList({ logs, boulderGrades, leadGrades, onDel
 
         {/* Boulder + Board Column */}
         <div>
-          <div className="bg-green-50 px-4 py-2 font-bold text-green-900 border-b">
+          <div className="bg-success/15 px-4 py-2 font-bold text-success border-b">
             🪨 Boulder + Board ({boulderBoardLogs.length})
           </div>
           <div className="max-h-[600px] overflow-y-auto">
             {boulderBoardLogs.length === 0 ? (
-              <div className="p-8 text-center text-gray-500">
+              <div className="p-8 text-center text-muted">
                 <div className="text-4xl mb-2">🪨</div>
                 <p>אין מסלולי Boulder/Board עדיין</p>
               </div>

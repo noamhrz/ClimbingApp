@@ -88,18 +88,18 @@ export default function ExerciseAccordion({
   const hasGoals = exercise.Sets || exercise.Reps || exercise.Duration || exercise.Rest
 
   return (
-    <div data-exercise-id={exercise.ExerciseID} className="border border-gray-200 rounded-lg overflow-hidden bg-white shadow-sm">
+    <div data-exercise-id={exercise.ExerciseID} className="border border-line rounded-lg overflow-hidden bg-surface shadow-sm">
       {/* Accordion Header */}
       <button
         onClick={handleToggle}
-        className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
+        className="w-full flex items-center justify-between p-4 hover:bg-surface transition-colors"
       >
         <div className="flex items-center gap-3 flex-1 text-right">
-          <span className="text-lg font-medium text-gray-900">
+          <span className="text-lg font-medium text-fg">
             {index + 1}. {exercise.Name}
           </span>
           {!isExpanded && (
-            <span className="text-sm text-gray-500">
+            <span className="text-sm text-muted">
               {getSummary()}
             </span>
           )}
@@ -110,16 +110,16 @@ export default function ExerciseAccordion({
           {!isExpanded && (
             <>
               {exercise.ImageURL && (
-                <span className="text-blue-500 text-sm">🖼️</span>
+                <span className="text-accent text-sm">🖼️</span>
               )}
               {exercise.VideoURL && (
-                <span className="text-blue-500 text-sm">🎥</span>
+                <span className="text-accent text-sm">🎥</span>
               )}
             </>
           )}
           
           {/* Expand/Collapse icon */}
-          <span className="text-gray-400 text-xl">
+          <span className="text-faint text-xl">
             {isExpanded ? '▼' : '▶'}
           </span>
         </div>
@@ -127,18 +127,18 @@ export default function ExerciseAccordion({
 
       {/* Accordion Content */}
       {isExpanded && (
-        <div className="p-4 pt-0 border-t border-gray-100">
+        <div className="p-4 pt-0 border-t border-line">
           {/* Description */}
           {exercise.Description && (
-            <div className="mb-4 p-3 bg-blue-50 rounded-lg">
-              <p className="text-sm text-gray-700">{exercise.Description}</p>
+            <div className="mb-4 p-3 bg-accent/15 rounded-lg">
+              <p className="text-sm text-fg-2">{exercise.Description}</p>
             </div>
           )}
 
           {/* Exercise Goals Section - Minimalist */}
           {hasGoals && (
-            <div className="mb-4 p-3 bg-gray-50 border border-gray-200 rounded-lg">
-              <div className="flex flex-wrap gap-4 text-sm text-gray-700">
+            <div className="mb-4 p-3 bg-surface border border-line rounded-lg">
+              <div className="flex flex-wrap gap-4 text-sm text-fg-2">
                 {exercise.Sets && (
                   <span>
                     <span className="font-medium">{exercise.Sets}</span> סטים
@@ -155,7 +155,7 @@ export default function ExerciseAccordion({
                   </span>
                 )}
                 {exercise.Rest && (
-                  <span className="text-gray-500">
+                  <span className="text-muted">
                     מנוחה: <span className="font-medium">{exercise.Rest}</span> שנ׳
                   </span>
                 )}
@@ -169,7 +169,7 @@ export default function ExerciseAccordion({
               {/* Image - clickable! */}
               {exercise.ImageURL && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-fg-2 mb-2">
                     🖼️ תמונה להדגמה:
                   </label>
                   <a
@@ -181,11 +181,11 @@ export default function ExerciseAccordion({
                     <img 
                       src={exercise.ImageURL} 
                       alt={exercise.Name}
-                      className="w-full max-w-md rounded-lg shadow-md border border-gray-200 group-hover:opacity-90 transition-opacity"
+                      className="w-full max-w-md rounded-lg shadow-md border border-line group-hover:opacity-90 transition-opacity"
                     />
                     {/* Hover overlay */}
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-all rounded-lg flex items-center justify-center">
-                      <span className="opacity-0 group-hover:opacity-100 text-white font-bold text-lg bg-blue-600 px-4 py-2 rounded-lg shadow-lg">
+                      <span className="opacity-0 group-hover:opacity-100 text-white font-bold text-lg bg-accent px-4 py-2 rounded-lg shadow-lg">
                         🔍 לחץ להגדלה
                       </span>
                     </div>
@@ -196,14 +196,14 @@ export default function ExerciseAccordion({
               {/* Video Link */}
               {exercise.VideoURL && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-fg-2 mb-2">
                     🎥 וידאו הדגמה:
                   </label>
                   <a
                     href={exercise.VideoURL}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors shadow-sm"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-accent hover:bg-accent-hover text-white rounded-lg transition-colors shadow-sm"
                   >
                     צפה בוידאו
                   </a>
@@ -223,7 +223,7 @@ export default function ExerciseAccordion({
           <div className="mt-4 flex justify-center">
             <button
               onClick={isLast ? onSave : (onNext ?? handleToggle)}
-              className="px-6 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-lg text-sm font-medium transition-colors"
+              className="px-6 py-2 bg-accent/15 hover:bg-accent/15 text-accent border border-accent rounded-lg text-sm font-medium transition-colors"
             >
               {isLast ? '✓ סיום ושמירה' : '✓ סיום והבא ←'}
             </button>

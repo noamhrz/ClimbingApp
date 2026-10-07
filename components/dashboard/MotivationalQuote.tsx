@@ -43,7 +43,7 @@ export default function MotivationalQuote() {
 
   if (loading || !quote) {
     return (
-      <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl p-8 shadow-lg text-center">
+      <div className="text-white rounded-xl p-8 shadow-lg text-center bg-surface border border-line">
         <div className="text-5xl mb-4">💪</div>
         <div className="text-xl">טוען ציטוט...</div>
       </div>
@@ -51,7 +51,7 @@ export default function MotivationalQuote() {
   }
 
   return (
-    <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl p-8 shadow-lg text-center">
+    <div className="text-white rounded-xl p-8 shadow-lg text-center bg-surface border border-line">
       {/* אייקון */}
       <div className="text-5xl mb-4">💪</div>
       
@@ -72,7 +72,7 @@ export default function MotivationalQuote() {
       
       {/* קטגוריה */}
       {quote.Category && (
-        <span className="inline-block bg-blue-500/30 px-3 py-1 rounded-full text-xs mb-4">
+        <span className="inline-block bg-accent/30 px-3 py-1 rounded-full text-xs mb-4">
           {quote.Category}
         </span>
       )}

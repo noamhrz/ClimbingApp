@@ -23,7 +23,7 @@ export default function StatsCards({
     // Both hands exercise - single card
     return (
       <div className="mb-6">
-        <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg p-6 text-white">
+        <div className="rounded-xl shadow-lg p-6 text-white bg-surface border border-line">
           <h3 className="text-xl font-bold mb-4">📊 סטטיסטיקות כלליות</h3>
           
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
@@ -76,7 +76,7 @@ export default function StatsCards({
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
       
       {/* Right Hand Card */}
-      <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg p-6 text-white">
+      <div className="rounded-xl shadow-lg p-6 text-white bg-surface border border-line">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-xl font-bold">🫱 יד ימין</h3>
           {rightStats && (
@@ -126,7 +126,7 @@ export default function StatsCards({
       </div>
 
       {/* Left Hand Card */}
-      <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl shadow-lg p-6 text-white">
+      <div className="rounded-xl shadow-lg p-6 text-white bg-surface border border-line">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-xl font-bold">🫲 יד שמאל</h3>
           {leftStats && (
@@ -140,9 +140,9 @@ export default function StatsCards({
           <div className="space-y-3">
             {leftStats.avgWeight > 0 && (
               <div className="bg-white/10 rounded-lg p-3 backdrop-blur">
-                <div className="text-green-100 text-sm">משקל ממוצע</div>
+                <div className="text-success text-sm">משקל ממוצע</div>
                 <div className="text-2xl font-bold">{leftStats.avgWeight.toFixed(1)} ק״ג</div>
-                <div className="text-xs text-green-200 mt-1">
+                <div className="text-xs text-success mt-1">
                   Max: {leftStats.maxWeight} | Min: {leftStats.minWeight}
                 </div>
               </div>
@@ -150,9 +150,9 @@ export default function StatsCards({
             
             {leftStats.avgReps > 0 && (
               <div className="bg-white/10 rounded-lg p-3 backdrop-blur">
-                <div className="text-green-100 text-sm">חזרות ממוצעות</div>
+                <div className="text-success text-sm">חזרות ממוצעות</div>
                 <div className="text-2xl font-bold">{leftStats.avgReps.toFixed(1)}</div>
-                <div className="text-xs text-green-200 mt-1">
+                <div className="text-xs text-success mt-1">
                   Max: {leftStats.maxReps} | Min: {leftStats.minReps}
                 </div>
               </div>
@@ -160,16 +160,16 @@ export default function StatsCards({
             
             {leftStats.avgRPE > 0 && (
               <div className="bg-white/10 rounded-lg p-3 backdrop-blur">
-                <div className="text-green-100 text-sm">RPE ממוצע</div>
+                <div className="text-success text-sm">RPE ממוצע</div>
                 <div className="text-2xl font-bold">{leftStats.avgRPE.toFixed(1)}</div>
-                <div className="text-xs text-green-200 mt-1">
+                <div className="text-xs text-success mt-1">
                   Max: {leftStats.maxRPE}
                 </div>
               </div>
             )}
           </div>
         ) : (
-          <div className="text-center py-8 text-green-100">
+          <div className="text-center py-8 text-success">
             אין נתונים זמינים
           </div>
         )}

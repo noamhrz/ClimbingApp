@@ -31,7 +31,7 @@ export default function ClimbingLogFilters({ filters, onChange, boulderGrades, l
       : boulderGrades
 
   return (
-    <div className="bg-white rounded-lg shadow p-4 mb-6">
+    <div className="bg-surface rounded-lg shadow p-4 mb-6">
       <h3 className="font-bold mb-4">🔍 סינונים</h3>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
@@ -138,7 +138,7 @@ export default function ClimbingLogFilters({ filters, onChange, boulderGrades, l
               maxGradeId: null,
             })
           }}
-          className="text-sm text-blue-600 hover:underline"
+          className="text-sm text-accent hover:underline"
         >
           🔄 איפוס סינונים
         </button>

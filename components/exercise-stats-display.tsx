@@ -31,10 +31,10 @@ export function ExerciseStatsDisplay({ performance, selectedEmail }: ExerciseSta
   
   if (performance.exercises.length === 0) {
     return (
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-8 text-center">
+      <div className="bg-accent/15 border border-accent rounded-lg p-8 text-center">
         <div className="text-4xl mb-3">💪</div>
-        <h3 className="text-xl font-bold text-gray-900 mb-2">אין נתוני תרגילים</h3>
-        <p className="text-gray-600">לא נמצאו תרגילים שבוצעו בטווח התאריכים הנבחר</p>
+        <h3 className="text-xl font-bold text-fg mb-2">אין נתוני תרגילים</h3>
+        <p className="text-fg-3">לא נמצאו תרגילים שבוצעו בטווח התאריכים הנבחר</p>
       </div>
     )
   }
@@ -51,7 +51,7 @@ export function ExerciseStatsDisplay({ performance, selectedEmail }: ExerciseSta
   return (
     <div className="space-y-6">
       {/* Header with filter */}
-      <div className="bg-gradient-to-r from-purple-500 to-pink-600 rounded-lg p-6 text-white shadow-lg">
+      <div className="rounded-lg p-6 text-white shadow-lg bg-surface border border-line">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-2xl font-bold">💪 סטטיסטיקות תרגילים</h2>
           
@@ -63,9 +63,9 @@ export function ExerciseStatsDisplay({ performance, selectedEmail }: ExerciseSta
               onChange={(e) => setSelectedCategory(e.target.value)}
               className="px-3 py-2 rounded-lg bg-white/20 backdrop-blur-sm border border-white/30 text-white font-medium focus:outline-none focus:ring-2 focus:ring-white/50 cursor-pointer"
             >
-              <option value="all" className="text-gray-900">🔍 הכל ({performance.exercises.length})</option>
+              <option value="all" className="text-fg">🔍 הכל ({performance.exercises.length})</option>
               {allCategories.map((category) => (
-                <option key={category} value={category} className="text-gray-900">
+                <option key={category} value={category} className="text-fg">
                   {getCategoryIcon(category)} {category} ({categorizedExercises[category].length})
                 </option>
               ))}
@@ -164,13 +164,13 @@ function CategorySection({
   userEmail?: string
 }) {
   return (
-    <div className="bg-white rounded-lg shadow-lg border-2 border-gray-200">
+    <div className="bg-surface rounded-lg shadow-lg border-2 border-line">
       {/* Category Header */}
-      <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-4 border-b-2 border-gray-200 rounded-t-lg">
-        <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+      <div className="p-4 border-b-2 border-line rounded-t-lg bg-surface">
+        <h3 className="text-xl font-bold text-fg flex items-center gap-2">
           <span>{getCategoryIcon(category)}</span>
           <span>{category}</span>
-          <span className="text-sm font-normal text-gray-600">({exercises.length} תרגילים)</span>
+          <span className="text-sm font-normal text-fg-3">({exercises.length} תרגילים)</span>
         </h3>
       </div>
 
@@ -219,12 +219,12 @@ export function ExerciseCard({
   }
 
   return (
-    <div className="border-2 border-gray-200 rounded-lg p-4 hover:border-purple-300 transition">
+    <div className="border-2 border-line rounded-lg p-4 hover:border-purple-300 transition">
       {/* Exercise Name - Clickable */}
       <div className="mb-4 flex items-center justify-between">
         <Link 
           href={buildAnalyticsUrl()}
-          className="text-lg font-bold text-blue-600 hover:text-blue-800 hover:underline transition-colors flex items-center gap-2 group"
+          className="text-lg font-bold text-accent hover:text-accent/90 hover:underline transition-colors flex items-center gap-2 group"
         >
           <span>{exercise.exerciseName}</span>
           <span className="text-sm opacity-0 group-hover:opacity-100 transition-opacity">
@@ -315,7 +315,7 @@ function HandStatsBar({
   return (
     <div className="mb-4">
       <div className="flex items-center justify-between mb-2">
-        <span className="font-semibold text-gray-900">{label}</span>
+        <span className="font-semibold text-fg">{label}</span>
         {!isBodyWeight && (
           <span className={`text-sm font-medium ${trendColor}`}>
             {trendIcon} {stats.trend > 0 ? '+' : ''}{stats.trend.toFixed(1)}%
@@ -331,16 +331,16 @@ function HandStatsBar({
       {isBodyWeight ? (
         <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-2">
           <div className="flex items-center justify-between mb-3">
-            <p className="text-sm text-gray-600 italic">** לא הוזן משקל</p>
+            <p className="text-sm text-fg-3 italic">** לא הוזן משקל</p>
             <span className="text-2xl font-bold text-purple-600">{formatValue(stats.current, stats.unit, isBodyWeight)}</span>
           </div>
-          <div className="flex items-center gap-4 text-sm text-gray-600">
+          <div className="flex items-center gap-4 text-sm text-fg-3">
             <span>Max: <strong>{formatValue(stats.max, stats.unit, isBodyWeight)}</strong></span>
             <span>Avg: <strong>{formatValue(stats.avg, stats.unit, isBodyWeight)}</strong></span>
             <span>Sessions: <strong>{stats.totalSessions}</strong></span>
           </div>
           {stats.last5.length > 0 && (
-            <div className="mt-2 text-xs text-gray-500">
+            <div className="mt-2 text-xs text-muted">
               📈 Last 5: {stats.last5.map(v => formatValue(v, stats.unit, isBodyWeight)).join(' → ')}
             </div>
           )}
@@ -348,7 +348,7 @@ function HandStatsBar({
       ) : (
         <>
           <div className="w-full mb-6 relative" dir="ltr">
-            <div className="w-full bg-gray-200 rounded-full h-8 relative overflow-visible">
+            <div className="w-full bg-raised rounded-full h-8 relative overflow-visible">
               
               {stats.unit === 'KG' && (
                 <>
@@ -361,12 +361,12 @@ function HandStatsBar({
                     return (
                       <div key={kg}>
                         <div 
-                          className={`absolute top-0 bottom-0 ${isMajor ? 'w-0.5 bg-gray-400' : 'w-px bg-gray-300'}`}
+                          className={`absolute top-0 bottom-0 ${isMajor ? 'w-0.5 bg-raised' : 'w-px bg-line-strong'}`}
                           style={{ left: `${position}%` }}
                         />
                         {isMajor && (
                           <div 
-                            className="absolute -top-5 text-xs font-medium text-gray-600 whitespace-nowrap"
+                            className="absolute -top-5 text-xs font-medium text-fg-3 whitespace-nowrap"
                             style={{ left: `${position}%`, transform: 'translateX(-50%)' }}
                           >
                             {kg}
@@ -381,7 +381,7 @@ function HandStatsBar({
               {stats.unit === 'KG' && (
                 <>
                   <div 
-                    className="absolute top-0 bottom-0 w-2 bg-white z-20"
+                    className="absolute top-0 bottom-0 w-2 bg-surface z-20"
                     style={{ 
                       left: `${100 - (bodyWeightKG / effectiveMaxScale) * 100}%`,
                       transform: 'translateX(-50%)'
@@ -395,7 +395,7 @@ function HandStatsBar({
                     }}
                   />
                   <div 
-                    className="absolute -top-6 text-sm font-black text-black whitespace-nowrap bg-white px-2 py-1 rounded-md border-2 border-black z-40"
+                    className="absolute -top-6 text-sm font-black text-fg whitespace-nowrap bg-surface px-2 py-1 rounded-md border-2 border-black z-40"
                     style={{ 
                       left: `${100 - (bodyWeightKG / effectiveMaxScale) * 100}%`, 
                       transform: 'translateX(-50%)',
@@ -422,20 +422,20 @@ function HandStatsBar({
             
             {stats.unit === 'KG' && (
               <div className="flex justify-between mt-1">
-                <span className="text-xs text-gray-500">{maxScaleKG.toFixed(0)} KG</span>
-                <span className="text-xs text-gray-500">0</span>
+                <span className="text-xs text-muted">{maxScaleKG.toFixed(0)} KG</span>
+                <span className="text-xs text-muted">0</span>
               </div>
             )}
           </div>
 
-          <div className="flex items-center gap-4 text-sm text-gray-600">
+          <div className="flex items-center gap-4 text-sm text-fg-3">
             <span>Max: <strong>{formatValue(stats.max, stats.unit, isBodyWeight)}</strong></span>
             <span>Avg: <strong>{formatValue(stats.avg, stats.unit, isBodyWeight)}</strong></span>
             <span>Sessions: <strong>{stats.totalSessions}</strong></span>
           </div>
 
           {stats.last5.length > 0 && (
-            <div className="mt-2 text-xs text-gray-500">
+            <div className="mt-2 text-xs text-muted">
               📈 Last 5: {stats.last5.map(v => formatValue(v, stats.unit, isBodyWeight)).join(' → ')}
             </div>
           )}
@@ -463,7 +463,7 @@ function ImbalanceWarning({ imbalance }: { imbalance: ImbalanceStats }) {
       <div className={`font-bold ${textColor} mb-1`}>
         {imbalance.message}
       </div>
-      <div className="text-sm text-gray-700 space-y-1">
+      <div className="text-sm text-fg-2 space-y-1">
         <div>📊 Current Gap: <strong>{Math.abs(imbalance.currentGap).toFixed(1)}%</strong></div>
         <div>📈 Average Gap: <strong>{Math.abs(imbalance.avgGap).toFixed(1)}%</strong></div>
         <div>🔝 Max Gap: <strong>{Math.abs(imbalance.maxGap).toFixed(1)}%</strong></div>

@@ -98,7 +98,7 @@ export default function LoadLastWorkoutButton({
   return (
     <div className="text-center mt-6">
       <button
-        className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2.5 rounded-lg font-semibold shadow-md transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center gap-2 mx-auto"
+        className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2.5 rounded-lg font-semibold shadow-md transition-colors disabled:bg-raised disabled:cursor-not-allowed flex items-center gap-2 mx-auto"
         onClick={handleLoadFromLastWorkout}
         disabled={loading}
       >
@@ -130,7 +130,7 @@ export default function LoadLastWorkoutButton({
           <>🔄 טען נתונים מאימון אחרון</>
         )}
       </button>
-      <p className="text-gray-500 text-sm mt-2">
+      <p className="text-muted text-sm mt-2">
         ימלא את הטופס בנתונים מהאימון הקודם שלך
       </p>
     </div>

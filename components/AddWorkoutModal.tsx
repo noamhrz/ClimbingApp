@@ -291,12 +291,12 @@ export default function AddWorkoutModal({
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
               transition={{ type: 'spring', duration: 0.3 }}
-              className="bg-white rounded-2xl shadow-2xl w-full max-w-md flex flex-col"
+              className="bg-surface rounded-2xl shadow-2xl w-full max-w-md flex flex-col"
               style={{ maxHeight: 'calc(100vh - 2rem)' }}
               dir="rtl"
             >
               {/* Header — fixed */}
-              <div className="flex-shrink-0 bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4 rounded-t-2xl">
+              <div className="flex-shrink-0 px-6 py-4 rounded-t-2xl bg-surface border border-line">
                 <h2 className="text-2xl font-bold text-white text-center">
                   ➕ הוספת אימונים ללוח
                 </h2>
@@ -308,21 +308,21 @@ export default function AddWorkoutModal({
 
                   {/* Step 1: Date Picker */}
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    <label className="block text-sm font-semibold text-fg-2 mb-2">
                       📅 תאריך אימון
                     </label>
                     <input
                       type="date"
                       value={selectedDate}
                       onChange={(e) => handleDateChange(e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      className="w-full px-4 py-3 border border-line rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent transition-all"
                       required
                     />
                     {isLoadingExisting && (
-                      <div className="mt-2 text-xs text-gray-400 text-center">טוען אימונים קיימים...</div>
+                      <div className="mt-2 text-xs text-faint text-center">טוען אימונים קיימים...</div>
                     )}
                     {!isLoadingExisting && existingCalendarMap.size > 0 && (
-                      <div className="mt-2 text-xs text-blue-600 text-center">
+                      <div className="mt-2 text-xs text-accent text-center">
                         נמצאו {existingCalendarMap.size} אימונים קיימים ביום זה
                       </div>
                     )}
@@ -330,7 +330,7 @@ export default function AddWorkoutModal({
 
                   {/* Step 2: Time Selector */}
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    <label className="block text-sm font-semibold text-fg-2 mb-2">
                       🕐 זמן אימון (יחול על אימונים חדשים בלבד)
                     </label>
                     <div className="grid grid-cols-3 gap-2">
@@ -339,51 +339,51 @@ export default function AddWorkoutModal({
                         onClick={() => setSelectedTime('morning')}
                         className={`py-3 px-4 rounded-lg border-2 transition-all ${
                           selectedTime === 'morning'
-                            ? 'border-blue-500 bg-blue-50 text-blue-700'
-                            : 'border-gray-200 hover:border-blue-300'
+                            ? 'border-accent bg-accent/15 text-accent'
+                            : 'border-line hover:border-accent/90'
                         }`}
                       >
                         <div className="text-2xl mb-1">🌅</div>
                         <div className="text-sm font-medium">בוקר</div>
-                        <div className="text-xs text-gray-500">09:00</div>
+                        <div className="text-xs text-muted">09:00</div>
                       </button>
                       <button
                         type="button"
                         onClick={() => setSelectedTime('afternoon')}
                         className={`py-3 px-4 rounded-lg border-2 transition-all ${
                           selectedTime === 'afternoon'
-                            ? 'border-blue-500 bg-blue-50 text-blue-700'
-                            : 'border-gray-200 hover:border-blue-300'
+                            ? 'border-accent bg-accent/15 text-accent'
+                            : 'border-line hover:border-accent/90'
                         }`}
                       >
                         <div className="text-2xl mb-1">☀️</div>
                         <div className="text-sm font-medium">צהריים</div>
-                        <div className="text-xs text-gray-500">14:00</div>
+                        <div className="text-xs text-muted">14:00</div>
                       </button>
                       <button
                         type="button"
                         onClick={() => setSelectedTime('evening')}
                         className={`py-3 px-4 rounded-lg border-2 transition-all ${
                           selectedTime === 'evening'
-                            ? 'border-blue-500 bg-blue-50 text-blue-700'
-                            : 'border-gray-200 hover:border-blue-300'
+                            ? 'border-accent bg-accent/15 text-accent'
+                            : 'border-line hover:border-accent/90'
                         }`}
                       >
                         <div className="text-2xl mb-1">🌙</div>
                         <div className="text-sm font-medium">ערב</div>
-                        <div className="text-xs text-gray-500">18:00</div>
+                        <div className="text-xs text-muted">18:00</div>
                       </button>
                     </div>
                   </div>
 
                   {/* Step 3: Multi-Workout Selector */}
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    <label className="block text-sm font-semibold text-fg-2 mb-2">
                       🏋️ בחר אימונים (ניתן לבחור כמה שרוצים)
                     </label>
-                    <div className="space-y-2 border border-gray-200 rounded-lg p-2">
+                    <div className="space-y-2 border border-line rounded-lg p-2">
                       {availableWorkouts.length === 0 ? (
-                        <div className="text-center py-4 text-gray-500">
+                        <div className="text-center py-4 text-muted">
                           אין אימונים זמינים
                         </div>
                       ) : (
@@ -398,9 +398,9 @@ export default function AddWorkoutModal({
                               className={`w-full text-right px-4 py-3 rounded-lg border-2 transition-all ${
                                 isSelected
                                   ? isExisting
-                                    ? 'border-green-500 bg-green-500 text-white'
-                                    : 'border-blue-500 bg-blue-500 text-white'
-                                  : 'border-gray-200 bg-white hover:border-blue-300 hover:bg-gray-50'
+                                    ? 'border-success bg-success text-white'
+                                    : 'border-accent bg-accent text-white'
+                                  : 'border-line bg-surface hover:border-accent/90 hover:bg-surface/90'
                               }`}
                             >
                               <div className="flex items-center justify-between">
@@ -413,7 +413,7 @@ export default function AddWorkoutModal({
                                 <span className="text-2xl">{getCategoryEmoji(workout.category)}</span>
                               </div>
                               {workout.category && (
-                                <div className={`text-sm mt-1 ${isSelected ? 'text-white/80' : 'text-gray-500'}`}>
+                                <div className={`text-sm mt-1 ${isSelected ? 'text-white/80' : 'text-muted'}`}>
                                   {workout.category}
                                 </div>
                               )}
@@ -427,19 +427,19 @@ export default function AddWorkoutModal({
                     {selectedWorkoutIds.length > 0 && (
                       <div className="mt-3 text-center flex gap-2 justify-center flex-wrap">
                         {existingCalendarMap.size > 0 && (
-                          <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-green-50 text-green-700 rounded-lg text-sm font-medium">
+                          <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-success/15 text-success rounded-lg text-sm font-medium">
                             <span>📌</span>
                             <span>{[...existingCalendarMap.keys()].filter(id => selectedWorkoutIds.includes(id)).length} קיימים</span>
                           </span>
                         )}
                         {selectedWorkoutIds.filter(id => !existingCalendarMap.has(id)).length > 0 && (
-                          <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg text-sm font-medium">
+                          <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-accent/15 text-accent rounded-lg text-sm font-medium">
                             <span>✨</span>
                             <span>{selectedWorkoutIds.filter(id => !existingCalendarMap.has(id)).length} חדשים</span>
                           </span>
                         )}
                         {[...existingCalendarMap.keys()].filter(id => !selectedWorkoutIds.includes(id)).length > 0 && (
-                          <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-red-50 text-red-700 rounded-lg text-sm font-medium">
+                          <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-danger/15 text-danger rounded-lg text-sm font-medium">
                             <span>🗑️</span>
                             <span>{[...existingCalendarMap.keys()].filter(id => !selectedWorkoutIds.includes(id)).length} יוסרו</span>
                           </span>
@@ -450,11 +450,11 @@ export default function AddWorkoutModal({
 
                   {/* Step 4: Day Order */}
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    <label className="block text-sm font-semibold text-fg-2 mb-2">
                       📋 סדר ביום — אפשר לגרור לשינוי
                     </label>
                     {orderedWorkouts.length === 0 ? (
-                      <div className="text-center py-5 text-sm text-gray-400 border-2 border-dashed border-gray-200 rounded-lg">
+                      <div className="text-center py-5 text-sm text-faint border-2 border-dashed border-line rounded-lg">
                         בחר אימונים למעלה כדי לראות את הסדר
                       </div>
                     ) : (
@@ -469,15 +469,15 @@ export default function AddWorkoutModal({
                             onDragEnd={handleDragEnd}
                             className={`flex items-center gap-3 px-4 py-3 border-2 rounded-lg select-none transition-all ${
                               draggedId === workout.id
-                                ? 'border-blue-400 bg-blue-50 opacity-60'
-                                : 'border-gray-200 bg-white cursor-grab active:cursor-grabbing'
+                                ? 'border-accent bg-accent/15 opacity-60'
+                                : 'border-line bg-surface cursor-grab active:cursor-grabbing'
                             }`}
                           >
-                            <span className="text-gray-400 text-xl leading-none">≡</span>
-                            <span className="text-blue-600 font-bold text-sm w-6">{index + 1}.</span>
-                            <span className="font-medium text-gray-800 flex-1">{workout.name}</span>
+                            <span className="text-faint text-xl leading-none">≡</span>
+                            <span className="text-accent font-bold text-sm w-6">{index + 1}.</span>
+                            <span className="font-medium text-fg flex-1">{workout.name}</span>
                             {isExistingWorkout(workout.id) && (
-                              <span className="text-xs text-green-600 font-medium">📌</span>
+                              <span className="text-xs text-success font-medium">📌</span>
                             )}
                           </div>
                         ))}
@@ -488,19 +488,19 @@ export default function AddWorkoutModal({
                 </div>
 
                 {/* Actions — fixed at bottom */}
-                <div className="flex-shrink-0 flex gap-3 px-6 py-4 border-t border-gray-100">
+                <div className="flex-shrink-0 flex gap-3 px-6 py-4 border-t border-line">
                   <button
                     type="button"
                     onClick={onClose}
                     disabled={isSubmitting}
-                    className="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-all disabled:opacity-50"
+                    className="flex-1 px-6 py-3 border-2 border-line text-fg-2 font-semibold rounded-lg hover:bg-surface transition-all disabled:opacity-50"
                   >
                     ביטול
                   </button>
                   <button
                     type="submit"
                     disabled={isSubmitting || selectedWorkoutIds.length === 0}
-                    className="flex-1 px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 px-6 py-3 bg-accent text-white font-semibold rounded-lg hover:bg-accent-hover transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isSubmitting
                       ? 'שומר...'

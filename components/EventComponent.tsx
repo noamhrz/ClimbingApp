@@ -95,7 +95,7 @@ export default function EventComponent({
         </div>
 
         {event.Deloading && event.DeloadingPercentage && (
-          <div className="absolute top-0 right-0 bg-blue-600 text-white text-[10px] px-1 rounded-bl">
+          <div className="absolute top-0 right-0 bg-accent text-white text-[10px] px-1 rounded-bl">
             {event.DeloadingPercentage}%
           </div>
         )}

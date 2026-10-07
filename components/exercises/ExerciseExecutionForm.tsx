@@ -51,7 +51,7 @@ export default function ExerciseExecutionForm({ exercise, value, onChange, disab
         {/* Reps or Duration */}
         {isDuration ? (
           <div>
-            <label className="block text-xs text-gray-600 mb-1">⏱️ זמן (שניות)</label>
+            <label className="block text-xs text-fg-3 mb-1">⏱️ זמן (שניות)</label>
             <input
               type="number"
               min="0"
@@ -60,12 +60,12 @@ export default function ExerciseExecutionForm({ exercise, value, onChange, disab
               placeholder="שניות"
               disabled={disabled}
               onFocus={(e) => e.target.select()}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
+              className="w-full px-3 py-2 border border-line rounded-lg focus:ring-2 focus:ring-accent focus:border-accent disabled:bg-surface"
             />
           </div>
         ) : (
           <div>
-            <label className="block text-xs text-gray-600 mb-1">🔢 חזרות</label>
+            <label className="block text-xs text-fg-3 mb-1">🔢 חזרות</label>
             <input
               type="number"
               min="0"
@@ -74,14 +74,14 @@ export default function ExerciseExecutionForm({ exercise, value, onChange, disab
               placeholder="חזרות"
               disabled={disabled}
               onFocus={(e) => e.target.select()}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
+              className="w-full px-3 py-2 border border-line rounded-lg focus:ring-2 focus:ring-accent focus:border-accent disabled:bg-surface"
             />
           </div>
         )}
 
         {/* Weight */}
         <div>
-          <label className="block text-xs text-gray-600 mb-1">⚖️ משקל (ק״ג)</label>
+          <label className="block text-xs text-fg-3 mb-1">⚖️ משקל (ק״ג)</label>
           <input
             type="number"
             step="0.5"
@@ -90,13 +90,13 @@ export default function ExerciseExecutionForm({ exercise, value, onChange, disab
             placeholder="משקל"
             disabled={disabled}
             onFocus={(e) => e.target.select()}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
+            className="w-full px-3 py-2 border border-line rounded-lg focus:ring-2 focus:ring-accent focus:border-accent disabled:bg-surface"
           />
         </div>
 
         {/* RPE */}
         <div>
-          <label className="block text-xs text-gray-600 mb-1">💪 RPE (1-10)</label>
+          <label className="block text-xs text-fg-3 mb-1">💪 RPE (1-10)</label>
           <input
             type="number"
             min="1"
@@ -106,21 +106,21 @@ export default function ExerciseExecutionForm({ exercise, value, onChange, disab
             placeholder="RPE"
             disabled={disabled}
             onFocus={(e) => e.target.select()}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
+            className="w-full px-3 py-2 border border-line rounded-lg focus:ring-2 focus:ring-accent focus:border-accent disabled:bg-surface"
           />
         </div>
       </div>
 
       {/* Notes */}
       <div>
-        <label className="block text-xs text-gray-600 mb-1">📝 הערות</label>
+        <label className="block text-xs text-fg-3 mb-1">📝 הערות</label>
         <textarea
           value={value.Notes ?? ''}
           onChange={(e) => handleChange('Notes', e.target.value)}
           placeholder="הערות..."
           rows={2}
           disabled={disabled}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 text-sm"
+          className="w-full px-3 py-2 border border-line rounded-lg focus:ring-2 focus:ring-accent focus:border-accent disabled:bg-surface text-sm"
         />
       </div>
     </div>
@@ -130,8 +130,8 @@ export default function ExerciseExecutionForm({ exercise, value, onChange, disab
   const renderSingleHand = () => (
     <div className="space-y-4">
       {/* Right Hand */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <h4 className="font-semibold text-blue-900 mb-3 flex items-center gap-2">
+      <div className="bg-accent/15 border border-accent rounded-lg p-4">
+        <h4 className="font-semibold text-accent mb-3 flex items-center gap-2">
           <span className="text-xl">🫱</span>
           <span>יד ימין</span>
         </h4>
@@ -141,7 +141,7 @@ export default function ExerciseExecutionForm({ exercise, value, onChange, disab
             {/* Reps or Duration - Right */}
             {isDuration ? (
               <div>
-                <label className="block text-xs text-gray-600 mb-1">⏱️ זמן (שניות)</label>
+                <label className="block text-xs text-fg-3 mb-1">⏱️ זמן (שניות)</label>
                 <input
                   type="number"
                   min="0"
@@ -150,12 +150,12 @@ export default function ExerciseExecutionForm({ exercise, value, onChange, disab
                   placeholder="שניות"
                   disabled={disabled}
                   onFocus={(e) => e.target.select()}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
+                  className="w-full px-3 py-2 border border-line rounded-lg focus:ring-2 focus:ring-accent focus:border-accent disabled:bg-surface"
                 />
               </div>
             ) : (
               <div>
-                <label className="block text-xs text-gray-600 mb-1">🔢 חזרות</label>
+                <label className="block text-xs text-fg-3 mb-1">🔢 חזרות</label>
                 <input
                   type="number"
                   min="0"
@@ -164,14 +164,14 @@ export default function ExerciseExecutionForm({ exercise, value, onChange, disab
                   placeholder="חזרות"
                   disabled={disabled}
                   onFocus={(e) => e.target.select()}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
+                  className="w-full px-3 py-2 border border-line rounded-lg focus:ring-2 focus:ring-accent focus:border-accent disabled:bg-surface"
                 />
               </div>
             )}
 
             {/* Weight - Right */}
             <div>
-              <label className="block text-xs text-gray-600 mb-1">⚖️ משקל</label>
+              <label className="block text-xs text-fg-3 mb-1">⚖️ משקל</label>
               <input
                 type="number"
                 step="0.5"
@@ -180,13 +180,13 @@ export default function ExerciseExecutionForm({ exercise, value, onChange, disab
                 placeholder="משקל"
                 disabled={disabled}
                 onFocus={(e) => e.target.select()}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
+                className="w-full px-3 py-2 border border-line rounded-lg focus:ring-2 focus:ring-accent focus:border-accent disabled:bg-surface"
               />
             </div>
 
             {/* RPE - Right */}
             <div>
-              <label className="block text-xs text-gray-600 mb-1">💪 RPE</label>
+              <label className="block text-xs text-fg-3 mb-1">💪 RPE</label>
               <input
                 type="number"
                 min="1"
@@ -196,29 +196,29 @@ export default function ExerciseExecutionForm({ exercise, value, onChange, disab
                 placeholder="RPE"
                 disabled={disabled}
                 onFocus={(e) => e.target.select()}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100"
+                className="w-full px-3 py-2 border border-line rounded-lg focus:ring-2 focus:ring-accent focus:border-accent disabled:bg-surface"
               />
             </div>
           </div>
 
           {/* Notes - Right */}
           <div>
-            <label className="block text-xs text-gray-600 mb-1">📝 הערות</label>
+            <label className="block text-xs text-fg-3 mb-1">📝 הערות</label>
             <textarea
               value={value.Notes ?? ''}
               onChange={(e) => handleChange('Notes', e.target.value)}
               placeholder="הערות..."
               rows={2}
               disabled={disabled}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 text-sm"
+              className="w-full px-3 py-2 border border-line rounded-lg focus:ring-2 focus:ring-accent focus:border-accent disabled:bg-surface text-sm"
             />
           </div>
         </div>
       </div>
 
       {/* Left Hand */}
-      <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-        <h4 className="font-semibold text-orange-900 mb-3 flex items-center gap-2">
+      <div className="bg-warning/15 border border-warning rounded-lg p-4">
+        <h4 className="font-semibold text-warning mb-3 flex items-center gap-2">
           <span className="text-xl">🫲</span>
           <span>יד שמאל</span>
         </h4>
@@ -228,7 +228,7 @@ export default function ExerciseExecutionForm({ exercise, value, onChange, disab
             {/* Reps or Duration - Left */}
             {isDuration ? (
               <div>
-                <label className="block text-xs text-gray-600 mb-1">⏱️ זמן (שניות)</label>
+                <label className="block text-xs text-fg-3 mb-1">⏱️ זמן (שניות)</label>
                 <input
                   type="number"
                   min="0"
@@ -237,12 +237,12 @@ export default function ExerciseExecutionForm({ exercise, value, onChange, disab
                   placeholder="שניות"
                   disabled={disabled}
                   onFocus={(e) => e.target.select()}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 disabled:bg-gray-100"
+                  className="w-full px-3 py-2 border border-line rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-warning disabled:bg-surface"
                 />
               </div>
             ) : (
               <div>
-                <label className="block text-xs text-gray-600 mb-1">🔢 חזרות</label>
+                <label className="block text-xs text-fg-3 mb-1">🔢 חזרות</label>
                 <input
                   type="number"
                   min="0"
@@ -251,14 +251,14 @@ export default function ExerciseExecutionForm({ exercise, value, onChange, disab
                   placeholder="חזרות"
                   disabled={disabled}
                   onFocus={(e) => e.target.select()}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 disabled:bg-gray-100"
+                  className="w-full px-3 py-2 border border-line rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-warning disabled:bg-surface"
                 />
               </div>
             )}
 
             {/* Weight - Left */}
             <div>
-              <label className="block text-xs text-gray-600 mb-1">⚖️ משקל</label>
+              <label className="block text-xs text-fg-3 mb-1">⚖️ משקל</label>
               <input
                 type="number"
                 step="0.5"
@@ -267,13 +267,13 @@ export default function ExerciseExecutionForm({ exercise, value, onChange, disab
                 placeholder="משקל"
                 disabled={disabled}
                 onFocus={(e) => e.target.select()}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 disabled:bg-gray-100"
+                className="w-full px-3 py-2 border border-line rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-warning disabled:bg-surface"
               />
             </div>
 
             {/* RPE - Left */}
             <div>
-              <label className="block text-xs text-gray-600 mb-1">💪 RPE</label>
+              <label className="block text-xs text-fg-3 mb-1">💪 RPE</label>
               <input
                 type="number"
                 min="1"
@@ -283,21 +283,21 @@ export default function ExerciseExecutionForm({ exercise, value, onChange, disab
                 placeholder="RPE"
                 disabled={disabled}
                 onFocus={(e) => e.target.select()}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 disabled:bg-gray-100"
+                className="w-full px-3 py-2 border border-line rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-warning disabled:bg-surface"
               />
             </div>
           </div>
 
           {/* Notes - Left */}
           <div>
-            <label className="block text-xs text-gray-600 mb-1">📝 הערות</label>
+            <label className="block text-xs text-fg-3 mb-1">📝 הערות</label>
             <textarea
               value={value.NotesLeft ?? ''}
               onChange={(e) => handleChange('NotesLeft', e.target.value)}
               placeholder="הערות..."
               rows={2}
               disabled={disabled}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 disabled:bg-gray-100 text-sm"
+              className="w-full px-3 py-2 border border-line rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-warning disabled:bg-surface text-sm"
             />
           </div>
         </div>

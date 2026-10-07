@@ -311,19 +311,19 @@ export default function AssignWorkoutsClient() {
   const selectedUser = trainees.find(t => t.Email === selectedUserEmail)
 
   return (
-    <div dir="rtl" className="min-h-screen bg-gray-50 pb-20">
+    <div dir="rtl" className="min-h-screen bg-surface pb-20">
       {/* Header */}
-      <div className="bg-white shadow-sm border-b sticky top-0 z-30">
+      <div className="bg-surface shadow-sm border-b sticky top-0 z-30">
         <div className="max-w-7xl mx-auto px-4 py-4">
-          <h1 className="text-2xl font-bold text-blue-600 mb-4">👥 הקצאת אימונים</h1>
+          <h1 className="text-2xl font-bold text-accent mb-4">👥 הקצאת אימונים</h1>
           
           {/* User Selection */}
           <div className="flex items-center gap-4">
-            <label className="text-sm font-medium text-gray-700">בחר מתאמן:</label>
+            <label className="text-sm font-medium text-fg-2">בחר מתאמן:</label>
             <select
               value={selectedUserEmail}
               onChange={(e) => setSelectedUserEmail(e.target.value)}
-              className="flex-1 max-w-md px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="flex-1 max-w-md px-4 py-2 border border-line rounded-lg focus:ring-2 focus:ring-accent focus:border-accent"
             >
               <option value="">-- בחר מתאמן --</option>
               {trainees.filter(u => u.Status !== 'Inactive').map(user => (
@@ -342,21 +342,21 @@ export default function AssignWorkoutsClient() {
         {!selectedUserEmail ? (
           <div className="text-center py-12">
             <div className="text-6xl mb-4">👆</div>
-            <p className="text-xl text-gray-600">בחר מתאמן כדי להתחיל</p>
+            <p className="text-xl text-fg-3">בחר מתאמן כדי להתחיל</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Available Workouts */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-              <div className="p-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-blue-100">
-                <h2 className="text-lg font-bold text-blue-800 mb-3">📚 אימונים זמינים</h2>
+            <div className="bg-surface rounded-xl shadow-sm border border-line">
+              <div className="p-4 border-b border-line bg-surface">
+                <h2 className="text-lg font-bold text-accent mb-3">📚 אימונים זמינים</h2>
                 
                 {/* Filters */}
                 <div className="flex gap-2">
                   <select
                     value={selectedCategory}
                     onChange={(e) => setSelectedCategory(e.target.value)}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+                    className="flex-1 px-3 py-2 border border-line rounded-lg text-sm focus:ring-2 focus:ring-accent"
                   >
                     <option value="all">כל הקטגוריות</option>
                     {categories.map(cat => (
@@ -369,7 +369,7 @@ export default function AssignWorkoutsClient() {
                     placeholder="🔍 חיפוש..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+                    className="flex-1 px-3 py-2 border border-line rounded-lg text-sm focus:ring-2 focus:ring-accent"
                   />
                 </div>
               </div>
@@ -377,7 +377,7 @@ export default function AssignWorkoutsClient() {
               {/* Available Workouts List */}
               <div className="p-4 space-y-3 max-h-[600px] overflow-y-auto">
                 {availableWorkouts.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500">
+                  <div className="text-center py-8 text-muted">
                     {searchQuery || selectedCategory !== 'all' 
                       ? 'לא נמצאו אימונים מתאימים'
                       : 'כל האימונים כבר מוקצים'}
@@ -386,26 +386,26 @@ export default function AssignWorkoutsClient() {
                   availableWorkouts.map(workout => (
                     <div
                       key={workout.id}
-                      className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 hover:bg-blue-50 transition-all"
+                      className="border border-line rounded-lg p-4 hover:border-accent hover:bg-accent/15 transition-all"
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
                             <span className="text-2xl">{getCategoryEmoji(workout.category)}</span>
-                            <h3 className="font-bold text-gray-900">{workout.name}</h3>
+                            <h3 className="font-bold text-fg">{workout.name}</h3>
                           </div>
                           {workout.description && (
-                            <p className="text-sm text-gray-600 line-clamp-2">{workout.description}</p>
+                            <p className="text-sm text-fg-3 line-clamp-2">{workout.description}</p>
                           )}
                           {workout.category && (
-                            <span className="inline-block mt-2 px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded">
+                            <span className="inline-block mt-2 px-2 py-1 bg-accent/15 text-accent text-xs rounded">
                               {workout.category}
                             </span>
                           )}
                         </div>
                         <button
                           onClick={() => handleAddWorkout(workout)}
-                          className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium transition-colors"
+                          className="px-4 py-2 bg-success hover:bg-success/90 text-white rounded-lg text-sm font-medium transition-colors"
                         >
                           + הוסף
                         </button>
@@ -417,12 +417,12 @@ export default function AssignWorkoutsClient() {
             </div>
 
             {/* User's Workouts */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-              <div className="p-4 border-b border-gray-200 bg-gradient-to-r from-green-50 to-green-100">
-                <h2 className="text-lg font-bold text-green-800">
+            <div className="bg-surface rounded-xl shadow-sm border border-line">
+              <div className="p-4 border-b border-line bg-surface">
+                <h2 className="text-lg font-bold text-success">
                   ✅ אימונים של {selectedUser?.Name}
                 </h2>
-                <p className="text-sm text-green-700 mt-1">
+                <p className="text-sm text-success mt-1">
                   {userWorkouts.length} אימונים מוקצים
                   {userWorkouts.filter(w => w.IsKeyWorkout).length > 0 && (
                     <span className="mr-2">
@@ -436,11 +436,11 @@ export default function AssignWorkoutsClient() {
               <div className="p-4 space-y-3 max-h-[600px] overflow-y-auto">
                 {loading ? (
                   <div className="text-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto"></div>
-                    <p className="text-gray-600 mt-2">טוען אימונים...</p>
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-success mx-auto"></div>
+                    <p className="text-fg-3 mt-2">טוען אימונים...</p>
                   </div>
                 ) : userWorkouts.length === 0 ? (
-                  <div className="text-center py-8 text-gray-500">
+                  <div className="text-center py-8 text-muted">
                     <div className="text-4xl mb-2">📭</div>
                     <p>עדיין לא הוקצו אימונים</p>
                   </div>
@@ -448,34 +448,34 @@ export default function AssignWorkoutsClient() {
                   userWorkouts.map(workout => (
                     <div
                       key={workout.id}
-                      className="border border-gray-200 rounded-lg p-4 hover:border-red-300 transition-all"
+                      className="border border-line rounded-lg p-4 hover:border-danger transition-all"
                     >
                       <div className="flex items-start justify-between gap-3 mb-3">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
                             <span className="text-2xl">{getCategoryEmoji(workout.category)}</span>
-                            <h3 className="font-bold text-gray-900">{workout.name}</h3>
+                            <h3 className="font-bold text-fg">{workout.name}</h3>
                             {workout.IsKeyWorkout && <span className="text-xl">⭐</span>}
                           </div>
                           {workout.description && (
-                            <p className="text-sm text-gray-600 line-clamp-2">{workout.description}</p>
+                            <p className="text-sm text-fg-3 line-clamp-2">{workout.description}</p>
                           )}
                           {workout.category && (
-                            <span className="inline-block mt-2 px-2 py-1 bg-green-100 text-green-800 text-xs rounded">
+                            <span className="inline-block mt-2 px-2 py-1 bg-success/15 text-success text-xs rounded">
                               {workout.category}
                             </span>
                           )}
                         </div>
                         <button
                           onClick={() => handleRemoveWorkout(workout)}
-                          className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition-colors"
+                          className="px-4 py-2 bg-danger hover:bg-danger/90 text-white rounded-lg text-sm font-medium transition-colors"
                         >
                           ❌ הסר
                         </button>
                       </div>
 
                       {/* 🆕 אימון מפתח + הערה */}
-                      <div className="border-t border-gray-200 pt-3 space-y-2">
+                      <div className="border-t border-line pt-3 space-y-2">
                         {/* Checkbox אימון מפתח */}
                         <label className="flex items-center gap-2 cursor-pointer group">
                           <input
@@ -484,14 +484,14 @@ export default function AssignWorkoutsClient() {
                             onChange={(e) => handleKeyWorkoutToggle(workout, e.target.checked)}
                             className="w-4 h-4 cursor-pointer"
                           />
-                          <span className="text-sm font-medium text-gray-700 group-hover:text-blue-600">
+                          <span className="text-sm font-medium text-fg-2 group-hover:text-accent">
                             ⭐ אימון מפתח
                           </span>
                         </label>
 
                         {/* הערה */}
                         <div>
-                          <label className="block text-xs font-medium text-gray-600 mb-1">
+                          <label className="block text-xs font-medium text-fg-3 mb-1">
                             💬 הערה למתאמן:
                           </label>
                           <textarea
@@ -499,8 +499,8 @@ export default function AssignWorkoutsClient() {
                             onChange={(e) => handleNotesChange(workout, e.target.value)}
                             onBlur={(e) => handleNotesSave(workout, e.target.value)}
                             placeholder="הוסף הערה..."
-                            className="w-full px-2 py-1 border border-gray-300 rounded text-sm 
-                                     focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full px-2 py-1 border border-line rounded text-sm 
+                                     focus:ring-2 focus:ring-accent focus:border-accent"
                             rows={2}
                           />
                         </div>

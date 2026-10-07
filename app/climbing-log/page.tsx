@@ -154,7 +154,7 @@ export default function ClimbingLogPage() {
     return (
       <div className="max-w-7xl mx-auto p-6">
         <div className="text-center py-12">
-          <p className="text-gray-600">אנא התחבר כדי לצפות ביומן הטיפוס</p>
+          <p className="text-fg-3">אנא התחבר כדי לצפות ביומן הטיפוס</p>
         </div>
       </div>
     )
@@ -167,7 +167,7 @@ export default function ClimbingLogPage() {
         <div className="flex items-center gap-4 mb-4">
           <button
             onClick={() => router.push('/dashboard')}
-            className="text-gray-600 hover:text-gray-900"
+            className="text-fg-3 hover:text-fg"
             title="חזור לדף הבית"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -186,11 +186,11 @@ export default function ClimbingLogPage() {
         <div className="flex gap-3 flex-wrap items-center">
           <button
             onClick={() => setShowAddModal(true)}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-medium"
+            className="bg-accent text-white px-4 py-2 rounded-lg hover:bg-accent-hover font-medium"
           >
             + הוסף מסלול
           </button>
-          <div className="text-sm text-gray-600">
+          <div className="text-sm text-fg-3">
             סה"כ {allLogs.length} מסלולים
           </div>
         </div>
@@ -207,8 +207,8 @@ export default function ClimbingLogPage() {
       {/* Loading */}
       {loading ? (
         <div className="text-center py-12">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-          <p className="mt-4 text-gray-600">טוען נתונים...</p>
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-accent"></div>
+          <p className="mt-4 text-fg-3">טוען נתונים...</p>
         </div>
       ) : (
         <>
@@ -217,9 +217,9 @@ export default function ClimbingLogPage() {
 
           {/* List */}
           {filteredLogs.length === 0 ? (
-            <div className="bg-white rounded-lg shadow p-12 text-center">
+            <div className="bg-surface rounded-lg shadow p-12 text-center">
               <div className="text-6xl mb-4">🧗</div>
-              <p className="text-gray-600 text-lg mb-4">
+              <p className="text-fg-3 text-lg mb-4">
                 {allLogs.length > 0
                   ? 'לא נמצאו מסלולים עם הסינון הנוכחי'
                   : 'עדיין אין רשומות ביומן'}
@@ -227,7 +227,7 @@ export default function ClimbingLogPage() {
               {allLogs.length === 0 && (
                 <button
                   onClick={() => setShowAddModal(true)}
-                  className="text-blue-600 hover:underline font-medium"
+                  className="text-accent hover:underline font-medium"
                 >
                   הוסף את המסלול הראשון שלך!
                 </button>

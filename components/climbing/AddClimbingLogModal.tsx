@@ -159,13 +159,13 @@ export default function AddClimbingLogModal({
   return (
     <>
       <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" dir="rtl">
-          <div className="sticky top-0 bg-white border-b px-6 py-4">
+        <div className="bg-surface rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" dir="rtl">
+          <div className="sticky top-0 bg-surface border-b px-6 py-4">
             <div className="flex justify-between items-center">
               <h2 className="text-2xl font-bold">🧗 הוסף מסלול</h2>
               <button
                 onClick={onClose}
-                className="text-gray-500 hover:text-gray-700 text-2xl"
+                className="text-muted hover:text-fg-2 text-2xl"
               >
                 ✕
               </button>
@@ -175,7 +175,7 @@ export default function AddClimbingLogModal({
           <form onSubmit={handleSubmit} className="p-6 space-y-4">
             {/* Climb Type */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-fg-2 mb-2">
                 סוג טיפוס
               </label>
               <div className="grid grid-cols-3 gap-2">
@@ -186,8 +186,8 @@ export default function AddClimbingLogModal({
                     onClick={() => setClimbType(type)}
                     className={`py-2 px-4 rounded-lg font-medium ${
                       climbType === type
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        ? 'bg-accent text-white'
+                        : 'bg-surface text-fg-2 hover:bg-raised'
                     }`}
                   >
                     {type === 'Boulder' ? '🪨 בולדר' : type === 'Board' ? '🟨 בורד' : '🧗 הובלה'}
@@ -198,13 +198,13 @@ export default function AddClimbingLogModal({
 
             {/* Grade */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-fg-2 mb-2">
                 דרגה
               </label>
               <select
                 value={gradeId || ''}
                 onChange={(e) => setGradeId(e.target.value ? Number(e.target.value) : null)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-2 border border-line rounded-lg focus:ring-2 focus:ring-accent"
                 required
               >
                 <option value="">בחר דרגה</option>
@@ -218,14 +218,14 @@ export default function AddClimbingLogModal({
 
             {/* Route Name */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-fg-2 mb-2">
                 שם מסלול (אופציונלי)
               </label>
               <input
                 type="text"
                 value={routeName}
                 onChange={(e) => setRouteName(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-2 border border-line rounded-lg focus:ring-2 focus:ring-accent"
                 placeholder="למשל: The Nose"
               />
             </div>
@@ -233,7 +233,7 @@ export default function AddClimbingLogModal({
             {/* Date and Time */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-fg-2 mb-2">
                   תאריך
                 </label>
                 <input
@@ -241,19 +241,19 @@ export default function AddClimbingLogModal({
                   value={date}
                   max={format(new Date(), 'yyyy-MM-dd')}
                   onChange={(e) => setDate(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2 border border-line rounded-lg focus:ring-2 focus:ring-accent"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-fg-2 mb-2">
                   שעה
                 </label>
                 <input
                   type="time"
                   value={time}
                   onChange={(e) => setTime(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2 border border-line rounded-lg focus:ring-2 focus:ring-accent"
                   required
                 />
               </div>
@@ -262,7 +262,7 @@ export default function AddClimbingLogModal({
             {/* Attempts & Success */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-fg-2 mb-2">
                   נסיונות
                 </label>
                 <input
@@ -271,12 +271,12 @@ export default function AddClimbingLogModal({
                   value={attempts}
                   onChange={(e) => setAttempts(Number(e.target.value))}
                   onFocus={(e) => e.target.select()}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2 border border-line rounded-lg focus:ring-2 focus:ring-accent"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-fg-2 mb-2">
                   הצלחה?
                 </label>
                 <div className="flex gap-2 mt-2">
@@ -285,8 +285,8 @@ export default function AddClimbingLogModal({
                     onClick={() => setSuccessful(true)}
                     className={`flex-1 py-2 rounded-lg font-medium ${
                       successful
-                        ? 'bg-green-600 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        ? 'bg-success text-white'
+                        : 'bg-surface text-fg-2 hover:bg-raised'
                     }`}
                   >
                     ✅ כן
@@ -296,8 +296,8 @@ export default function AddClimbingLogModal({
                     onClick={() => setSuccessful(false)}
                     className={`flex-1 py-2 rounded-lg font-medium ${
                       !successful
-                        ? 'bg-red-600 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        ? 'bg-danger text-white'
+                        : 'bg-surface text-fg-2 hover:bg-raised'
                     }`}
                   >
                     ❌ לא
@@ -308,7 +308,7 @@ export default function AddClimbingLogModal({
 
             {/* Location - WITH SEARCH */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-fg-2 mb-2">
                 מיקום (אופציונלי)
               </label>
               <div className="space-y-2">
@@ -318,14 +318,14 @@ export default function AddClimbingLogModal({
                   placeholder="🔍 חפש מיקום..."
                   value={locationSearch}
                   onChange={(e) => setLocationSearch(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+                  className="w-full px-4 py-2 border border-line rounded-lg focus:ring-2 focus:ring-accent text-sm"
                 />
                 
                 {/* Filtered select */}
                 <select
                   value={locationId || ''}
                   onChange={(e) => setLocationId(e.target.value ? Number(e.target.value) : null)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2 border border-line rounded-lg focus:ring-2 focus:ring-accent"
                 >
                   <option value="">בחר מיקום</option>
                   {filteredLocations.map((loc) => (
@@ -337,7 +337,7 @@ export default function AddClimbingLogModal({
                 
                 {/* Show count if filtering */}
                 {locationSearch && (
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-fg-3">
                     נמצאו {filteredLocations.length} מתוך {localLocations.length} מיקומים
                   </p>
                 )}
@@ -346,7 +346,7 @@ export default function AddClimbingLogModal({
                 <button
                   type="button"
                   onClick={() => setShowAddLocationModal(true)}
-                  className="w-full py-2 px-4 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 transition-all font-medium"
+                  className="w-full py-2 px-4 border-2 border-dashed border-line rounded-lg text-fg-3 hover:border-accent hover:text-accent hover:bg-accent/15 transition-all font-medium"
                 >
                   ➕ הוסף מיקום חדש
                 </button>
@@ -356,13 +356,13 @@ export default function AddClimbingLogModal({
             {/* Board Type (only for Board) */}
             {climbType === 'Board' && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-fg-2 mb-2">
                   סוג בורד
                 </label>
                 <select
                   value={boardTypeId || ''}
                   onChange={(e) => setBoardTypeId(e.target.value ? Number(e.target.value) : null)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-4 py-2 border border-line rounded-lg focus:ring-2 focus:ring-accent"
                 >
                   <option value="">בחר בורד</option>
                   {boardTypes.map((board) => (
@@ -376,14 +376,14 @@ export default function AddClimbingLogModal({
 
             {/* Notes */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-fg-2 mb-2">
                 הערות (אופציונלי)
               </label>
               <textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 rows={3}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 resize-none"
+                className="w-full px-4 py-2 border border-line rounded-lg focus:ring-2 focus:ring-accent resize-none"
                 placeholder="הערות על המסלול..."
               />
             </div>
@@ -393,14 +393,14 @@ export default function AddClimbingLogModal({
               <button
                 type="submit"
                 disabled={saving}
-                className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 bg-accent text-white py-3 rounded-lg font-medium hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {saving ? '💾 שומר...' : '💾 שמור מסלול'}
               </button>
               <button
                 type="button"
                 onClick={onClose}
-                className="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50"
+                className="px-6 py-3 border border-line rounded-lg hover:bg-surface"
               >
                 ביטול
               </button>
@@ -412,31 +412,31 @@ export default function AddClimbingLogModal({
       {/* Add New Location Modal */}
       {showAddLocationModal && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[60] p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6" dir="rtl">
+          <div className="bg-surface rounded-xl shadow-2xl max-w-md w-full p-6" dir="rtl">
             {/* Header */}
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-bold text-gray-900">
+              <h3 className="text-xl font-bold text-fg">
                 📍 הוספת מיקום חדש
               </h3>
               <button
                 onClick={() => setShowAddLocationModal(false)}
                 disabled={savingLocation}
-                className="text-gray-400 hover:text-gray-600 text-2xl"
+                className="text-faint hover:text-fg-3 text-2xl"
               >
                 ×
               </button>
             </div>
 
             {/* Info */}
-            <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-              <p className="text-sm text-blue-900">
+            <div className="mb-4 p-3 bg-accent/15 border border-accent rounded-lg">
+              <p className="text-sm text-accent">
                 💡 הוסף מיקום חדש לרשימה. המיקום יהיה זמין לכולם.
               </p>
             </div>
 
             {/* Name Input */}
             <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-fg-2 mb-2">
                 שם המיקום *
               </label>
               <input
@@ -444,7 +444,7 @@ export default function AddClimbingLogModal({
                 value={newLocationName}
                 onChange={(e) => setNewLocationName(e.target.value)}
                 placeholder="למשל: קיר ספיידרמן"
-                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-accent"
                 disabled={savingLocation}
                 autoFocus
                 onKeyPress={(e) => {
@@ -461,14 +461,14 @@ export default function AddClimbingLogModal({
               <button
                 onClick={handleAddLocation}
                 disabled={savingLocation || !newLocationName.trim()}
-                className="flex-1 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition"
+                className="flex-1 py-3 bg-accent text-white rounded-lg hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed font-medium transition"
               >
                 {savingLocation ? '⏳ שומר...' : '✅ הוסף מיקום'}
               </button>
               <button
                 onClick={() => setShowAddLocationModal(false)}
                 disabled={savingLocation}
-                className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition disabled:opacity-50"
+                className="px-6 py-3 bg-raised text-fg-2 rounded-lg hover:bg-raised/90 transition disabled:opacity-50"
               >
                 ביטול
               </button>

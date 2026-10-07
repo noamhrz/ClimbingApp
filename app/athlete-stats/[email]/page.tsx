@@ -184,21 +184,21 @@ export default function ProfilePage() {
         <div className="flex items-center justify-between mb-4">
           <div>
             <h1 className="text-4xl font-bold mb-2">📊 סטטיסטיקות מתאמן</h1>
-            <p className="text-gray-600">
+            <p className="text-fg-3">
               {isViewingSelf ? 'הנתונים שלך' : `נתונים עבור ${metrics?.userName || selectedEmail}`}
             </p>
           </div>
 
           {/* User selector - only for admin/coach */}
           {canViewOthers && users.length > 0 && (
-            <div className="bg-white rounded-lg shadow-md p-4 border-2 border-blue-300">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+            <div className="bg-surface rounded-lg shadow-md p-4 border-2 border-accent">
+              <label className="block text-sm font-medium text-fg-2 mb-2">
                 👤 בחר משתמש:
               </label>
               <select
                 value={selectedEmail}
                 onChange={(e) => handleUserChange(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-4 py-2 border border-line rounded-lg focus:ring-2 focus:ring-accent focus:border-accent"
               >
                 {users.map((user) => (
                   <option
@@ -215,10 +215,10 @@ export default function ProfilePage() {
         </div>
 
         {/* Date Range Picker - only for admin/coach */}
-        {canViewOthers && <div className="bg-white rounded-lg shadow-md p-4 border border-gray-300">
+        {canViewOthers && <div className="bg-surface rounded-lg shadow-md p-4 border border-line">
           <div className="flex items-center gap-4 flex-wrap">
             <div className="flex-1 min-w-[200px]">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-fg-2 mb-1">
                 📅 מתאריך:
               </label>
               <input
@@ -227,11 +227,11 @@ export default function ProfilePage() {
                 onChange={(e) => setStartDate(e.target.value)}
                 max={endDate}
                 disabled={refreshLoading}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full px-3 py-2 border border-line rounded-lg focus:ring-2 focus:ring-accent disabled:opacity-50 disabled:cursor-not-allowed"
               />
             </div>
             <div className="flex-1 min-w-[200px]">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-fg-2 mb-1">
                 📅 עד תאריך:
               </label>
               <input
@@ -241,14 +241,14 @@ export default function ProfilePage() {
                 min={startDate}
                 max={new Date().toISOString().split('T')[0]}
                 disabled={refreshLoading}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full px-3 py-2 border border-line rounded-lg focus:ring-2 focus:ring-accent disabled:opacity-50 disabled:cursor-not-allowed"
               />
             </div>
             <div className="flex items-end">
               <button
                 onClick={handleDateRangeChange}
                 disabled={refreshLoading}
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                className="px-6 py-2 bg-accent text-white rounded-lg hover:bg-accent-hover transition font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               >
                 {refreshLoading ? (
                   <>
@@ -266,12 +266,12 @@ export default function ProfilePage() {
 
       {/* Error State */}
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-6 mb-6">
+        <div className="bg-danger/15 border border-danger rounded-lg p-6 mb-6">
           <div className="flex items-center gap-3">
             <span className="text-3xl">⚠️</span>
             <div>
-              <div className="font-bold text-red-900">שגיאה בטעינת נתונים</div>
-              <div className="text-red-700">{error}</div>
+              <div className="font-bold text-danger">שגיאה בטעינת נתונים</div>
+              <div className="text-danger">{error}</div>
             </div>
           </div>
         </div>
@@ -281,32 +281,32 @@ export default function ProfilePage() {
       {metrics && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           {/* Workout Completion Card */}
-          <div className="bg-white rounded-lg shadow-lg p-6 border-r-4 border-blue-500">
+          <div className="bg-surface rounded-lg shadow-lg p-6 border-r-4 border-accent">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-bold text-gray-800">✅ אחוז השלמת אימונים</h3>
+              <h3 className="text-xl font-bold text-fg">✅ אחוז השלמת אימונים</h3>
             </div>
             
             <div className="text-center">
               <div className={`text-6xl font-bold mb-4 ${
-                metrics.workoutCompletion >= 80 ? 'text-green-600' :
-                metrics.workoutCompletion >= 50 ? 'text-yellow-600' :
-                'text-red-600'
+                metrics.workoutCompletion >= 80 ? 'text-success' :
+                metrics.workoutCompletion >= 50 ? 'text-warning' :
+                'text-danger'
               }`}>
                 {metrics.workoutCompletion.toFixed(1)}%
               </div>
               
-              <div className="text-gray-600 text-sm space-y-1">
+              <div className="text-fg-3 text-sm space-y-1">
                 <div>✅ הושלמו: <strong>{metrics.completedWorkouts}</strong></div>
                 <div>📋 סה"כ: <strong>{metrics.totalWorkouts}</strong></div>
               </div>
 
               {/* Progress Bar */}
-              <div className="mt-4 w-full bg-gray-200 rounded-full h-3">
+              <div className="mt-4 w-full bg-raised rounded-full h-3">
                 <div
                   className={`h-3 rounded-full transition-all ${
-                    metrics.workoutCompletion >= 80 ? 'bg-green-600' :
-                    metrics.workoutCompletion >= 50 ? 'bg-yellow-600' :
-                    'bg-red-600'
+                    metrics.workoutCompletion >= 80 ? 'bg-success' :
+                    metrics.workoutCompletion >= 50 ? 'bg-warning' :
+                    'bg-danger'
                   }`}
                   style={{ width: `${metrics.workoutCompletion}%` }}
                 />
@@ -315,29 +315,29 @@ export default function ProfilePage() {
           </div>
 
           {/* Sleep Average Card */}
-          <div className={`bg-white rounded-lg shadow-lg p-6 border-r-4 ${
-            metrics.sleepAverage >= 8 ? 'border-green-500' :
-            metrics.sleepAverage >= 6 ? 'border-yellow-500' :
-            'border-red-500'
+          <div className={`bg-surface rounded-lg shadow-lg p-6 border-r-4 ${
+            metrics.sleepAverage >= 8 ? 'border-success' :
+            metrics.sleepAverage >= 6 ? 'border-warning' :
+            'border-danger'
           }`}>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-bold text-gray-800">😴 ממוצע שעות שינה</h3>
+              <h3 className="text-xl font-bold text-fg">😴 ממוצע שעות שינה</h3>
             </div>
             
             <div className="text-center">
               <div className={`text-6xl font-bold mb-4 ${
-                metrics.sleepAverage >= 8 ? 'text-green-600' :
-                metrics.sleepAverage >= 6 ? 'text-yellow-600' :
-                'text-red-600'
+                metrics.sleepAverage >= 8 ? 'text-success' :
+                metrics.sleepAverage >= 6 ? 'text-warning' :
+                'text-danger'
               }`}>
                 {metrics.sleepAverage > 0 ? metrics.sleepAverage.toFixed(1) : '—'}
               </div>
               
-              <div className="text-gray-600 text-sm mb-4">
+              <div className="text-fg-3 text-sm mb-4">
                 {metrics.sleepAverage > 0 ? (
                   <>שעות לילה בממוצע</>
                 ) : (
-                  <span className="text-gray-400">לא דווח על שינה בתקופה זו</span>
+                  <span className="text-faint">לא דווח על שינה בתקופה זו</span>
                 )}
               </div>
 
@@ -346,15 +346,15 @@ export default function ProfilePage() {
                 <div className="space-y-2 text-sm">
                   <div className="flex items-center justify-center gap-2">
                     {metrics.sleepAverage >= 8 ? (
-                      <span className="text-green-600 font-bold">🟢 מעולה!</span>
+                      <span className="text-success font-bold">🟢 מעולה!</span>
                     ) : metrics.sleepAverage >= 6 ? (
-                      <span className="text-yellow-600 font-bold">🟡 בינוני</span>
+                      <span className="text-warning font-bold">🟡 בינוני</span>
                     ) : (
-                      <span className="text-red-600 font-bold">🔴 נמוך מדי</span>
+                      <span className="text-danger font-bold">🔴 נמוך מדי</span>
                     )}
                   </div>
                   
-                  <div className="text-xs text-gray-500 pt-2 border-t">
+                  <div className="text-xs text-muted pt-2 border-t">
                     <div>🟢 מעולה: 8+ שעות</div>
                     <div>🟡 בינוני: 6-8 שעות</div>
                     <div>🔴 נמוך: פחות מ-6 שעות</div>
@@ -382,10 +382,10 @@ export default function ProfilePage() {
 
       {/* No Data State */}
       {metrics && metrics.totalWorkouts === 0 && metrics.sleepAverage === 0 && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-12 text-center mt-6">
+        <div className="bg-warning/15 border border-warning rounded-lg p-12 text-center mt-6">
           <div className="text-6xl mb-4">📊</div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">אין נתונים לתקופה זו</h2>
-          <p className="text-gray-600">
+          <h2 className="text-2xl font-bold text-fg mb-2">אין נתונים לתקופה זו</h2>
+          <p className="text-fg-3">
             נסה לבחור טווח תאריכים אחר או בדוק שיש רשומות במערכת.
           </p>
         </div>

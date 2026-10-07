@@ -28,8 +28,8 @@ const ENERGY_LABELS: Record<number, string> = {
 function PainEnergyTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-3 shadow text-right text-sm" dir="rtl">
-      <p className="font-semibold text-gray-700 mb-1">{label}</p>
+    <div className="bg-surface border border-line rounded-lg p-3 shadow text-right text-sm" dir="rtl">
+      <p className="font-semibold text-fg-2 mb-1">{label}</p>
       {payload.map((entry: any) => {
         const val = entry.value
         if (val === null || val === undefined) return null
@@ -52,8 +52,8 @@ function SleepTooltip({ active, payload, label }: any) {
   const val = payload[0]?.value
   if (val === null || val === undefined) return null
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-3 shadow text-right text-sm" dir="rtl">
-      <p className="font-semibold text-gray-700 mb-1">{label}</p>
+    <div className="bg-surface border border-line rounded-lg p-3 shadow text-right text-sm" dir="rtl">
+      <p className="font-semibold text-fg-2 mb-1">{label}</p>
       <p style={{ color: '#3b82f6' }}>😴 שינה: {val} שעות</p>
     </div>
   )
@@ -62,7 +62,7 @@ function SleepTooltip({ active, payload, label }: any) {
 export default function WellnessChart({ data }: Props) {
   if (!data || data.length === 0) {
     return (
-      <div className="flex items-center justify-center h-32 text-gray-500">
+      <div className="flex items-center justify-center h-32 text-muted">
         אין נתוני Wellness להצגה
       </div>
     )
@@ -79,7 +79,7 @@ export default function WellnessChart({ data }: Props) {
     <div className="space-y-6">
       {/* Chart 1: Pain & Energy */}
       <div>
-        <p className="text-sm font-medium text-gray-600 mb-2 text-right">🔴 כאב  •  🟢 אנרגיה</p>
+        <p className="text-sm font-medium text-fg-3 mb-2 text-right">🔴 כאב  •  🟢 אנרגיה</p>
         <ResponsiveContainer width="100%" height={220}>
           <LineChart data={processedData}>
             <CartesianGrid strokeDasharray="3 3" />
@@ -118,7 +118,7 @@ export default function WellnessChart({ data }: Props) {
 
       {/* Chart 2: Sleep */}
       <div>
-        <p className="text-sm font-medium text-gray-600 mb-2 text-right">🔵 שינה</p>
+        <p className="text-sm font-medium text-fg-3 mb-2 text-right">🔵 שינה</p>
         <ResponsiveContainer width="100%" height={220}>
           <LineChart data={processedData}>
             <CartesianGrid strokeDasharray="3 3" />

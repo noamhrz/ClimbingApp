@@ -55,7 +55,7 @@ export default function GoalsPage() {
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-4xl font-bold mb-2">🎯 הגדרת יעדים</h1>
-        <p className="text-gray-600 text-lg">בחר משתמש לעריכת יעדים</p>
+        <p className="text-fg-3 text-lg">בחר משתמש לעריכת יעדים</p>
       </div>
 
       {/* User Role Badge */}
@@ -64,7 +64,7 @@ export default function GoalsPage() {
           <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg font-medium ${
             activeUser.Role === 'admin'
               ? 'bg-purple-100 text-purple-800 border border-purple-300'
-              : 'bg-blue-100 text-blue-800 border border-blue-300'
+              : 'bg-accent/15 text-accent border border-accent'
           }`}>
             <span className="text-xl">
               {activeUser.Role === 'admin' ? '👑' : '🎓'}
@@ -81,10 +81,10 @@ export default function GoalsPage() {
 
       {/* Users List */}
       {users.length === 0 ? (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-8 text-center">
+        <div className="bg-warning/15 border border-warning rounded-lg p-8 text-center">
           <div className="text-5xl mb-4">👥</div>
-          <h2 className="text-xl font-bold text-gray-900 mb-2">אין משתמשים</h2>
-          <p className="text-gray-600">
+          <h2 className="text-xl font-bold text-fg mb-2">אין משתמשים</h2>
+          <p className="text-fg-3">
             {activeUser?.Role === 'coach'
               ? 'עדיין לא שויכו אליך מתאמנים'
               : 'אין משתמשים במערכת'}
@@ -96,15 +96,15 @@ export default function GoalsPage() {
             <button
               key={user.Email}
               onClick={() => router.push(`/goals/${encodeURIComponent(user.Email)}`)}
-              className="bg-white border-2 border-gray-200 rounded-xl p-6 hover:border-blue-500 hover:shadow-lg transition-all text-right"
+              className="bg-surface border-2 border-line rounded-xl p-6 hover:border-accent hover:shadow-lg transition-all text-right"
             >
               <div className="flex items-center gap-4">
                 <div className="text-4xl">👤</div>
                 <div className="flex-1">
-                  <div className="text-lg font-bold text-gray-900">{user.Name}</div>
-                  <div className="text-sm text-gray-500">{user.Email}</div>
+                  <div className="text-lg font-bold text-fg">{user.Name}</div>
+                  <div className="text-sm text-muted">{user.Email}</div>
                 </div>
-                <div className="text-2xl text-blue-600">→</div>
+                <div className="text-2xl text-accent">→</div>
               </div>
             </button>
           ))}

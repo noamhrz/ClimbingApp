@@ -188,20 +188,20 @@ export default function ExerciseModal({ exercise, onSave, onClose, isDuplicate =
       onClick={handleBackdropClick}
     >
       <div 
-        className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+        className="bg-surface rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="sticky top-0 bg-white border-b px-6 py-4 z-10">
+        <div className="sticky top-0 bg-surface border-b px-6 py-4 z-10">
           <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-gray-900">
+            <h2 className="text-2xl font-bold text-fg">
               {isEditing ? '✏️ עריכת תרגיל' : 
                isDuplicate ? '📋 שכפול תרגיל' : 
                '➕ תרגיל חדש'}
             </h2>
             <button
               onClick={handleClose}
-              className="text-gray-400 hover:text-gray-600 text-2xl leading-none"
+              className="text-faint hover:text-fg-3 text-2xl leading-none"
               type="button"
             >
               ✕
@@ -213,15 +213,15 @@ export default function ExerciseModal({ exercise, onSave, onClose, isDuplicate =
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {/* Name */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              שם התרגיל <span className="text-red-500">*</span>
+            <label className="block text-sm font-medium text-fg-2 mb-2">
+              שם התרגיל <span className="text-danger">*</span>
             </label>
             <input
               type="text"
               value={formData.Name}
               onChange={(e) => setFormData({ ...formData, Name: e.target.value })}
               placeholder="לדוגמה: עליות מתח"
-              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-accent focus:border-accent"
               required
               minLength={3}
             />
@@ -229,8 +229,8 @@ export default function ExerciseModal({ exercise, onSave, onClose, isDuplicate =
 
           {/* Category */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              קטגוריה <span className="text-red-500">*</span>
+            <label className="block text-sm font-medium text-fg-2 mb-2">
+              קטגוריה <span className="text-danger">*</span>
             </label>
             
             <input
@@ -239,7 +239,7 @@ export default function ExerciseModal({ exercise, onSave, onClose, isDuplicate =
               value={formData.Category}
               onChange={(e) => setFormData({ ...formData, Category: e.target.value })}
               placeholder="בחר או הקלד קטגוריה..."
-              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-accent focus:border-accent"
               required
             />
             
@@ -258,8 +258,8 @@ export default function ExerciseModal({ exercise, onSave, onClose, isDuplicate =
                     onClick={() => setFormData({ ...formData, Category: cat })}
                     className={`text-xs px-3 py-1 rounded-full transition ${
                       formData.Category === cat
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        ? 'bg-accent text-white'
+                        : 'bg-surface text-fg-2 hover:bg-raised'
                     }`}
                   >
                     {cat}
@@ -271,7 +271,7 @@ export default function ExerciseModal({ exercise, onSave, onClose, isDuplicate =
 
           {/* Description */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-fg-2 mb-2">
               תיאור
             </label>
             <textarea
@@ -279,13 +279,13 @@ export default function ExerciseModal({ exercise, onSave, onClose, isDuplicate =
               onChange={(e) => setFormData({ ...formData, Description: e.target.value })}
               placeholder="מטרה, ביצוע, דגשים..."
               rows={5}
-              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-accent"
             />
           </div>
 
           {/* Video URL */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-fg-2 mb-2">
               קישור לוידאו
             </label>
             <input
@@ -293,13 +293,13 @@ export default function ExerciseModal({ exercise, onSave, onClose, isDuplicate =
               value={formData.VideoURL}
               onChange={(e) => setFormData({ ...formData, VideoURL: e.target.value })}
               placeholder="https://www.youtube.com/..."
-              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-accent"
             />
           </div>
 
           {/* Image URL */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-fg-2 mb-2">
               קישור לתמונה
             </label>
             <input
@@ -307,24 +307,24 @@ export default function ExerciseModal({ exercise, onSave, onClose, isDuplicate =
               value={formData.ImageURL}
               onChange={(e) => setFormData({ ...formData, ImageURL: e.target.value })}
               placeholder="https://..."
-              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-accent"
             />
           </div>
 
           {/* isDuration Checkbox */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="bg-accent/15 border border-accent rounded-lg p-4">
             <label className="flex items-center gap-3 cursor-pointer">
               <input
                 type="checkbox"
                 checked={formData.isDuration}
                 onChange={(e) => setFormData({ ...formData, isDuration: e.target.checked })}
-                className="w-5 h-5 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                className="w-5 h-5 text-accent rounded focus:ring-2 focus:ring-accent"
               />
               <div>
-                <span className="text-sm font-medium text-gray-900">
+                <span className="text-sm font-medium text-fg">
                   ⏱️ תרגיל מבוסס זמן
                 </span>
-                <p className="text-xs text-gray-600 mt-0.5">
+                <p className="text-xs text-fg-3 mt-0.5">
                   סמן אם התרגיל נמדד בשניות (למשל: פלאנק, הנג, מתיחה) במקום חזרות
                 </p>
               </div>
@@ -341,10 +341,10 @@ export default function ExerciseModal({ exercise, onSave, onClose, isDuplicate =
                 className="w-5 h-5 text-purple-600 rounded focus:ring-2 focus:ring-purple-500"
               />
               <div>
-                <span className="text-sm font-medium text-gray-900">
+                <span className="text-sm font-medium text-fg">
                   🧩 תרגיל דינמי (לפי רמות)
                 </span>
-                <p className="text-xs text-gray-600 mt-0.5">
+                <p className="text-xs text-fg-3 mt-0.5">
                   לאחר יצירה תועבר לעורך הדינמי להגדרת תרגילים לפי רמות רודמאפ
                 </p>
               </div>
@@ -352,13 +352,13 @@ export default function ExerciseModal({ exercise, onSave, onClose, isDuplicate =
 
             {formData.is_dynamic && (
               <div className="mt-3 border-t border-purple-200 pt-3">
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                  קטגוריית רודמאפ <span className="text-red-500">*</span>
+                <label className="block text-sm font-medium text-fg-2 mb-1.5">
+                  קטגוריית רודמאפ <span className="text-danger">*</span>
                 </label>
                 <select
                   value={formData.RoadmapCategoryID ?? ''}
                   onChange={(e) => setFormData({ ...formData, RoadmapCategoryID: e.target.value ? Number(e.target.value) : null })}
-                  className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 bg-white"
+                  className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 bg-surface"
                 >
                   <option value="">-- בחר קטגוריה --</option>
                   {roadmapCategories.map((cat) => (
@@ -372,19 +372,19 @@ export default function ExerciseModal({ exercise, onSave, onClose, isDuplicate =
           </div>
 
           {/* Single Hand Checkbox */}
-          <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+          <div className="bg-warning/15 border border-warning rounded-lg p-4">
             <label className="flex items-center gap-3 cursor-pointer">
               <input
                 type="checkbox"
                 checked={formData.IsSingleHand}
                 onChange={(e) => setFormData({ ...formData, IsSingleHand: e.target.checked })}
-                className="w-5 h-5 text-orange-600 rounded focus:ring-2 focus:ring-orange-500"
+                className="w-5 h-5 text-warning rounded focus:ring-2 focus:ring-orange-500"
               />
               <div>
-                <span className="text-sm font-medium text-gray-900">
+                <span className="text-sm font-medium text-fg">
                   🖐️ תרגיל יד אחת
                 </span>
-                <p className="text-xs text-gray-600 mt-0.5">
+                <p className="text-xs text-fg-3 mt-0.5">
                   סמן אם התרגיל מיועד לביצוע ביד אחת בלבד (לדוגמה: One-Arm Hang)
                 </p>
               </div>
@@ -395,14 +395,14 @@ export default function ExerciseModal({ exercise, onSave, onClose, isDuplicate =
           <div className="flex gap-3 pt-4 border-t">
             <button
               type="submit"
-              className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium shadow-sm"
+              className="flex-1 px-4 py-3 bg-accent text-white rounded-lg hover:bg-accent-hover transition font-medium shadow-sm"
             >
               {isEditing ? '💾 שמור שינויים' : '➕ צור תרגיל'}
             </button>
             <button
               type="button"
               onClick={handleClose}
-              className="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition font-medium"
+              className="px-6 py-3 bg-surface text-fg-2 rounded-lg hover:bg-raised transition font-medium"
             >
               ביטול
             </button>

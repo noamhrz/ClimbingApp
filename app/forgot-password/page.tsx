@@ -45,23 +45,23 @@ export default function ForgotPasswordPage() {
 
   if (emailSent) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50 px-4">
-        <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full">
+      <div className="min-h-screen flex items-center justify-center px-4 bg-surface border border-line">
+        <div className="bg-surface rounded-2xl shadow-xl p-8 max-w-md w-full">
           <div className="text-center">
             <div className="text-6xl mb-4">📧</div>
-            <h1 className="text-2xl font-bold text-gray-800 mb-2">
+            <h1 className="text-2xl font-bold text-fg mb-2">
               נשלח מייל!
             </h1>
-            <p className="text-gray-600 mb-6">
+            <p className="text-fg-3 mb-6">
               שלחנו לינק לאיפוס סיסמה לכתובת:
             </p>
-            <p className="font-semibold text-blue-600 mb-6">{email}</p>
+            <p className="font-semibold text-accent mb-6">{email}</p>
             
-            <div className="bg-blue-50 rounded-lg p-4 mb-6 text-right">
-              <p className="text-sm text-blue-800">
+            <div className="bg-accent/15 rounded-lg p-4 mb-6 text-right">
+              <p className="text-sm text-accent">
                 <strong>💡 שים לב:</strong>
               </p>
-              <ul className="text-sm text-blue-700 mt-2 space-y-1 mr-4">
+              <ul className="text-sm text-accent mt-2 space-y-1 mr-4">
                 <li>• בדוק את תיבת הדואר הנכנס</li>
                 <li>• בדוק גם בספאם/זבל</li>
                 <li>• הלינק תקף ל-60 דקות</li>
@@ -70,7 +70,7 @@ export default function ForgotPasswordPage() {
 
             <Link
               href="/login"
-              className="block w-full py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+              className="block w-full py-3 bg-accent text-white rounded-lg hover:bg-accent-hover transition-colors font-medium"
             >
               חזרה להתחברות
             </Link>
@@ -81,7 +81,7 @@ export default function ForgotPasswordPage() {
                 setEmail('')
                 setMessage(null)
               }}
-              className="mt-3 text-sm text-gray-600 hover:text-gray-800"
+              className="mt-3 text-sm text-fg-3 hover:text-fg"
             >
               לא קיבלת? שלח שוב
             </button>
@@ -92,14 +92,14 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50 px-4">
-      <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full">
+    <div className="min-h-screen flex items-center justify-center px-4 bg-surface border border-line">
+      <div className="bg-surface rounded-2xl shadow-xl p-8 max-w-md w-full">
         <div className="text-center mb-8">
           <div className="text-6xl mb-4">🔐</div>
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">
+          <h1 className="text-3xl font-bold text-fg mb-2">
             שכחת סיסמה?
           </h1>
-          <p className="text-gray-600">
+          <p className="text-fg-3">
             אין בעיה! נשלח לך לינק לאיפוס סיסמה
           </p>
         </div>
@@ -107,8 +107,8 @@ export default function ForgotPasswordPage() {
         {message && (
           <div className={`mb-6 p-4 rounded-lg ${
             message.type === 'success' 
-              ? 'bg-green-50 text-green-800 border border-green-200' 
-              : 'bg-red-50 text-red-800 border border-red-200'
+              ? 'bg-success/15 text-success border border-success' 
+              : 'bg-danger/15 text-danger border border-danger'
           }`}>
             {message.text}
           </div>
@@ -116,7 +116,7 @@ export default function ForgotPasswordPage() {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2 text-right">
+            <label className="block text-sm font-medium text-fg-2 mb-2 text-right">
               כתובת אימייל
             </label>
             <input
@@ -124,7 +124,7 @@ export default function ForgotPasswordPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="name@example.com"
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-right"
+              className="w-full px-4 py-3 border border-line rounded-lg focus:ring-2 focus:ring-accent focus:border-accent text-right"
               disabled={loading}
               required
             />
@@ -133,7 +133,7 @@ export default function ForgotPasswordPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+            className="w-full py-3 bg-accent text-white rounded-lg hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
           >
             {loading ? '⏳ שולח...' : '📧 שלח לינק לאיפוס'}
           </button>
@@ -142,17 +142,17 @@ export default function ForgotPasswordPage() {
         <div className="mt-6 text-center">
           <Link
             href="/login"
-            className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+            className="text-sm text-accent hover:text-accent/90 font-medium"
           >
             ← חזרה להתחברות
           </Link>
         </div>
 
-        <div className="mt-8 bg-gray-50 rounded-lg p-4">
-          <p className="text-xs text-gray-600 text-right">
+        <div className="mt-8 bg-surface rounded-lg p-4">
+          <p className="text-xs text-fg-3 text-right">
             <strong>💡 איך זה עובד?</strong>
           </p>
-          <ol className="text-xs text-gray-600 mt-2 space-y-1 mr-4">
+          <ol className="text-xs text-fg-3 mt-2 space-y-1 mr-4">
             <li>1. הזן את כתובת המייל שלך</li>
             <li>2. קבל לינק מיוחד למייל</li>
             <li>3. לחץ על הלינק</li>

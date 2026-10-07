@@ -37,7 +37,7 @@ export default function SortableExerciseItem({
 
   return (
     <div ref={setNodeRef} style={style} className="relative">
-      <div className="absolute -right-2 -top-2 bg-blue-600 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold z-10">
+      <div className="absolute -right-2 -top-2 bg-accent text-white rounded-full w-6 h-6 flex items-center justify-center text-xs font-bold z-10">
         {index + 1}
       </div>
       <ExerciseForm

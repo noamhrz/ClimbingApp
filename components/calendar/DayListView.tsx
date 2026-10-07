@@ -63,10 +63,10 @@ function EventCardBody({ event, index }: { event: CalendarEvent; index: number }
         {index + 1}
       </div>
       <div className="space-y-3 pr-4">
-        <h3 className="text-xl font-bold text-gray-900">{event.title}</h3>
-        <div className="flex items-center gap-2 bg-white rounded-lg px-3 py-2 border w-fit">
+        <h3 className="text-xl font-bold text-fg">{event.title}</h3>
+        <div className="flex items-center gap-2 bg-surface rounded-lg px-3 py-2 border w-fit">
           <span className="text-lg">⏱</span>
-          <span className="text-base font-semibold text-gray-700">
+          <span className="text-base font-semibold text-fg-2">
             {event.EstimatedTotalTime != null
               ? event.EstimatedTotalTime
               : Math.abs(moment(event.end).diff(moment(event.start), 'minutes'))} דק'
@@ -74,7 +74,7 @@ function EventCardBody({ event, index }: { event: CalendarEvent; index: number }
         </div>
         <div className="flex gap-2 flex-wrap">
           {event.completed && (
-            <span className="inline-flex items-center gap-2 px-4 py-2 bg-green-100 text-green-800 rounded-lg text-sm font-bold">
+            <span className="inline-flex items-center gap-2 px-4 py-2 bg-success/15 text-success rounded-lg text-sm font-bold">
               <span className="text-lg">✅</span><span>הושלם</span>
             </span>
           )}
@@ -84,12 +84,12 @@ function EventCardBody({ event, index }: { event: CalendarEvent; index: number }
             </span>
           )}
           {!event.completed && !event.Deloading && new Date(event.end) < new Date() && (
-            <span className="inline-flex items-center gap-2 px-4 py-2 bg-red-100 text-red-800 rounded-lg text-sm font-bold">
+            <span className="inline-flex items-center gap-2 px-4 py-2 bg-danger/15 text-danger rounded-lg text-sm font-bold">
               <span className="text-lg">❌</span><span>פספס</span>
             </span>
           )}
           {!event.completed && !event.Deloading && new Date(event.end) >= new Date() && (
-            <span className="inline-flex items-center gap-2 px-4 py-2 bg-blue-100 text-blue-800 rounded-lg text-sm font-bold">
+            <span className="inline-flex items-center gap-2 px-4 py-2 bg-accent/15 text-accent rounded-lg text-sm font-bold">
               <span className="text-lg">⏳</span><span>ממתין</span>
             </span>
           )}
@@ -121,14 +121,14 @@ function SortableEventCard({
         transition,
         borderRightColor: color,
       }}
-      className={`group relative bg-gray-50 rounded-xl p-6 pl-10 border-r-8 hover:shadow-lg transition-shadow cursor-pointer
+      className={`group relative bg-surface rounded-xl p-6 pl-10 border-r-8 hover:shadow-lg transition-shadow cursor-pointer
         ${isDragging ? 'opacity-50 shadow-xl z-50' : ''}
         ${isPending ? 'border-dashed opacity-80' : ''}
       `}
       onClick={() => onEventClick(event)}
     >
       <div
-        className="absolute top-1/2 -translate-y-1/2 left-2 w-6 h-8 flex items-center justify-center cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-500 select-none touch-none"
+        className="absolute top-1/2 -translate-y-1/2 left-2 w-6 h-8 flex items-center justify-center cursor-grab active:cursor-grabbing text-faint hover:text-muted select-none touch-none"
         {...listeners}
         {...attributes}
         onClick={e => e.stopPropagation()}
@@ -139,7 +139,7 @@ function SortableEventCard({
       <EventCardBody event={event} index={index} />
 
       <div className="absolute top-4 left-10 opacity-0 group-hover:opacity-100 transition-opacity">
-        <div className="px-3 py-1 bg-blue-600 text-white rounded-lg text-xs font-medium">
+        <div className="px-3 py-1 bg-accent text-white rounded-lg text-xs font-medium">
           👆 לחץ להתחלה
         </div>
       </div>
@@ -228,19 +228,19 @@ export default function DayListView({
   }, [date])
 
   return (
-    <div className="bg-white rounded-xl shadow-sm">
+    <div className="bg-surface rounded-xl shadow-sm">
       {/* Floating Navigation Buttons */}
       <div className="fixed bottom-32 right-6 z-40 flex flex-col gap-2">
         <button
           onClick={goToPrevDay}
-          className="w-14 h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg flex items-center justify-center text-2xl transition-all hover:scale-110 active:scale-95"
+          className="w-14 h-14 bg-accent hover:bg-accent-hover text-white rounded-full shadow-lg flex items-center justify-center text-2xl transition-all hover:scale-110 active:scale-95"
           title="יום קודם (←)"
         >
           →
         </button>
         <button
           onClick={goToNextDay}
-          className="w-14 h-14 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg flex items-center justify-center text-2xl transition-all hover:scale-110 active:scale-95"
+          className="w-14 h-14 bg-accent hover:bg-accent-hover text-white rounded-full shadow-lg flex items-center justify-center text-2xl transition-all hover:scale-110 active:scale-95"
           title="יום הבא (→)"
         >
           ←
@@ -255,7 +255,7 @@ export default function DayListView({
         {!isToday && (
           <button
             onClick={goToToday}
-            className="w-14 h-14 bg-green-600 hover:bg-green-700 text-white rounded-full shadow-lg flex items-center justify-center text-xl transition-all hover:scale-110 active:scale-95"
+            className="w-14 h-14 bg-success hover:bg-success/90 text-white rounded-full shadow-lg flex items-center justify-center text-xl transition-all hover:scale-110 active:scale-95"
             title="קפיצה להיום (T)"
           >
             🏠
@@ -264,23 +264,23 @@ export default function DayListView({
       </div>
 
       {/* Header with Navigation */}
-      <div className="sticky top-0 bg-white border-b px-6 py-4 z-10">
+      <div className="sticky top-0 bg-surface border-b px-6 py-4 z-10">
         <div className="flex items-center justify-between mb-4">
           <button
             onClick={goToPrevDay}
-            className="p-3 hover:bg-gray-100 rounded-lg transition-colors active:bg-gray-200"
+            className="p-3 hover:bg-surface rounded-lg transition-colors active:bg-raised"
           >
             <span className="text-3xl">→</span>
           </button>
 
           <div className="text-center">
-            <div className={`text-5xl font-bold mb-2 ${isToday ? 'text-yellow-600' : 'text-gray-900'}`}>
+            <div className={`text-5xl font-bold mb-2 ${isToday ? 'text-warning' : 'text-fg'}`}>
               {moment(date).format('D')}
             </div>
-            <h2 className="text-2xl font-bold text-gray-900">{moment(date).format('dddd')}</h2>
-            <p className="text-sm text-gray-500 mt-1">{moment(date).format('MMMM YYYY')}</p>
+            <h2 className="text-2xl font-bold text-fg">{moment(date).format('dddd')}</h2>
+            <p className="text-sm text-muted mt-1">{moment(date).format('MMMM YYYY')}</p>
             {isToday && (
-              <div className="mt-2 inline-block px-3 py-1 bg-yellow-400 text-yellow-900 rounded-full text-xs font-bold">
+              <div className="mt-2 inline-block px-3 py-1 bg-warning text-warning rounded-full text-xs font-bold">
                 היום
               </div>
             )}
@@ -288,7 +288,7 @@ export default function DayListView({
 
           <button
             onClick={goToNextDay}
-            className="p-3 hover:bg-gray-100 rounded-lg transition-colors active:bg-gray-200"
+            className="p-3 hover:bg-surface rounded-lg transition-colors active:bg-raised"
           >
             <span className="text-3xl">←</span>
           </button>
@@ -304,7 +304,7 @@ export default function DayListView({
           {!isToday && (
             <button
               onClick={goToToday}
-              className="px-4 py-2 bg-green-100 hover:bg-green-200 text-green-700 rounded-lg transition-colors text-sm font-medium"
+              className="px-4 py-2 bg-success/15 hover:bg-success/15 text-success rounded-lg transition-colors text-sm font-medium"
             >
               🏠 קפיצה להיום
             </button>
@@ -313,7 +313,7 @@ export default function DayListView({
 
         <div className="text-center mt-4">
           <div className="inline-flex items-center gap-3 flex-wrap justify-center">
-            <span className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-full text-sm font-medium">
+            <span className="inline-flex items-center gap-2 px-4 py-2 bg-surface text-fg-2 rounded-full text-sm font-medium">
               <span>📋</span>
               <span>{sortedEvents.length} אימונים</span>
             </span>
@@ -335,19 +335,19 @@ export default function DayListView({
               )
             })()}
             {sortedEvents.filter(e => e.completed).length > 0 && (
-              <span className="inline-flex items-center gap-2 px-4 py-2 bg-green-100 text-green-700 rounded-full text-sm font-medium">
+              <span className="inline-flex items-center gap-2 px-4 py-2 bg-success/15 text-success rounded-full text-sm font-medium">
                 <span>✅</span>
                 <span>{sortedEvents.filter(e => e.completed).length} הושלמו</span>
               </span>
             )}
             {sortedEvents.filter(e => !e.completed && new Date(e.end) < new Date()).length > 0 && (
-              <span className="inline-flex items-center gap-2 px-4 py-2 bg-red-100 text-red-700 rounded-full text-sm font-medium">
+              <span className="inline-flex items-center gap-2 px-4 py-2 bg-danger/15 text-danger rounded-full text-sm font-medium">
                 <span>❌</span>
                 <span>{sortedEvents.filter(e => !e.completed && new Date(e.end) < new Date()).length} פספסו</span>
               </span>
             )}
             {sortedEvents.filter(e => !e.completed && new Date(e.end) >= new Date()).length > 0 && (
-              <span className="inline-flex items-center gap-2 px-4 py-2 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
+              <span className="inline-flex items-center gap-2 px-4 py-2 bg-accent/15 text-accent rounded-full text-sm font-medium">
                 <span>⏳</span>
                 <span>{sortedEvents.filter(e => !e.completed && new Date(e.end) >= new Date()).length} ממתינים</span>
               </span>
@@ -355,7 +355,7 @@ export default function DayListView({
           </div>
         </div>
 
-        <div className="text-center mt-3 text-xs text-gray-400">
+        <div className="text-center mt-3 text-xs text-faint">
           {isDesktop
             ? '💡 קיצורי מקלדת: ← → (ימים) | M (חודש) | T (היום) | גרור אימונים לשינוי סדר'
             : '💡 קיצורי מקלדת: ← → (ימים) | M (חודש) | T (היום)'}
@@ -367,9 +367,9 @@ export default function DayListView({
         {sortedEvents.length === 0 ? (
           <div className="text-center py-16">
             <div className="text-8xl mb-6">🏖️</div>
-            <h3 className="text-2xl font-bold text-gray-700 mb-2">יום מנוחה</h3>
-            <p className="text-gray-500">אין אימונים מתוכננים היום</p>
-            <p className="text-gray-400 text-sm mt-2">תהנה מהיום החופשי! 😊</p>
+            <h3 className="text-2xl font-bold text-fg-2 mb-2">יום מנוחה</h3>
+            <p className="text-muted">אין אימונים מתוכננים היום</p>
+            <p className="text-faint text-sm mt-2">תהנה מהיום החופשי! 😊</p>
           </div>
         ) : isDesktop && onReorder ? (
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
@@ -396,7 +396,7 @@ export default function DayListView({
                 <div
                   key={event.id}
                   onClick={() => onEventClick(event)}
-                  className={`group relative bg-gray-50 rounded-xl p-6 hover:shadow-lg transition-all cursor-pointer border-r-8 active:bg-gray-100 hover:translate-x-[-4px] ${isPending ? 'border-dashed opacity-80' : ''}`}
+                  className={`group relative bg-surface rounded-xl p-6 hover:shadow-lg transition-all cursor-pointer border-r-8 active:bg-surface hover:translate-x-[-4px] ${isPending ? 'border-dashed opacity-80' : ''}`}
                   style={{ borderRightColor: color }}
                 >
                   <div
@@ -406,21 +406,21 @@ export default function DayListView({
                     {index + 1}
                   </div>
                   <div className="space-y-3 pr-4">
-                    <h3 className="text-xl font-bold text-gray-900">{event.title}</h3>
-                    <div className="flex items-center gap-3 bg-white rounded-lg p-3 border">
+                    <h3 className="text-xl font-bold text-fg">{event.title}</h3>
+                    <div className="flex items-center gap-3 bg-surface rounded-lg p-3 border">
                       <span className="text-2xl">🕐</span>
-                      <div className="flex items-center gap-2 text-lg font-semibold text-gray-700">
+                      <div className="flex items-center gap-2 text-lg font-semibold text-fg-2">
                         <span>{moment(event.start).format('HH:mm')}</span>
-                        <span className="text-gray-400">→</span>
+                        <span className="text-faint">→</span>
                         <span>{moment(event.end).format('HH:mm')}</span>
                       </div>
-                      <span className="text-sm text-gray-500 mr-auto">
+                      <span className="text-sm text-muted mr-auto">
                         ({Math.abs(moment(event.end).diff(moment(event.start), 'minutes'))} דק')
                       </span>
                     </div>
                     <div className="flex gap-2 flex-wrap">
                       {event.completed && (
-                        <span className="inline-flex items-center gap-2 px-4 py-2 bg-green-100 text-green-800 rounded-lg text-sm font-bold">
+                        <span className="inline-flex items-center gap-2 px-4 py-2 bg-success/15 text-success rounded-lg text-sm font-bold">
                           <span className="text-lg">✅</span><span>הושלם</span>
                         </span>
                       )}
@@ -430,19 +430,19 @@ export default function DayListView({
                         </span>
                       )}
                       {!event.completed && !event.Deloading && new Date(event.end) < new Date() && (
-                        <span className="inline-flex items-center gap-2 px-4 py-2 bg-red-100 text-red-800 rounded-lg text-sm font-bold">
+                        <span className="inline-flex items-center gap-2 px-4 py-2 bg-danger/15 text-danger rounded-lg text-sm font-bold">
                           <span className="text-lg">❌</span><span>פספס</span>
                         </span>
                       )}
                       {!event.completed && !event.Deloading && new Date(event.end) >= new Date() && (
-                        <span className="inline-flex items-center gap-2 px-4 py-2 bg-blue-100 text-blue-800 rounded-lg text-sm font-bold">
+                        <span className="inline-flex items-center gap-2 px-4 py-2 bg-accent/15 text-accent rounded-lg text-sm font-bold">
                           <span className="text-lg">⏳</span><span>ממתין</span>
                         </span>
                       )}
                     </div>
                   </div>
                   <div className="absolute top-4 left-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <div className="px-3 py-1 bg-blue-600 text-white rounded-lg text-xs font-medium">
+                    <div className="px-3 py-1 bg-accent text-white rounded-lg text-xs font-medium">
                       👆 לחץ להתחלה
                     </div>
                   </div>
@@ -455,38 +455,38 @@ export default function DayListView({
 
       {/* Summary Footer */}
       {sortedEvents.length > 0 && (
-        <div className="border-t p-6 bg-gray-50">
+        <div className="border-t p-6 bg-surface">
           <div className="max-w-3xl mx-auto">
-            <h3 className="text-lg font-bold text-gray-700 mb-4 text-center">סיכום היום</h3>
+            <h3 className="text-lg font-bold text-fg-2 mb-4 text-center">סיכום היום</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="text-center p-4 bg-white rounded-lg shadow-sm">
-                <div className="text-3xl font-bold text-gray-700 mb-1">{sortedEvents.length}</div>
-                <div className="text-sm text-gray-600">סה"כ</div>
+              <div className="text-center p-4 bg-surface rounded-lg shadow-sm">
+                <div className="text-3xl font-bold text-fg-2 mb-1">{sortedEvents.length}</div>
+                <div className="text-sm text-fg-3">סה"כ</div>
               </div>
-              <div className="text-center p-4 bg-white rounded-lg shadow-sm">
-                <div className="text-3xl font-bold text-green-600 mb-1">
+              <div className="text-center p-4 bg-surface rounded-lg shadow-sm">
+                <div className="text-3xl font-bold text-success mb-1">
                   {sortedEvents.filter(e => e.completed).length}
                 </div>
-                <div className="text-sm text-gray-600">הושלמו</div>
+                <div className="text-sm text-fg-3">הושלמו</div>
               </div>
-              <div className="text-center p-4 bg-white rounded-lg shadow-sm">
-                <div className="text-3xl font-bold text-red-600 mb-1">
+              <div className="text-center p-4 bg-surface rounded-lg shadow-sm">
+                <div className="text-3xl font-bold text-danger mb-1">
                   {sortedEvents.filter(e => !e.completed && new Date(e.end) < new Date()).length}
                 </div>
-                <div className="text-sm text-gray-600">פספסו</div>
+                <div className="text-sm text-fg-3">פספסו</div>
               </div>
-              <div className="text-center p-4 bg-white rounded-lg shadow-sm">
-                <div className="text-3xl font-bold text-blue-600 mb-1">
+              <div className="text-center p-4 bg-surface rounded-lg shadow-sm">
+                <div className="text-3xl font-bold text-accent mb-1">
                   {sortedEvents.filter(e => !e.completed && new Date(e.end) >= new Date()).length}
                 </div>
-                <div className="text-sm text-gray-600">ממתינים</div>
+                <div className="text-sm text-fg-3">ממתינים</div>
               </div>
             </div>
           </div>
         </div>
       )}
 
-      <div className="lg:hidden text-center py-4 text-xs text-gray-400">
+      <div className="lg:hidden text-center py-4 text-xs text-faint">
         💡 החלק ימינה/שמאלה למעבר בין ימים | החלק למטה לחודש
       </div>
     </div>
