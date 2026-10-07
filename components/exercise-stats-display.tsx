@@ -75,15 +75,15 @@ export function ExerciseStatsDisplay({ performance, selectedEmail }: ExerciseSta
         
         {/* Summary Stats */}
         <div className="grid grid-cols-3 gap-4 mt-4">
-          <div className="bg-white/20 rounded-lg p-3 backdrop-blur-sm">
+          <div className="bg-raised border border-line rounded-lg p-3">
             <div className="text-sm opacity-90">סה"כ תרגילים</div>
             <div className="text-2xl font-bold">{performance.exercises.length}</div>
           </div>
-          <div className="bg-white/20 rounded-lg p-3 backdrop-blur-sm">
+          <div className="bg-raised border border-line rounded-lg p-3">
             <div className="text-sm opacity-90">קטגוריות</div>
             <div className="text-2xl font-bold">{allCategories.length}</div>
           </div>
-          <div className="bg-white/20 rounded-lg p-3 backdrop-blur-sm">
+          <div className="bg-raised border border-line rounded-lg p-3">
             <div className="text-sm opacity-90">מוצגים</div>
             <div className="text-2xl font-bold">
               {selectedCategory === 'all' ? performance.exercises.length : categorizedExercises[selectedCategory]?.length || 0}

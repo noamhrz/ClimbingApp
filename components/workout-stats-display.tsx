@@ -72,15 +72,15 @@ export function WorkoutStatsDisplay({ performance, email }: WorkoutStatsDisplayP
         </div>
         
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          <div className="bg-white/20 rounded-lg p-4 backdrop-blur-sm">
+          <div className="bg-raised border border-line rounded-lg p-4">
             <div className="text-sm opacity-90">סה"כ אימונים</div>
             <div className="text-3xl font-bold">{performance.totalSessions}</div>
           </div>
-          <div className="bg-white/20 rounded-lg p-4 backdrop-blur-sm">
+          <div className="bg-raised border border-line rounded-lg p-4">
             <div className="text-sm opacity-90">בוצעו</div>
             <div className="text-3xl font-bold">{performance.completedSessions}</div>
           </div>
-          <div className="bg-white/20 rounded-lg p-4 backdrop-blur-sm col-span-2 md:col-span-1">
+          <div className="bg-raised border border-line rounded-lg p-4 col-span-2 md:col-span-1">
             <div className="text-sm opacity-90">אחוז השלמה</div>
             <div className="text-3xl font-bold">
               {performance.overallCompletionRate.toFixed(1)}%

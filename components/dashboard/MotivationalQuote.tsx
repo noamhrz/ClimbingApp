@@ -80,7 +80,7 @@ export default function MotivationalQuote() {
       {/* כפתור לציטוט חדש */}
       <button 
         onClick={loadRandomQuote}
-        className="mt-4 px-6 py-2 bg-white/20 hover:bg-white/30 rounded-lg 
+        className="mt-4 px-6 py-2 bg-raised border border-line-strong hover:bg-line-strong rounded-lg 
                    text-white font-medium transition-all hover:scale-105"
       >
         🔄 ציטוט אחר

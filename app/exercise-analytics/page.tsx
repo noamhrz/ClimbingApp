@@ -536,7 +536,7 @@ export default function ExerciseAnalyticsPage() {
             </div>
             <button
               onClick={() => router.back()}
-              className="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors"
+              className="px-4 py-2 bg-raised border border-line-strong hover:bg-line-strong rounded-lg transition-colors"
             >
               ← חזרה
             </button>

@@ -281,7 +281,7 @@ export default function AddWorkoutModal({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black bg-opacity-50 z-[60]"
+            className="fixed inset-0 bg-black/60 z-[60]"
           />
 
           {/* Modal */}
@@ -407,13 +407,13 @@ export default function AddWorkoutModal({
                                 <div className="flex items-center gap-2">
                                   <span className="font-medium">{workout.name}</span>
                                   {isExisting && isSelected && (
-                                    <span className="text-xs bg-white/30 px-1.5 py-0.5 rounded">קיים</span>
+                                    <span className="text-xs bg-black/20 px-1.5 py-0.5 rounded">קיים</span>
                                   )}
                                 </div>
                                 <span className="text-2xl">{getCategoryEmoji(workout.category)}</span>
                               </div>
                               {workout.category && (
-                                <div className={`text-sm mt-1 ${isSelected ? 'text-white/80' : 'text-muted'}`}>
+                                <div className={`text-sm mt-1 ${isSelected ? 'text-on-accent/80' : 'text-muted'}`}>
                                   {workout.category}
                                 </div>
                               )}

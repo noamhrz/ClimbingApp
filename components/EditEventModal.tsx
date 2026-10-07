@@ -70,7 +70,7 @@ export default function EditEventModal({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black bg-opacity-50 z-50"
+            className="fixed inset-0 bg-black/60 z-50"
           />
 
           {/* Modal */}

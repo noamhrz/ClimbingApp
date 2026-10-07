@@ -32,7 +32,7 @@ export function ClimbingStatsDisplay({ performance }: ClimbingStatsDisplayProps)
         <h2 className="text-2xl font-bold mb-4">🧗 סיכום טיפוס</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Boulder Points */}
-          <div className="bg-white/20 rounded-lg p-4 backdrop-blur-sm">
+          <div className="bg-raised border border-line rounded-lg p-4">
             <div className="text-sm opacity-90 mb-1">🧗 בולדר</div>
             <div className="text-3xl font-bold">
               {combinedBoulderBoard?.grades
@@ -43,7 +43,7 @@ export function ClimbingStatsDisplay({ performance }: ClimbingStatsDisplayProps)
           </div>
 
           {/* Board Points */}
-          <div className="bg-white/20 rounded-lg p-4 backdrop-blur-sm">
+          <div className="bg-raised border border-line rounded-lg p-4">
             <div className="text-sm opacity-90 mb-1">🎯 בורד</div>
             <div className="text-3xl font-bold">
               {combinedBoulderBoard?.grades
@@ -54,7 +54,7 @@ export function ClimbingStatsDisplay({ performance }: ClimbingStatsDisplayProps)
           </div>
 
           {/* Lead Routes */}
-          <div className="bg-white/20 rounded-lg p-4 backdrop-blur-sm">
+          <div className="bg-raised border border-line rounded-lg p-4">
             <div className="text-sm opacity-90 mb-1">🪢 ליד</div>
             <div className="text-3xl font-bold">
               {performance.lead?.totalSuccesses || 0}

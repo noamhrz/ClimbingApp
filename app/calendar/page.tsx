@@ -627,7 +627,7 @@ export default function CalendarPage() {
             <div className="text-sm opacity-90">לחץ על המשבצת הרצויה</div>
             <button
               onClick={handleCancelSelection}
-              className="mt-3 px-4 py-2 bg-surface bg-opacity-20 hover:bg-opacity-30 rounded-lg text-sm transition-all pointer-events-auto"
+              className="mt-3 px-4 py-2 bg-raised border border-line-strong hover:bg-line-strong rounded-lg text-sm transition-all pointer-events-auto"
             >
               ביטול
             </button>

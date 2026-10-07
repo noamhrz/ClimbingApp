@@ -227,7 +227,7 @@ export default function WorkoutsPage() {
                         )}
 
                         {workout.Notes && (
-                          <div className="mt-3 p-3 bg-white/80 rounded-lg border border-warning">
+                          <div className="mt-3 p-3 bg-warning/10 rounded-lg border border-warning/40">
                             <p className="text-xs font-semibold text-warning mb-1">
                               💬 הערת המאמן:
                             </p>

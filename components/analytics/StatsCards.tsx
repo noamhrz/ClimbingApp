@@ -29,7 +29,7 @@ export default function StatsCards({
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             {/* Weight Stats */}
             {bothHandsStats.avgWeight > 0 && (
-              <div className="bg-white/10 rounded-lg p-3 backdrop-blur">
+              <div className="bg-raised border border-line rounded-lg p-3">
                 <div className="text-fg-2 text-sm">משקל ממוצע</div>
                 <div className="text-2xl font-bold">{bothHandsStats.avgWeight.toFixed(1)} ק״ג</div>
                 <div className="text-xs text-fg-2 mt-1">
@@ -40,7 +40,7 @@ export default function StatsCards({
             
             {/* Reps Stats */}
             {bothHandsStats.avgReps > 0 && (
-              <div className="bg-white/10 rounded-lg p-3 backdrop-blur">
+              <div className="bg-raised border border-line rounded-lg p-3">
                 <div className="text-fg-2 text-sm">חזרות ממוצעות</div>
                 <div className="text-2xl font-bold">{bothHandsStats.avgReps.toFixed(1)}</div>
                 <div className="text-xs text-fg-2 mt-1">
@@ -51,7 +51,7 @@ export default function StatsCards({
             
             {/* RPE Stats */}
             {bothHandsStats.avgRPE > 0 && (
-              <div className="bg-white/10 rounded-lg p-3 backdrop-blur">
+              <div className="bg-raised border border-line rounded-lg p-3">
                 <div className="text-fg-2 text-sm">RPE ממוצע</div>
                 <div className="text-2xl font-bold">{bothHandsStats.avgRPE.toFixed(1)}</div>
                 <div className="text-xs text-fg-2 mt-1">
@@ -61,7 +61,7 @@ export default function StatsCards({
             )}
             
             {/* Sessions Count */}
-            <div className="bg-white/10 rounded-lg p-3 backdrop-blur">
+            <div className="bg-raised border border-line rounded-lg p-3">
               <div className="text-fg-2 text-sm">סשנים</div>
               <div className="text-2xl font-bold">{bothHandsStats.sessionsCount}</div>
             </div>
@@ -80,7 +80,7 @@ export default function StatsCards({
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-xl font-bold">🫱 יד ימין</h3>
           {rightStats && (
-            <span className="text-sm bg-white/20 px-3 py-1 rounded-full">
+            <span className="text-sm bg-raised border border-line-strong px-3 py-1 rounded-full">
               {rightStats.sessionsCount} סשנים
             </span>
           )}
@@ -89,7 +89,7 @@ export default function StatsCards({
         {rightStats ? (
           <div className="space-y-3">
             {rightStats.avgWeight > 0 && (
-              <div className="bg-white/10 rounded-lg p-3 backdrop-blur">
+              <div className="bg-raised border border-line rounded-lg p-3">
                 <div className="text-fg-2 text-sm">משקל ממוצע</div>
                 <div className="text-2xl font-bold">{rightStats.avgWeight.toFixed(1)} ק״ג</div>
                 <div className="text-xs text-fg-2 mt-1">
@@ -99,7 +99,7 @@ export default function StatsCards({
             )}
             
             {rightStats.avgReps > 0 && (
-              <div className="bg-white/10 rounded-lg p-3 backdrop-blur">
+              <div className="bg-raised border border-line rounded-lg p-3">
                 <div className="text-fg-2 text-sm">חזרות ממוצעות</div>
                 <div className="text-2xl font-bold">{rightStats.avgReps.toFixed(1)}</div>
                 <div className="text-xs text-fg-2 mt-1">
@@ -109,7 +109,7 @@ export default function StatsCards({
             )}
             
             {rightStats.avgRPE > 0 && (
-              <div className="bg-white/10 rounded-lg p-3 backdrop-blur">
+              <div className="bg-raised border border-line rounded-lg p-3">
                 <div className="text-fg-2 text-sm">RPE ממוצע</div>
                 <div className="text-2xl font-bold">{rightStats.avgRPE.toFixed(1)}</div>
                 <div className="text-xs text-fg-2 mt-1">
@@ -130,7 +130,7 @@ export default function StatsCards({
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-xl font-bold">🫲 יד שמאל</h3>
           {leftStats && (
-            <span className="text-sm bg-white/20 px-3 py-1 rounded-full">
+            <span className="text-sm bg-raised border border-line-strong px-3 py-1 rounded-full">
               {leftStats.sessionsCount} סשנים
             </span>
           )}
@@ -139,7 +139,7 @@ export default function StatsCards({
         {leftStats ? (
           <div className="space-y-3">
             {leftStats.avgWeight > 0 && (
-              <div className="bg-white/10 rounded-lg p-3 backdrop-blur">
+              <div className="bg-raised border border-line rounded-lg p-3">
                 <div className="text-success text-sm">משקל ממוצע</div>
                 <div className="text-2xl font-bold">{leftStats.avgWeight.toFixed(1)} ק״ג</div>
                 <div className="text-xs text-success mt-1">
@@ -149,7 +149,7 @@ export default function StatsCards({
             )}
             
             {leftStats.avgReps > 0 && (
-              <div className="bg-white/10 rounded-lg p-3 backdrop-blur">
+              <div className="bg-raised border border-line rounded-lg p-3">
                 <div className="text-success text-sm">חזרות ממוצעות</div>
                 <div className="text-2xl font-bold">{leftStats.avgReps.toFixed(1)}</div>
                 <div className="text-xs text-success mt-1">
@@ -159,7 +159,7 @@ export default function StatsCards({
             )}
             
             {leftStats.avgRPE > 0 && (
-              <div className="bg-white/10 rounded-lg p-3 backdrop-blur">
+              <div className="bg-raised border border-line rounded-lg p-3">
                 <div className="text-success text-sm">RPE ממוצע</div>
                 <div className="text-2xl font-bold">{leftStats.avgRPE.toFixed(1)}</div>
                 <div className="text-xs text-success mt-1">
