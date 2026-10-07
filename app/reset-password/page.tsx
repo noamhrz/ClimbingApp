@@ -85,8 +85,8 @@ export default function ResetPasswordPage() {
 
   if (!isValidSession && !loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-4 bg-surface border border-line">
-        <div className="bg-surface rounded-2xl shadow-xl p-8 max-w-md w-full text-center">
+      <div className="min-h-screen flex items-center justify-center px-4 bg-bg">
+        <div className="bg-surface rounded-2xl border border-line shadow-2xl shadow-black/40 p-8 max-w-md w-full text-center">
           <div className="text-6xl mb-4">⚠️</div>
           <h1 className="text-2xl font-bold text-fg mb-4">
             לינק לא תקף
@@ -96,7 +96,7 @@ export default function ResetPasswordPage() {
           </p>
           <button
             onClick={() => router.push('/forgot-password')}
-            className="w-full py-3 bg-accent text-white rounded-lg hover:bg-accent-hover transition-colors font-medium"
+            className="w-full py-3 min-h-12 bg-accent text-on-accent rounded-full font-bold hover:bg-accent-hover transition-colors"
           >
             בקש לינק חדש
           </button>
@@ -106,8 +106,8 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 bg-surface border border-line">
-      <div className="bg-surface rounded-2xl shadow-xl p-8 max-w-md w-full">
+    <div className="min-h-screen flex items-center justify-center px-4 bg-bg">
+      <div className="bg-surface rounded-2xl border border-line shadow-2xl shadow-black/40 p-8 max-w-md w-full">
         <div className="text-center mb-8">
           <div className="text-6xl mb-4">🔐</div>
           <h1 className="text-3xl font-bold text-fg mb-2">
@@ -133,7 +133,7 @@ export default function ResetPasswordPage() {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label className="block text-sm font-medium text-fg-2 mb-2 text-right">
+            <label className="block text-sm font-medium text-fg-2 mb-2 text-start">
               סיסמה חדשה
             </label>
             <div className="relative">
@@ -142,14 +142,14 @@ export default function ResetPasswordPage() {
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 placeholder="לפחות 6 תווים"
-                className="w-full px-4 py-3 border border-line rounded-lg focus:ring-2 focus:ring-accent focus:border-accent text-right pr-12"
+                className="w-full min-h-12 px-4 py-3 bg-bg text-fg text-base placeholder:text-faint border border-line-strong rounded-xl focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent text-start pe-12"
                 disabled={loading}
                 required
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-muted hover:text-fg-2"
+                className="absolute end-3 top-1/2 -translate-y-1/2 text-muted hover:text-fg-2"
               >
                 {showPassword ? '🙈' : '👁️'}
               </button>
@@ -157,7 +157,7 @@ export default function ResetPasswordPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-fg-2 mb-2 text-right">
+            <label className="block text-sm font-medium text-fg-2 mb-2 text-start">
               אישור סיסמה
             </label>
             <input
@@ -165,7 +165,7 @@ export default function ResetPasswordPage() {
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               placeholder="הזן שוב את הסיסמה"
-              className="w-full px-4 py-3 border border-line rounded-lg focus:ring-2 focus:ring-accent focus:border-accent text-right"
+              className="w-full min-h-12 px-4 py-3 bg-bg text-fg text-base placeholder:text-faint border border-line-strong rounded-xl focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent text-start"
               disabled={loading}
               required
             />
@@ -207,7 +207,7 @@ export default function ResetPasswordPage() {
           <button
             type="submit"
             disabled={loading || !newPassword || !confirmPassword}
-            className="w-full py-3 bg-accent text-white rounded-lg hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+            className="w-full py-3 min-h-12 bg-accent text-on-accent rounded-full font-bold hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {loading ? '⏳ מעדכן...' : '💾 עדכן סיסמה'}
           </button>
@@ -217,7 +217,7 @@ export default function ResetPasswordPage() {
           <p className="text-xs text-accent">
             <strong>💡 טיפים לסיסמה חזקה:</strong>
           </p>
-          <ul className="text-xs text-accent mt-2 space-y-1 mr-4">
+          <ul className="text-xs text-accent mt-2 space-y-1 ms-4">
             <li>• השתמש בשילוב של אותיות גדולות וקטנות</li>
             <li>• הוסף מספרים ותווים מיוחדים</li>
             <li>• אל תשתמש באותה סיסמה באתרים שונים</li>

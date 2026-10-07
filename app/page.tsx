@@ -67,7 +67,7 @@ export default function LoginPage() {
   // Show loading while checking auth status
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-surface border border-line">
+      <div className="min-h-screen flex items-center justify-center bg-bg">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-accent mx-auto mb-4"></div>
           <p className="text-fg-3 font-medium">בודק התחברות...</p>
@@ -83,8 +83,8 @@ export default function LoginPage() {
 
   // User is not logged in - show login form
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 bg-surface border border-line">
-      <div className="bg-surface rounded-2xl shadow-xl p-8 max-w-md w-full">
+    <div className="min-h-screen flex items-center justify-center px-4 bg-bg">
+      <div className="bg-surface rounded-2xl border border-line shadow-2xl shadow-black/40 p-8 max-w-md w-full">
         <div className="text-center mb-8">
           {/* Logo */}
           <div className="flex justify-center mb-6">
@@ -114,7 +114,7 @@ export default function LoginPage() {
 
         <form onSubmit={handleLogin} className="space-y-6">
           <div>
-            <label className="block text-sm font-medium text-fg-2 mb-2 text-right">
+            <label className="block text-sm font-medium text-fg-2 mb-2 text-start">
               אימייל
             </label>
             <input
@@ -122,14 +122,14 @@ export default function LoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="name@example.com"
-              className="w-full px-4 py-3 border border-line rounded-lg focus:ring-2 focus:ring-accent focus:border-accent text-right"
+              className="w-full min-h-12 px-4 py-3 bg-bg text-fg text-base placeholder:text-faint border border-line-strong rounded-xl focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent text-start"
               required
               disabled={loading}
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-fg-2 mb-2 text-right">
+            <label className="block text-sm font-medium text-fg-2 mb-2 text-start">
               סיסמה
             </label>
             <input
@@ -137,7 +137,7 @@ export default function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
-              className="w-full px-4 py-3 border border-line rounded-lg focus:ring-2 focus:ring-accent focus:border-accent text-right"
+              className="w-full min-h-12 px-4 py-3 bg-bg text-fg text-base placeholder:text-faint border border-line-strong rounded-xl focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent text-start"
               required
               disabled={loading}
             />
@@ -146,7 +146,7 @@ export default function LoginPage() {
           <div className="flex items-center justify-between">
             <Link
               href="/forgot-password"
-              className="text-sm text-accent hover:text-accent/90 font-medium"
+              className="text-sm text-accent hover:text-accent-hover font-semibold"
             >
               שכחתי סיסמה
             </Link>
@@ -155,7 +155,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 bg-accent text-white rounded-lg hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+            className="w-full py-3 min-h-12 bg-accent text-on-accent rounded-full font-bold hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {loading ? '⏳ מתחבר...' : '🚀 התחבר'}
           </button>
@@ -169,7 +169,7 @@ export default function LoginPage() {
         </div>
 
         {/* Footer */}
-        <div className="mt-8 pt-6 border-t text-center">
+        <div className="mt-8 pt-6 border-t border-line text-center">
           <p className="text-xs text-muted">
             © {new Date().getFullYear()} Noam Herz Climbing
           </p>

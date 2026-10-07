@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
 import { getRoleConfig } from '@/lib/permissions'
 import { useState, useRef, useEffect, createContext, useContext } from 'react'
@@ -28,14 +28,14 @@ function NavDropdown({ label, children }: { label: string; children: React.React
       <div ref={ref} className="relative">
         <button
           onClick={() => setOpen(v => !v)}
-          className="bg-white/10 hover:bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-lg transition-all whitespace-nowrap text-sm font-medium border border-white/20 hover:border-white/40 flex items-center gap-1"
+          className={`${btnBase} ${open ? 'border-fg-3 text-fg' : ''} gap-1`}
         >
           {label}
           <span className={`text-[10px] inline-block transition-transform duration-200 ${open ? 'rotate-180' : ''}`}>▾</span>
         </button>
 
         {open && (
-          <div className="absolute top-full mt-1 right-0 bg-surface text-fg rounded-lg shadow-xl z-[200] min-w-[150px] py-1 border border-line">
+          <div className="absolute top-full mt-2 start-0 bg-raised text-fg rounded-xl shadow-2xl shadow-black/50 z-[200] min-w-[190px] py-1.5 border border-line-strong">
             {children}
           </div>
         )}
@@ -50,7 +50,7 @@ function DropdownItem({ href, children }: { href: string; children: React.ReactN
     <Link
       href={href}
       onClick={close}
-      className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-accent/15 hover:text-accent transition-colors whitespace-nowrap text-right"
+      className="flex items-center gap-2 px-4 min-h-11 text-sm text-fg-2 hover:bg-accent/15 hover:text-accent transition-colors whitespace-nowrap text-start"
     >
       {children}
     </Link>
@@ -59,11 +59,14 @@ function DropdownItem({ href, children }: { href: string; children: React.ReactN
 
 // ─── Header ─────────────────────────────────────────────────────────────────
 
-const btnBase = 'bg-white/10 hover:bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-lg transition-all whitespace-nowrap text-sm font-medium border border-white/20 hover:border-white/40'
+const btnBase = 'inline-flex items-center min-h-10 px-3.5 rounded-full whitespace-nowrap text-sm font-semibold border border-line-strong bg-surface text-fg-2 hover:text-fg hover:border-fg-3 transition-colors'
+const btnActive = 'inline-flex items-center min-h-10 px-3.5 rounded-full whitespace-nowrap text-sm font-bold border border-accent bg-accent text-on-accent'
 
 export default function UserHeader() {
   const { activeUser, currentUser, isImpersonating, switchToSelf, logout } = useAuth()
   const router = useRouter()
+  const pathname = usePathname()
+  const navCls = (href: string) => (pathname === href || pathname.startsWith(href + '/') ? btnActive : btnBase)
   const headerRef = useRef<HTMLElement>(null)
 
   // Exposes the header's real (possibly multi-line) height as a CSS var so
@@ -108,37 +111,37 @@ export default function UserHeader() {
     : `/goals/${encodeURIComponent((activeUser || currentUser)?.Email || '')}`
 
   return (
-    <header ref={headerRef} className="text-white shadow-lg sticky top-0 z-50 bg-surface border border-line">
-      <div className="max-w-7xl mx-auto px-4 py-3">
+    <header ref={headerRef} className="text-fg sticky top-0 z-50 bg-bg/95 backdrop-blur-md border-b border-line">
+      <div className="max-w-7xl mx-auto px-4 pt-3 pb-3">
 
         {/* Top Row - User Info */}
-        <div className="flex justify-between items-center mb-3">
-          <div className="flex items-center gap-3">
-            <div className="w-16 h-16 bg-surface rounded-full p-2 shadow-lg flex items-center justify-center">
+        <div className="flex justify-between items-center gap-3 mb-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-12 h-12 shrink-0 bg-raised rounded-full p-1.5 border border-line-strong flex items-center justify-center">
               <img
                 src={getRoleImage(displayUser.Role)}
                 alt={displayUser.Role}
                 className="w-full h-full object-contain"
               />
             </div>
-            <div>
-              <p className="text-xs text-blue-200">משתמש פעיל:</p>
+            <div className="min-w-0">
+              <p className="text-xs text-muted">משתמש פעיל:</p>
               <Link
                 href="/profile"
-                className="font-bold text-lg hover:text-blue-100 transition-colors inline-flex items-center gap-1 group"
+                className="font-bold text-lg leading-tight text-fg hover:text-accent transition-colors inline-flex items-center gap-1 group"
               >
                 <span>{displayUser.Name}</span>
                 <span className="opacity-0 group-hover:opacity-100 transition-opacity text-sm">👤</span>
               </Link>
-              <p className="text-xs text-blue-200">{displayUser.Email}</p>
+              <p className="text-xs text-muted truncate">{displayUser.Email}</p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
             {isImpersonating && (
               <button
                 onClick={switchToSelf}
-                className="bg-warning hover:bg-warning/90 text-white font-semibold px-4 py-2 rounded-lg transition-all shadow-md flex items-center gap-2"
+                className="min-h-11 bg-warning/15 hover:bg-warning/25 text-warning border border-warning/30 font-semibold px-4 rounded-full transition-colors flex items-center gap-2"
                 title="חזור לעצמי"
               >
                 <span>👤</span>
@@ -148,7 +151,7 @@ export default function UserHeader() {
             )}
             <button
               onClick={handleLogout}
-              className="bg-danger hover:bg-danger/90 text-white font-semibold px-4 py-2 rounded-lg transition-all shadow-md flex items-center gap-2"
+              className="min-h-11 min-w-11 justify-center bg-surface hover:bg-danger/15 text-fg-2 hover:text-danger border border-line-strong hover:border-danger/40 font-semibold px-3.5 rounded-full transition-colors flex items-center gap-2"
               title="התנתק"
             >
               <span>🚪</span>
@@ -161,9 +164,9 @@ export default function UserHeader() {
         <nav className="flex gap-2 items-center flex-wrap">
 
           {/* Pinned */}
-          <Link href="/dashboard" className={btnBase}>📊 Dashboard</Link>
-          <Link href="/calendar"  className={btnBase}>📅 לוח</Link>
-          <Link href="/workouts"  className={btnBase}>🏋️ אימונים</Link>
+          <Link href="/dashboard" className={navCls('/dashboard')}>📊 Dashboard</Link>
+          <Link href="/calendar"  className={navCls('/calendar')}>📅 לוח</Link>
+          <Link href="/workouts"  className={navCls('/workouts')}>🏋️ אימונים</Link>
 
           {/* נתונים */}
           <NavDropdown label="📈 נתונים">
@@ -199,7 +202,7 @@ export default function UserHeader() {
 
         {/* Impersonation banner */}
         {isImpersonating && currentUser && (
-          <div className="mt-3 bg-warning/20 border border-warning/30 rounded-lg px-4 py-2 backdrop-blur-sm">
+          <div className="mt-3 bg-warning/10 border border-warning/30 rounded-xl px-4 py-2.5 text-fg-2">
             <div className="flex items-center justify-between text-sm">
               <div className="flex items-center gap-2">
                 <span>🔍</span>
@@ -210,7 +213,7 @@ export default function UserHeader() {
               </div>
               <button
                 onClick={switchToSelf}
-                className="text-warning hover:text-white underline font-medium"
+                className="text-warning hover:text-fg underline font-semibold min-h-11 px-1"
               >
                 חזור לעצמי
               </button>

@@ -45,8 +45,8 @@ export default function ForgotPasswordPage() {
 
   if (emailSent) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-4 bg-surface border border-line">
-        <div className="bg-surface rounded-2xl shadow-xl p-8 max-w-md w-full">
+      <div className="min-h-screen flex items-center justify-center px-4 bg-bg">
+        <div className="bg-surface rounded-2xl border border-line shadow-2xl shadow-black/40 p-8 max-w-md w-full">
           <div className="text-center">
             <div className="text-6xl mb-4">📧</div>
             <h1 className="text-2xl font-bold text-fg mb-2">
@@ -57,11 +57,11 @@ export default function ForgotPasswordPage() {
             </p>
             <p className="font-semibold text-accent mb-6">{email}</p>
             
-            <div className="bg-accent/15 rounded-lg p-4 mb-6 text-right">
+            <div className="bg-accent/15 rounded-lg p-4 mb-6 text-start">
               <p className="text-sm text-accent">
                 <strong>💡 שים לב:</strong>
               </p>
-              <ul className="text-sm text-accent mt-2 space-y-1 mr-4">
+              <ul className="text-sm text-accent mt-2 space-y-1 ms-4">
                 <li>• בדוק את תיבת הדואר הנכנס</li>
                 <li>• בדוק גם בספאם/זבל</li>
                 <li>• הלינק תקף ל-60 דקות</li>
@@ -70,7 +70,7 @@ export default function ForgotPasswordPage() {
 
             <Link
               href="/login"
-              className="block w-full py-3 bg-accent text-white rounded-lg hover:bg-accent-hover transition-colors font-medium"
+              className="block w-full py-3 min-h-12 bg-accent text-on-accent rounded-full font-bold hover:bg-accent-hover transition-colors"
             >
               חזרה להתחברות
             </Link>
@@ -92,8 +92,8 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 bg-surface border border-line">
-      <div className="bg-surface rounded-2xl shadow-xl p-8 max-w-md w-full">
+    <div className="min-h-screen flex items-center justify-center px-4 bg-bg">
+      <div className="bg-surface rounded-2xl border border-line shadow-2xl shadow-black/40 p-8 max-w-md w-full">
         <div className="text-center mb-8">
           <div className="text-6xl mb-4">🔐</div>
           <h1 className="text-3xl font-bold text-fg mb-2">
@@ -116,7 +116,7 @@ export default function ForgotPasswordPage() {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label className="block text-sm font-medium text-fg-2 mb-2 text-right">
+            <label className="block text-sm font-medium text-fg-2 mb-2 text-start">
               כתובת אימייל
             </label>
             <input
@@ -124,7 +124,7 @@ export default function ForgotPasswordPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="name@example.com"
-              className="w-full px-4 py-3 border border-line rounded-lg focus:ring-2 focus:ring-accent focus:border-accent text-right"
+              className="w-full min-h-12 px-4 py-3 bg-bg text-fg text-base placeholder:text-faint border border-line-strong rounded-xl focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent text-start"
               disabled={loading}
               required
             />
@@ -133,7 +133,7 @@ export default function ForgotPasswordPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 bg-accent text-white rounded-lg hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+            className="w-full py-3 min-h-12 bg-accent text-on-accent rounded-full font-bold hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {loading ? '⏳ שולח...' : '📧 שלח לינק לאיפוס'}
           </button>
@@ -142,17 +142,17 @@ export default function ForgotPasswordPage() {
         <div className="mt-6 text-center">
           <Link
             href="/login"
-            className="text-sm text-accent hover:text-accent/90 font-medium"
+            className="text-sm text-accent hover:text-accent-hover font-semibold"
           >
             ← חזרה להתחברות
           </Link>
         </div>
 
         <div className="mt-8 bg-surface rounded-lg p-4">
-          <p className="text-xs text-fg-3 text-right">
+          <p className="text-xs text-fg-3 text-start">
             <strong>💡 איך זה עובד?</strong>
           </p>
-          <ol className="text-xs text-fg-3 mt-2 space-y-1 mr-4">
+          <ol className="text-xs text-fg-3 mt-2 space-y-1 ms-4">
             <li>1. הזן את כתובת המייל שלך</li>
             <li>2. קבל לינק מיוחד למייל</li>
             <li>3. לחץ על הלינק</li>
