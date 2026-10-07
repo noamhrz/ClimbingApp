@@ -76,17 +76,17 @@ export default function EventContextMenu({
         className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[101] w-11/12 max-w-sm animate-in zoom-in-95 duration-200"
         role="menu"
       >
-        <div className="bg-surface rounded-2xl shadow-2xl overflow-hidden">
+        <div className="bg-raised border border-line-strong rounded-2xl overflow-hidden shadow-2xl">
           {/* Header with Title + Date */}
           <div className="px-5 py-4 bg-surface border border-line">
             {/* Workout title - FIRST */}
-            <h3 className="font-bold text-white text-xl text-center mb-2">
+            <h3 className="font-bold text-fg text-xl text-center mb-2">
               {eventTitle}
             </h3>
             
             {/* ✅ Date below title */}
             {formattedDate ? (
-              <p className="text-blue-100 text-base text-center font-medium">
+              <p className="text-fg-2 text-base text-center font-medium">
                 📅 {formattedDate}
               </p>
             ) : (
@@ -104,11 +104,11 @@ export default function EventContextMenu({
                 onClose()
                 onStartNow()
               }}
-              className={`w-full py-3 px-4 rounded-xl font-semibold text-white transition-all active:scale-95 ${
-                isCompleted
-                  ? 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700'
-                  : 'bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700'
-              }`}
+              className={`w-full py-3 px-4 rounded-xl font-semibold text-on-accent transition-all active:scale-95 ${
+ isCompleted
+ ? 'bg-success'
+ : 'bg-accent hover:bg-accent-hover'
+ }`}
             >
               {isCompleted ? '✅ צפה באימון' : '▶️ התחל אימון'}
             </button>
@@ -142,7 +142,7 @@ export default function EventContextMenu({
                   onClose()
                   onMarkCompleted()
                 }}
-                className="w-full py-3 px-4 bg-purple-100 hover:bg-purple-200 rounded-xl font-medium text-purple-700 transition-all active:scale-95"
+                className="w-full py-3 px-4 bg-info/10 hover:bg-info/20 rounded-xl font-medium text-info transition-all active:scale-95"
               >
                 📋 סמן כבוצע (נתונים מאימון קודם)
               </button>

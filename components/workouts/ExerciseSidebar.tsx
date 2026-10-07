@@ -40,7 +40,7 @@ function ExerciseCard({ exercise, onAddExercise }: CardProps) {
     <div className="relative h-11">
       <div
         className={`absolute inset-x-0 top-0 bg-surface border rounded-lg cursor-pointer transition-shadow duration-150
-          ${isExpanded ? 'z-20 shadow-xl border-accent' : 'z-10 shadow-sm hover:shadow-md'}`}
+ ${isExpanded ? 'z-20 shadow-xl border-accent' : 'z-10 '}`}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
         onClick={handleClick}
@@ -52,9 +52,9 @@ function ExerciseCard({ exercise, onAddExercise }: CardProps) {
           </div>
           {!isTouchDevice && (
             <button
-              className={`shrink-0 bg-accent text-white rounded px-2 py-1 text-xs font-medium
-                hover:bg-accent-hover transition-opacity duration-150
-                ${isExpanded ? 'opacity-100' : 'opacity-0'}`}
+              className={`shrink-0 bg-accent text-on-accent rounded px-2 py-1 text-xs font-medium
+ hover:bg-accent-hover transition-opacity duration-150
+ ${isExpanded ? 'opacity-100' : 'opacity-0'}`}
               onClick={(e) => {
                 e.stopPropagation()
                 onAddExercise(exercise)
@@ -87,7 +87,7 @@ function ExerciseCard({ exercise, onAddExercise }: CardProps) {
                 )}
                 <div className="flex gap-1 flex-wrap pt-0.5">
                   {exercise.IsSingleHand && (
-                    <span className="bg-purple-100 text-purple-700 text-xs px-2 py-0.5 rounded">
+                    <span className="bg-info/10 text-info text-xs px-2 py-0.5 rounded">
                       יד בודדת
                     </span>
                   )}
@@ -99,7 +99,7 @@ function ExerciseCard({ exercise, onAddExercise }: CardProps) {
                 </div>
                 {isTouchDevice && (
                   <button
-                    className="w-full mt-1 bg-accent text-white rounded px-3 py-2 text-sm font-medium hover:bg-accent-hover active:bg-accent"
+                    className="w-full mt-1 bg-accent text-on-accent rounded px-3 py-2 text-sm font-medium hover:bg-accent-hover active:bg-accent"
                     onClick={(e) => {
                       e.stopPropagation()
                       onAddExercise(exercise)

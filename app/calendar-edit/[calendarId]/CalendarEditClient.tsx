@@ -776,7 +776,7 @@ export default function CalendarEditClient() {
   return (
     <>
       <div className="mx-auto max-w-6xl px-4 py-6" dir="rtl">
-        <div className="bg-surface rounded-lg shadow-lg p-8">
+        <div className="bg-surface rounded-lg p-8">
           {/* Header */}
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-fg mb-2">
@@ -847,7 +847,7 @@ export default function CalendarEditClient() {
                 return (
                   <div key={blockNum} className="mb-8">
                     <div 
-                      className="text-white rounded-t-lg px-4 py-3 font-bold text-lg cursor-pointer hover: hover: transition-all flex justify-between items-center select-none bg-surface border border-line"
+                      className="text-fg rounded-t-lg px-4 py-3 font-bold text-lg cursor-pointer hover: hover: transition-all flex justify-between items-center select-none bg-surface border border-line"
                       onClick={() => toggleBlock(blockNum)}
                     >
                       <span>📦 בלוק {blockNum}</span>
@@ -1009,9 +1009,9 @@ export default function CalendarEditClient() {
             </button>
             <button
               id="save-workout-btn"
-              className={`bg-accent hover:bg-accent-hover text-white px-6 py-2 rounded font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
-                isSaving ? 'animate-pulse' : ''
-              }`}
+              className={`bg-accent hover:bg-accent-hover text-on-accent px-6 py-2 rounded font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
+ isSaving ? 'animate-pulse' : ''
+ }`}
               onClick={handleSave}
               disabled={isSaving}
             >
@@ -1033,9 +1033,9 @@ export default function CalendarEditClient() {
 
         {/* Toast Notification */}
         {toast && (
-          <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 px-6 py-4 rounded-lg shadow-xl text-white font-medium z-50 animate-in ${
-            toast.type === 'success' ? 'bg-success' : 'bg-danger'
-          }`}>
+          <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 px-6 py-4 rounded-lg shadow-xl text-on-accent font-medium z-50 animate-in ${
+ toast.type === 'success' ? 'bg-success' : 'bg-danger'
+ }`}>
             {toast.message}
           </div>
         )}
@@ -1044,7 +1044,7 @@ export default function CalendarEditClient() {
       {/* Add New Location Modal */}
       {showAddLocationModal && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[60] p-4">
-          <div className="bg-surface rounded-xl shadow-2xl max-w-md w-full p-6" dir="rtl">
+          <div className="bg-raised border border-line-strong rounded-xl max-w-md w-full p-6" dir="rtl">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-xl font-bold text-fg">
                 📍 הוספת מיקום חדש
@@ -1089,7 +1089,7 @@ export default function CalendarEditClient() {
               <button
                 onClick={handleAddLocation}
                 disabled={savingLocation || !newLocationName.trim()}
-                className="flex-1 py-3 bg-accent text-white rounded-lg hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed font-medium transition"
+                className="flex-1 py-3 bg-accent text-on-accent rounded-lg hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed font-medium transition"
               >
                 {savingLocation ? '⏳ שומר...' : '✅ הוסף מיקום'}
               </button>

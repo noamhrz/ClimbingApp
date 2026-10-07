@@ -120,7 +120,7 @@ export default function NewWorkoutPage() {
       )}
 
       {/* Action Buttons */}
-      <div className="flex gap-3 justify-end sticky bottom-6 bg-surface p-4 border-t border-line shadow-lg rounded-lg">
+      <div className="flex gap-3 justify-end sticky bottom-6 bg-surface p-4 border-t border-line rounded-lg">
         <button
           onClick={handleCancel}
           className="px-6 py-3 border border-line rounded-lg hover:bg-surface font-medium"
@@ -130,7 +130,7 @@ export default function NewWorkoutPage() {
         </button>
         <button
           onClick={handleSave}
-          className="px-6 py-3 bg-accent text-white rounded-lg hover:bg-accent-hover font-medium disabled:opacity-50"
+          className="px-6 py-3 bg-accent text-on-accent rounded-lg hover:bg-accent-hover font-medium disabled:opacity-50"
           disabled={saving}
         >
           {saving ? '💾 יוצר...' : '💾 צור אימון'}

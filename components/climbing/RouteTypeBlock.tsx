@@ -101,11 +101,11 @@ export function RouteTypeBlock({
   }
   
   return (
-    <div className="mb-6 border rounded-lg overflow-hidden shadow-sm">
+    <div className="mb-6 border rounded-lg overflow-hidden ">
       {/* Accordion Header - Clickable */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full text-white px-4 py-3 flex items-center justify-between hover: hover: transition-all bg-surface border border-line"
+        className="w-full text-fg px-4 py-3 flex items-center justify-between hover: hover: transition-all bg-surface border border-line"
       >
         <span className="font-bold text-lg">
           {icon} {type} ({routes.length} מסלולים)
@@ -120,14 +120,14 @@ export function RouteTypeBlock({
         <>
           {/* Board Type Selector - Only for Board */}
           {type === 'Board' && (
-            <div className="p-4 bg-purple-50 border-b">
+            <div className="p-4 bg-info/10 border-b">
               <label className="block text-sm font-medium mb-2">
                 🏋️ סוג Board:
               </label>
               <select
                 value={selectedBoardType || ''}
                 onChange={(e) => onBoardTypeChange(Number(e.target.value) || null)}
-                className="w-full px-3 py-2 border rounded focus:ring-2 focus:ring-purple-500"
+                className="w-full px-3 py-2 border rounded focus:ring-2 focus:ring-info"
               >
                 <option value="">בחר סוג Board</option>
                 {(boardTypes || []).map(board => (
@@ -148,8 +148,8 @@ export function RouteTypeBlock({
 
           {/* Quick Add */}
           <div className={`p-4 border-b transition-all duration-300 ${
-            justAdded ? 'bg-success/15' : 'bg-accent/15'
-          }`}>
+ justAdded ? 'bg-success/15' : 'bg-accent/15'
+ }`}>
             <div className="text-sm font-medium mb-2">🚀 הוספה מהירה:</div>
             
             {/* Grade and Count - Same Row */}
@@ -198,12 +198,12 @@ export function RouteTypeBlock({
               onClick={handleQuickAdd}
               disabled={countValue < 1 || isAdding}
               className={`w-full px-4 py-2 rounded font-medium transition-all duration-300 ${
-                justAdded
-                  ? 'bg-success text-white scale-105'
-                  : isAdding
-                  ? 'bg-raised text-white cursor-not-allowed'
-                  : 'bg-accent text-white hover:bg-accent-hover'
-              } disabled:bg-raised disabled:cursor-not-allowed`}
+ justAdded
+ ? 'bg-success text-on-accent scale-105'
+ : isAdding
+ ? 'bg-raised text-faint cursor-not-allowed'
+ : 'bg-accent text-on-accent hover:bg-accent-hover'
+ } disabled:bg-raised disabled:text-faint disabled:cursor-not-allowed`}
             >
               {isAdding ? (
                 <span className="flex items-center justify-center gap-2">

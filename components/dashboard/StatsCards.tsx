@@ -13,7 +13,7 @@ export default function StatsCards({ stats }: Props) {
   return (
     <div className="grid grid-cols-3 gap-2 md:gap-4">
       {/* Completed This Week */}
-      <div className="rounded-lg md:rounded-xl p-3 md:p-6 text-white shadow-lg bg-surface border border-line">
+      <div className="rounded-lg md:rounded-xl p-3 md:p-6 text-fg bg-surface border border-line">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between">
           <div className="flex-1">
             <p className="text-[10px] md:text-sm opacity-90 leading-tight">בוצעו השבוע</p>
@@ -24,7 +24,7 @@ export default function StatsCards({ stats }: Props) {
       </div>
 
       {/* Pending This Week */}
-      <div className="rounded-lg md:rounded-xl p-3 md:p-6 text-white shadow-lg bg-surface border border-line">
+      <div className="rounded-lg md:rounded-xl p-3 md:p-6 text-fg bg-surface border border-line">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between">
           <div className="flex-1">
             <p className="text-[10px] md:text-sm opacity-90 leading-tight">עדיין לא בוצעו</p>
@@ -35,7 +35,7 @@ export default function StatsCards({ stats }: Props) {
       </div>
 
       {/* Missed This Week */}
-      <div className="rounded-lg md:rounded-xl p-3 md:p-6 text-white shadow-lg bg-surface border border-line">
+      <div className="rounded-lg md:rounded-xl p-3 md:p-6 text-fg bg-surface border border-line">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between">
           <div className="flex-1">
             <p className="text-[10px] md:text-sm opacity-90 leading-tight">פספסתי השבוע</p>

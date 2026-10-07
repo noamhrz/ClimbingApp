@@ -62,9 +62,9 @@ export default function WorkoutCard({ workout, onUpdate }: Props) {
 
   return (
     <div
-      className={`bg-surface rounded-lg shadow-md p-4 hover:shadow-lg transition-shadow ${
-        !workout.IsActive ? 'opacity-60 border-2 border-line' : ''
-      }`}
+      className={`bg-surface rounded-lg p-4 transition-shadow ${
+ !workout.IsActive ? 'opacity-60 border-2 border-line' : ''
+ }`}
     >
       {/* Header */}
       <div className="flex items-start justify-between mb-3">
@@ -125,7 +125,7 @@ export default function WorkoutCard({ workout, onUpdate }: Props) {
       <div className="flex gap-2">
         <button
           onClick={() => router.push(`/workouts-editor/${workout.WorkoutID}`)}
-          className="flex-1 bg-accent text-white px-3 py-2 rounded hover:bg-accent-hover text-sm font-medium disabled:opacity-50"
+          className="flex-1 bg-accent text-on-accent px-3 py-2 rounded hover:bg-accent-hover text-sm font-medium disabled:opacity-50"
           disabled={loading}
         >
           ✏️ עריכה

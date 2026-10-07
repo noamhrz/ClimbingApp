@@ -46,7 +46,7 @@ export default function GoalsProgressPyramid({
 
   if (loading) {
     return (
-      <div className="bg-surface rounded-2xl shadow-md border border-line p-8">
+      <div className="bg-surface rounded-2xl border border-line p-8">
         {title && <h3 className="text-2xl font-bold mb-6 text-fg">{title}</h3>}
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
@@ -60,7 +60,7 @@ export default function GoalsProgressPyramid({
 
   if (progress.length === 0) {
     return (
-      <div className="bg-surface rounded-2xl shadow-md border border-line p-8">
+      <div className="bg-surface rounded-2xl border border-line p-8">
         {title && <h3 className="text-2xl font-bold mb-6 text-fg">{title}</h3>}
         <div className="flex items-center justify-center h-64 bg-surface rounded-xl">
           <div className="text-center">
@@ -83,35 +83,35 @@ export default function GoalsProgressPyramid({
   const getColorClasses = () => {
     if (type === 'lead') {
       return {
-        completed: 'bg-blue-500',
-        remaining: 'bg-blue-200',
-        text: 'text-blue-700',
-        bgLight: 'bg-blue-50',
-        border: 'border-blue-300'
+        completed: 'bg-accent',
+        remaining: 'bg-accent/20',
+        text: 'text-accent',
+        bgLight: 'bg-accent/10',
+        border: 'border-accent/30'
       }
     }
     if (type === 'board') {
       return {
-        completed: 'bg-purple-500',
-        remaining: 'bg-purple-200',
-        text: 'text-purple-700',
-        bgLight: 'bg-purple-50',
-        border: 'border-purple-300'
+        completed: 'bg-info',
+        remaining: 'bg-info/20',
+        text: 'text-info',
+        bgLight: 'bg-info/10',
+        border: 'border-info/30'
       }
     }
     return {
-      completed: 'bg-orange-500',
-      remaining: 'bg-orange-200',
-      text: 'text-orange-700',
-      bgLight: 'bg-orange-50',
-      border: 'border-orange-300'
+      completed: 'bg-warning',
+      remaining: 'bg-warning/20',
+      text: 'text-warning',
+      bgLight: 'bg-warning/10',
+      border: 'border-warning/30'
     }
   }
 
   const colors = getColorClasses()
 
   return (
-    <div className="bg-surface rounded-2xl shadow-md border border-line p-8" dir="rtl">
+    <div className="bg-surface rounded-2xl border border-line p-8" dir="rtl">
       {/* Title */}
       {title && (
         <h3 className="text-2xl font-bold mb-6 text-fg">{title}</h3>
@@ -161,7 +161,7 @@ export default function GoalsProgressPyramid({
                   <div className="absolute inset-0 flex items-center justify-between px-4">
                     {/* Right side - Grade */}
                     <div className="flex items-center gap-3">
-                      <div className={`${colors.completed} text-white font-bold text-lg px-3 py-1 rounded-md shadow-sm`}>
+                      <div className={`${colors.completed} text-on-accent font-bold text-lg px-3 py-1 rounded-md `}>
                         {item.grade}
                       </div>
                       <div className="text-sm font-semibold text-fg-2">

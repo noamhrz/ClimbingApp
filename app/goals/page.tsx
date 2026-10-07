@@ -62,10 +62,10 @@ export default function GoalsPage() {
       {activeUser && (
         <div className="mb-6">
           <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg font-medium ${
-            activeUser.Role === 'admin'
-              ? 'bg-purple-100 text-purple-800 border border-purple-300'
-              : 'bg-accent/15 text-accent border border-accent'
-          }`}>
+ activeUser.Role === 'admin'
+ ? 'bg-info/10 text-info border border-info/30'
+ : 'bg-accent/15 text-accent border border-accent'
+ }`}>
             <span className="text-xl">
               {activeUser.Role === 'admin' ? '👑' : '🎓'}
             </span>
@@ -96,7 +96,7 @@ export default function GoalsPage() {
             <button
               key={user.Email}
               onClick={() => router.push(`/goals/${encodeURIComponent(user.Email)}`)}
-              className="bg-surface border-2 border-line rounded-xl p-6 hover:border-accent hover:shadow-lg transition-all text-right"
+              className="bg-surface border-2 border-line rounded-xl p-6 hover:border-accent transition-all text-right"
             >
               <div className="flex items-center gap-4">
                 <div className="text-4xl">👤</div>

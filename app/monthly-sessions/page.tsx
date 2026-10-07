@@ -55,7 +55,7 @@ function AddRow({
       <button
         onClick={onAdd}
         disabled={!value.trim()}
-        className="bg-accent hover:bg-accent-hover disabled:opacity-40 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+        className="bg-accent hover:bg-accent-hover disabled:opacity-40 text-on-accent px-4 py-2 rounded-lg text-sm font-medium transition-colors"
       >
         הוסף
       </button>
@@ -318,7 +318,7 @@ function MonthlySessionsContent() {
       <h1 className="text-2xl font-bold text-fg mb-6">פגישות חודשיות</h1>
 
       {/* ── Filters ── */}
-      <div className="bg-surface rounded-xl shadow-sm border border-line p-4 mb-6">
+      <div className="bg-surface rounded-xl border border-line p-4 mb-6">
         <div className="flex flex-wrap gap-3">
 
           <div className="flex flex-col gap-1 flex-1 min-w-[150px]">
@@ -369,7 +369,7 @@ function MonthlySessionsContent() {
           <p className="text-faint">טוען פגישה...</p>
         </div>
       ) : !session ? (
-        <div className="bg-surface rounded-xl shadow-sm border border-line p-10 text-center">
+        <div className="bg-surface rounded-xl border border-line p-10 text-center">
           <p className="text-muted text-base mb-1">
             אין פגישה עבור {selectedUserName}
           </p>
@@ -379,7 +379,7 @@ function MonthlySessionsContent() {
           {canEdit && (
             <button
               onClick={handleCreateSession}
-              className="bg-accent hover:bg-accent-hover text-white font-semibold px-6 py-2.5 rounded-lg transition-colors"
+              className="bg-accent hover:bg-accent-hover text-on-accent font-semibold px-6 py-2.5 rounded-lg transition-colors"
             >
               + צור פגישה חדשה
             </button>
@@ -389,13 +389,13 @@ function MonthlySessionsContent() {
         <div className="space-y-5">
 
           {/* Session header */}
-          <div className="text-white rounded-xl px-5 py-4 bg-surface border border-line">
+          <div className="text-fg rounded-xl px-5 py-4 bg-surface border border-line">
             <h2 className="font-bold text-lg">{MONTH_NAMES[session.Month - 1]} {session.Year}</h2>
-            <p className="text-blue-200 text-sm mt-0.5">{selectedUserName}</p>
+            <p className="text-fg-2 text-sm mt-0.5">{selectedUserName}</p>
           </div>
 
           {/* Notes */}
-          <div className="bg-surface rounded-xl shadow-sm border border-line p-5">
+          <div className="bg-surface rounded-xl border border-line p-5">
             <h3 className="font-semibold text-fg mb-3">📝 הערות מאמן</h3>
             {canEdit ? (
               <div className="relative">
@@ -419,7 +419,7 @@ function MonthlySessionsContent() {
           </div>
 
           {/* Coach Todos */}
-          <div className="bg-surface rounded-xl shadow-sm border border-line p-5">
+          <div className="bg-surface rounded-xl border border-line p-5">
             <h3 className="font-semibold text-fg mb-4">✅ משימות מאמן</h3>
             <div className="space-y-1">
               {coachTodos.length === 0 && <p className="text-faint text-sm py-1">אין משימות</p>}
@@ -446,8 +446,8 @@ function MonthlySessionsContent() {
                       </span>
                       {!canEdit && (
                         <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                          todo.Completed ? 'bg-success/15 text-success' : 'bg-warning/15 text-warning'
-                        }`}>
+ todo.Completed ? 'bg-success/15 text-success' : 'bg-warning/15 text-warning'
+ }`}>
                           {todo.Completed ? 'הושלם' : 'ממתין'}
                         </span>
                       )}
@@ -468,7 +468,7 @@ function MonthlySessionsContent() {
           </div>
 
           {/* Athlete Todos */}
-          <div className="bg-surface rounded-xl shadow-sm border border-line p-5">
+          <div className="bg-surface rounded-xl border border-line p-5">
             <h3 className="font-semibold text-fg mb-4">🎯 משימות ספורטאי</h3>
             <div className="space-y-1">
               {athleteTodos.length === 0 && <p className="text-faint text-sm py-1">אין משימות</p>}
@@ -509,7 +509,7 @@ function MonthlySessionsContent() {
           </div>
 
           {/* Achievements */}
-          <div className="bg-surface rounded-xl shadow-sm border border-line p-5">
+          <div className="bg-surface rounded-xl border border-line p-5">
             <h3 className="font-semibold text-fg mb-4">⭐ הישגים חודשיים</h3>
             <div className="space-y-1">
               {achievements.length === 0 && <p className="text-faint text-sm py-1">אין הישגים</p>}
@@ -543,7 +543,7 @@ function MonthlySessionsContent() {
           </div>
 
           {/* Highlights */}
-          <div className="bg-surface rounded-xl shadow-sm border border-line p-5">
+          <div className="bg-surface rounded-xl border border-line p-5">
             <h3 className="font-semibold text-fg mb-4">📌 דגשים חודשיים</h3>
             <div className="space-y-1">
               {highlights.length === 0 && <p className="text-faint text-sm py-1">אין דגשים</p>}

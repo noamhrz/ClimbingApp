@@ -313,7 +313,7 @@ export default function AssignWorkoutsClient() {
   return (
     <div dir="rtl" className="min-h-screen bg-surface pb-20">
       {/* Header */}
-      <div className="bg-surface shadow-sm border-b sticky top-0 z-30">
+      <div className="bg-surface border-b sticky top-0 z-30">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <h1 className="text-2xl font-bold text-accent mb-4">👥 הקצאת אימונים</h1>
           
@@ -347,7 +347,7 @@ export default function AssignWorkoutsClient() {
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Available Workouts */}
-            <div className="bg-surface rounded-xl shadow-sm border border-line">
+            <div className="bg-surface rounded-xl border border-line">
               <div className="p-4 border-b border-line bg-surface">
                 <h2 className="text-lg font-bold text-accent mb-3">📚 אימונים זמינים</h2>
                 
@@ -405,7 +405,7 @@ export default function AssignWorkoutsClient() {
                         </div>
                         <button
                           onClick={() => handleAddWorkout(workout)}
-                          className="px-4 py-2 bg-success hover:bg-success/90 text-white rounded-lg text-sm font-medium transition-colors"
+                          className="px-4 py-2 bg-success hover:bg-success/90 text-on-accent rounded-lg text-sm font-medium transition-colors"
                         >
                           + הוסף
                         </button>
@@ -417,7 +417,7 @@ export default function AssignWorkoutsClient() {
             </div>
 
             {/* User's Workouts */}
-            <div className="bg-surface rounded-xl shadow-sm border border-line">
+            <div className="bg-surface rounded-xl border border-line">
               <div className="p-4 border-b border-line bg-surface">
                 <h2 className="text-lg font-bold text-success">
                   ✅ אימונים של {selectedUser?.Name}
@@ -468,7 +468,7 @@ export default function AssignWorkoutsClient() {
                         </div>
                         <button
                           onClick={() => handleRemoveWorkout(workout)}
-                          className="px-4 py-2 bg-danger hover:bg-danger/90 text-white rounded-lg text-sm font-medium transition-colors"
+                          className="px-4 py-2 bg-danger hover:bg-danger/90 text-on-accent rounded-lg text-sm font-medium transition-colors"
                         >
                           ❌ הסר
                         </button>

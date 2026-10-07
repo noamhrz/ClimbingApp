@@ -23,21 +23,21 @@ export function ClimbingSummary({ routes }: ClimbingSummaryProps) {
         
         <div className="flex gap-3 text-sm">
           {summary.boulder > 0 && (
-            <span className="bg-surface px-2 py-1 rounded shadow-sm">
+            <span className="bg-surface px-2 py-1 rounded ">
               🪨 <span className="font-bold">{summary.boulder}</span>
             </span>
           )}
           {summary.board > 0 && (
-            <span className="bg-surface px-2 py-1 rounded shadow-sm">
+            <span className="bg-surface px-2 py-1 rounded ">
               🏋️ <span className="font-bold">{summary.board}</span>
             </span>
           )}
           {summary.lead > 0 && (
-            <span className="bg-surface px-2 py-1 rounded shadow-sm">
+            <span className="bg-surface px-2 py-1 rounded ">
               🧗 <span className="font-bold">{summary.lead}</span>
             </span>
           )}
-          <span className="text-white px-2 py-1 rounded shadow-sm font-bold bg-surface border border-line">
+          <span className="text-fg px-2 py-1 rounded font-bold bg-surface border border-line">
             סה״כ {summary.total}
           </span>
         </div>

@@ -245,7 +245,7 @@ export default function UserProfilePage() {
           <p className="text-xl text-fg-3">אנא התחבר</p>
           <button
             onClick={() => router.push('/')}
-            className="mt-4 px-6 py-2 bg-accent text-white rounded-lg hover:bg-accent-hover"
+            className="mt-4 px-6 py-2 bg-accent text-on-accent rounded-lg hover:bg-accent-hover"
           >
             התחבר
           </button>
@@ -257,7 +257,7 @@ export default function UserProfilePage() {
   return (
     <div dir="rtl" className="min-h-screen bg-surface pb-20">
       {/* Header */}
-      <div className="bg-surface shadow-sm border-b">
+      <div className="bg-surface border-b">
         <div className="max-w-2xl mx-auto px-4 py-6">
           <h1 className="text-3xl font-bold text-accent">👤 הפרופיל שלי</h1>
         </div>
@@ -269,18 +269,18 @@ export default function UserProfilePage() {
         {/* Message */}
         {message && (
           <div className={`mb-4 p-4 rounded-lg ${
-            message.type === 'success'
-              ? 'bg-success/15 text-success border border-success'
-              : 'bg-danger/15 text-danger border border-danger'
-          }`}>
+ message.type === 'success'
+ ? 'bg-success/15 text-success border border-success'
+ : 'bg-danger/15 text-danger border border-danger'
+ }`}>
             {message.text}
           </div>
         )}
 
         {/* Profile Card */}
-        <div className="bg-surface rounded-xl shadow-sm border p-6 mb-6">
+        <div className="bg-surface rounded-xl border p-6 mb-6">
           <div className="flex items-center gap-4 mb-6">
-            <div className="w-20 h-20 rounded-full flex items-center justify-center text-white text-3xl font-bold bg-surface border border-line">
+            <div className="w-20 h-20 rounded-full flex items-center justify-center text-fg text-3xl font-bold bg-surface border border-line">
               {activeUser?.Name?.charAt(0).toUpperCase() || '?'}
             </div>
             <div>
@@ -328,7 +328,7 @@ export default function UserProfilePage() {
         </div>
 
         {/* Body Weight & Phone Card */}
-        <div className="bg-surface rounded-xl shadow-sm border p-6 mb-6">
+        <div className="bg-surface rounded-xl border p-6 mb-6">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <span className="text-2xl">⚖️</span>
@@ -337,7 +337,7 @@ export default function UserProfilePage() {
             {!isEditingProfile && canEdit && (
               <button
                 onClick={() => setIsEditingProfile(true)}
-                className="px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent-hover transition-colors text-sm"
+                className="px-4 py-2 bg-accent text-on-accent rounded-lg hover:bg-accent-hover transition-colors text-sm"
               >
                 ✏️ ערוך
               </button>
@@ -390,14 +390,14 @@ export default function UserProfilePage() {
                   onClick={handleToggleWhatsApp}
                   disabled={savingWhatsapp}
                   className={`relative inline-flex h-7 w-14 items-center rounded-full transition-colors focus:outline-none disabled:opacity-50 ${
-                    whatsappActive ? 'bg-success' : 'bg-raised'
-                  }`}
+ whatsappActive ? 'bg-success' : 'bg-raised'
+ }`}
                   aria-label="Toggle WhatsApp reminders"
                 >
                   <span
-                    className={`inline-block h-5 w-5 transform rounded-full bg-surface shadow transition-transform ${
-                      whatsappActive ? 'translate-x-8' : 'translate-x-1'
-                    }`}
+                    className={`inline-block h-5 w-5 transform rounded-full bg-surface transition-transform ${
+ whatsappActive ? 'translate-x-8' : 'translate-x-1'
+ }`}
                   />
                 </button>
               </div>
@@ -463,13 +463,13 @@ export default function UserProfilePage() {
                   onClick={() => setWhatsappActive(v => !v)}
                   type="button"
                   className={`relative inline-flex h-7 w-14 items-center rounded-full transition-colors focus:outline-none ${
-                    whatsappActive ? 'bg-success' : 'bg-raised'
-                  }`}
+ whatsappActive ? 'bg-success' : 'bg-raised'
+ }`}
                 >
                   <span
-                    className={`inline-block h-5 w-5 transform rounded-full bg-surface shadow transition-transform ${
-                      whatsappActive ? 'translate-x-8' : 'translate-x-1'
-                    }`}
+                    className={`inline-block h-5 w-5 transform rounded-full bg-surface transition-transform ${
+ whatsappActive ? 'translate-x-8' : 'translate-x-1'
+ }`}
                   />
                 </button>
               </div>
@@ -479,7 +479,7 @@ export default function UserProfilePage() {
                 <button
                   onClick={handleSaveProfile}
                   disabled={loading}
-                  className="flex-1 px-4 py-3 bg-success text-white rounded-lg hover:bg-success/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+                  className="flex-1 px-4 py-3 bg-success text-on-accent rounded-lg hover:bg-success/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
                 >
                   {loading ? '💾 שומר...' : '💾 שמור נתונים'}
                 </button>
@@ -500,7 +500,7 @@ export default function UserProfilePage() {
         </div>
 
         {/* Security Card - only shown when viewing own profile */}
-        {!isImpersonating && <div className="bg-surface rounded-xl shadow-sm border p-6 mb-6">
+        {!isImpersonating && <div className="bg-surface rounded-xl border p-6 mb-6">
           <div className="flex items-center gap-2 mb-4">
             <span className="text-2xl">🔐</span>
             <h3 className="text-xl font-bold text-fg">שינוי סיסמה</h3>
@@ -515,7 +515,7 @@ export default function UserProfilePage() {
                 </div>
                 <button
                   onClick={() => setShowPasswordForm(true)}
-                  className="px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent-hover transition-colors"
+                  className="px-4 py-2 bg-accent text-on-accent rounded-lg hover:bg-accent-hover transition-colors"
                 >
                   🔄 שנה סיסמה
                 </button>
@@ -577,7 +577,7 @@ export default function UserProfilePage() {
                 <button
                   onClick={handleDirectPasswordReset}
                   disabled={loading || !newPassword || !confirmPassword}
-                  className="flex-1 px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="flex-1 px-4 py-2 bg-accent text-on-accent rounded-lg hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   {loading ? '⏳ שומר...' : '💾 שמור סיסמה'}
                 </button>
@@ -605,7 +605,7 @@ export default function UserProfilePage() {
               supabase.auth.signOut()
               router.push('/')
             }}
-            className="w-full px-6 py-3 bg-danger text-white rounded-lg hover:bg-danger/90 transition-colors font-medium"
+            className="w-full px-6 py-3 bg-danger text-on-accent rounded-lg hover:bg-danger/90 transition-colors font-medium"
           >
             🚪 התנתק
           </button>

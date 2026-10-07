@@ -29,25 +29,25 @@ interface UserProgress {
 }
 
 const COLOR_BG: Record<string, string> = {
-  blue:   'bg-blue-500',
-  green:  'bg-green-500',
-  purple: 'bg-purple-500',
-  red:    'bg-red-500',
-  orange: 'bg-orange-500',
-  yellow: 'bg-yellow-400',
-  pink:   'bg-pink-500',
-  gray:   'bg-gray-500',
+  blue:   'bg-accent',
+  green:  'bg-success',
+  purple: 'bg-info',
+  red:    'bg-danger',
+  orange: 'bg-warning',
+  yellow: 'bg-warning',
+  pink:   'bg-info',
+  gray:   'bg-line-strong',
 }
 
 const COLOR_LIGHT: Record<string, string> = {
-  blue:   'bg-blue-100 text-blue-800',
-  green:  'bg-green-100 text-green-800',
-  purple: 'bg-purple-100 text-purple-800',
-  red:    'bg-red-100 text-red-800',
-  orange: 'bg-orange-100 text-orange-800',
-  yellow: 'bg-yellow-100 text-yellow-800',
-  pink:   'bg-pink-100 text-pink-800',
-  gray:   'bg-gray-100 text-gray-800',
+  blue:   'bg-accent/10 text-accent',
+  green:  'bg-success/10 text-success',
+  purple: 'bg-info/10 text-info',
+  red:    'bg-danger/10 text-danger',
+  orange: 'bg-warning/10 text-warning',
+  yellow: 'bg-warning/10 text-warning',
+  pink:   'bg-info/10 text-info',
+  gray:   'bg-surface text-fg',
 }
 
 const getAuthHeaders = async () => {
@@ -132,7 +132,7 @@ export default function RoadmapProgressPage() {
   return (
     <div dir="rtl" className="min-h-screen bg-surface pb-20">
       {/* Header */}
-      <div className="bg-surface shadow-sm border-b sticky top-0 z-30">
+      <div className="bg-surface border-b sticky top-0 z-30">
         <div className="max-w-4xl mx-auto px-4 py-4">
           <h1 className="text-2xl font-bold text-fg">🗺️ מפת ההתקדמות שלי</h1>
           <p className="text-sm text-muted mt-0.5">
@@ -143,7 +143,7 @@ export default function RoadmapProgressPage() {
 
       <div className="max-w-4xl mx-auto px-4 py-6">
         {startedCats.length === 0 ? (
-          <div className="bg-surface rounded-xl shadow-sm border flex items-center justify-center h-48">
+          <div className="bg-surface rounded-xl border flex items-center justify-center h-48">
             <p className="text-faint text-sm">עוד לא עודכנה התקדמות</p>
           </div>
         ) : (
@@ -167,7 +167,7 @@ export default function RoadmapProgressPage() {
               const pct = maxLevel > 0 ? Math.round((currentLevel / maxLevel) * 100) : 0
 
               return (
-                <div key={cat.CategoryID} className="bg-surface rounded-xl shadow-sm border overflow-hidden">
+                <div key={cat.CategoryID} className="bg-surface rounded-xl border overflow-hidden">
                   {/* Category header */}
                   <div className="px-5 py-4 flex items-center gap-3">
                     <span className="text-3xl">{cat.Icon}</span>
@@ -210,10 +210,10 @@ export default function RoadmapProgressPage() {
                             key={level.LevelID}
                             title={level.Name}
                             className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-all ${
-                              done
-                                ? `${activeBg} text-white border-transparent`
-                                : 'bg-surface text-faint border-line'
-                            }`}
+ done
+ ? `${activeBg} text-white border-transparent`
+ : 'bg-surface text-faint border-line'
+ }`}
                           >
                             L{level.LevelNumber}
                           </div>

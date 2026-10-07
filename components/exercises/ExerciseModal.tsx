@@ -188,7 +188,7 @@ export default function ExerciseModal({ exercise, onSave, onClose, isDuplicate =
       onClick={handleBackdropClick}
     >
       <div 
-        className="bg-surface rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+        className="bg-raised border border-line-strong rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -257,10 +257,10 @@ export default function ExerciseModal({ exercise, onSave, onClose, isDuplicate =
                     type="button"
                     onClick={() => setFormData({ ...formData, Category: cat })}
                     className={`text-xs px-3 py-1 rounded-full transition ${
-                      formData.Category === cat
-                        ? 'bg-accent text-white'
-                        : 'bg-surface text-fg-2 hover:bg-raised'
-                    }`}
+ formData.Category === cat
+ ? 'bg-accent text-on-accent'
+ : 'bg-surface text-fg-2 hover:bg-raised'
+ }`}
                   >
                     {cat}
                   </button>
@@ -332,13 +332,13 @@ export default function ExerciseModal({ exercise, onSave, onClose, isDuplicate =
           </div>
 
           {/* is_dynamic Checkbox */}
-          <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+          <div className="bg-info/10 border border-info/30 rounded-lg p-4">
             <label className="flex items-center gap-3 cursor-pointer">
               <input
                 type="checkbox"
                 checked={formData.is_dynamic}
                 onChange={(e) => setFormData({ ...formData, is_dynamic: e.target.checked, RoadmapCategoryID: e.target.checked ? formData.RoadmapCategoryID : null })}
-                className="w-5 h-5 text-purple-600 rounded focus:ring-2 focus:ring-purple-500"
+                className="w-5 h-5 text-info rounded focus:ring-2 focus:ring-info"
               />
               <div>
                 <span className="text-sm font-medium text-fg">
@@ -351,14 +351,14 @@ export default function ExerciseModal({ exercise, onSave, onClose, isDuplicate =
             </label>
 
             {formData.is_dynamic && (
-              <div className="mt-3 border-t border-purple-200 pt-3">
+              <div className="mt-3 border-t border-info/30 pt-3">
                 <label className="block text-sm font-medium text-fg-2 mb-1.5">
                   קטגוריית רודמאפ <span className="text-danger">*</span>
                 </label>
                 <select
                   value={formData.RoadmapCategoryID ?? ''}
                   onChange={(e) => setFormData({ ...formData, RoadmapCategoryID: e.target.value ? Number(e.target.value) : null })}
-                  className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-purple-500 bg-surface"
+                  className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-info bg-surface"
                 >
                   <option value="">-- בחר קטגוריה --</option>
                   {roadmapCategories.map((cat) => (
@@ -378,7 +378,7 @@ export default function ExerciseModal({ exercise, onSave, onClose, isDuplicate =
                 type="checkbox"
                 checked={formData.IsSingleHand}
                 onChange={(e) => setFormData({ ...formData, IsSingleHand: e.target.checked })}
-                className="w-5 h-5 text-warning rounded focus:ring-2 focus:ring-orange-500"
+                className="w-5 h-5 text-warning rounded focus:ring-2 focus:ring-warning"
               />
               <div>
                 <span className="text-sm font-medium text-fg">
@@ -395,7 +395,7 @@ export default function ExerciseModal({ exercise, onSave, onClose, isDuplicate =
           <div className="flex gap-3 pt-4 border-t">
             <button
               type="submit"
-              className="flex-1 px-4 py-3 bg-accent text-white rounded-lg hover:bg-accent-hover transition font-medium shadow-sm"
+              className="flex-1 px-4 py-3 bg-accent text-on-accent rounded-lg hover:bg-accent-hover transition font-medium "
             >
               {isEditing ? '💾 שמור שינויים' : '➕ צור תרגיל'}
             </button>

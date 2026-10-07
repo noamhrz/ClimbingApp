@@ -80,15 +80,15 @@ export default function EditEventModal({
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
               transition={{ type: 'spring', duration: 0.3 }}
-              className="bg-surface rounded-2xl shadow-2xl w-full max-w-md overflow-hidden"
+              className="bg-raised border border-line-strong rounded-2xl w-full max-w-md overflow-hidden"
               dir="rtl"
             >
               {/* Header */}
               <div className="px-6 py-4 bg-surface border border-line">
-                <h2 className="text-2xl font-bold text-white text-center">
+                <h2 className="text-2xl font-bold text-fg text-center">
                   📅 שינוי תאריך וזמן
                 </h2>
-                <p className="text-blue-100 text-center text-sm mt-1">
+                <p className="text-fg-2 text-center text-sm mt-1">
                   {eventTitle}
                 </p>
               </div>
@@ -119,10 +119,10 @@ export default function EditEventModal({
                       type="button"
                       onClick={() => setSelectedTime('morning')}
                       className={`py-3 px-4 rounded-lg border-2 transition-all ${
-                        selectedTime === 'morning'
-                          ? 'border-accent bg-accent/15 text-accent'
-                          : 'border-line hover:border-accent/90'
-                      }`}
+ selectedTime === 'morning'
+ ? 'border-accent bg-accent/15 text-accent'
+ : 'border-line hover:border-accent/90'
+ }`}
                     >
                       <div className="text-2xl mb-1">🌅</div>
                       <div className="text-sm font-medium">בוקר</div>
@@ -132,10 +132,10 @@ export default function EditEventModal({
                       type="button"
                       onClick={() => setSelectedTime('afternoon')}
                       className={`py-3 px-4 rounded-lg border-2 transition-all ${
-                        selectedTime === 'afternoon'
-                          ? 'border-accent bg-accent/15 text-accent'
-                          : 'border-line hover:border-accent/90'
-                      }`}
+ selectedTime === 'afternoon'
+ ? 'border-accent bg-accent/15 text-accent'
+ : 'border-line hover:border-accent/90'
+ }`}
                     >
                       <div className="text-2xl mb-1">☀️</div>
                       <div className="text-sm font-medium">צהריים</div>
@@ -145,10 +145,10 @@ export default function EditEventModal({
                       type="button"
                       onClick={() => setSelectedTime('evening')}
                       className={`py-3 px-4 rounded-lg border-2 transition-all ${
-                        selectedTime === 'evening'
-                          ? 'border-accent bg-accent/15 text-accent'
-                          : 'border-line hover:border-accent/90'
-                      }`}
+ selectedTime === 'evening'
+ ? 'border-accent bg-accent/15 text-accent'
+ : 'border-line hover:border-accent/90'
+ }`}
                     >
                       <div className="text-2xl mb-1">🌙</div>
                       <div className="text-sm font-medium">ערב</div>
@@ -168,7 +168,7 @@ export default function EditEventModal({
                   <button
                     onClick={handleSave}
                     disabled={!selectedDate}
-                    className="flex-1 px-6 py-3 bg-accent text-white font-semibold rounded-lg hover:bg-accent-hover transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 px-6 py-3 bg-accent text-on-accent font-semibold rounded-lg hover:bg-accent-hover transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     שמור שינויים
                   </button>

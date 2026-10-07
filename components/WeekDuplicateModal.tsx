@@ -146,7 +146,7 @@ export default function WeekDuplicateModal({ isOpen, onClose, onSuccess, email }
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-surface rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-raised border border-line-strong rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="sticky top-0 bg-surface border-b px-6 py-4">
           <div className="flex items-center justify-between">
@@ -245,7 +245,7 @@ export default function WeekDuplicateModal({ isOpen, onClose, onSuccess, email }
             <button
               onClick={handleDuplicate}
               disabled={loading || !startDate || !endDate}
-              className="flex-1 py-3 bg-accent text-white rounded-lg hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed font-medium transition"
+              className="flex-1 py-3 bg-accent text-on-accent rounded-lg hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed font-medium transition"
             >
               {loading ? '⏳ משכפל...' : '📋 שכפל שבוע'}
             </button>

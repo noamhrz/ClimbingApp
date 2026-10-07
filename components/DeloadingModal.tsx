@@ -76,7 +76,7 @@ export default function DeloadingModal({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-surface rounded-xl shadow-xl max-w-md w-full p-6">
+      <div className="bg-raised border border-line-strong rounded-xl max-w-md w-full p-6">
         <h2 className="text-xl font-bold mb-4 text-fg">
           {mode === 'apply' ? '🔵 החלת דילודינג' : '❌ הסרת דילודינג'}
         </h2>
@@ -159,11 +159,11 @@ export default function DeloadingModal({
             </button>
             <button
               type="submit"
-              className={`flex-1 px-4 py-2 rounded-lg text-white transition-colors ${
-                mode === 'apply'
-                  ? 'bg-accent hover:bg-accent-hover'
-                  : 'bg-danger hover:bg-danger/90'
-              } disabled:opacity-50 disabled:cursor-not-allowed`}
+              className={`flex-1 px-4 py-2 rounded-lg text-on-accent transition-colors ${
+ mode === 'apply'
+ ? 'bg-accent hover:bg-accent-hover'
+ : 'bg-danger hover:bg-danger/90'
+ } disabled:opacity-50 disabled:cursor-not-allowed`}
               disabled={loading}
             >
               {loading ? '⌛ מעדכן...' : mode === 'apply' ? 'החל דילודינג' : 'הסר דילודינג'}

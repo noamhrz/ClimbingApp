@@ -304,7 +304,7 @@ const WorkoutExercises = forwardRef<WorkoutExercisesHandle, Props>(function Work
               <button
                 onClick={handleSaveClick}
                 disabled={saving}
-                className="px-4 py-2 bg-success text-white rounded-lg hover:bg-success/90 font-medium disabled:opacity-50 text-sm"
+                className="px-4 py-2 bg-success text-on-accent rounded-lg hover:bg-success/90 font-medium disabled:opacity-50 text-sm"
               >
                 {saving ? '💾 שומר...' : '💾 שמור תרגילים'}
               </button>
@@ -359,7 +359,7 @@ const WorkoutExercises = forwardRef<WorkoutExercisesHandle, Props>(function Work
 
       <DragOverlay>
         {activeExercise && (
-          <div className="bg-surface border-2 border-accent rounded-lg p-3 shadow-xl opacity-90 cursor-grabbing">
+          <div className="bg-surface border-2 border-accent rounded-lg p-3 opacity-90 cursor-grabbing">
             <span className="font-medium text-sm">{activeExercise.Exercise.Name}</span>
           </div>
         )}

@@ -62,17 +62,17 @@ export default function EventComponent({
 
   const getEventColor = () => {
     if (event.Deloading) {
-      return event.completed ? '#b7f7b3' : '#cce9ff'
+      return event.completed ? '#9BD3AC' : '#A9CBDC'
     }
     
     const now = new Date()
     const eventDate = new Date(event.start)
     const isToday = eventDate.toDateString() === now.toDateString()
     
-    if (event.completed) return 'rgb(34 197 94)'
-    if (isToday) return 'rgb(251 191 36)'
-    if (eventDate < now) return 'rgb(239 68 68)'
-    return 'rgb(37 99 235)'
+    if (event.completed) return '#5FB37A'
+    if (isToday) return '#E3B341'
+    if (eventDate < now) return '#E06A5F'
+    return '#E0763A'
   }
 
   return (
@@ -81,10 +81,10 @@ export default function EventComponent({
       onMouseLeave={handleMouseLeave}
     >
       <div
-        className="h-full w-full px-1 py-1 pointer-events-auto cursor-pointer overflow-hidden transition-all duration-200 hover:brightness-110 hover:shadow-lg"
+        className="h-full w-full px-1 py-1 pointer-events-auto cursor-pointer overflow-hidden transition-all duration-200 hover:brightness-110 "
         style={{
           backgroundColor: getEventColor(),
-          color: 'white',
+          color: '#14110E',
         }}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
@@ -95,7 +95,7 @@ export default function EventComponent({
         </div>
 
         {event.Deloading && event.DeloadingPercentage && (
-          <div className="absolute top-0 right-0 bg-accent text-white text-[10px] px-1 rounded-bl">
+          <div className="absolute top-0 right-0 bg-accent text-on-accent text-[10px] px-1 rounded-bl">
             {event.DeloadingPercentage}%
           </div>
         )}

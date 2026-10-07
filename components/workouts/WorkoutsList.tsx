@@ -65,7 +65,7 @@ export default function WorkoutsList() {
         <div className="flex gap-3 flex-wrap items-center">
           <button
             onClick={() => router.push('/workouts-editor/new')}
-            className="bg-accent text-white px-4 py-2 rounded-lg hover:bg-accent-hover font-medium"
+            className="bg-accent text-on-accent px-4 py-2 rounded-lg hover:bg-accent-hover font-medium"
           >
             + אימון חדש
           </button>
@@ -82,7 +82,7 @@ export default function WorkoutsList() {
       </div>
 
       {/* Filters */}
-      <div className="bg-surface rounded-lg shadow p-4 mb-6">
+      <div className="bg-surface rounded-lg p-4 mb-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Search */}
           <div>

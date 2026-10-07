@@ -49,7 +49,7 @@ export function WorkoutStatsDisplay({ performance, email }: WorkoutStatsDisplayP
   return (
     <div className="space-y-6">
       {/* Overall Summary */}
-      <div className="rounded-lg p-6 text-white shadow-lg bg-surface border border-line">
+      <div className="rounded-lg p-6 text-fg bg-surface border border-line">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-2xl font-bold">💪 סיכום אימונים</h2>
           
@@ -59,7 +59,7 @@ export function WorkoutStatsDisplay({ performance, email }: WorkoutStatsDisplayP
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="px-3 py-2 rounded-lg bg-white/20 backdrop-blur-sm border border-white/30 text-white font-medium focus:outline-none focus:ring-2 focus:ring-white/50 cursor-pointer"
+              className="px-3 py-2 rounded-lg min-h-11 bg-bg border border-line-strong text-fg font-medium focus:outline-none focus:border-accent cursor-pointer"
             >
               <option value="all" className="text-fg">🔍 הכל ({performance.workouts.length})</option>
               {allCategories.map((category) => (
@@ -162,7 +162,7 @@ function CategorySection({
   dateRange: { start: string; end: string }
 }) {
   return (
-    <div className="bg-surface rounded-lg shadow-lg border-2 border-line">
+    <div className="bg-surface rounded-lg border-2 border-line">
       <div className="p-4 border-b-2 border-line rounded-t-lg bg-surface">
         <h3 className="text-xl font-bold text-fg flex items-center gap-2">
           <span>{getCategoryIcon(category)}</span>
@@ -218,8 +218,8 @@ function WorkoutTimelineRow({ workout, rank, maxSessions, email, dateRange }: {
 }) {
   const [open, setOpen] = useState(false)
 
-  const bgColor = workout.completionRate >= 80 ? 'bg-green-50' :
-                  workout.completionRate >= 50 ? 'bg-yellow-50' : 'bg-red-50'
+  const bgColor = workout.completionRate >= 80 ? 'bg-success/10' :
+                  workout.completionRate >= 50 ? 'bg-warning/10' : 'bg-danger/10'
 
   const timelineWidth = maxSessions > 0 ? (workout.totalSessions / maxSessions) * 100 : 0
 
@@ -241,9 +241,9 @@ function WorkoutTimelineRow({ workout, rank, maxSessions, email, dateRange }: {
           <div className="w-full bg-raised rounded-full h-2">
             <div
               className={`h-2 rounded-full ${
-                workout.completionRate >= 80 ? 'bg-success' :
-                workout.completionRate >= 50 ? 'bg-warning' : 'bg-danger'
-              }`}
+ workout.completionRate >= 80 ? 'bg-success' :
+ workout.completionRate >= 50 ? 'bg-warning' : 'bg-danger'
+ }`}
               style={{ width: `${timelineWidth}%` }}
             />
           </div>
@@ -588,7 +588,7 @@ function WorkoutExercisesPanel({ workoutId, lastCalendarId, containClimbing, ema
   return (
     <div className="px-4 py-3 space-y-4" dir="rtl">
       {!lastCalendarId && (
-        <p className="text-xs text-amber-600">⚠️ האימון לא בוצע — מציג תוכנית בלבד</p>
+        <p className="text-xs text-warning">⚠️ האימון לא בוצע — מציג תוכנית בלבד</p>
       )}
 
       {/* Climbing logbook */}
@@ -613,11 +613,11 @@ function WorkoutExercisesPanel({ workoutId, lastCalendarId, containClimbing, ema
                       <span className="text-xs font-mono text-faint w-10 shrink-0">{s.date}</span>
                       <div className="flex-1 bg-raised rounded-full h-3">
                         <div
-                          className="h-3 rounded-full bg-purple-500 transition-all"
+                          className="h-3 rounded-full bg-info transition-all"
                           style={{ width: `${pct}%` }}
                         />
                       </div>
-                      <span className="text-xs font-semibold text-purple-700 w-10 text-left shrink-0">
+                      <span className="text-xs font-semibold text-info w-10 text-left shrink-0">
                         {s.totalVolumeScore.toFixed(1)}
                       </span>
                     </div>
@@ -703,7 +703,7 @@ function WorkoutExercisesPanel({ workoutId, lastCalendarId, containClimbing, ema
         <div className="text-sm text-faint text-center">אין נתונים לאימון זה</div>
       )}
 
-      {planned.length > 0 && <table className="w-full text-xs">
+      {planned.length > 0 && <div className="overflow-x-auto"><table className="w-full min-w-[480px] text-xs">
         <thead>
           <tr className="border-b border-line text-muted">
             <th className="text-right py-1 pr-2 font-semibold">תרגיל</th>
@@ -761,7 +761,7 @@ function WorkoutExercisesPanel({ workoutId, lastCalendarId, containClimbing, ema
             )
           })}
         </tbody>
-      </table>}
+      </table></div>}
 
       {/* Performance history — horizontal table: rows=exercises, columns=dates */}
       {exercisesWithHistory.length > 0 && (
@@ -822,7 +822,7 @@ function WorkoutExercisesPanel({ workoutId, lastCalendarId, containClimbing, ema
                             ))}
                           </tr>
                           <tr>
-                            <td className="py-1.5 px-2 text-purple-700 font-medium bg-surface whitespace-nowrap" dir="rtl">שמאל</td>
+                            <td className="py-1.5 px-2 text-info font-medium bg-surface whitespace-nowrap" dir="rtl">שמאל</td>
                             {calendarIds.map(calId => (
                               <td key={calId} className="text-center py-1.5 px-2 font-mono text-fg-2 whitespace-nowrap">
                                 {lookup.get(`${calId}-Left`) ?? <span className="text-faint">—</span>}

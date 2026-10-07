@@ -46,10 +46,10 @@ interface Props {
 
 function getEventColor(event: CalendarEvent): string {
   const now = new Date()
-  if (event.completed) return '#10b981'
-  if (event.Deloading) return '#06b6d4'
-  if (new Date(event.end) < now) return '#ef4444'
-  return '#3b82f6'
+  if (event.completed) return '#5FB37A'
+  if (event.Deloading) return '#7FB0C9'
+  if (new Date(event.end) < now) return '#E06A5F'
+  return '#E0763A'
 }
 
 function EventCardBody({ event, index }: { event: CalendarEvent; index: number }) {
@@ -57,7 +57,7 @@ function EventCardBody({ event, index }: { event: CalendarEvent; index: number }
   return (
     <>
       <div
-        className="absolute -top-3 -right-3 w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg"
+        className="absolute -top-3 -right-3 w-10 h-10 rounded-full flex items-center justify-center text-on-accent font-bold text-lg shadow-lg"
         style={{ backgroundColor: color }}
       >
         {index + 1}
@@ -79,7 +79,7 @@ function EventCardBody({ event, index }: { event: CalendarEvent; index: number }
             </span>
           )}
           {event.Deloading && !event.completed && (
-            <span className="inline-flex items-center gap-2 px-4 py-2 bg-cyan-100 text-cyan-800 rounded-lg text-sm font-bold">
+            <span className="inline-flex items-center gap-2 px-4 py-2 bg-info/10 text-info rounded-lg text-sm font-bold">
               <span className="text-lg">🔵</span><span>דילודינג {event.DeloadingPercentage}%</span>
             </span>
           )}
@@ -121,10 +121,10 @@ function SortableEventCard({
         transition,
         borderRightColor: color,
       }}
-      className={`group relative bg-surface rounded-xl p-6 pl-10 border-r-8 hover:shadow-lg transition-shadow cursor-pointer
-        ${isDragging ? 'opacity-50 shadow-xl z-50' : ''}
-        ${isPending ? 'border-dashed opacity-80' : ''}
-      `}
+      className={`group relative bg-surface rounded-xl p-6 pl-10 border-r-8 transition-shadow cursor-pointer
+ ${isDragging ? 'opacity-50 shadow-xl z-50' : ''}
+ ${isPending ? 'border-dashed opacity-80' : ''}
+ `}
       onClick={() => onEventClick(event)}
     >
       <div
@@ -139,7 +139,7 @@ function SortableEventCard({
       <EventCardBody event={event} index={index} />
 
       <div className="absolute top-4 left-10 opacity-0 group-hover:opacity-100 transition-opacity">
-        <div className="px-3 py-1 bg-accent text-white rounded-lg text-xs font-medium">
+        <div className="px-3 py-1 bg-accent text-on-accent rounded-lg text-xs font-medium">
           👆 לחץ להתחלה
         </div>
       </div>
@@ -228,26 +228,26 @@ export default function DayListView({
   }, [date])
 
   return (
-    <div className="bg-surface rounded-xl shadow-sm">
+    <div className="bg-surface rounded-xl ">
       {/* Floating Navigation Buttons */}
       <div className="fixed bottom-32 right-6 z-40 flex flex-col gap-2">
         <button
           onClick={goToPrevDay}
-          className="w-14 h-14 bg-accent hover:bg-accent-hover text-white rounded-full shadow-lg flex items-center justify-center text-2xl transition-all hover:scale-110 active:scale-95"
+          className="w-14 h-14 bg-accent hover:bg-accent-hover text-on-accent rounded-full flex items-center justify-center text-2xl transition-all hover:scale-110 active:scale-95"
           title="יום קודם (←)"
         >
           →
         </button>
         <button
           onClick={goToNextDay}
-          className="w-14 h-14 bg-accent hover:bg-accent-hover text-white rounded-full shadow-lg flex items-center justify-center text-2xl transition-all hover:scale-110 active:scale-95"
+          className="w-14 h-14 bg-accent hover:bg-accent-hover text-on-accent rounded-full flex items-center justify-center text-2xl transition-all hover:scale-110 active:scale-95"
           title="יום הבא (→)"
         >
           ←
         </button>
         <button
           onClick={onBackToMonth}
-          className="w-14 h-14 bg-purple-600 hover:bg-purple-700 text-white rounded-full shadow-lg flex items-center justify-center text-xl transition-all hover:scale-110 active:scale-95"
+          className="w-14 h-14 bg-info hover:bg-info text-on-accent rounded-full flex items-center justify-center text-xl transition-all hover:scale-110 active:scale-95"
           title="חזרה לחודש (M)"
         >
           🗓️
@@ -255,7 +255,7 @@ export default function DayListView({
         {!isToday && (
           <button
             onClick={goToToday}
-            className="w-14 h-14 bg-success hover:bg-success/90 text-white rounded-full shadow-lg flex items-center justify-center text-xl transition-all hover:scale-110 active:scale-95"
+            className="w-14 h-14 bg-success hover:bg-success/90 text-on-accent rounded-full flex items-center justify-center text-xl transition-all hover:scale-110 active:scale-95"
             title="קפיצה להיום (T)"
           >
             🏠
@@ -297,7 +297,7 @@ export default function DayListView({
         <div className="flex gap-2 justify-center">
           <button
             onClick={onBackToMonth}
-            className="px-4 py-2 bg-purple-100 hover:bg-purple-200 text-purple-700 rounded-lg transition-colors text-sm font-medium"
+            className="px-4 py-2 bg-info/10 hover:bg-info/20 text-info rounded-lg transition-colors text-sm font-medium"
           >
             🗓️ חזרה לחודש
           </button>
@@ -328,7 +328,7 @@ export default function DayListView({
                 ? (mins > 0 ? `${hours}ש' ${mins}ד'` : `${hours}ש'`)
                 : `${mins} דק'`
               return (
-                <span className="inline-flex items-center gap-2 px-4 py-2 bg-purple-100 text-purple-700 rounded-full text-sm font-medium">
+                <span className="inline-flex items-center gap-2 px-4 py-2 bg-info/10 text-info rounded-full text-sm font-medium">
                   <span>⏱</span>
                   <span>{label}</span>
                 </span>
@@ -396,11 +396,11 @@ export default function DayListView({
                 <div
                   key={event.id}
                   onClick={() => onEventClick(event)}
-                  className={`group relative bg-surface rounded-xl p-6 hover:shadow-lg transition-all cursor-pointer border-r-8 active:bg-surface hover:translate-x-[-4px] ${isPending ? 'border-dashed opacity-80' : ''}`}
+                  className={`group relative bg-surface rounded-xl p-6 transition-all cursor-pointer border-r-8 active:bg-surface hover:translate-x-[-4px] ${isPending ? 'border-dashed opacity-80' : ''}`}
                   style={{ borderRightColor: color }}
                 >
                   <div
-                    className="absolute -top-3 -right-3 w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg"
+                    className="absolute -top-3 -right-3 w-10 h-10 rounded-full flex items-center justify-center text-on-accent font-bold text-lg shadow-lg"
                     style={{ backgroundColor: color }}
                   >
                     {index + 1}
@@ -425,7 +425,7 @@ export default function DayListView({
                         </span>
                       )}
                       {event.Deloading && !event.completed && (
-                        <span className="inline-flex items-center gap-2 px-4 py-2 bg-cyan-100 text-cyan-800 rounded-lg text-sm font-bold">
+                        <span className="inline-flex items-center gap-2 px-4 py-2 bg-info/10 text-info rounded-lg text-sm font-bold">
                           <span className="text-lg">🔵</span><span>דילודינג {event.DeloadingPercentage}%</span>
                         </span>
                       )}
@@ -442,7 +442,7 @@ export default function DayListView({
                     </div>
                   </div>
                   <div className="absolute top-4 left-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <div className="px-3 py-1 bg-accent text-white rounded-lg text-xs font-medium">
+                    <div className="px-3 py-1 bg-accent text-on-accent rounded-lg text-xs font-medium">
                       👆 לחץ להתחלה
                     </div>
                   </div>
@@ -459,23 +459,23 @@ export default function DayListView({
           <div className="max-w-3xl mx-auto">
             <h3 className="text-lg font-bold text-fg-2 mb-4 text-center">סיכום היום</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="text-center p-4 bg-surface rounded-lg shadow-sm">
+              <div className="text-center p-4 bg-surface rounded-lg ">
                 <div className="text-3xl font-bold text-fg-2 mb-1">{sortedEvents.length}</div>
                 <div className="text-sm text-fg-3">סה"כ</div>
               </div>
-              <div className="text-center p-4 bg-surface rounded-lg shadow-sm">
+              <div className="text-center p-4 bg-surface rounded-lg ">
                 <div className="text-3xl font-bold text-success mb-1">
                   {sortedEvents.filter(e => e.completed).length}
                 </div>
                 <div className="text-sm text-fg-3">הושלמו</div>
               </div>
-              <div className="text-center p-4 bg-surface rounded-lg shadow-sm">
+              <div className="text-center p-4 bg-surface rounded-lg ">
                 <div className="text-3xl font-bold text-danger mb-1">
                   {sortedEvents.filter(e => !e.completed && new Date(e.end) < new Date()).length}
                 </div>
                 <div className="text-sm text-fg-3">פספסו</div>
               </div>
-              <div className="text-center p-4 bg-surface rounded-lg shadow-sm">
+              <div className="text-center p-4 bg-surface rounded-lg ">
                 <div className="text-3xl font-bold text-accent mb-1">
                   {sortedEvents.filter(e => !e.completed && new Date(e.end) >= new Date()).length}
                 </div>

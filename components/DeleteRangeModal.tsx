@@ -216,7 +216,7 @@ export default function DeleteRangeModal({ isOpen, onClose, onSuccess, email }: 
   return (
     <>
       <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-        <div className="bg-surface rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" dir="rtl">
+        <div className="bg-raised border border-line-strong rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" dir="rtl">
           {/* Header */}
           <div className="sticky top-0 bg-surface border-b px-6 py-4 rounded-t-xl">
             <div className="flex justify-between items-center">
@@ -267,7 +267,7 @@ export default function DeleteRangeModal({ isOpen, onClose, onSuccess, email }: 
             <button
               onClick={handleSearch}
               disabled={loading || deleting}
-              className="w-full py-3 bg-accent text-white rounded-lg hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed font-medium transition"
+              className="w-full py-3 bg-accent text-on-accent rounded-lg hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed font-medium transition"
             >
               {loading ? '⏳ מחפש...' : '🔍 חפש אימונים בטווח'}
             </button>
@@ -333,12 +333,12 @@ export default function DeleteRangeModal({ isOpen, onClose, onSuccess, email }: 
                       <div
                         key={event.CalendarID}
                         className={`flex items-center gap-2 text-sm ${
-                          event.Completed
-                            ? 'text-success'
-                            : missed
-                            ? 'text-danger'
-                            : 'text-accent'
-                        }`}
+ event.Completed
+ ? 'text-success'
+ : missed
+ ? 'text-danger'
+ : 'text-accent'
+ }`}
                       >
                         <span className="text-base">
                           {event.Completed ? '✅' : missed ? '❌' : '⏳'}
@@ -381,7 +381,7 @@ export default function DeleteRangeModal({ isOpen, onClose, onSuccess, email }: 
                 <button
                   onClick={handleDelete}
                   disabled={deleting || filteredEvents.length === 0}
-                  className="flex-1 py-3 bg-danger text-white rounded-lg hover:bg-danger/90 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition"
+                  className="flex-1 py-3 bg-danger text-on-accent rounded-lg hover:bg-danger/90 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition"
                 >
                   {deleting ? '⏳ מוחק...' : `🗑️ מחק ${filteredEvents.length} אימונים`}
                 </button>
@@ -394,7 +394,7 @@ export default function DeleteRangeModal({ isOpen, onClose, onSuccess, email }: 
       {/* Confirmation Modal */}
       {showConfirmation && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[60] p-4">
-          <div className="bg-surface rounded-xl shadow-2xl max-w-md w-full p-6" dir="rtl">
+          <div className="bg-raised border border-line-strong rounded-xl max-w-md w-full p-6" dir="rtl">
             <h3 className="text-xl font-bold text-fg mb-4">
               ⚠️ האם אתה בטוח?
             </h3>
@@ -422,7 +422,7 @@ export default function DeleteRangeModal({ isOpen, onClose, onSuccess, email }: 
               <button
                 onClick={handleConfirmedDelete}
                 disabled={deleting}
-                className="flex-1 py-3 bg-danger text-white rounded-lg hover:bg-danger/90 disabled:opacity-50 font-medium transition"
+                className="flex-1 py-3 bg-danger text-on-accent rounded-lg hover:bg-danger/90 disabled:opacity-50 font-medium transition"
               >
                 {deleting ? '⏳ מוחק...' : 'כן, אני בטוח - מחק'}
               </button>

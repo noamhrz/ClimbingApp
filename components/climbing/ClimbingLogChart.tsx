@@ -200,7 +200,7 @@ export default function ClimbingLogChart({ data }: Props) {
   }, [data])
 
   return (
-    <div className="bg-surface rounded-lg shadow p-6 mb-6">
+    <div className="bg-surface rounded-lg p-6 mb-6">
       <div style={{ height: '400px' }}>
         <canvas ref={canvasRef}></canvas>
       </div>

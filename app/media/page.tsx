@@ -69,7 +69,7 @@ function FileCard({
   }
 
   return (
-    <div className="bg-surface rounded-xl shadow-sm border border-line flex flex-col">
+    <div className="bg-surface rounded-xl border border-line flex flex-col">
       {/* Preview */}
       <div className="bg-surface relative rounded-t-xl overflow-hidden" style={{ minHeight: '160px' }}>
         {isVideo(file.MimeType) ? (
@@ -117,10 +117,10 @@ function FileCard({
               <Link
                 href={`/analysis/${file.FileID}`}
                 className={`text-xs px-2 py-1 rounded-lg transition-colors font-medium ${
-                  hasAnalysis
-                    ? 'bg-success/15 text-success hover:bg-success/15 border border-success'
-                    : 'text-accent hover:text-accent/90'
-                }`}
+ hasAnalysis
+ ? 'bg-success/15 text-success hover:bg-success/15 border border-success'
+ : 'text-accent hover:text-accent/90'
+ }`}
                 title={hasAnalysis ? 'צפה בניתוח' : 'נתח סרטון'}
               >
                 {hasAnalysis ? 'צפה בניתוח' : '📊 נתח'}
@@ -157,8 +157,8 @@ function DropZone({ onFiles }: { onFiles: (files: FileList) => void }) {
       onDrop={e => { e.preventDefault(); setDragOver(false); if (e.dataTransfer.files.length) onFiles(e.dataTransfer.files) }}
       onClick={() => inputRef.current?.click()}
       className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors ${
-        dragOver ? 'border-accent bg-accent/15' : 'border-line hover:border-accent/90 hover:bg-surface'
-      }`}
+ dragOver ? 'border-accent bg-accent/15' : 'border-line hover:border-accent/90 hover:bg-surface'
+ }`}
     >
       <p className="text-3xl mb-2">📁</p>
       <p className="text-sm font-medium text-fg-2">גרור קובץ לכאן או לחץ לבחירה</p>
@@ -560,7 +560,7 @@ function MediaContent() {
 
       {/* ── Filters (only admin/coach see the dropdown) ── */}
       {isCoachOrAdmin ? (
-        <div className="bg-surface rounded-xl shadow-sm border border-line p-4 mb-6">
+        <div className="bg-surface rounded-xl border border-line p-4 mb-6">
           <div className="flex flex-wrap gap-3 items-end">
             <div className="flex flex-col gap-1 flex-1 min-w-[160px]">
               <label className="text-xs font-medium text-muted">ספורטאי</label>
@@ -577,7 +577,7 @@ function MediaContent() {
           </div>
         </div>
       ) : (
-        <div className="bg-surface rounded-xl shadow-sm border border-line px-4 py-3 mb-6">
+        <div className="bg-surface rounded-xl border border-line px-4 py-3 mb-6">
           <p className="text-sm text-fg-3">
             <span className="font-medium">{users[0]?.Name ?? currentUser?.Name}</span>
             <span className="text-faint mr-1"> — הקבצים שלי</span>
@@ -625,7 +625,7 @@ function MediaContent() {
             <p className="text-xs text-accent mt-1.5 text-center">
               {uploadProgress < 100 ? `מעלה לשרת... ${uploadProgress}%` : 'מעבד את הוידאו...'}
             </p>
-            <p className="text-xs text-blue-400 mt-1 text-center">השאר את המסך דלוק עד סיום ההעלאה</p>
+            <p className="text-xs text-accent mt-1 text-center">השאר את המסך דלוק עד סיום ההעלאה</p>
           </div>
         ) : (
           <DropZone onFiles={handleFiles} />
@@ -661,7 +661,7 @@ function MediaContent() {
           <p className="text-faint">טוען קבצים...</p>
         </div>
       ) : files.length === 0 ? (
-        <div className="bg-surface rounded-xl shadow-sm border border-line p-10 text-center">
+        <div className="bg-surface rounded-xl border border-line p-10 text-center">
           <p className="text-4xl mb-3">📂</p>
           <p className="text-muted">אין קבצים עדיין</p>
           <p className="text-faint text-sm mt-1">גרור קבצים לאזור ההעלאה למעלה</p>
@@ -685,7 +685,7 @@ function MediaContent() {
 
       {/* ── Toast ── */}
       {toast && (
-        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 bg-bg text-white text-sm px-4 py-2.5 rounded-xl shadow-lg animate-toast whitespace-nowrap">
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 bg-bg text-fg text-sm px-4 py-2.5 rounded-xl shadow-lg animate-toast whitespace-nowrap">
           {toast}
         </div>
       )}

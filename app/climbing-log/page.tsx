@@ -186,7 +186,7 @@ export default function ClimbingLogPage() {
         <div className="flex gap-3 flex-wrap items-center">
           <button
             onClick={() => setShowAddModal(true)}
-            className="bg-accent text-white px-4 py-2 rounded-lg hover:bg-accent-hover font-medium"
+            className="bg-accent text-on-accent px-4 py-2 rounded-lg hover:bg-accent-hover font-medium"
           >
             + הוסף מסלול
           </button>
@@ -217,7 +217,7 @@ export default function ClimbingLogPage() {
 
           {/* List */}
           {filteredLogs.length === 0 ? (
-            <div className="bg-surface rounded-lg shadow p-12 text-center">
+            <div className="bg-surface rounded-lg p-12 text-center">
               <div className="text-6xl mb-4">🧗</div>
               <p className="text-fg-3 text-lg mb-4">
                 {allLogs.length > 0

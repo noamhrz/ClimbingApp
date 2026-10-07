@@ -37,6 +37,21 @@
   --radius-card: 12px;
 }
 
+:root {
+  color-scheme: dark;
+}
+
+/* Recharts defaults on dark (grid lines, axis ticks, tooltips, legends) */
+.recharts-cartesian-grid line[stroke="#ccc"] { stroke: var(--color-line); }
+.recharts-cartesian-axis-tick-value[fill="#666"] { fill: var(--color-muted); }
+.recharts-cartesian-axis-line[stroke="#666"], .recharts-cartesian-axis-tick-line[stroke="#666"] { stroke: var(--color-line-strong); }
+.recharts-default-tooltip {
+  background-color: var(--color-raised) !important;
+  border-color: var(--color-line-strong) !important;
+  border-radius: 8px;
+  color: var(--color-fg);
+}
+
 body {
   background: var(--color-bg);
   color: var(--color-fg);

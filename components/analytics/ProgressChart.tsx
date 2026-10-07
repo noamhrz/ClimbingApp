@@ -25,7 +25,7 @@ const BarRepsLabel = (props: any) => {
     <text 
       x={x + width / 2} 
       y={y - 8} 
-      fill="#10b981" 
+      fill="#5FB37A" 
       fontSize="12" 
       fontWeight="bold"
       textAnchor="middle"
@@ -46,7 +46,7 @@ const RightHandRepsLabel = (props: any) => {
     <text 
       x={x + width / 2} 
       y={y - 8} 
-      fill="#1e40af" 
+      fill="#E0763A" 
       fontSize="11" 
       fontWeight="bold"
       textAnchor="middle"
@@ -67,7 +67,7 @@ const LeftHandRepsLabel = (props: any) => {
     <text 
       x={x + width / 2} 
       y={y - 8} 
-      fill="#065f46" 
+      fill="#5FB37A" 
       fontSize="11" 
       fontWeight="bold"
       textAnchor="middle"
@@ -87,7 +87,7 @@ const PercentageBWLabel = ({ x, y, width, value, bodyWeight }: any) => {
     <text 
       x={x + width / 2} 
       y={y - 24}  // Above reps
-      fill="#6b7280" 
+      fill="#A39E95" 
       fontSize="10" 
       fontWeight="600"
       textAnchor="middle"
@@ -101,7 +101,7 @@ export default function ProgressChart({ data, isSingleHand, bodyWeight }: Progre
   
   if (!data || data.length === 0) {
     return (
-      <div className="bg-surface rounded-xl shadow-sm border border-line p-8 mb-6">
+      <div className="bg-surface rounded-xl border border-line p-8 mb-6">
         <div className="text-center text-muted">
           <div className="text-4xl mb-2">📈</div>
           <div>אין נתונים להצגה</div>
@@ -115,7 +115,7 @@ export default function ProgressChart({ data, isSingleHand, bodyWeight }: Progre
     if (active && payload && payload.length) {
       const data = payload[0].payload
       return (
-        <div className="bg-surface p-4 rounded-lg shadow-xl border-2 border-line">
+        <div className="bg-surface p-4 rounded-lg border-2 border-line">
           <p className="font-bold text-fg mb-3 text-base border-b pb-2">📅 {label}</p>
           <div className="space-y-2">
             {data.weight !== null && data.weight !== undefined && (
@@ -127,7 +127,7 @@ export default function ProgressChart({ data, isSingleHand, bodyWeight }: Progre
                 {bodyWeight && (
                   <div className="flex items-center justify-between gap-4">
                     <span className="text-sm font-medium text-fg-2">📊 % ממשקל גוף:</span>
-                    <span className="text-sm font-bold text-purple-600">{((data.weight / bodyWeight) * 100).toFixed(1)}%</span>
+                    <span className="text-sm font-bold text-info">{((data.weight / bodyWeight) * 100).toFixed(1)}%</span>
                   </div>
                 )}
               </>
@@ -141,7 +141,7 @@ export default function ProgressChart({ data, isSingleHand, bodyWeight }: Progre
             {data.rpe !== null && data.rpe !== undefined && (
               <div className="flex items-center justify-between gap-4">
                 <span className="text-sm font-medium text-fg-2">🔥 RPE:</span>
-                <span className="text-sm font-bold text-amber-600">{data.rpe}</span>
+                <span className="text-sm font-bold text-warning">{data.rpe}</span>
               </div>
             )}
             {/* Single hand data */}
@@ -154,7 +154,7 @@ export default function ProgressChart({ data, isSingleHand, bodyWeight }: Progre
                 {bodyWeight && (
                   <div className="flex items-center justify-between gap-4">
                     <span className="text-sm font-medium text-fg-2">📊 % ממשקל גוף:</span>
-                    <span className="text-sm font-bold text-purple-600">{((data.right / bodyWeight) * 100).toFixed(1)}%</span>
+                    <span className="text-sm font-bold text-info">{((data.right / bodyWeight) * 100).toFixed(1)}%</span>
                   </div>
                 )}
                 {data.rightReps && (
@@ -174,7 +174,7 @@ export default function ProgressChart({ data, isSingleHand, bodyWeight }: Progre
                 {bodyWeight && (
                   <div className="flex items-center justify-between gap-4">
                     <span className="text-sm font-medium text-fg-2">📊 % ממשקל גוף:</span>
-                    <span className="text-sm font-bold text-purple-600">{((data.left / bodyWeight) * 100).toFixed(1)}%</span>
+                    <span className="text-sm font-bold text-info">{((data.left / bodyWeight) * 100).toFixed(1)}%</span>
                   </div>
                 )}
                 {data.leftReps && (
@@ -208,7 +208,7 @@ export default function ProgressChart({ data, isSingleHand, bodyWeight }: Progre
       <text 
         x={x + 12} 
         y={y - 8} 
-        fill="#10b981" 
+        fill="#5FB37A" 
         fontSize="12" 
         fontWeight="bold"
         textAnchor="start"
@@ -221,7 +221,7 @@ export default function ProgressChart({ data, isSingleHand, bodyWeight }: Progre
   if (isSingleHand) {
     // Single hand - Right vs Left with grouped bars
     return (
-      <div className="bg-surface rounded-xl shadow-sm border border-line p-6 mb-6">
+      <div className="bg-surface rounded-xl border border-line p-6 mb-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-bold text-fg">📈 התקדמות משקל - ימין vs שמאל</h3>
           <div className="text-sm text-muted">
@@ -231,33 +231,33 @@ export default function ProgressChart({ data, isSingleHand, bodyWeight }: Progre
         
         <div className="flex gap-4 text-sm mb-4 bg-surface p-3 rounded-lg">
           <div className="flex items-center gap-2">
-            <div className="w-4 h-3 bg-accent border-2 border-white shadow"></div>
+            <div className="w-4 h-3 bg-accent border-2 border-line-strong "></div>
             <span className="font-medium">🫱 יד ימין</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-4 h-3 bg-success border-2 border-white shadow"></div>
+            <div className="w-4 h-3 bg-success border-2 border-line-strong "></div>
             <span className="font-medium">🫲 יד שמאל</span>
           </div>
         </div>
         
         <ResponsiveContainer width="100%" height={450}>
           <BarChart data={data} margin={{ top: 20, right: 40, left: 20, bottom: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+            <CartesianGrid strokeDasharray="3 3" stroke="#2B2722" />
             <XAxis 
               dataKey="date" 
-              stroke="#6b7280"
+              stroke="#A39E95"
               style={{ fontSize: '13px', fontWeight: 500 }}
-              tick={{ fill: '#6b7280' }}
+              tick={{ fill: '#A39E95' }}
             />
             <YAxis 
-              stroke="#6b7280"
+              stroke="#A39E95"
               style={{ fontSize: '13px', fontWeight: 600 }}
-              tick={{ fill: '#6b7280' }}
+              tick={{ fill: '#A39E95' }}
               label={{ 
                 value: 'משקל (ק״ג)', 
                 angle: -90, 
                 position: 'insideLeft',
-                style: { fontSize: '14px', fontWeight: 700, fill: '#6b7280' }
+                style: { fontSize: '14px', fontWeight: 700, fill: '#A39E95' }
               }}
             />
             <Tooltip content={<CustomTooltip />} />
@@ -266,13 +266,13 @@ export default function ProgressChart({ data, isSingleHand, bodyWeight }: Progre
             {bodyWeight && (
               <ReferenceLine 
                 y={bodyWeight} 
-                stroke="#ef4444" 
+                stroke="#E06A5F" 
                 strokeDasharray="5 5" 
                 strokeWidth={2}
                 label={{ 
                   value: `BW: ${bodyWeight}kg`, 
                   position: 'right',
-                  fill: '#ef4444',
+                  fill: '#E06A5F',
                   fontSize: 12,
                   fontWeight: 'bold'
                 }}
@@ -282,7 +282,7 @@ export default function ProgressChart({ data, isSingleHand, bodyWeight }: Progre
             {/* Right hand bar */}
             <Bar 
               dataKey="right" 
-              fill="#3b82f6" 
+              fill="#E0763A" 
               name="יד ימין"
               radius={[8, 8, 0, 0]}
               maxBarSize={30}
@@ -294,7 +294,7 @@ export default function ProgressChart({ data, isSingleHand, bodyWeight }: Progre
             {/* Left hand bar */}
             <Bar 
               dataKey="left" 
-              fill="#10b981" 
+              fill="#5FB37A" 
               name="יד שמאל"
               radius={[8, 8, 0, 0]}
               maxBarSize={30}
@@ -310,7 +310,7 @@ export default function ProgressChart({ data, isSingleHand, bodyWeight }: Progre
 
   // Both hands - Weight with vertical bars
   return (
-    <div className="bg-surface rounded-xl shadow-sm border border-line p-6 mb-6">
+    <div className="bg-surface rounded-xl border border-line p-6 mb-6">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-bold text-fg">📈 התקדמות משקל</h3>
         <div className="text-sm text-muted">
@@ -320,31 +320,31 @@ export default function ProgressChart({ data, isSingleHand, bodyWeight }: Progre
       
       <div className="flex items-center gap-4 text-sm mb-4 bg-accent/15 p-3 rounded-lg">
         <div className="flex items-center gap-2">
-          <div className="w-4 h-3 bg-accent border-2 border-white shadow"></div>
+          <div className="w-4 h-3 bg-accent border-2 border-line-strong "></div>
           <span className="font-medium">⚖️ משקל (ק״ג)</span>
         </div>
       </div>
       
       <ResponsiveContainer width="100%" height={450}>
         <BarChart data={data} margin={{ top: 25, right: 40, left: 20, bottom: 5 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+          <CartesianGrid strokeDasharray="3 3" stroke="#2B2722" />
           
           <XAxis 
             dataKey="date" 
-            stroke="#6b7280"
+            stroke="#A39E95"
             style={{ fontSize: '13px', fontWeight: 500 }}
-            tick={{ fill: '#6b7280' }}
+            tick={{ fill: '#A39E95' }}
           />
           
           <YAxis 
-            stroke="#3b82f6"
+            stroke="#E0763A"
             style={{ fontSize: '13px', fontWeight: 600 }}
-            tick={{ fill: '#3b82f6' }}
+            tick={{ fill: '#E0763A' }}
             label={{ 
               value: 'משקל (ק״ג)', 
               angle: -90, 
               position: 'insideLeft',
-              style: { fontSize: '14px', fontWeight: 700, fill: '#3b82f6' }
+              style: { fontSize: '14px', fontWeight: 700, fill: '#E0763A' }
             }}
           />
           
@@ -354,13 +354,13 @@ export default function ProgressChart({ data, isSingleHand, bodyWeight }: Progre
           {bodyWeight && (
             <ReferenceLine 
               y={bodyWeight} 
-              stroke="#ef4444" 
+              stroke="#E06A5F" 
               strokeDasharray="5 5" 
               strokeWidth={2}
               label={{ 
                 value: `BW: ${bodyWeight}kg`, 
                 position: 'right',
-                fill: '#ef4444',
+                fill: '#E06A5F',
                 fontSize: 12,
                 fontWeight: 'bold'
               }}
@@ -370,7 +370,7 @@ export default function ProgressChart({ data, isSingleHand, bodyWeight }: Progre
           {/* Weight bars */}
           <Bar 
             dataKey="weight" 
-            fill="#3b82f6" 
+            fill="#E0763A" 
             name="משקל"
             radius={[8, 8, 0, 0]}
             maxBarSize={40}

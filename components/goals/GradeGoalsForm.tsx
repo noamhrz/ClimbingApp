@@ -95,15 +95,15 @@ export default function GradeGoalsForm({ type, initialData, onSave }: Props) {
         <button
           onClick={handleSave}
           disabled={saving}
-          className="px-6 py-3 bg-accent text-white font-semibold rounded-lg hover:bg-accent-hover transition disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-6 py-3 bg-accent text-on-accent font-semibold rounded-lg hover:bg-accent-hover transition disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {saving ? '💾 שומר...' : '💾 שמור'}
         </button>
         
         {message && (
           <div className={`px-4 py-2 rounded-lg ${
-            message.type === 'success' ? 'bg-success/15 text-success' : 'bg-danger/15 text-danger'
-          }`}>
+ message.type === 'success' ? 'bg-success/15 text-success' : 'bg-danger/15 text-danger'
+ }`}>
             {message.text}
           </div>
         )}

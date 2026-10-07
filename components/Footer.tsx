@@ -166,12 +166,12 @@ function UserSelectionMenu({
                     key={user.Email}
                     onClick={() => onSelectUser(user.Email)}
                     className={`p-4 rounded-xl border transition-colors text-start ${
-                      isInactive
-                        ? 'border-line bg-surface opacity-50'
-                        : isActive
-                          ? 'border-accent bg-accent/10'
-                          : 'border-line bg-surface hover:border-accent/60 hover:bg-accent/5'
-                    }`}
+ isInactive
+ ? 'border-line bg-surface opacity-50'
+ : isActive
+ ? 'border-accent bg-accent/10'
+ : 'border-line bg-surface hover:border-accent/60 hover:bg-accent/5'
+ }`}
                   >
                     <div className="flex items-start gap-3">
                       <span className="text-3xl">{config.icon}</span>

@@ -20,13 +20,13 @@ function getCommentStyle(comment: MediaComment, currentUser: Props['currentUser'
 
   if (isOwn) {
     return myRoleIsCoach
-      ? { align: 'items-end', bubble: 'bg-blue-100 border border-blue-200', name: 'text-blue-600' }
-      : { align: 'items-end', bubble: 'bg-green-100 border border-green-200', name: 'text-green-700' }
+      ? { align: 'items-end', bubble: 'bg-accent/10 border border-accent/30', name: 'text-accent' }
+      : { align: 'items-end', bubble: 'bg-success/10 border border-success/30', name: 'text-success' }
   }
   // Assume other side has the opposite role
   return myRoleIsCoach
-    ? { align: 'items-start', bubble: 'bg-gray-50 border border-gray-200', name: 'text-gray-500' }
-    : { align: 'items-start', bubble: 'bg-purple-50 border border-purple-200', name: 'text-purple-600' }
+    ? { align: 'items-start', bubble: 'bg-surface border border-line', name: 'text-muted' }
+    : { align: 'items-start', bubble: 'bg-info/10 border border-info/30', name: 'text-info' }
 }
 
 export default function MediaComments({ fileId, currentUser }: Props) {
@@ -130,7 +130,7 @@ export default function MediaComments({ fileId, currentUser }: Props) {
             <button
               onClick={handleSend}
               disabled={!newText.trim() || sending}
-              className="text-sm bg-accent hover:bg-accent/90 disabled:opacity-40 text-white px-3 py-1.5 rounded-lg transition-colors shrink-0"
+              className="text-sm bg-accent hover:bg-accent/90 disabled:opacity-40 text-on-accent px-3 py-1.5 rounded-lg transition-colors shrink-0"
             >
               שלח
             </button>

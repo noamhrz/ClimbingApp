@@ -106,10 +106,10 @@ export default function ForgotPasswordPage() {
 
         {message && (
           <div className={`mb-6 p-4 rounded-lg ${
-            message.type === 'success' 
-              ? 'bg-success/15 text-success border border-success' 
-              : 'bg-danger/15 text-danger border border-danger'
-          }`}>
+ message.type === 'success' 
+ ? 'bg-success/15 text-success border border-success' 
+ : 'bg-danger/15 text-danger border border-danger'
+ }`}>
             {message.text}
           </div>
         )}

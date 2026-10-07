@@ -66,7 +66,7 @@ export default function DynamicExercisesPage() {
           <p className="text-sm text-faint">צור תרגיל חדש עם הדגל "דינמי" מדף התרגילים</p>
           <button
             onClick={() => router.push('/exercises')}
-            className="mt-4 px-4 py-2 bg-accent text-white rounded-lg text-sm hover:bg-accent-hover"
+            className="mt-4 px-4 py-2 bg-accent text-on-accent rounded-lg text-sm hover:bg-accent-hover"
           >
             עבור לניהול תרגילים
           </button>
@@ -76,7 +76,7 @@ export default function DynamicExercisesPage() {
           {exercises.map((ex) => (
             <div
               key={ex.ExerciseID}
-              className="bg-surface border border-line rounded-xl p-4 hover:shadow-md transition-shadow cursor-pointer"
+              className="bg-surface border border-line rounded-xl p-4 transition-shadow cursor-pointer"
               onClick={() => router.push(`/exercises/dynamic/${ex.ExerciseID}`)}
             >
               <div className="flex items-start justify-between gap-2 mb-2">

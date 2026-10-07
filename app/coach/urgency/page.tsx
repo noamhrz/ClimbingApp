@@ -85,7 +85,7 @@ export default function UrgencyDashboard() {
           <p className="text-danger mb-6">{error}</p>
           <button
             onClick={() => router.push('/')}
-            className="px-6 py-3 bg-danger text-white rounded-lg hover:bg-danger/90 transition font-medium"
+            className="px-6 py-3 bg-danger text-on-accent rounded-lg hover:bg-danger/90 transition font-medium"
           >
             חזרה לדף הבית
           </button>
@@ -132,10 +132,10 @@ export default function UrgencyDashboard() {
           {/* User role badge */}
           <div className="text-left">
             <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg font-medium ${
-              activeUser?.Role === 'admin' 
-                ? 'bg-purple-100 text-purple-800 border border-purple-300'
-                : 'bg-accent/15 text-accent border border-accent'
-            }`}>
+ activeUser?.Role === 'admin' 
+ ? 'bg-info/10 text-info border border-info/30'
+ : 'bg-accent/15 text-accent border border-accent'
+ }`}>
               <span className="text-xl">
                 {activeUser?.Role === 'admin' ? '👑' : '🎓'}
               </span>
@@ -155,19 +155,19 @@ export default function UrgencyDashboard() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-surface rounded-lg shadow-md p-6 border-r-4 border-line-strong">
+        <div className="bg-surface rounded-lg p-6 border-r-4 border-line-strong">
           <div className="text-3xl font-bold text-fg">{athletes.length}</div>
           <div className="text-fg-3 mt-1">סה"כ מתאמנים</div>
         </div>
-        <div className="bg-surface rounded-lg shadow-md p-6 border-r-4 border-danger">
+        <div className="bg-surface rounded-lg p-6 border-r-4 border-danger">
           <div className="text-3xl font-bold text-danger">{criticalCount}</div>
           <div className="text-fg-3 mt-1">🔴🔴 קריטי</div>
         </div>
-        <div className="bg-surface rounded-lg shadow-md p-6 border-r-4 border-danger">
+        <div className="bg-surface rounded-lg p-6 border-r-4 border-danger">
           <div className="text-3xl font-bold text-danger">{highCount}</div>
           <div className="text-fg-3 mt-1">🔴 דחוף</div>
         </div>
-        <div className="bg-surface rounded-lg shadow-md p-6 border-r-4 border-warning">
+        <div className="bg-surface rounded-lg p-6 border-r-4 border-warning">
           <div className="text-3xl font-bold text-warning">{mediumCount}</div>
           <div className="text-fg-3 mt-1">🟡 בינוני</div>
         </div>
@@ -177,46 +177,46 @@ export default function UrgencyDashboard() {
       <div className="flex gap-3 mb-6 flex-wrap">
         <button
           onClick={() => setFilter('all')}
-          className={`px-5 py-2.5 rounded-lg font-medium transition shadow-sm ${
-            filter === 'all' 
-              ? 'bg-accent text-white shadow-md' 
-              : 'bg-surface text-fg-2 hover:bg-surface/90 border border-line'
-          }`}
+          className={`px-5 py-2.5 rounded-lg font-medium transition ${
+ filter === 'all' 
+ ? 'bg-accent text-on-accent ' 
+ : 'bg-surface text-fg-2 hover:bg-surface/90 border border-line'
+ }`}
         >
           הכל ({athletes.length})
         </button>
         <button
           onClick={() => setFilter('critical')}
-          className={`px-5 py-2.5 rounded-lg font-medium transition shadow-sm ${
-            filter === 'critical' 
-              ? 'bg-danger text-white shadow-md' 
-              : 'bg-surface text-fg-2 hover:bg-surface/90 border border-line'
-          }`}
+          className={`px-5 py-2.5 rounded-lg font-medium transition ${
+ filter === 'critical' 
+ ? 'bg-danger text-on-accent ' 
+ : 'bg-surface text-fg-2 hover:bg-surface/90 border border-line'
+ }`}
         >
           🔴🔴 קריטי ({criticalCount})
         </button>
         <button
           onClick={() => setFilter('high')}
-          className={`px-5 py-2.5 rounded-lg font-medium transition shadow-sm ${
-            filter === 'high' 
-              ? 'bg-danger text-white shadow-md' 
-              : 'bg-surface text-fg-2 hover:bg-surface/90 border border-line'
-          }`}
+          className={`px-5 py-2.5 rounded-lg font-medium transition ${
+ filter === 'high' 
+ ? 'bg-danger text-on-accent ' 
+ : 'bg-surface text-fg-2 hover:bg-surface/90 border border-line'
+ }`}
         >
           🔴 דחוף ({criticalCount + highCount})
         </button>
         <button
           onClick={loadAthletes}
-          className="mr-auto px-5 py-2.5 bg-surface border border-line rounded-lg hover:bg-surface/90 transition shadow-sm font-medium"
+          className="mr-auto px-5 py-2.5 bg-surface border border-line rounded-lg hover:bg-surface/90 transition font-medium"
         >
           🔄 רענן
         </button>
       </div>
 
       {/* Table */}
-      <div className="bg-surface rounded-lg shadow-lg overflow-hidden">
+      <div className="bg-surface rounded-lg overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
+          <table className="min-w-full divide-y divide-line">
             <thead className="bg-surface">
               <tr>
                 <th className="px-6 py-4 text-right text-xs font-bold text-fg-3 uppercase tracking-wider">
@@ -236,15 +236,15 @@ export default function UrgencyDashboard() {
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-surface divide-y divide-gray-200">
+            <tbody className="bg-surface divide-y divide-line">
               {filteredAthletes.map((athlete, index) => (
                 <tr 
                   key={athlete.email}
                   className={`hover:bg-surface transition-colors ${
-                    athlete.urgencyLevel === 'critical' ? 'bg-danger/15' :
-                    athlete.urgencyLevel === 'high' ? 'bg-warning/15' :
-                    athlete.urgencyLevel === 'medium' ? 'bg-warning/15' : ''
-                  }`}
+ athlete.urgencyLevel === 'critical' ? 'bg-danger/15' :
+ athlete.urgencyLevel === 'high' ? 'bg-warning/15' :
+ athlete.urgencyLevel === 'medium' ? 'bg-warning/15' : ''
+ }`}
                 >
                   {/* Index */}
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-muted font-medium">
@@ -288,13 +288,13 @@ export default function UrgencyDashboard() {
                     <div className="flex gap-2">
                       <button
                         onClick={() => router.push(`/athlete-stats/${athlete.email}`)}
-                        className="px-4 py-2 bg-accent text-white text-sm rounded-lg hover:bg-accent-hover transition shadow-sm font-medium"
+                        className="px-4 py-2 bg-accent text-on-accent text-sm rounded-lg hover:bg-accent-hover transition font-medium"
                       >
                         👁️ צפה
                       </button>
                       <button
                         onClick={() => {/* TODO: implement messaging */}}
-                        className="px-4 py-2 bg-raised text-fg-2 text-sm rounded-lg hover:bg-raised/90 transition shadow-sm font-medium"
+                        className="px-4 py-2 bg-raised text-fg-2 text-sm rounded-lg hover:bg-raised/90 transition font-medium"
                       >
                         💬
                       </button>
@@ -322,7 +322,7 @@ export default function UrgencyDashboard() {
       </div>
 
       {/* Legend */}
-      <div className="mt-6 bg-surface rounded-lg shadow p-6">
+      <div className="mt-6 bg-surface rounded-lg p-6">
         <h3 className="font-bold text-lg mb-3">📊 מקרא:</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
           <div>

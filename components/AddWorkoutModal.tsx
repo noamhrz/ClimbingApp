@@ -291,13 +291,13 @@ export default function AddWorkoutModal({
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
               transition={{ type: 'spring', duration: 0.3 }}
-              className="bg-surface rounded-2xl shadow-2xl w-full max-w-md flex flex-col"
+              className="bg-raised border border-line-strong rounded-2xl w-full max-w-md flex flex-col"
               style={{ maxHeight: 'calc(100vh - 2rem)' }}
               dir="rtl"
             >
               {/* Header — fixed */}
               <div className="flex-shrink-0 px-6 py-4 rounded-t-2xl bg-surface border border-line">
-                <h2 className="text-2xl font-bold text-white text-center">
+                <h2 className="text-2xl font-bold text-fg text-center">
                   ➕ הוספת אימונים ללוח
                 </h2>
               </div>
@@ -338,10 +338,10 @@ export default function AddWorkoutModal({
                         type="button"
                         onClick={() => setSelectedTime('morning')}
                         className={`py-3 px-4 rounded-lg border-2 transition-all ${
-                          selectedTime === 'morning'
-                            ? 'border-accent bg-accent/15 text-accent'
-                            : 'border-line hover:border-accent/90'
-                        }`}
+ selectedTime === 'morning'
+ ? 'border-accent bg-accent/15 text-accent'
+ : 'border-line hover:border-accent/90'
+ }`}
                       >
                         <div className="text-2xl mb-1">🌅</div>
                         <div className="text-sm font-medium">בוקר</div>
@@ -351,10 +351,10 @@ export default function AddWorkoutModal({
                         type="button"
                         onClick={() => setSelectedTime('afternoon')}
                         className={`py-3 px-4 rounded-lg border-2 transition-all ${
-                          selectedTime === 'afternoon'
-                            ? 'border-accent bg-accent/15 text-accent'
-                            : 'border-line hover:border-accent/90'
-                        }`}
+ selectedTime === 'afternoon'
+ ? 'border-accent bg-accent/15 text-accent'
+ : 'border-line hover:border-accent/90'
+ }`}
                       >
                         <div className="text-2xl mb-1">☀️</div>
                         <div className="text-sm font-medium">צהריים</div>
@@ -364,10 +364,10 @@ export default function AddWorkoutModal({
                         type="button"
                         onClick={() => setSelectedTime('evening')}
                         className={`py-3 px-4 rounded-lg border-2 transition-all ${
-                          selectedTime === 'evening'
-                            ? 'border-accent bg-accent/15 text-accent'
-                            : 'border-line hover:border-accent/90'
-                        }`}
+ selectedTime === 'evening'
+ ? 'border-accent bg-accent/15 text-accent'
+ : 'border-line hover:border-accent/90'
+ }`}
                       >
                         <div className="text-2xl mb-1">🌙</div>
                         <div className="text-sm font-medium">ערב</div>
@@ -396,12 +396,12 @@ export default function AddWorkoutModal({
                               type="button"
                               onClick={() => toggleWorkoutSelection(workout.id)}
                               className={`w-full text-right px-4 py-3 rounded-lg border-2 transition-all ${
-                                isSelected
-                                  ? isExisting
-                                    ? 'border-success bg-success text-white'
-                                    : 'border-accent bg-accent text-white'
-                                  : 'border-line bg-surface hover:border-accent/90 hover:bg-surface/90'
-                              }`}
+ isSelected
+ ? isExisting
+ ? 'border-success bg-success text-on-accent'
+ : 'border-accent bg-accent text-on-accent'
+ : 'border-line bg-surface hover:border-accent/90 hover:bg-surface/90'
+ }`}
                             >
                               <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
@@ -468,10 +468,10 @@ export default function AddWorkoutModal({
                             onDragEnter={() => handleDragEnter(workout.id)}
                             onDragEnd={handleDragEnd}
                             className={`flex items-center gap-3 px-4 py-3 border-2 rounded-lg select-none transition-all ${
-                              draggedId === workout.id
-                                ? 'border-accent bg-accent/15 opacity-60'
-                                : 'border-line bg-surface cursor-grab active:cursor-grabbing'
-                            }`}
+ draggedId === workout.id
+ ? 'border-accent bg-accent/15 opacity-60'
+ : 'border-line bg-surface cursor-grab active:cursor-grabbing'
+ }`}
                           >
                             <span className="text-faint text-xl leading-none">≡</span>
                             <span className="text-accent font-bold text-sm w-6">{index + 1}.</span>
@@ -500,7 +500,7 @@ export default function AddWorkoutModal({
                   <button
                     type="submit"
                     disabled={isSubmitting || selectedWorkoutIds.length === 0}
-                    className="flex-1 px-6 py-3 bg-accent text-white font-semibold rounded-lg hover:bg-accent-hover transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 px-6 py-3 bg-accent text-on-accent font-semibold rounded-lg hover:bg-accent-hover transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isSubmitting
                       ? 'שומר...'

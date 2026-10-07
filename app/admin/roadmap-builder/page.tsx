@@ -96,14 +96,14 @@ const COLOR_OPTIONS = [
 ]
 
 const COLOR_CLASSES: Record<string, string> = {
-  blue: 'bg-blue-100 border-blue-300 text-blue-800',
-  green: 'bg-green-100 border-green-300 text-green-800',
-  purple: 'bg-purple-100 border-purple-300 text-purple-800',
-  red: 'bg-red-100 border-red-300 text-red-800',
-  orange: 'bg-orange-100 border-orange-300 text-orange-800',
-  yellow: 'bg-yellow-100 border-yellow-300 text-yellow-800',
-  pink: 'bg-pink-100 border-pink-300 text-pink-800',
-  gray: 'bg-gray-100 border-gray-300 text-gray-800',
+  blue: 'bg-accent/10 border-accent/30 text-accent',
+  green: 'bg-success/10 border-success/30 text-success',
+  purple: 'bg-info/10 border-info/30 text-info',
+  red: 'bg-danger/10 border-danger/30 text-danger',
+  orange: 'bg-warning/10 border-warning/30 text-warning',
+  yellow: 'bg-warning/10 border-warning/30 text-warning',
+  pink: 'bg-info/10 border-info/30 text-info',
+  gray: 'bg-surface border-line text-fg',
 }
 
 // ─── Level Edit Modal ─────────────────────────────────────────────────────────
@@ -146,7 +146,7 @@ function LevelModal({ level, categories, onClose, onSave, saving }: LevelModalPr
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-surface rounded-xl shadow-2xl max-w-lg w-full p-6 max-h-[90vh] overflow-y-auto">
+      <div className="bg-raised border border-line-strong rounded-xl max-w-lg w-full p-6 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-bold text-fg">
             {form.id ? '✏️ עריכת רמה' : '➕ רמה חדשה'}
@@ -236,7 +236,7 @@ function LevelModal({ level, categories, onClose, onSave, saving }: LevelModalPr
                   <button
                     type="button"
                     onClick={addPrereq}
-                    className="px-3 py-1 bg-accent text-white rounded text-sm hover:bg-accent-hover"
+                    className="px-3 py-1 bg-accent text-on-accent rounded text-sm hover:bg-accent-hover"
                   >
                     הוסף
                   </button>
@@ -256,7 +256,7 @@ function LevelModal({ level, categories, onClose, onSave, saving }: LevelModalPr
             <button
               onClick={() => onSave(form)}
               disabled={saving || !form.Name}
-              className="flex-1 py-2.5 bg-accent text-white rounded-lg hover:bg-accent-hover disabled:opacity-50 font-medium"
+              className="flex-1 py-2.5 bg-accent text-on-accent rounded-lg hover:bg-accent-hover disabled:opacity-50 font-medium"
             >
               {saving ? '⏳ שומר...' : '💾 שמור'}
             </button>
@@ -291,7 +291,7 @@ function CategoryModal({ onClose, onSave, saving }: CategoryModalProps) {
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-surface rounded-xl shadow-2xl max-w-md w-full p-6">
+      <div className="bg-raised border border-line-strong rounded-xl max-w-md w-full p-6">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-bold text-fg">➕ קטגוריה חדשה</h2>
           <button onClick={onClose} className="text-faint hover:text-fg-3 text-2xl leading-none">×</button>
@@ -324,8 +324,8 @@ function CategoryModal({ onClose, onSave, saving }: CategoryModalProps) {
                   type="button"
                   onClick={() => setColor(opt.value)}
                   className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-all ${
-                    COLOR_CLASSES[opt.value]
-                  } ${color === opt.value ? 'ring-2 ring-offset-1 ring-accent' : 'opacity-60 hover:opacity-100'}`}
+ COLOR_CLASSES[opt.value]
+ } ${color === opt.value ? 'ring-2 ring-offset-1 ring-accent' : 'opacity-60 hover:opacity-100'}`}
                 >
                   {opt.label}
                 </button>
@@ -348,7 +348,7 @@ function CategoryModal({ onClose, onSave, saving }: CategoryModalProps) {
             <button
               onClick={() => onSave({ Name: name, Icon: icon, Color: color, Group: group })}
               disabled={saving || !name.trim()}
-              className="flex-1 py-2.5 bg-success text-white rounded-lg hover:bg-success/90 disabled:opacity-50 font-medium"
+              className="flex-1 py-2.5 bg-success text-on-accent rounded-lg hover:bg-success/90 disabled:opacity-50 font-medium"
             >
               {saving ? '⏳ שומר...' : '✅ צור קטגוריה'}
             </button>
@@ -379,7 +379,7 @@ function EditCategoryModal({ cat, onClose, onSave, saving }: EditCategoryModalPr
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-surface rounded-xl shadow-2xl max-w-md w-full p-6">
+      <div className="bg-raised border border-line-strong rounded-xl max-w-md w-full p-6">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-bold text-fg">✏️ עריכת קטגוריה</h2>
           <button onClick={onClose} className="text-faint hover:text-fg-3 text-2xl leading-none">×</button>
@@ -411,8 +411,8 @@ function EditCategoryModal({ cat, onClose, onSave, saving }: EditCategoryModalPr
                   type="button"
                   onClick={() => setForm(f => ({ ...f, Color: opt.value }))}
                   className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-all ${
-                    COLOR_CLASSES[opt.value]
-                  } ${form.Color === opt.value ? 'ring-2 ring-offset-1 ring-accent' : 'opacity-60 hover:opacity-100'}`}
+ COLOR_CLASSES[opt.value]
+ } ${form.Color === opt.value ? 'ring-2 ring-offset-1 ring-accent' : 'opacity-60 hover:opacity-100'}`}
                 >
                   {opt.label}
                 </button>
@@ -435,7 +435,7 @@ function EditCategoryModal({ cat, onClose, onSave, saving }: EditCategoryModalPr
             <button
               onClick={() => onSave(form)}
               disabled={saving || !form.Name.trim()}
-              className="flex-1 py-2.5 bg-accent text-white rounded-lg hover:bg-accent-hover disabled:opacity-50 font-medium"
+              className="flex-1 py-2.5 bg-accent text-on-accent rounded-lg hover:bg-accent-hover disabled:opacity-50 font-medium"
             >
               {saving ? '⏳ שומר...' : '💾 שמור'}
             </button>
@@ -494,8 +494,8 @@ function DraggableLevelRow({ level, index, categories, onEdit, onDelete, onMove 
     <div
       ref={ref}
       className={`px-5 py-4 flex items-start gap-4 transition-colors ${
-        isDragging ? 'opacity-30' : isOver ? 'bg-accent/15' : 'hover:bg-surface'
-      }`}
+ isDragging ? 'opacity-30' : isOver ? 'bg-accent/15' : 'hover:bg-surface'
+ }`}
     >
       <div
         ref={drag as unknown as React.RefCallback<HTMLDivElement>}
@@ -525,14 +525,14 @@ function DraggableLevelRow({ level, index, categories, onEdit, onDelete, onMove 
       <div className="flex gap-2 shrink-0">
         <button
           onClick={() => onEdit(level)}
-          className="px-2.5 py-1.5 bg-accent text-white rounded-lg hover:bg-accent/90 text-sm"
+          className="px-2.5 py-1.5 bg-accent text-on-accent rounded-lg hover:bg-accent/90 text-sm"
           title="ערוך"
         >
           ✏️
         </button>
         <button
           onClick={() => onDelete(level)}
-          className="px-2.5 py-1.5 bg-danger text-white rounded-lg hover:bg-danger/90 text-sm"
+          className="px-2.5 py-1.5 bg-danger text-on-accent rounded-lg hover:bg-danger/90 text-sm"
           title="מחק"
         >
           🗑
@@ -788,7 +788,7 @@ export default function RoadmapBuilderPage() {
     <DndProvider backend={HTML5Backend}>
     <div dir="rtl" className="min-h-screen bg-surface pb-20">
       {/* Header */}
-      <div className="bg-surface shadow-sm border-b sticky top-0 z-30">
+      <div className="bg-surface border-b sticky top-0 z-30">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <h1 className="text-2xl font-bold text-fg">🗺️ בניית Roadmap</h1>
           <p className="text-sm text-muted mt-0.5">ניהול קטגוריות ורמות מסלול ההתקדמות</p>
@@ -799,7 +799,7 @@ export default function RoadmapBuilderPage() {
 
         {/* Left panel — Categories */}
         <div className="w-72 shrink-0 flex flex-col gap-3">
-          <div className="bg-surface rounded-xl shadow-sm border overflow-hidden">
+          <div className="bg-surface rounded-xl border overflow-hidden">
             <div className="px-4 py-3 border-b bg-surface">
               <h2 className="font-semibold text-fg-2">קטגוריות</h2>
             </div>
@@ -834,8 +834,8 @@ export default function RoadmapBuilderPage() {
                           <div key={catId ?? idx} className="group border-b last:border-b-0">
                             <div
                               className={`w-full text-right px-4 py-3 flex items-center gap-3 cursor-pointer hover:bg-surface transition-colors ${
-                                isSelected ? 'bg-accent/15 border-r-4 border-accent' : ''
-                              }`}
+ isSelected ? 'bg-accent/15 border-r-4 border-accent' : ''
+ }`}
                               onClick={() => setSelectedCatId(catId ?? null)}
                             >
                               <span className={`text-xl rounded-lg p-1.5 border ${colorClass}`}>{cat.Icon}</span>
@@ -885,14 +885,14 @@ export default function RoadmapBuilderPage() {
         {/* Right panel — Levels */}
         <div className="flex-1">
           {!selectedCatId ? (
-            <div className="bg-surface rounded-xl shadow-sm border flex items-center justify-center h-64">
+            <div className="bg-surface rounded-xl border flex items-center justify-center h-64">
               <div className="text-center text-faint">
                 <p className="text-4xl mb-2">👈</p>
                 <p className="text-sm">בחר קטגוריה כדי לראות את הרמות שלה</p>
               </div>
             </div>
           ) : (
-            <div className="bg-surface rounded-xl shadow-sm border overflow-hidden">
+            <div className="bg-surface rounded-xl border overflow-hidden">
               <div className="px-5 py-4 border-b bg-surface flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="text-2xl">{selectedCat?.Icon}</span>
@@ -906,7 +906,7 @@ export default function RoadmapBuilderPage() {
                     <button
                       onClick={handleSaveOrder}
                       disabled={saving}
-                      className="px-3 py-1.5 text-sm bg-success text-white rounded-lg hover:bg-success/90 disabled:opacity-50 font-medium"
+                      className="px-3 py-1.5 text-sm bg-success text-on-accent rounded-lg hover:bg-success/90 disabled:opacity-50 font-medium"
                     >
                       {saving ? '⏳ שומר...' : '💾 שמור סדר'}
                     </button>
@@ -960,13 +960,13 @@ export default function RoadmapBuilderPage() {
                       <button
                         onClick={handleQuickAddLevel}
                         disabled={saving || !newLevelName.trim()}
-                        className="px-3 py-1.5 bg-success text-white rounded-lg text-sm hover:bg-success/90 disabled:opacity-50"
+                        className="px-3 py-1.5 bg-success text-on-accent rounded-lg text-sm hover:bg-success/90 disabled:opacity-50"
                       >
                         הוסף
                       </button>
                       <button
                         onClick={() => { setEditingLevel({ CategoryID: selectedCatId! }); setShowNewLevelRow(false) }}
-                        className="px-3 py-1.5 bg-accent text-white rounded-lg text-sm hover:bg-accent-hover"
+                        className="px-3 py-1.5 bg-accent text-on-accent rounded-lg text-sm hover:bg-accent-hover"
                         title="פתח עורך מלא"
                       >
                         ✏️ עורך מלא

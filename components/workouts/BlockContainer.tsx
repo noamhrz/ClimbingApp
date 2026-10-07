@@ -35,10 +35,10 @@ export default function BlockContainer({
       ref={setNodeRef}
       onPointerDownCapture={onSelectBlock}
       className={`rounded-lg p-4 border-2 transition-colors ${
-        isOver || isSelectedForAdd
-          ? 'border-accent bg-accent/15'
-          : 'border-line bg-surface'
-      }`}
+ isOver || isSelectedForAdd
+ ? 'border-accent bg-accent/15'
+ : 'border-line bg-surface'
+ }`}
     >
       {/* Block Header */}
       <div className="flex items-center justify-between mb-3">
@@ -77,10 +77,10 @@ export default function BlockContainer({
           <button
             onClick={onAddExercise}
             className={`w-full border-2 border-dashed rounded-lg py-3 text-sm transition-colors ${
-              isSelectedForAdd
-                ? 'border-accent text-accent bg-accent/15'
-                : 'border-line text-muted hover:border-accent/90 hover:text-accent/90'
-            }`}
+ isSelectedForAdd
+ ? 'border-accent text-accent bg-accent/15'
+ : 'border-line text-muted hover:border-accent/90 hover:text-accent/90'
+ }`}
           >
             {isSelectedForAdd ? '👉 בחר תרגיל מהסיידבר' : `+ הוסף תרגיל לבלוק ${blockNumber}`}
           </button>

@@ -28,7 +28,7 @@ const ENERGY_LABELS: Record<number, string> = {
 function PainEnergyTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null
   return (
-    <div className="bg-surface border border-line rounded-lg p-3 shadow text-right text-sm" dir="rtl">
+    <div className="bg-surface border border-line rounded-lg p-3 text-right text-sm" dir="rtl">
       <p className="font-semibold text-fg-2 mb-1">{label}</p>
       {payload.map((entry: any) => {
         const val = entry.value
@@ -52,9 +52,9 @@ function SleepTooltip({ active, payload, label }: any) {
   const val = payload[0]?.value
   if (val === null || val === undefined) return null
   return (
-    <div className="bg-surface border border-line rounded-lg p-3 shadow text-right text-sm" dir="rtl">
+    <div className="bg-surface border border-line rounded-lg p-3 text-right text-sm" dir="rtl">
       <p className="font-semibold text-fg-2 mb-1">{label}</p>
-      <p style={{ color: '#3b82f6' }}>😴 שינה: {val} שעות</p>
+      <p style={{ color: '#E0763A' }}>😴 שינה: {val} שעות</p>
     </div>
   )
 }
@@ -95,7 +95,7 @@ export default function WellnessChart({ data }: Props) {
             <Line
               type="monotone"
               dataKey="energy"
-              stroke="#22c55e"
+              stroke="#5FB37A"
               strokeWidth={2}
               name="⚡ אנרגיה"
               dot={{ r: 4 }}
@@ -105,7 +105,7 @@ export default function WellnessChart({ data }: Props) {
             <Line
               type="monotone"
               dataKey="soreness"
-              stroke="#ef4444"
+              stroke="#E06A5F"
               strokeWidth={2}
               name="🤕 כאב"
               dot={{ r: 4 }}
@@ -134,7 +134,7 @@ export default function WellnessChart({ data }: Props) {
             <Line
               type="monotone"
               dataKey="sleep"
-              stroke="#3b82f6"
+              stroke="#E0763A"
               strokeWidth={2}
               name="😴 שינה"
               dot={{ r: 4 }}

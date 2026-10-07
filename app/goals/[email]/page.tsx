@@ -154,7 +154,7 @@ export default function GoalsEditPage() {
       </div>
 
       {/* Year & Quarter Selector */}
-      <div className="bg-surface rounded-xl shadow-sm p-6 mb-6">
+      <div className="bg-surface rounded-xl p-6 mb-6">
         <div className="flex items-center gap-6">
           <div className="flex-1">
             <label className="block text-sm font-semibold text-fg-2 mb-2">
@@ -192,7 +192,7 @@ export default function GoalsEditPage() {
       {/* Accordion Sections */}
       <div className="space-y-4">
         {/* General Goals */}
-        <div className="bg-surface rounded-xl shadow-sm overflow-hidden">
+        <div className="bg-surface rounded-xl overflow-hidden">
           <button
             onClick={() => toggleSection('general')}
             className="w-full px-6 py-4 flex items-center justify-between hover:bg-surface transition"
@@ -216,7 +216,7 @@ export default function GoalsEditPage() {
         </div>
 
         {/* Boulder Goals */}
-        <div className="bg-surface rounded-xl shadow-sm overflow-hidden">
+        <div className="bg-surface rounded-xl overflow-hidden">
           <button
             onClick={() => toggleSection('boulder')}
             className="w-full px-6 py-4 flex items-center justify-between hover:bg-surface transition"
@@ -241,7 +241,7 @@ export default function GoalsEditPage() {
         </div>
 
         {/* Board Goals */}
-        <div className="bg-surface rounded-xl shadow-sm overflow-hidden">
+        <div className="bg-surface rounded-xl overflow-hidden">
           <button
             onClick={() => toggleSection('board')}
             className="w-full px-6 py-4 flex items-center justify-between hover:bg-surface transition"
@@ -266,7 +266,7 @@ export default function GoalsEditPage() {
         </div>
 
         {/* Lead Goals */}
-        <div className="bg-surface rounded-xl shadow-sm overflow-hidden">
+        <div className="bg-surface rounded-xl overflow-hidden">
           <button
             onClick={() => toggleSection('lead')}
             className="w-full px-6 py-4 flex items-center justify-between hover:bg-surface transition"

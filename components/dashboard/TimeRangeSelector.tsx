@@ -12,10 +12,10 @@ export default function TimeRangeSelector({ selected, onChange }: Props) {
       <button
         onClick={() => onChange('10days')}
         className={`px-6 py-3 rounded-lg font-medium transition-all ${
-          selected === '10days'
-            ? 'bg-accent text-white shadow-lg scale-105'
-            : 'bg-raised text-fg-2 hover:bg-raised/90'
-        }`}
+ selected === '10days'
+ ? 'bg-accent text-on-accent scale-105'
+ : 'bg-raised text-fg-2 hover:bg-raised/90'
+ }`}
       >
         📅 10 ימים
       </button>
@@ -23,10 +23,10 @@ export default function TimeRangeSelector({ selected, onChange }: Props) {
       <button
         onClick={() => onChange('6weeks')}
         className={`px-6 py-3 rounded-lg font-medium transition-all ${
-          selected === '6weeks'
-            ? 'bg-accent text-white shadow-lg scale-105'
-            : 'bg-raised text-fg-2 hover:bg-raised/90'
-        }`}
+ selected === '6weeks'
+ ? 'bg-accent text-on-accent scale-105'
+ : 'bg-raised text-fg-2 hover:bg-raised/90'
+ }`}
       >
         📅 6 שבועות
       </button>
@@ -34,10 +34,10 @@ export default function TimeRangeSelector({ selected, onChange }: Props) {
       <button
         onClick={() => onChange('12weeks')}
         className={`px-6 py-3 rounded-lg font-medium transition-all ${
-          selected === '12weeks'
-            ? 'bg-accent text-white shadow-lg scale-105'
-            : 'bg-raised text-fg-2 hover:bg-raised/90'
-        }`}
+ selected === '12weeks'
+ ? 'bg-accent text-on-accent scale-105'
+ : 'bg-raised text-fg-2 hover:bg-raised/90'
+ }`}
       >
         📅 12 שבועות
       </button>

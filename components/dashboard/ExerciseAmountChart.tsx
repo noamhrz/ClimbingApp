@@ -13,7 +13,7 @@ function WorkoutsTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null
   const val = payload[0]?.value ?? 0
   return (
-    <div className="bg-surface border border-line rounded-lg p-3 shadow text-right text-sm" dir="rtl">
+    <div className="bg-surface border border-line rounded-lg p-3 text-right text-sm" dir="rtl">
       <p className="font-semibold text-fg-2 mb-1">{label}</p>
       <p className="text-success">{val} אימונים בוצעו</p>
     </div>
@@ -44,7 +44,7 @@ export default function ExerciseAmountChart({ data }: Props) {
         <Tooltip content={<WorkoutsTooltip />} />
         <Bar
           dataKey="count"
-          fill="#22c55e"
+          fill="#5FB37A"
           radius={[6, 6, 0, 0]}
         />
       </BarChart>

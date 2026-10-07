@@ -88,7 +88,7 @@ export default function ExerciseAccordion({
   const hasGoals = exercise.Sets || exercise.Reps || exercise.Duration || exercise.Rest
 
   return (
-    <div data-exercise-id={exercise.ExerciseID} className="border border-line rounded-lg overflow-hidden bg-surface shadow-sm">
+    <div data-exercise-id={exercise.ExerciseID} className="border border-line rounded-lg overflow-hidden bg-surface ">
       {/* Accordion Header */}
       <button
         onClick={handleToggle}
@@ -181,11 +181,11 @@ export default function ExerciseAccordion({
                     <img 
                       src={exercise.ImageURL} 
                       alt={exercise.Name}
-                      className="w-full max-w-md rounded-lg shadow-md border border-line group-hover:opacity-90 transition-opacity"
+                      className="w-full max-w-md rounded-lg border border-line group-hover:opacity-90 transition-opacity"
                     />
                     {/* Hover overlay */}
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-all rounded-lg flex items-center justify-center">
-                      <span className="opacity-0 group-hover:opacity-100 text-white font-bold text-lg bg-accent px-4 py-2 rounded-lg shadow-lg">
+                      <span className="opacity-0 group-hover:opacity-100 text-on-accent font-bold text-lg bg-accent px-4 py-2 rounded-lg ">
                         🔍 לחץ להגדלה
                       </span>
                     </div>
@@ -203,7 +203,7 @@ export default function ExerciseAccordion({
                     href={exercise.VideoURL}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-accent hover:bg-accent-hover text-white rounded-lg transition-colors shadow-sm"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-accent hover:bg-accent-hover text-on-accent rounded-lg transition-colors "
                   >
                     צפה בוידאו
                   </a>

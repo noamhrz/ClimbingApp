@@ -73,7 +73,7 @@ function SortableItem({
             <span className="text-xs bg-success/15 text-success px-2 py-0.5 rounded">חזרות</span>
           )}
           {item.exercise.IsSingleHand && (
-            <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded">יד אחת</span>
+            <span className="text-xs bg-info/10 text-info px-2 py-0.5 rounded">יד אחת</span>
           )}
         </div>
       </div>
@@ -468,12 +468,12 @@ export default function DynamicExerciseEditorPage() {
                   key={lvl.LevelID}
                   onClick={() => setActiveLevelId(lvl.LevelID)}
                   className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors max-w-[180px] truncate ${
-                    isActive
-                      ? 'bg-accent/15 text-accent border-transparent'
-                      : hasItems
-                      ? 'bg-surface text-success border-success hover:bg-success/15'
-                      : 'bg-surface text-muted border-line hover:bg-surface/90'
-                  }`}
+ isActive
+ ? 'bg-accent/15 text-accent border-transparent'
+ : hasItems
+ ? 'bg-surface text-success border-success hover:bg-success/15'
+ : 'bg-surface text-muted border-line hover:bg-surface/90'
+ }`}
                 >
                   {lvl.Name || `רמה ${lvl.LevelNumber}`}
                 </button>
@@ -583,7 +583,7 @@ export default function DynamicExerciseEditorPage() {
         <button
           onClick={handleSave}
           disabled={saving || !dynamicExercise?.RoadmapCategoryID}
-          className="px-5 py-2.5 bg-accent text-white rounded-lg text-sm font-medium hover:bg-accent-hover disabled:opacity-50"
+          className="px-5 py-2.5 bg-accent text-on-accent rounded-lg text-sm font-medium hover:bg-accent-hover disabled:opacity-50"
         >
           {saving ? 'שומר...' : '💾 שמור'}
         </button>

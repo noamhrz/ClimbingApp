@@ -120,10 +120,10 @@ export default function ResetPasswordPage() {
 
         {message && (
           <div className={`mb-6 p-4 rounded-lg ${
-            message.type === 'success' 
-              ? 'bg-success/15 text-success border border-success' 
-              : 'bg-danger/15 text-danger border border-danger'
-          }`}>
+ message.type === 'success' 
+ ? 'bg-success/15 text-success border border-success' 
+ : 'bg-danger/15 text-danger border border-danger'
+ }`}>
             {message.text}
             {message.type === 'success' && (
               <p className="text-sm mt-2">מעביר להתחברות...</p>

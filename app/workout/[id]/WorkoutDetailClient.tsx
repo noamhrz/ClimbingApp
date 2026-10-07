@@ -826,7 +826,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
   return (
     <>
       <div className="mx-auto max-w-6xl" dir="rtl">
-        <div className="bg-surface rounded-lg shadow-lg p-6">
+        <div className="bg-surface rounded-lg p-6">
           {/* Header */}
           <div className="mb-6">
             <h1 className="text-3xl font-bold text-fg mb-2">
@@ -861,7 +861,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
             {(isFutureWorkout || isPastWorkout) && (
               <button
                 onClick={handleConvertToToday}
-                className="mt-3 bg-accent hover:bg-accent/90 text-white px-4 py-2 rounded-lg text-sm font-medium transition"
+                className="mt-3 bg-accent hover:bg-accent/90 text-on-accent px-4 py-2 rounded-lg text-sm font-medium transition"
               >
                 🔄 העבר להיום
               </button>
@@ -943,7 +943,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
                   <div key={blockNum} className="mb-8">
                     {/* Block Header - Clickable Toggle */}
                     <div 
-                      className="text-white rounded-t-lg px-4 py-3 font-bold text-lg cursor-pointer hover: hover: transition-all flex justify-between items-center select-none bg-surface border border-line"
+                      className="text-fg rounded-t-lg px-4 py-3 font-bold text-lg cursor-pointer hover: hover: transition-all flex justify-between items-center select-none bg-surface border border-line"
                       onClick={() => toggleBlock(blockNum)}
                     >
                       <span>📦 בלוק {blockNum}</span>
@@ -1005,10 +1005,10 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
                     value={selectedLocation || ''}
                     onChange={(e) => setSelectedLocation(Number(e.target.value) || null)}
                     className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-accent ${
-                      routes.length > 0 && !selectedLocation 
-                        ? 'border-danger bg-danger/15' 
-                        : 'border-line'
-                    }`}
+ routes.length > 0 && !selectedLocation 
+ ? 'border-danger bg-danger/15' 
+ : 'border-line'
+ }`}
                   >
                     <option value="">בחר מיקום</option>
                     {filteredLocations.map(loc => (
@@ -1117,7 +1117,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
           <div className="text-center mt-8">
             <button
               id="save-workout-btn"
-              className="bg-accent hover:bg-accent-hover text-white px-8 py-3 rounded-lg font-semibold text-lg shadow-md transition-colors disabled:bg-raised disabled:cursor-not-allowed"
+              className="bg-accent hover:bg-accent-hover text-on-accent px-8 py-3 rounded-lg font-semibold text-lg transition-colors disabled:bg-raised disabled:text-faint disabled:cursor-not-allowed"
               onClick={onComplete}
               disabled={isSaving || (workout.containClimbing && routes.length > 0 && !selectedLocation)}
             >
@@ -1145,13 +1145,13 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 20 }}
-              className={`fixed bottom-24 left-1/2 -translate-x-1/2 px-6 py-3 rounded-lg shadow-lg text-white text-sm z-[9999] ${
-                toast.color === 'blue'
-                  ? 'bg-accent'
-                  : toast.color === 'red'
-                  ? 'bg-danger'
-                  : 'bg-raised'
-              }`}
+              className={`fixed bottom-24 left-1/2 -translate-x-1/2 px-6 py-3 rounded-lg shadow-lg text-on-accent text-sm z-[9999] ${
+ toast.color === 'blue'
+ ? 'bg-accent'
+ : toast.color === 'red'
+ ? 'bg-danger'
+ : 'bg-raised'
+ }`}
             >
               {toast.text}
             </motion.div>
@@ -1162,7 +1162,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
       {/* Add New Location Modal */}
       {showAddLocationModal && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[60] p-4">
-          <div className="bg-surface rounded-xl shadow-2xl max-w-md w-full p-6" dir="rtl">
+          <div className="bg-raised border border-line-strong rounded-xl max-w-md w-full p-6" dir="rtl">
             {/* Header */}
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-xl font-bold text-fg">
@@ -1211,7 +1211,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
               <button
                 onClick={handleAddLocation}
                 disabled={savingLocation || !newLocationName.trim()}
-                className="flex-1 py-3 bg-accent text-white rounded-lg hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed font-medium transition"
+                className="flex-1 py-3 bg-accent text-on-accent rounded-lg hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed font-medium transition"
               >
                 {savingLocation ? '⏳ שומר...' : '✅ הוסף מיקום'}
               </button>

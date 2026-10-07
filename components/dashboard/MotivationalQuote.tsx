@@ -43,7 +43,7 @@ export default function MotivationalQuote() {
 
   if (loading || !quote) {
     return (
-      <div className="text-white rounded-xl p-8 shadow-lg text-center bg-surface border border-line">
+      <div className="text-fg rounded-xl p-8 text-center bg-surface border border-line">
         <div className="text-5xl mb-4">💪</div>
         <div className="text-xl">טוען ציטוט...</div>
       </div>
@@ -51,7 +51,7 @@ export default function MotivationalQuote() {
   }
 
   return (
-    <div className="text-white rounded-xl p-8 shadow-lg text-center bg-surface border border-line">
+    <div className="text-fg rounded-xl p-8 text-center bg-surface border border-line">
       {/* אייקון */}
       <div className="text-5xl mb-4">💪</div>
       
@@ -61,12 +61,12 @@ export default function MotivationalQuote() {
       </blockquote>
       
       {/* המחבר */}
-      <p className="text-blue-100 text-lg mb-1">
+      <p className="text-fg-2 text-lg mb-1">
         - {quote.Author}
       </p>
       
       {/* הציטוט באנגלית (קטן יותר) */}
-      <p className="text-blue-200 text-sm italic mb-4">
+      <p className="text-fg-2 text-sm italic mb-4">
         "{quote.Quote_EN}"
       </p>
       

@@ -36,14 +36,14 @@ interface UserProgress {
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const COLOR_CLASSES: Record<string, { bg: string; text: string; border: string }> = {
-  blue:   { bg: 'bg-blue-500',   text: 'text-white', border: 'border-blue-500' },
-  green:  { bg: 'bg-green-500',  text: 'text-white', border: 'border-green-500' },
-  purple: { bg: 'bg-purple-500', text: 'text-white', border: 'border-purple-500' },
-  red:    { bg: 'bg-red-500',    text: 'text-white', border: 'border-red-500' },
-  orange: { bg: 'bg-orange-500', text: 'text-white', border: 'border-orange-500' },
-  yellow: { bg: 'bg-yellow-400', text: 'text-gray-800', border: 'border-yellow-400' },
-  pink:   { bg: 'bg-pink-500',   text: 'text-white', border: 'border-pink-500' },
-  gray:   { bg: 'bg-gray-500',   text: 'text-white', border: 'border-gray-500' },
+  blue:   { bg: 'bg-accent',   text: 'text-on-accent', border: 'border-accent' },
+  green:  { bg: 'bg-success',  text: 'text-on-accent', border: 'border-success' },
+  purple: { bg: 'bg-info', text: 'text-on-accent', border: 'border-info' },
+  red:    { bg: 'bg-danger',    text: 'text-on-accent', border: 'border-danger' },
+  orange: { bg: 'bg-warning', text: 'text-on-accent', border: 'border-warning' },
+  yellow: { bg: 'bg-warning', text: 'text-on-accent', border: 'border-warning' },
+  pink:   { bg: 'bg-info',   text: 'text-on-accent', border: 'border-info' },
+  gray:   { bg: 'bg-line-strong',   text: 'text-fg', border: 'border-line-strong' },
 }
 
 const getAuthHeaders = async () => {
@@ -173,7 +173,7 @@ export default function RoadmapProgressPage() {
   return (
     <div dir="rtl" className="min-h-screen bg-surface pb-20">
       {/* Header */}
-      <div className="bg-surface shadow-sm border-b sticky top-0 z-30">
+      <div className="bg-surface border-b sticky top-0 z-30">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <h1 className="text-2xl font-bold text-fg">📊 עדכון התקדמות Roadmap</h1>
           <p className="text-sm text-muted mt-0.5">עדכן את רמות ההתקדמות של המתאמנים</p>
@@ -184,7 +184,7 @@ export default function RoadmapProgressPage() {
 
         {/* Left panel — Trainees list */}
         <div className="w-72 shrink-0 flex flex-col gap-3">
-          <div className="bg-surface rounded-xl shadow-sm border overflow-hidden flex flex-col">
+          <div className="bg-surface rounded-xl border overflow-hidden flex flex-col">
             <div className="px-4 py-3 border-b bg-surface">
               <h2 className="font-semibold text-fg-2 mb-2">מתאמנים</h2>
               <input
@@ -205,8 +205,8 @@ export default function RoadmapProgressPage() {
                     <button
                       onClick={() => setSelectedTrainee(t)}
                       className={`w-full text-right px-4 py-3 hover:bg-surface transition-colors ${
-                        selectedTrainee?.Email === t.Email ? 'bg-accent/15 border-r-4 border-accent' : ''
-                      }`}
+ selectedTrainee?.Email === t.Email ? 'bg-accent/15 border-r-4 border-accent' : ''
+ }`}
                     >
                       <p className={`font-medium text-sm truncate ${selectedTrainee?.Email === t.Email ? 'text-accent' : 'text-fg'}`}>
                         {t.Name}
@@ -223,7 +223,7 @@ export default function RoadmapProgressPage() {
         {/* Right panel — Progress editor */}
         <div className="flex-1">
           {!selectedTrainee ? (
-            <div className="bg-surface rounded-xl shadow-sm border flex items-center justify-center h-64">
+            <div className="bg-surface rounded-xl border flex items-center justify-center h-64">
               <div className="text-center text-faint">
                 <p className="text-4xl mb-2">👈</p>
                 <p className="text-sm">בחר מתאמן כדי לעדכן את ההתקדמות שלו</p>
@@ -232,7 +232,7 @@ export default function RoadmapProgressPage() {
           ) : (
             <div className="flex flex-col gap-4">
               {/* Trainee header */}
-              <div className="bg-surface rounded-xl shadow-sm border px-5 py-4 flex items-center justify-between">
+              <div className="bg-surface rounded-xl border px-5 py-4 flex items-center justify-between">
                 <div>
                   <h2 className="text-lg font-bold text-fg">{selectedTrainee.Name}</h2>
                   <p className="text-sm text-muted">{selectedTrainee.Email}</p>
@@ -241,12 +241,12 @@ export default function RoadmapProgressPage() {
                   onClick={handleSave}
                   disabled={saving || !hasPendingChanges}
                   className={`px-5 py-2.5 rounded-lg font-medium text-sm transition-all ${
-                    saveSuccess
-                      ? 'bg-success text-white'
-                      : hasPendingChanges
-                      ? 'bg-accent text-white hover:bg-accent-hover'
-                      : 'bg-surface text-faint cursor-not-allowed'
-                  } disabled:opacity-60`}
+ saveSuccess
+ ? 'bg-success text-on-accent'
+ : hasPendingChanges
+ ? 'bg-accent text-on-accent hover:bg-accent-hover'
+ : 'bg-surface text-faint cursor-not-allowed'
+ } disabled:opacity-60`}
                 >
                   {saving ? '⏳ שומר...' : saveSuccess ? '✅ נשמר!' : '💾 שמור שינויים'}
                 </button>
@@ -254,11 +254,11 @@ export default function RoadmapProgressPage() {
 
               {/* Categories grid */}
               {loadingData ? (
-                <div className="bg-surface rounded-xl shadow-sm border flex items-center justify-center h-48">
+                <div className="bg-surface rounded-xl border flex items-center justify-center h-48">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent" />
                 </div>
               ) : categories.length === 0 ? (
-                <div className="bg-surface rounded-xl shadow-sm border flex items-center justify-center h-48">
+                <div className="bg-surface rounded-xl border flex items-center justify-center h-48">
                   <p className="text-faint text-sm">אין קטגוריות — צור קטגוריות ב-Roadmap Builder</p>
                 </div>
               ) : (() => {
@@ -292,7 +292,7 @@ export default function RoadmapProgressPage() {
                             const colors = COLOR_CLASSES[colorKey] ?? COLOR_CLASSES.gray
 
                             return (
-                              <div key={cat.CategoryID} className="bg-surface rounded-xl shadow-sm border px-5 py-4">
+                              <div key={cat.CategoryID} className="bg-surface rounded-xl border px-5 py-4">
                                 <div className="flex items-center gap-2 mb-3">
                                   <span className="text-2xl">{cat.Icon}</span>
                                   <div>
@@ -309,10 +309,10 @@ export default function RoadmapProgressPage() {
                                   <button
                                     onClick={() => setPendingProgress(p => ({ ...p, [cat.CategoryID]: 0 }))}
                                     className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
-                                      currentLevel === 0
-                                        ? 'bg-raised text-white border-line-strong'
-                                        : 'bg-surface text-fg-3 border-line hover:border-line-strong/90'
-                                    }`}
+ currentLevel === 0
+ ? 'bg-raised text-fg border-line-strong'
+ : 'bg-surface text-fg-3 border-line hover:border-line-strong/90'
+ }`}
                                   >
                                     לא התחיל
                                   </button>
@@ -325,10 +325,10 @@ export default function RoadmapProgressPage() {
                                         onClick={() => setPendingProgress(p => ({ ...p, [cat.CategoryID]: level.LevelNumber }))}
                                         title={level.Name}
                                         className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
-                                          isActive
-                                            ? `${colors.bg} ${colors.text} ${colors.border}`
-                                            : 'bg-surface text-fg-3 border-line hover:border-line-strong'
-                                        }`}
+ isActive
+ ? `${colors.bg} ${colors.text} ${colors.border}`
+ : 'bg-surface text-fg-3 border-line hover:border-line-strong'
+ }`}
                                       >
                                         L{level.LevelNumber}
                                       </button>

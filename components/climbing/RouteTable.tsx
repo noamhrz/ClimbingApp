@@ -69,10 +69,10 @@ export function RouteTable({ routes, onUpdate, onDelete }: RouteTableProps) {
               <tr 
                 key={route.id} 
                 className={`border-b hover:bg-surface/90 transition-all duration-300 ${
-                  index % 2 === 0 ? 'bg-surface' : 'bg-surface'
-                } ${
-                  deletingId === route.id ? 'opacity-0 scale-95 bg-danger/15' : 'opacity-100 scale-100'
-                }`}
+ index % 2 === 0 ? 'bg-surface' : 'bg-surface'
+ } ${
+ deletingId === route.id ? 'opacity-0 scale-95 bg-danger/15' : 'opacity-100 scale-100'
+ }`}
               >
                 <td className="px-3 py-3">
                   <div className="font-mono text-sm font-semibold">
@@ -142,9 +142,9 @@ export function RouteTable({ routes, onUpdate, onDelete }: RouteTableProps) {
         {routes.map((route, index) => (
           <div 
             key={route.id} 
-            className={`bg-surface border rounded-lg p-4 shadow-sm transition-all duration-300 ${
-              deletingId === route.id ? 'opacity-0 scale-95 bg-danger/15' : 'opacity-100 scale-100'
-            }`}
+            className={`bg-surface border rounded-lg p-4 transition-all duration-300 ${
+ deletingId === route.id ? 'opacity-0 scale-95 bg-danger/15' : 'opacity-100 scale-100'
+ }`}
           >
             {/* Header with grade and delete */}
             <div className="flex items-center justify-between mb-3">
@@ -230,7 +230,7 @@ export function RouteTable({ routes, onUpdate, onDelete }: RouteTableProps) {
       {/* Delete Confirmation Modal */}
       {confirmDelete && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-surface rounded-lg shadow-xl max-w-md w-full p-6 animate-in fade-in zoom-in duration-200">
+          <div className="bg-raised border border-line-strong rounded-lg max-w-md w-full p-6 animate-in fade-in zoom-in duration-200">
             {/* Header */}
             <div className="flex items-center gap-3 mb-4">
               <div className="text-3xl">🗑️</div>
@@ -265,7 +265,7 @@ export function RouteTable({ routes, onUpdate, onDelete }: RouteTableProps) {
               </button>
               <button
                 onClick={handleConfirmDelete}
-                className="flex-1 px-4 py-2 bg-danger hover:bg-danger/90 text-white rounded-lg font-medium transition"
+                className="flex-1 px-4 py-2 bg-danger hover:bg-danger/90 text-on-accent rounded-lg font-medium transition"
               >
                 🗑️ מחק
               </button>

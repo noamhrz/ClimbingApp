@@ -237,7 +237,7 @@ export default function ExerciseExecutionForm({ exercise, value, onChange, disab
                   placeholder="שניות"
                   disabled={disabled}
                   onFocus={(e) => e.target.select()}
-                  className="w-full px-3 py-2 border border-line rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-warning disabled:bg-surface"
+                  className="w-full px-3 py-2 border border-line rounded-lg focus:ring-2 focus:ring-warning focus:border-warning disabled:bg-surface"
                 />
               </div>
             ) : (
@@ -251,7 +251,7 @@ export default function ExerciseExecutionForm({ exercise, value, onChange, disab
                   placeholder="חזרות"
                   disabled={disabled}
                   onFocus={(e) => e.target.select()}
-                  className="w-full px-3 py-2 border border-line rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-warning disabled:bg-surface"
+                  className="w-full px-3 py-2 border border-line rounded-lg focus:ring-2 focus:ring-warning focus:border-warning disabled:bg-surface"
                 />
               </div>
             )}
@@ -267,7 +267,7 @@ export default function ExerciseExecutionForm({ exercise, value, onChange, disab
                 placeholder="משקל"
                 disabled={disabled}
                 onFocus={(e) => e.target.select()}
-                className="w-full px-3 py-2 border border-line rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-warning disabled:bg-surface"
+                className="w-full px-3 py-2 border border-line rounded-lg focus:ring-2 focus:ring-warning focus:border-warning disabled:bg-surface"
               />
             </div>
 
@@ -283,7 +283,7 @@ export default function ExerciseExecutionForm({ exercise, value, onChange, disab
                 placeholder="RPE"
                 disabled={disabled}
                 onFocus={(e) => e.target.select()}
-                className="w-full px-3 py-2 border border-line rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-warning disabled:bg-surface"
+                className="w-full px-3 py-2 border border-line rounded-lg focus:ring-2 focus:ring-warning focus:border-warning disabled:bg-surface"
               />
             </div>
           </div>
@@ -297,7 +297,7 @@ export default function ExerciseExecutionForm({ exercise, value, onChange, disab
               placeholder="הערות..."
               rows={2}
               disabled={disabled}
-              className="w-full px-3 py-2 border border-line rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-warning disabled:bg-surface text-sm"
+              className="w-full px-3 py-2 border border-line rounded-lg focus:ring-2 focus:ring-warning focus:border-warning disabled:bg-surface text-sm"
             />
           </div>
         </div>

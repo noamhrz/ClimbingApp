@@ -134,7 +134,7 @@ export default function WorkoutsPage() {
   return (
     <div dir="rtl" className="min-h-screen bg-surface pb-20">
       {/* Header */}
-      <div className="bg-surface shadow-sm border-b sticky top-0 z-30">
+      <div className="bg-surface border-b sticky top-0 z-30">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <h1 className="text-2xl font-bold text-accent mb-4">
             🏋️ האימונים של {userToShow?.Name || 'המשתמש'}
@@ -203,7 +203,7 @@ export default function WorkoutsPage() {
                       href={`/workout/${workout.WorkoutID}`}
                       className="block"
                     >
-                      <div className="border-2 border-warning rounded-xl p-5 hover:shadow-xl transition-all hover:scale-105 bg-surface border border-line">
+                      <div className="border-2 border-warning rounded-xl p-5 transition-all hover:scale-105 bg-surface border border-line">
                         <div className="flex items-start justify-between mb-3">
                           <div className="flex items-center gap-2">
                             <span className="text-3xl">{getCategoryEmoji(workout.Category)}</span>
@@ -267,7 +267,7 @@ export default function WorkoutsPage() {
                       href={`/workout/${workout.WorkoutID}`}
                       className="block"
                     >
-                      <div className="bg-surface border border-line rounded-xl p-5 hover:shadow-lg transition-all hover:border-accent">
+                      <div className="bg-surface border border-line rounded-xl p-5 transition-all hover:border-accent">
                         <div className="flex items-start justify-between mb-3">
                           <span className="text-3xl">{getCategoryEmoji(workout.Category)}</span>
                           {workout.Category && (

@@ -54,7 +54,7 @@ export default function WorkoutForm({ initialData, onChange }: Props) {
   }
 
   return (
-    <div className="bg-surface rounded-lg shadow p-6 space-y-6">
+    <div className="bg-surface rounded-lg p-6 space-y-6">
       <h2 className="text-xl font-bold">מידע בסיסי</h2>
 
       {/* Name */}

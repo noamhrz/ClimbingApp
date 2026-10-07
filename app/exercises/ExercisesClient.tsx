@@ -267,7 +267,7 @@ export default function ExercisesClient() {
             setIsDuplicating(false)
             setShowModal(true)
           }}
-          className="px-4 py-2 bg-accent text-white rounded-lg hover:bg-accent-hover transition flex items-center gap-2 shadow-sm"
+          className="px-4 py-2 bg-accent text-on-accent rounded-lg hover:bg-accent-hover transition flex items-center gap-2 "
         >
           <span className="text-xl">➕</span>
           <span>תרגיל חדש</span>
@@ -275,7 +275,7 @@ export default function ExercisesClient() {
       </div>
 
       {/* Filters */}
-      <div className="bg-surface rounded-lg shadow-sm p-4 mb-6">
+      <div className="bg-surface rounded-lg p-4 mb-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Search */}
           <div>

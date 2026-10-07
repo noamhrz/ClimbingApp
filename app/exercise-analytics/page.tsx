@@ -520,12 +520,12 @@ export default function ExerciseAnalyticsPage() {
   return (
     <div dir="rtl" className="min-h-screen bg-surface pb-20">
       {/* Header */}
-      <div className="text-white shadow-lg bg-surface border border-line">
+      <div className="text-fg bg-surface border border-line">
         <div className="max-w-7xl mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold">📊 ניתוח תרגילים</h1>
-              <p className="text-blue-100 mt-1">
+              <p className="text-fg-2 mt-1">
                 מעקב אחר התקדמות ושיפור ביצועים
                 {targetEmail && targetEmail !== activeUser?.Email && (
                   <span className="mr-2 bg-accent/50 px-2 py-1 rounded text-sm">
@@ -549,7 +549,7 @@ export default function ExerciseAnalyticsPage() {
         
         {/* User Selector - Only for admin/coach */}
         {canViewOthers && (
-          <div className="rounded-xl shadow-md p-5 mb-6 border-2 border-purple-200 bg-surface border border-line">
+          <div className="rounded-xl p-5 mb-6 border-2 border-info/30 bg-surface border border-line">
             <div className="flex items-center gap-3 mb-3">
               <div className="text-2xl">👥</div>
               <div>
@@ -564,7 +564,7 @@ export default function ExerciseAnalyticsPage() {
               <select
                 value={targetEmail}
                 onChange={(e) => handleUserChange(e.target.value)}
-                className="w-full px-4 py-3 border-2 border-purple-300 rounded-lg text-base font-medium focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-surface"
+                className="w-full px-4 py-3 border-2 border-info/30 rounded-lg text-base font-medium focus:ring-2 focus:ring-info focus:border-info bg-surface"
               >
                 {users.map((user) => (
                   <option

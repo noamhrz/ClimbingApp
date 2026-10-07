@@ -46,9 +46,9 @@ export default function ExerciseCard({ exercise, canEdit, onEdit, onDelete, onDu
   const emoji = getCategoryEmoji(exercise.Category)
 
   return (
-    <div className={`bg-surface rounded-lg shadow-sm border hover:shadow-md transition p-4 ${
-      exercise.Status === 'Inactive' ? 'opacity-60' : ''
-    }`}>
+    <div className={`bg-surface rounded-lg border transition p-4 ${
+ exercise.Status === 'Inactive' ? 'opacity-60' : ''
+ }`}>
       {/* Header */}
       <div className="flex items-start justify-between mb-3">
         <div className="flex-1">
@@ -63,7 +63,7 @@ export default function ExerciseCard({ exercise, canEdit, onEdit, onDelete, onDu
               {exercise.Category}
             </span>
             {exercise.isDuration && (
-              <span className="inline-block px-2 py-0.5 text-xs rounded-full bg-purple-100 text-purple-800">
+              <span className="inline-block px-2 py-0.5 text-xs rounded-full bg-info/10 text-info">
                 ⏱️ זמן
               </span>
             )}
@@ -117,7 +117,7 @@ export default function ExerciseCard({ exercise, canEdit, onEdit, onDelete, onDu
               href={exercise.ImageURL}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-xs px-2 py-1 bg-purple-50 text-purple-600 rounded hover:bg-purple-100 transition flex items-center gap-1"
+              className="text-xs px-2 py-1 bg-info/10 text-info rounded hover:bg-info/10 transition flex items-center gap-1"
               onClick={(e) => e.stopPropagation()}
             >
               <span>🖼️</span>

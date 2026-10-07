@@ -37,8 +37,8 @@ export default function ClimbingVolumeChart({ data }: Props) {
             return [value, labels[name] || name]
           }}
           contentStyle={{ 
-            backgroundColor: 'white', 
-            border: '1px solid #e5e7eb',
+            backgroundColor: '#1C1915', 
+            border: '1px solid #2B2722',
             borderRadius: '8px'
           }}
         />
@@ -57,7 +57,7 @@ export default function ClimbingVolumeChart({ data }: Props) {
         <Bar 
           dataKey="lead" 
           stackId="a"
-          fill="#8b5cf6" 
+          fill="#7FB0C9" 
           name="lead"
         />
         
@@ -65,7 +65,7 @@ export default function ClimbingVolumeChart({ data }: Props) {
         <Bar 
           dataKey="board" 
           stackId="a"
-          fill="#eab308" 
+          fill="#E3B341" 
           name="board"
         />
         
@@ -73,7 +73,7 @@ export default function ClimbingVolumeChart({ data }: Props) {
         <Bar 
           dataKey="boulder" 
           stackId="a"
-          fill="#92400e" 
+          fill="#E0763A" 
           name="boulder"
         />
       </BarChart>

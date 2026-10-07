@@ -53,7 +53,7 @@ export default function ExerciseFilters({
   }
 
   return (
-    <div className="bg-surface rounded-xl shadow-sm border border-line p-4 mb-6">
+    <div className="bg-surface rounded-xl border border-line p-4 mb-6">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         
         {/* Exercise Autocomplete */}
@@ -162,11 +162,11 @@ export default function ExerciseFilters({
           )}
           
           {filters.category && (
-            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-purple-100 text-purple-700">
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-info/10 text-info">
               {filters.category}
               <button
                 onClick={() => onFiltersChange({ ...filters, category: null })}
-                className="mr-2 hover:text-purple-900"
+                className="mr-2 hover:text-info"
               >
                 ✕
               </button>

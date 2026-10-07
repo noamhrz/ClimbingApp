@@ -134,7 +134,7 @@ export default function WellnessModal({ isOpen, onClose, currentUser, onSave }: 
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-surface rounded-xl shadow-2xl max-w-md w-full p-6 max-h-[90vh] overflow-y-auto">
+      <div className="bg-raised border border-line-strong rounded-xl max-w-md w-full p-6 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h2 className="text-2xl font-bold text-fg">
@@ -213,10 +213,10 @@ export default function WellnessModal({ isOpen, onClose, currentUser, onSave }: 
                   type="button"
                   onClick={() => setEnergy(value)}
                   className={`flex items-center gap-2 px-3 py-2 rounded-lg border-2 text-right transition-colors ${
-                    energy === value
-                      ? 'border-success bg-success/15 text-success font-semibold'
-                      : 'border-line bg-surface text-fg-2 hover:border-success/90'
-                  }`}
+ energy === value
+ ? 'border-success bg-success/15 text-success font-semibold'
+ : 'border-line bg-surface text-fg-2 hover:border-success/90'
+ }`}
                 >
                   <span className="text-xl flex-shrink-0">{emoji}</span>
                   <span className="text-xs leading-tight">{value} — {label}</span>
@@ -242,10 +242,10 @@ export default function WellnessModal({ isOpen, onClose, currentUser, onSave }: 
                   type="button"
                   onClick={() => setSoreness(value)}
                   className={`flex items-center gap-2 px-3 py-2 rounded-lg border-2 text-right transition-colors ${
-                    soreness === value
-                      ? 'border-danger bg-danger/15 text-danger font-semibold'
-                      : 'border-line bg-surface text-fg-2 hover:border-danger/90'
-                  }`}
+ soreness === value
+ ? 'border-danger bg-danger/15 text-danger font-semibold'
+ : 'border-line bg-surface text-fg-2 hover:border-danger/90'
+ }`}
                 >
                   <span className="text-xl flex-shrink-0">{emoji}</span>
                   <span className="text-xs leading-tight">{value} — {label}</span>
@@ -289,7 +289,7 @@ export default function WellnessModal({ isOpen, onClose, currentUser, onSave }: 
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 py-3 bg-success text-white rounded-lg hover:bg-success/90 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-colors"
+              className="flex-1 py-3 bg-success text-on-accent rounded-lg hover:bg-success/90 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-colors"
             >
               {loading ? '⏳ שומר...' : isExistingEntry ? '💾 עדכן' : '✅ שמור'}
             </button>

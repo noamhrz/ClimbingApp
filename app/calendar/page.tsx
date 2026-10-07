@@ -576,7 +576,7 @@ export default function CalendarPage() {
 
   return (
     <div dir="rtl" className="min-h-screen bg-surface pb-20">
-      <div className="bg-surface shadow-sm border-b">
+      <div className="bg-surface border-b">
         <div className="max-w-7xl mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
             <h1 className="text-xl font-bold text-accent">📅 לוח אימונים</h1>
@@ -585,20 +585,20 @@ export default function CalendarPage() {
               <button
                 onClick={() => setView('day')}
                 className={`px-4 py-2 rounded-lg font-medium transition-all ${
-                  view === 'day'
-                    ? 'bg-accent text-white shadow-md'
-                    : 'bg-surface text-fg-2 hover:bg-raised'
-                }`}
+ view === 'day'
+ ? 'bg-accent text-on-accent '
+ : 'bg-surface text-fg-2 hover:bg-raised'
+ }`}
               >
                 📋 יום
               </button>
               <button
                 onClick={() => setView('month')}
                 className={`px-4 py-2 rounded-lg font-medium transition-all ${
-                  view === 'month'
-                    ? 'bg-accent text-white shadow-md'
-                    : 'bg-surface text-fg-2 hover:bg-raised'
-                }`}
+ view === 'month'
+ ? 'bg-accent text-on-accent '
+ : 'bg-surface text-fg-2 hover:bg-raised'
+ }`}
               >
                 🗓️ חודש
               </button>
@@ -609,18 +609,18 @@ export default function CalendarPage() {
 
       <button
         onClick={handleAddButtonClick}
-        className={`fixed bottom-28 left-6 text-white text-3xl rounded-full w-16 h-16 shadow-lg hover:shadow-xl transition-all duration-200 z-40 flex items-center justify-center ${
-          isSelectingDate 
-            ? 'bg-warning hover:bg-warning/90 animate-pulse' 
-            : 'bg-accent hover:bg-accent-hover'
-        }`}
+        className={`fixed bottom-28 left-6 text-on-accent text-3xl rounded-full w-16 h-16 shadow-lg transition-all duration-200 z-40 flex items-center justify-center ${
+ isSelectingDate 
+ ? 'bg-warning hover:bg-warning/90 animate-pulse' 
+ : 'bg-accent hover:bg-accent-hover'
+ }`}
         title={isSelectingDate ? 'בחר תאריך בלוח' : 'הוספת אימון חדש'}
       >
         +
       </button>
 
       {isSelectingDate && (
-        <div className="fixed top-20 left-1/2 transform -translate-x-1/2 text-white px-6 py-4 rounded-xl shadow-2xl z-50 animate-bounce pointer-events-none bg-surface border border-line">
+        <div className="fixed top-20 left-1/2 transform -translate-x-1/2 text-fg px-6 py-4 rounded-xl shadow-2xl z-50 animate-bounce pointer-events-none bg-surface border border-line">
           <div className="text-center">
             <div className="text-2xl mb-2">👆</div>
             <div className="font-bold text-lg mb-1">בחר תאריך בלוח</div>
@@ -699,28 +699,28 @@ export default function CalendarPage() {
         <div className="fixed bottom-28 right-6 flex flex-col gap-2 z-40">
           <button
             onClick={() => setShowDuplicateModal(true)}
-            className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg shadow-lg text-sm font-medium transition-all"
+            className="bg-info hover:bg-info text-on-accent px-4 py-2 rounded-lg text-sm font-medium transition-all"
             title="שכפול שבוע"
           >
             📋 שכפול שבוע
           </button>
           <button
             onClick={handleApplyDeloading}
-            className="bg-cyan-600 hover:bg-cyan-700 text-white px-4 py-2 rounded-lg shadow-lg text-sm font-medium transition-all"
+            className="bg-info hover:bg-info text-on-accent px-4 py-2 rounded-lg text-sm font-medium transition-all"
             title="החל דילודינג"
           >
             🔵 דילודינג
           </button>
           <button
             onClick={handleRemoveDeloading}
-            className="bg-raised hover:bg-raised/90 text-white px-4 py-2 rounded-lg shadow-lg text-sm font-medium transition-all"
+            className="bg-raised hover:bg-raised/90 text-fg px-4 py-2 rounded-lg text-sm font-medium transition-all"
             title="הסר דילודינג"
           >
             ❌ הסר דילודינג
           </button>
           <button
             onClick={() => setShowDeleteRangeModal(true)}
-            className="bg-danger hover:bg-danger/90 text-white px-4 py-2 rounded-lg shadow-lg text-sm font-medium transition-all"
+            className="bg-danger hover:bg-danger/90 text-on-accent px-4 py-2 rounded-lg text-sm font-medium transition-all"
             title="נקה טווח תאריכים"
           >
             🗑️ נקה טווח
@@ -729,11 +729,11 @@ export default function CalendarPage() {
       )}
 
       {!isMobile && hasPendingChanges && (
-        <div className="fixed top-14 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 bg-amber-50 border border-amber-300 text-amber-800 px-6 py-3 rounded-xl shadow-lg whitespace-nowrap">
+        <div className="fixed top-14 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 bg-warning/10 border border-warning/30 text-warning px-6 py-3 rounded-xl shadow-lg whitespace-nowrap">
           <span className="font-medium text-sm">יש שינויים שלא נשמרו</span>
           <button
             onClick={handleSavePendingChanges}
-            className="px-4 py-1.5 bg-accent hover:bg-accent-hover text-white rounded-lg text-sm font-medium transition-all"
+            className="px-4 py-1.5 bg-accent hover:bg-accent-hover text-on-accent rounded-lg text-sm font-medium transition-all"
           >
             💾 שמור שינויים
           </button>
@@ -747,7 +747,7 @@ export default function CalendarPage() {
       )}
 
       <div className="max-w-7xl mx-auto p-4">
-        <div className="bg-surface rounded-xl shadow-sm p-4 overflow-hidden">
+        <div className="bg-surface rounded-xl p-4 overflow-hidden">
           {view === 'day' ? (
             <DayListView
               events={events}

@@ -18,7 +18,7 @@ export default function SessionsTable({ logs, isSingleHand }: SessionsTableProps
   
   if (!logs || logs.length === 0) {
     return (
-      <div className="bg-surface rounded-xl shadow-sm border border-line p-8">
+      <div className="bg-surface rounded-xl border border-line p-8">
         <div className="text-center text-muted">
           <div className="text-4xl mb-2">📋</div>
           <div>אין סשנים להצגה</div>
@@ -34,7 +34,7 @@ export default function SessionsTable({ logs, isSingleHand }: SessionsTableProps
   const displayedLogs = logs.slice(startIndex, endIndex)
 
   return (
-    <div className="bg-surface rounded-xl shadow-sm border border-line overflow-hidden">
+    <div className="bg-surface rounded-xl border border-line overflow-hidden">
       <div className="p-4 border-b border-line bg-surface flex justify-between items-center">
         <h3 className="text-lg font-bold text-fg">
           📊 סשנים מסוננים ({logs.length})
@@ -83,13 +83,13 @@ export default function SessionsTable({ logs, isSingleHand }: SessionsTableProps
               </th>
             </tr>
           </thead>
-          <tbody className="bg-surface divide-y divide-gray-200">
+          <tbody className="bg-surface divide-y divide-line">
             {displayedLogs.map((log, index) => (
               <tr 
                 key={log.ExerciseLogID}
                 className={`hover:bg-surface/90 transition-colors ${
-                  index % 2 === 0 ? 'bg-surface' : 'bg-surface/50'
-                }`}
+ index % 2 === 0 ? 'bg-surface' : 'bg-surface/50'
+ }`}
               >
                 <td className="px-4 py-3 whitespace-nowrap text-sm text-fg">
                   <div className="font-medium">
@@ -137,10 +137,10 @@ export default function SessionsTable({ logs, isSingleHand }: SessionsTableProps
                 <td className="px-4 py-3 whitespace-nowrap text-sm">
                   {log.RPE ? (
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      log.RPE >= 8 ? 'bg-danger/15 text-danger' :
-                      log.RPE >= 6 ? 'bg-amber-100 text-amber-800' :
-                      'bg-success/15 text-success'
-                    }`}>
+ log.RPE >= 8 ? 'bg-danger/15 text-danger' :
+ log.RPE >= 6 ? 'bg-warning/10 text-warning' :
+ 'bg-success/15 text-success'
+ }`}>
                       {log.RPE}
                     </span>
                   ) : '-'}
@@ -189,10 +189,10 @@ export default function SessionsTable({ logs, isSingleHand }: SessionsTableProps
                   key={i}
                   onClick={() => setCurrentPage(pageNum)}
                   className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
-                    currentPage === pageNum
-                      ? 'bg-accent text-white'
-                      : 'bg-surface border border-line text-fg-2 hover:bg-surface/90'
-                  }`}
+ currentPage === pageNum
+ ? 'bg-accent text-on-accent'
+ : 'bg-surface border border-line text-fg-2 hover:bg-surface/90'
+ }`}
                 >
                   {pageNum}
                 </button>

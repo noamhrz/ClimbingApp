@@ -35,7 +35,7 @@ export default function ExerciseForm({
   const estimatedTime = calculateExerciseTime(localData, exercise)
 
   return (
-    <div className="bg-surface border border-line rounded-lg p-3 hover:shadow-md transition-shadow group">
+    <div className="bg-surface border border-line rounded-lg p-3 transition-shadow group">
       {/* Header — drag handle covers icon + name, not the remove button */}
       <div className="flex items-center gap-2 mb-3">
         <div
@@ -50,7 +50,7 @@ export default function ExerciseForm({
             <div className="text-xs text-muted">
               {exercise.Category}
               {exercise.IsSingleHand && (
-                <span className="ml-2 bg-purple-100 text-purple-700 px-2 py-0.5 rounded">
+                <span className="ml-2 bg-info/10 text-info px-2 py-0.5 rounded">
                   Single Hand
                 </span>
               )}

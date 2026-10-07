@@ -63,8 +63,8 @@ const SCORE_LABELS: [ScoreKey, string][] = [
 const STALL_THRESHOLD = 7
 const LONG_STALL = 15
 const INEFFICIENT_CLIP = 10
-const THIRDS_COLORS = ['bg-green-400', 'bg-yellow-400', 'bg-red-500']
-const THIRDS_TEXT = ['text-green-700', 'text-yellow-700', 'text-red-700']
+const THIRDS_COLORS = ['bg-success', 'bg-warning', 'bg-danger']
+const THIRDS_TEXT = ['text-success', 'text-warning', 'text-danger']
 const THIRDS_LABELS = ['שליש א׳', 'שליש ב׳', 'שליש ג׳']
 
 // ── Pure helpers ───────────────────────────────────────────────────────────────
@@ -258,11 +258,11 @@ function TimeBreakdownBar({
   const pct = (v: number) => `${Math.max(0, (v / ClimbDuration) * 100).toFixed(1)}%`
 
   const segments = [
-    { label: 'הקלפה', value: ClippingTime, color: 'bg-yellow-400', text: 'text-yellow-700' },
-    { label: 'תנועה', value: displayMovementTime, color: 'bg-emerald-400', text: 'text-emerald-700' },
-    { label: 'עצירה', value: stallTime, color: 'bg-orange-400', text: 'text-orange-700' },
-    { label: 'מנוחה', value: physicalRestTime, color: 'bg-red-400', text: 'text-red-700' },
-    { label: 'היסוס', value: hesitationTime, color: 'bg-purple-400', text: 'text-purple-700' },
+    { label: 'הקלפה', value: ClippingTime, color: 'bg-warning', text: 'text-warning' },
+    { label: 'תנועה', value: displayMovementTime, color: 'bg-success', text: 'text-success' },
+    { label: 'עצירה', value: stallTime, color: 'bg-warning', text: 'text-warning' },
+    { label: 'מנוחה', value: physicalRestTime, color: 'bg-danger', text: 'text-danger' },
+    { label: 'היסוס', value: hesitationTime, color: 'bg-info', text: 'text-info' },
   ].filter(s => s.value > 0.01)
 
   return (
@@ -317,25 +317,25 @@ function RestPeriodsList({
               </button>
               <span className="text-faint shrink-0">↔ {r.afterMoveIndex + 1}</span>
               <span className={`shrink-0 font-semibold ${
-                r.type === 'tactical' ? 'text-warning' :
-                r.type === 'hesitation' ? 'text-purple-600' :
-                r.type === 'footwork' ? 'text-emerald-600' : 'text-danger'
-              }`}>{fmtSec(r.duration)}</span>
+ r.type === 'tactical' ? 'text-warning' :
+ r.type === 'hesitation' ? 'text-info' :
+ r.type === 'footwork' ? 'text-success' : 'text-danger'
+ }`}>{fmtSec(r.duration)}</span>
               <div className="flex gap-1 mr-auto flex-wrap">
                 {(
                   [
-                    { key: 'rest',      label: 'מנוחה',        active: 'bg-red-100 border-red-300 text-red-700',         idle: 'hover:border-red-300 hover:text-red-500' },
-                    { key: 'hesitation',label: 'היסוס',        active: 'bg-purple-100 border-purple-300 text-purple-700', idle: 'hover:border-purple-300 hover:text-purple-500' },
-                    { key: 'footwork',  label: 'רגליים',       active: 'bg-emerald-100 border-emerald-300 text-emerald-700', idle: 'hover:border-emerald-300 hover:text-emerald-500' },
-                    { key: 'tactical',  label: 'עצירה טקטית', active: 'bg-orange-100 border-orange-300 text-orange-700', idle: 'hover:border-orange-300 hover:text-orange-500' },
+                    { key: 'rest',      label: 'מנוחה',        active: 'bg-danger/10 border-danger/30 text-danger',         idle: 'hover:border-danger/30 hover:text-danger' },
+                    { key: 'hesitation',label: 'היסוס',        active: 'bg-info/10 border-info/30 text-info', idle: 'hover:border-info/30 hover:text-info' },
+                    { key: 'footwork',  label: 'רגליים',       active: 'bg-success/10 border-success/30 text-success', idle: 'hover:border-success/30 hover:text-success' },
+                    { key: 'tactical',  label: 'עצירה טקטית', active: 'bg-warning/10 border-warning/30 text-warning', idle: 'hover:border-warning/30 hover:text-warning' },
                   ] as const
                 ).map(btn => (
                   <button
                     key={btn.key}
                     onClick={() => onToggle(r.index, btn.key)}
                     className={`px-1.5 py-0.5 rounded text-[10px] border transition-colors ${
-                      r.type === btn.key
-                        ? `${btn.active} font-semibold`
+ r.type === btn.key
+ ? `${btn.active} font-semibold`
                         : `bg-surface border-line text-faint ${btn.idle}`
                     }`}
                   >
@@ -372,13 +372,13 @@ function OverallSummary({
         </div>
         <div className="flex h-5 rounded-full overflow-hidden">
           <div
-            className="bg-accent-hover flex items-center justify-center text-[11px] text-white font-bold"
+            className="bg-accent-hover flex items-center justify-center text-[11px] text-on-accent font-bold"
             style={{ width: `${leftPct}%` }}
           >
             {metrics.LeftMoves > 2 && metrics.LeftMoves}
           </div>
           <div
-            className="bg-danger flex items-center justify-center text-[11px] text-white font-bold"
+            className="bg-danger flex items-center justify-center text-[11px] text-on-accent font-bold"
             style={{ width: `${100 - leftPct}%` }}
           >
             {metrics.RightMoves > 2 && metrics.RightMoves}
@@ -429,8 +429,8 @@ function OverallSummary({
         </div>
         {isTop !== undefined && (
           <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-            isTop ? 'bg-success/15 text-success' : 'bg-surface text-muted'
-          }`}>
+ isTop ? 'bg-success/15 text-success' : 'bg-surface text-muted'
+ }`}>
             {isTop ? '✓ הגיע לראש' : '✗ לא הגיע לראש'}
           </span>
         )}
@@ -449,7 +449,7 @@ function OverallSummary({
               <div className="text-[10px] text-warning mt-0.5">ממוצע</div>
             </div>
             <div
-              className={`rounded-lg p-2 text-center ${metrics.LongestClipStartTime !== null ? 'cursor-pointer hover:ring-1 hover:ring-blue-200' : ''} ${metrics.LongestClip > INEFFICIENT_CLIP ? 'bg-danger/15' : 'bg-warning/15'}`}
+              className={`rounded-lg p-2 text-center ${metrics.LongestClipStartTime !== null ? 'cursor-pointer hover:ring-1 hover:ring-accent/40' : ''} ${metrics.LongestClip > INEFFICIENT_CLIP ? 'bg-danger/15' : 'bg-warning/15'}`}
               onClick={() => metrics.LongestClipStartTime !== null && onSeek?.(metrics.LongestClipStartTime)}
               title={metrics.LongestClipStartTime !== null ? 'לחץ לדילוג לנקודה זו' : undefined}
             >
@@ -493,10 +493,10 @@ function ScoreSlider({ label, value, onChange, disabled }: {
       <div className="flex justify-between items-center mb-1">
         <label className="text-sm text-fg-2">{label}</label>
         <span className={`text-sm font-bold px-2 py-0.5 rounded-md min-w-[2rem] text-center ${
-          value >= 4 ? 'bg-success/15 text-success' :
-          value <= 2 ? 'bg-danger/15 text-danger' :
-          'bg-warning/15 text-warning'
-        }`}>{value}</span>
+ value >= 4 ? 'bg-success/15 text-success' :
+ value <= 2 ? 'bg-danger/15 text-danger' :
+ 'bg-warning/15 text-warning'
+ }`}>{value}</span>
       </div>
       <input
         type="range" min={1} max={5} step={1}
@@ -527,7 +527,7 @@ function ThirdsViz({ metrics }: { metrics: Metrics }) {
             {byMoves.map((t, i) => (
               <div
                 key={i}
-                className={`${THIRDS_COLORS[i]} flex items-center justify-center text-xs text-white font-bold`}
+                className={`${THIRDS_COLORS[i]} flex items-center justify-center text-xs text-on-accent font-bold`}
                 style={{ width: `${(t.duration / totalDur) * 100}%` }}
               >
                 {t.move_count}
@@ -562,7 +562,7 @@ function ThirdsViz({ metrics }: { metrics: Metrics }) {
             {byTime.map((t, i) => (
               <div
                 key={i}
-                className={`${THIRDS_COLORS[i]} flex-1 flex items-center justify-center text-xs text-white font-bold`}
+                className={`${THIRDS_COLORS[i]} flex-1 flex items-center justify-center text-xs text-on-accent font-bold`}
               >
                 {t.move_count}
               </div>
@@ -1044,7 +1044,7 @@ export default function AnalysisPage() {
                 <button
                   onPointerDown={e => { e.preventDefault(); recordMove('L') }}
                   disabled={sessionState === 'idle'}
-                  className="flex-1 py-4 bg-accent hover:bg-accent/90 active:bg-accent-hover disabled:opacity-25 disabled:pointer-events-none text-white rounded-xl font-bold text-sm shadow select-none touch-none"
+                  className="flex-1 py-4 bg-accent hover:bg-accent/90 active:bg-accent-hover disabled:opacity-25 disabled:pointer-events-none text-on-accent rounded-xl font-bold text-sm select-none touch-none"
                 >
                   יד שמאל
                   <span className="block text-xs opacity-60 font-normal">←</span>
@@ -1052,22 +1052,22 @@ export default function AnalysisPage() {
                 <button
                   onPointerDown={e => { e.preventDefault(); handleClip() }}
                   disabled={sessionState === 'idle'}
-                  className={`px-3 py-4 text-white rounded-xl font-bold shadow select-none touch-none transition-colors disabled:opacity-25 disabled:pointer-events-none ${
-                    clipInProgress
-                      ? 'bg-warning hover:bg-warning/90 active:bg-warning ring-2 ring-yellow-300'
-                      : 'bg-warning hover:bg-warning/90 active:bg-warning'
-                  }`}
+                  className={`px-3 py-4 text-on-accent rounded-xl font-bold select-none touch-none transition-colors disabled:opacity-25 disabled:pointer-events-none ${
+ clipInProgress
+ ? 'bg-warning hover:bg-warning/90 active:bg-warning ring-2 ring-warning/40'
+ : 'bg-warning hover:bg-warning/90 active:bg-warning'
+ }`}
                 >
                   קליפ
                   <span className="block text-xs opacity-70 font-normal">[C]</span>
                 </button>
                 <button
                   onPointerDown={e => { e.preventDefault(); handleSpace() }}
-                  className={`px-3 py-4 text-white rounded-xl font-bold shadow select-none touch-none transition-colors ${
-                    sessionState === 'idle'
-                      ? 'bg-success hover:bg-success/90 active:bg-success'
-                      : 'bg-raised hover:bg-raised/90 active:bg-raised'
-                  }`}
+                  className={`px-3 py-4 rounded-xl font-bold select-none touch-none transition-colors ${
+ sessionState === 'idle'
+ ? 'bg-success text-on-accent hover:bg-success/90 active:bg-success'
+ : 'bg-line-strong text-fg hover:bg-line-strong/90 active:bg-line-strong'
+ }`}
                 >
                   {sessionState === 'idle' ? 'התחל' : 'סיום'}
                   <span className="block text-xs opacity-60 font-normal">{sessionState === 'idle' ? '↑' : '↓'}</span>
@@ -1075,7 +1075,7 @@ export default function AnalysisPage() {
                 <button
                   onPointerDown={e => { e.preventDefault(); recordMove('R') }}
                   disabled={sessionState === 'idle'}
-                  className="flex-1 py-4 bg-danger hover:bg-danger/90 active:bg-danger disabled:opacity-25 disabled:pointer-events-none text-white rounded-xl font-bold text-sm shadow select-none touch-none"
+                  className="flex-1 py-4 bg-danger hover:bg-danger/90 active:bg-danger disabled:opacity-25 disabled:pointer-events-none text-on-accent rounded-xl font-bold text-sm select-none touch-none"
                 >
                   יד ימין
                   <span className="block text-xs opacity-60 font-normal">→</span>
@@ -1103,7 +1103,7 @@ export default function AnalysisPage() {
               <button
                 onPointerDown={e => { e.preventDefault(); recordMove('L') }}
                 disabled={sessionState === 'idle'}
-                className="flex-1 py-4 bg-accent hover:bg-accent/90 active:bg-accent-hover disabled:opacity-25 disabled:pointer-events-none text-white rounded-xl font-bold text-sm shadow select-none touch-none"
+                className="flex-1 py-4 bg-accent hover:bg-accent/90 active:bg-accent-hover disabled:opacity-25 disabled:pointer-events-none text-on-accent rounded-xl font-bold text-sm select-none touch-none"
               >
                 יד שמאל
                 <span className="block text-xs opacity-60 font-normal">←</span>
@@ -1111,22 +1111,22 @@ export default function AnalysisPage() {
               <button
                 onPointerDown={e => { e.preventDefault(); handleClip() }}
                 disabled={sessionState === 'idle'}
-                className={`px-3 py-4 text-white rounded-xl font-bold shadow select-none touch-none transition-colors disabled:opacity-25 disabled:pointer-events-none ${
-                  clipInProgress
-                    ? 'bg-warning hover:bg-warning/90 active:bg-warning ring-2 ring-yellow-300'
-                    : 'bg-warning hover:bg-warning/90 active:bg-warning'
-                }`}
+                className={`px-3 py-4 text-on-accent rounded-xl font-bold select-none touch-none transition-colors disabled:opacity-25 disabled:pointer-events-none ${
+ clipInProgress
+ ? 'bg-warning hover:bg-warning/90 active:bg-warning ring-2 ring-warning/40'
+ : 'bg-warning hover:bg-warning/90 active:bg-warning'
+ }`}
               >
                 קליפ
                 <span className="block text-xs opacity-70 font-normal">[C]</span>
               </button>
               <button
                 onPointerDown={e => { e.preventDefault(); handleSpace() }}
-                className={`px-3 py-4 text-white rounded-xl font-bold shadow select-none touch-none transition-colors ${
-                  sessionState === 'idle'
-                    ? 'bg-success hover:bg-success/90 active:bg-success'
-                    : 'bg-raised hover:bg-raised/90 active:bg-raised'
-                }`}
+                className={`px-3 py-4 rounded-xl font-bold select-none touch-none transition-colors ${
+ sessionState === 'idle'
+ ? 'bg-success text-on-accent hover:bg-success/90 active:bg-success'
+ : 'bg-line-strong text-fg hover:bg-line-strong/90 active:bg-line-strong'
+ }`}
               >
                 {sessionState === 'idle' ? 'התחל' : 'סיום'}
                 <span className="block text-xs opacity-60 font-normal">{sessionState === 'idle' ? '↑' : '↓'}</span>
@@ -1134,7 +1134,7 @@ export default function AnalysisPage() {
               <button
                 onPointerDown={e => { e.preventDefault(); recordMove('R') }}
                 disabled={sessionState === 'idle'}
-                className="flex-1 py-4 bg-danger hover:bg-danger/90 active:bg-danger disabled:opacity-25 disabled:pointer-events-none text-white rounded-xl font-bold text-sm shadow select-none touch-none"
+                className="flex-1 py-4 bg-danger hover:bg-danger/90 active:bg-danger disabled:opacity-25 disabled:pointer-events-none text-on-accent rounded-xl font-bold text-sm select-none touch-none"
               >
                 יד ימין
                 <span className="block text-xs opacity-60 font-normal">→</span>
@@ -1179,10 +1179,10 @@ export default function AnalysisPage() {
             <button
               onClick={() => setTab('quantitative')}
               className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-                tab === 'quantitative'
-                  ? 'border-accent text-accent'
-                  : 'border-transparent text-muted hover:text-fg-2'
-              }`}
+ tab === 'quantitative'
+ ? 'border-accent text-accent'
+ : 'border-transparent text-muted hover:text-fg-2'
+ }`}
             >
               כמותי
             </button>
@@ -1190,10 +1190,10 @@ export default function AnalysisPage() {
               onClick={() => canShowQualitative && setTab('qualitative')}
               disabled={!canShowQualitative}
               className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
-                tab === 'qualitative'
-                  ? 'border-accent text-accent'
-                  : 'border-transparent text-muted hover:text-fg-2'
-              }`}
+ tab === 'qualitative'
+ ? 'border-accent text-accent'
+ : 'border-transparent text-muted hover:text-fg-2'
+ }`}
             >
               איכותי
             </button>
@@ -1284,7 +1284,7 @@ export default function AnalysisPage() {
                   disabled={!isCoachOrAdmin}
                   className={`relative w-12 h-6 rounded-full transition-colors disabled:opacity-50 ${isTop ? 'bg-success' : 'bg-raised'}`}
                 >
-                  <span className={`absolute top-0.5 w-5 h-5 bg-surface rounded-full shadow transition-transform ${isTop ? 'translate-x-6' : 'translate-x-0.5'}`} />
+                  <span className={`absolute top-0.5 w-5 h-5 bg-surface rounded-full transition-transform ${isTop ? 'translate-x-6' : 'translate-x-0.5'}`} />
                 </button>
               </div>
 
@@ -1316,7 +1316,7 @@ export default function AnalysisPage() {
                   <button
                     onClick={handleSaveComment}
                     disabled={saving}
-                    className="mt-2 text-sm bg-accent hover:bg-accent/90 disabled:opacity-40 text-white px-4 py-1.5 rounded-lg transition-colors"
+                    className="mt-2 text-sm bg-accent hover:bg-accent/90 disabled:opacity-40 text-on-accent px-4 py-1.5 rounded-lg transition-colors"
                   >
                     {saving ? 'שומר...' : 'שמור הערה'}
                   </button>
@@ -1328,7 +1328,7 @@ export default function AnalysisPage() {
                 <button
                   onClick={handleSave}
                   disabled={saving}
-                  className="w-full py-3 bg-accent hover:bg-accent-hover disabled:opacity-40 text-white font-semibold rounded-xl transition-colors shadow"
+                  className="w-full py-3 bg-accent hover:bg-accent-hover disabled:opacity-40 text-on-accent font-semibold rounded-xl transition-colors "
                 >
                   {saving ? 'שומר...' : saved ? '✓ נשמר!' : analysis ? 'עדכן ניתוח' : 'שמור ניתוח'}
                 </button>
@@ -1340,7 +1340,7 @@ export default function AnalysisPage() {
 
       {/* ── Comments ── */}
       {currentUser && (
-        <div className="mt-6 bg-surface rounded-xl shadow-sm border border-line">
+        <div className="mt-6 bg-surface rounded-xl border border-line">
           <div className="px-4 pt-4 pb-1">
             <h3 className="text-sm font-semibold text-fg-2">תגובות על הסרטון</h3>
           </div>

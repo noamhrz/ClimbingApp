@@ -51,7 +51,7 @@ export function ExerciseStatsDisplay({ performance, selectedEmail }: ExerciseSta
   return (
     <div className="space-y-6">
       {/* Header with filter */}
-      <div className="rounded-lg p-6 text-white shadow-lg bg-surface border border-line">
+      <div className="rounded-lg p-6 text-fg bg-surface border border-line">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-2xl font-bold">💪 סטטיסטיקות תרגילים</h2>
           
@@ -61,7 +61,7 @@ export function ExerciseStatsDisplay({ performance, selectedEmail }: ExerciseSta
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="px-3 py-2 rounded-lg bg-white/20 backdrop-blur-sm border border-white/30 text-white font-medium focus:outline-none focus:ring-2 focus:ring-white/50 cursor-pointer"
+              className="px-3 py-2 rounded-lg min-h-11 bg-bg border border-line-strong text-fg font-medium focus:outline-none focus:border-accent cursor-pointer"
             >
               <option value="all" className="text-fg">🔍 הכל ({performance.exercises.length})</option>
               {allCategories.map((category) => (
@@ -164,7 +164,7 @@ function CategorySection({
   userEmail?: string
 }) {
   return (
-    <div className="bg-surface rounded-lg shadow-lg border-2 border-line">
+    <div className="bg-surface rounded-lg border-2 border-line">
       {/* Category Header */}
       <div className="p-4 border-b-2 border-line rounded-t-lg bg-surface">
         <h3 className="text-xl font-bold text-fg flex items-center gap-2">
@@ -219,7 +219,7 @@ export function ExerciseCard({
   }
 
   return (
-    <div className="border-2 border-line rounded-lg p-4 hover:border-purple-300 transition">
+    <div className="border-2 border-line rounded-lg p-4 hover:border-info/30 transition">
       {/* Exercise Name - Clickable */}
       <div className="mb-4 flex items-center justify-between">
         <Link 
@@ -303,14 +303,14 @@ function HandStatsBar({
   const isBodyWeight = stats.isBodyWeight === true
   
   const colorClasses = {
-    green: isBodyWeight ? 'bg-gradient-to-r from-purple-500 to-purple-600' : 'bg-green-500',
-    red: isBodyWeight ? 'bg-gradient-to-r from-purple-500 to-purple-600' : 'bg-red-500',
-    yellow: isBodyWeight ? 'bg-gradient-to-r from-purple-500 to-purple-600' : 'bg-yellow-500',
-    blue: isBodyWeight ? 'bg-gradient-to-r from-purple-500 to-purple-600' : 'bg-blue-500'
+    green: isBodyWeight ? 'bg-info ' : 'bg-success',
+    red: isBodyWeight ? 'bg-info ' : 'bg-danger',
+    yellow: isBodyWeight ? 'bg-info ' : 'bg-warning',
+    blue: isBodyWeight ? 'bg-info ' : 'bg-accent'
   }
 
   const trendIcon = stats.trend > 5 ? '📈' : stats.trend < -5 ? '📉' : '➡️'
-  const trendColor = stats.trend > 5 ? 'text-green-600' : stats.trend < -5 ? 'text-red-600' : 'text-gray-600'
+  const trendColor = stats.trend > 5 ? 'text-success' : stats.trend < -5 ? 'text-danger' : 'text-fg-3'
 
   return (
     <div className="mb-4">
@@ -322,17 +322,17 @@ function HandStatsBar({
           </span>
         )}
         {isBodyWeight && (
-          <span className="text-sm font-medium text-purple-600">
+          <span className="text-sm font-medium text-info">
             💪 משקל גוף
           </span>
         )}
       </div>
 
       {isBodyWeight ? (
-        <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-2">
+        <div className="bg-info/10 border border-info/30 rounded-lg p-4 mb-2">
           <div className="flex items-center justify-between mb-3">
             <p className="text-sm text-fg-3 italic">** לא הוזן משקל</p>
-            <span className="text-2xl font-bold text-purple-600">{formatValue(stats.current, stats.unit, isBodyWeight)}</span>
+            <span className="text-2xl font-bold text-info">{formatValue(stats.current, stats.unit, isBodyWeight)}</span>
           </div>
           <div className="flex items-center gap-4 text-sm text-fg-3">
             <span>Max: <strong>{formatValue(stats.max, stats.unit, isBodyWeight)}</strong></span>
@@ -395,7 +395,7 @@ function HandStatsBar({
                     }}
                   />
                   <div 
-                    className="absolute -top-6 text-sm font-black text-fg whitespace-nowrap bg-surface px-2 py-1 rounded-md border-2 border-black z-40"
+                    className="absolute -top-6 text-sm font-black text-fg whitespace-nowrap bg-surface px-2 py-1 rounded-md border-2 border-line-strong z-40"
                     style={{ 
                       left: `${100 - (bodyWeightKG / effectiveMaxScale) * 100}%`, 
                       transform: 'translateX(-50%)',
@@ -414,7 +414,7 @@ function HandStatsBar({
                   marginLeft: 'auto'
                 }}
               >
-                <span className="text-white text-sm font-bold">
+                <span className="text-on-accent text-sm font-bold">
                   {formatValue(stats.current, stats.unit, isBodyWeight)}
                 </span>
               </div>
@@ -450,13 +450,13 @@ function HandStatsBar({
 // ═══════════════════════════════════════════════════════════════════
 
 function ImbalanceWarning({ imbalance }: { imbalance: ImbalanceStats }) {
-  const bgColor = imbalance.status === 'critical' ? 'bg-red-50 border-red-300' :
-                  imbalance.status === 'warning' ? 'bg-yellow-50 border-yellow-300' :
-                  'bg-green-50 border-green-300'
+  const bgColor = imbalance.status === 'critical' ? 'bg-danger/10 border-danger/30' :
+                  imbalance.status === 'warning' ? 'bg-warning/10 border-warning/30' :
+                  'bg-success/10 border-success/30'
 
-  const textColor = imbalance.status === 'critical' ? 'text-red-900' :
-                    imbalance.status === 'warning' ? 'text-yellow-900' :
-                    'text-green-900'
+  const textColor = imbalance.status === 'critical' ? 'text-danger' :
+                    imbalance.status === 'warning' ? 'text-warning' :
+                    'text-success'
 
   return (
     <div className={`mt-4 p-3 rounded-lg border-2 ${bgColor}`}>

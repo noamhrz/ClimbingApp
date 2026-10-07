@@ -98,14 +98,14 @@ export default function LoadLastWorkoutButton({
   return (
     <div className="text-center mt-6">
       <button
-        className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2.5 rounded-lg font-semibold shadow-md transition-colors disabled:bg-raised disabled:cursor-not-allowed flex items-center gap-2 mx-auto"
+        className="bg-info hover:bg-info text-on-accent px-6 py-2.5 rounded-lg font-semibold transition-colors disabled:bg-raised disabled:text-faint disabled:cursor-not-allowed flex items-center gap-2 mx-auto"
         onClick={handleLoadFromLastWorkout}
         disabled={loading}
       >
         {loading ? (
           <>
             <svg
-              className="animate-spin h-5 w-5 text-white"
+              className="animate-spin h-5 w-5 text-on-accent"
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
               viewBox="0 0 24 24"

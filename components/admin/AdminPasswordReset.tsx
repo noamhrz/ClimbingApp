@@ -82,7 +82,7 @@ export default function AdminPasswordReset({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-surface rounded-xl shadow-2xl max-w-md w-full p-6">
+      <div className="bg-raised border border-line-strong rounded-xl max-w-md w-full p-6">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h2 className="text-2xl font-bold text-fg">🔐 איפוס סיסמה</h2>
@@ -108,7 +108,7 @@ export default function AdminPasswordReset({
           {/* Generate Random Password */}
           <button
             onClick={generateRandomPassword}
-            className="w-full py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-colors font-medium border border-purple-300"
+            className="w-full py-2 bg-info/10 text-info rounded-lg hover:bg-info/20 transition-colors font-medium border border-info/30"
             disabled={loading}
           >
             🎲 צור סיסמה אוטומטית
@@ -186,7 +186,7 @@ export default function AdminPasswordReset({
             <button
               onClick={handleReset}
               disabled={loading || !newPassword || !confirmPassword}
-              className="flex-1 py-3 bg-accent text-white rounded-lg hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+              className="flex-1 py-3 bg-accent text-on-accent rounded-lg hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
             >
               {loading ? '⏳ מעדכן...' : '💾 עדכן סיסמה'}
             </button>

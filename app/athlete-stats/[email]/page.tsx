@@ -191,7 +191,7 @@ export default function ProfilePage() {
 
           {/* User selector - only for admin/coach */}
           {canViewOthers && users.length > 0 && (
-            <div className="bg-surface rounded-lg shadow-md p-4 border-2 border-accent">
+            <div className="bg-surface rounded-lg p-4 border-2 border-accent">
               <label className="block text-sm font-medium text-fg-2 mb-2">
                 👤 בחר משתמש:
               </label>
@@ -215,7 +215,7 @@ export default function ProfilePage() {
         </div>
 
         {/* Date Range Picker - only for admin/coach */}
-        {canViewOthers && <div className="bg-surface rounded-lg shadow-md p-4 border border-line">
+        {canViewOthers && <div className="bg-surface rounded-lg p-4 border border-line">
           <div className="flex items-center gap-4 flex-wrap">
             <div className="flex-1 min-w-[200px]">
               <label className="block text-sm font-medium text-fg-2 mb-1">
@@ -248,7 +248,7 @@ export default function ProfilePage() {
               <button
                 onClick={handleDateRangeChange}
                 disabled={refreshLoading}
-                className="px-6 py-2 bg-accent text-white rounded-lg hover:bg-accent-hover transition font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                className="px-6 py-2 bg-accent text-on-accent rounded-lg hover:bg-accent-hover transition font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               >
                 {refreshLoading ? (
                   <>
@@ -281,17 +281,17 @@ export default function ProfilePage() {
       {metrics && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           {/* Workout Completion Card */}
-          <div className="bg-surface rounded-lg shadow-lg p-6 border-r-4 border-accent">
+          <div className="bg-surface rounded-lg p-6 border-r-4 border-accent">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-xl font-bold text-fg">✅ אחוז השלמת אימונים</h3>
             </div>
             
             <div className="text-center">
               <div className={`text-6xl font-bold mb-4 ${
-                metrics.workoutCompletion >= 80 ? 'text-success' :
-                metrics.workoutCompletion >= 50 ? 'text-warning' :
-                'text-danger'
-              }`}>
+ metrics.workoutCompletion >= 80 ? 'text-success' :
+ metrics.workoutCompletion >= 50 ? 'text-warning' :
+ 'text-danger'
+ }`}>
                 {metrics.workoutCompletion.toFixed(1)}%
               </div>
               
@@ -304,10 +304,10 @@ export default function ProfilePage() {
               <div className="mt-4 w-full bg-raised rounded-full h-3">
                 <div
                   className={`h-3 rounded-full transition-all ${
-                    metrics.workoutCompletion >= 80 ? 'bg-success' :
-                    metrics.workoutCompletion >= 50 ? 'bg-warning' :
-                    'bg-danger'
-                  }`}
+ metrics.workoutCompletion >= 80 ? 'bg-success' :
+ metrics.workoutCompletion >= 50 ? 'bg-warning' :
+ 'bg-danger'
+ }`}
                   style={{ width: `${metrics.workoutCompletion}%` }}
                 />
               </div>
@@ -315,21 +315,21 @@ export default function ProfilePage() {
           </div>
 
           {/* Sleep Average Card */}
-          <div className={`bg-surface rounded-lg shadow-lg p-6 border-r-4 ${
-            metrics.sleepAverage >= 8 ? 'border-success' :
-            metrics.sleepAverage >= 6 ? 'border-warning' :
-            'border-danger'
-          }`}>
+          <div className={`bg-surface rounded-lg p-6 border-r-4 ${
+ metrics.sleepAverage >= 8 ? 'border-success' :
+ metrics.sleepAverage >= 6 ? 'border-warning' :
+ 'border-danger'
+ }`}>
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-xl font-bold text-fg">😴 ממוצע שעות שינה</h3>
             </div>
             
             <div className="text-center">
               <div className={`text-6xl font-bold mb-4 ${
-                metrics.sleepAverage >= 8 ? 'text-success' :
-                metrics.sleepAverage >= 6 ? 'text-warning' :
-                'text-danger'
-              }`}>
+ metrics.sleepAverage >= 8 ? 'text-success' :
+ metrics.sleepAverage >= 6 ? 'text-warning' :
+ 'text-danger'
+ }`}>
                 {metrics.sleepAverage > 0 ? metrics.sleepAverage.toFixed(1) : '—'}
               </div>
               

@@ -28,7 +28,7 @@ export function ClimbingStatsDisplay({ performance }: ClimbingStatsDisplayProps)
   return (
     <div className="space-y-6">
       {/* Overall Summary - Simplified */}
-      <div className="rounded-lg p-6 text-white shadow-lg bg-surface border border-line">
+      <div className="rounded-lg p-6 text-fg bg-surface border border-line">
         <h2 className="text-2xl font-bold mb-4">🧗 סיכום טיפוס</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Boulder Points */}
@@ -127,7 +127,7 @@ function ClimbTypeCardCombined({ stats }: { stats: ClimbTypeStats }) {
   const [tableOpen, setTableOpen] = useState(false)
 
   return (
-    <div className="bg-surface rounded-lg shadow-lg border-2 border-line">
+    <div className="bg-surface rounded-lg border-2 border-line">
       {/* Card header — toggles pyramid + table wrapper */}
       <button
         type="button"
@@ -206,7 +206,7 @@ function ClimbTypeCard({ stats, icon, title }: { stats: ClimbTypeStats; icon: st
   const [tableOpen, setTableOpen] = useState(false)
 
   return (
-    <div className="bg-surface rounded-lg shadow-lg border-2 border-line">
+    <div className="bg-surface rounded-lg border-2 border-line">
       {/* Card header — toggles pyramid + table wrapper */}
       <button
         type="button"
@@ -280,8 +280,8 @@ function ClimbTypeCard({ stats, icon, title }: { stats: ClimbTypeStats; icon: st
 // ═══════════════════════════════════════════════════════════════════
 
 function GradeRowCombined({ grade }: { grade: GradeStats }) {
-  const successBgColor = grade.successRate >= 80 ? 'bg-green-50' :
-                         grade.successRate >= 50 ? 'bg-yellow-50' : 'bg-red-50'
+  const successBgColor = grade.successRate >= 80 ? 'bg-success/10' :
+                         grade.successRate >= 50 ? 'bg-warning/10' : 'bg-danger/10'
   
   const typeColor = grade.climbType === 'Boulder' ? 'border-l-4 border-l-orange-500' :
                    grade.climbType === 'Board' ? 'border-l-4 border-l-yellow-500' : ''
@@ -304,7 +304,7 @@ function GradeRowCombined({ grade }: { grade: GradeStats }) {
       <td className="text-center p-2 text-accent">
         {grade.attemptsWithSuccess}
       </td>
-      <td className="text-center p-2 font-medium text-purple-700">
+      <td className="text-center p-2 font-medium text-info">
         {grade.avgAttemptsToSuccess > 0 ? grade.avgAttemptsToSuccess.toFixed(1) : '—'}
       </td>
     </tr>
@@ -316,8 +316,8 @@ function GradeRowCombined({ grade }: { grade: GradeStats }) {
 // ═══════════════════════════════════════════════════════════════════
 
 function GradeRow({ grade }: { grade: GradeStats }) {
-  const bgColor = grade.successRate >= 80 ? 'bg-green-50' :
-                  grade.successRate >= 50 ? 'bg-yellow-50' : 'bg-red-50'
+  const bgColor = grade.successRate >= 80 ? 'bg-success/10' :
+                  grade.successRate >= 50 ? 'bg-warning/10' : 'bg-danger/10'
   
   return (
     <tr className="border-b border-line hover:bg-surface transition">
@@ -330,7 +330,7 @@ function GradeRow({ grade }: { grade: GradeStats }) {
       <td className="text-center p-2 text-accent">
         {grade.attemptsWithSuccess}
       </td>
-      <td className="text-center p-2 font-medium text-purple-700">
+      <td className="text-center p-2 font-medium text-info">
         {grade.avgAttemptsToSuccess > 0 ? grade.avgAttemptsToSuccess.toFixed(1) : '—'}
       </td>
     </tr>
@@ -350,7 +350,7 @@ function MiniPyramidCombined({ grades }: { grades: GradeStats[] }) {
     <div className="space-y-2">
       {grades.map((grade, idx) => {
         const widthPercent = maxRoutes > 0 ? (grade.successfulRoutes / maxRoutes) * 100 : 0
-        const barColor = grade.climbType === 'Boulder' ? 'bg-orange-500' : 'bg-yellow-500'
+        const barColor = grade.climbType === 'Boulder' ? 'bg-warning' : 'bg-warning'
         
         return (
           <div key={`${grade.gradeId}-${grade.climbType}-${idx}`} className="flex items-center gap-2">
@@ -365,7 +365,7 @@ function MiniPyramidCombined({ grades }: { grades: GradeStats[] }) {
                 style={{ width: `${widthPercent}%` }}
               >
                 {widthPercent > 25 && (
-                  <span className="text-white font-bold text-xs">
+                  <span className="text-on-accent font-bold text-xs">
                     {grade.successfulRoutes}
                   </span>
                 )}
@@ -408,8 +408,8 @@ function MiniPyramid({ grades }: { grades: GradeStats[] }) {
     <div className="space-y-2">
       {grades.map((grade) => {
         const widthPercent = maxRoutes > 0 ? (grade.successfulRoutes / maxRoutes) * 100 : 0
-        const barColor = grade.successRate >= 80 ? 'bg-green-500' :
-                        grade.successRate >= 50 ? 'bg-yellow-500' : 'bg-red-500'
+        const barColor = grade.successRate >= 80 ? 'bg-success' :
+                        grade.successRate >= 50 ? 'bg-warning' : 'bg-danger'
         
         return (
           <div key={grade.gradeId} className="flex items-center gap-2">
@@ -423,7 +423,7 @@ function MiniPyramid({ grades }: { grades: GradeStats[] }) {
                 style={{ width: `${widthPercent}%` }}
               >
                 {widthPercent > 25 && (
-                  <span className="text-white font-bold text-xs">
+                  <span className="text-on-accent font-bold text-xs">
                     {grade.successfulRoutes}
                   </span>
                 )}
