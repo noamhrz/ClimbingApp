@@ -52,6 +52,7 @@ export default function ClimbingLogChart({ data }: Props) {
     applyChartTheme()
     const accent = readToken('--color-accent', '#E0763A')
     const info = readToken('--color-info', '#7FB0C9')
+    const warning = readToken('--color-warning', '#E3B341')
 
     if (data.type === 'Lead' && data.lead) {
       // Lead chart (simple bar)
@@ -66,8 +67,8 @@ export default function ClimbingLogChart({ data }: Props) {
             {
               label: 'הובלה (Lead)',
               data: counts,
-              backgroundColor: `${accent}B3`,
-              borderColor: accent,
+              backgroundColor: `${info}B3`,
+              borderColor: info,
               borderWidth: 1,
             },
           ],
@@ -135,8 +136,8 @@ export default function ClimbingLogChart({ data }: Props) {
             {
               label: '🟡 בורד',
               data: boardCounts,
-              backgroundColor: `${info}B3`,
-              borderColor: info,
+              backgroundColor: `${warning}B3`,
+              borderColor: warning,
               borderWidth: 1,
             },
           ],

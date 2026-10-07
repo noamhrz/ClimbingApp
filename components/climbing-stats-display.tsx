@@ -350,7 +350,7 @@ function MiniPyramidCombined({ grades }: { grades: GradeStats[] }) {
     <div className="space-y-2">
       {grades.map((grade, idx) => {
         const widthPercent = maxRoutes > 0 ? (grade.successfulRoutes / maxRoutes) * 100 : 0
-        const barColor = grade.climbType === 'Boulder' ? 'bg-warning' : 'bg-warning'
+        const barColor = grade.climbType === 'Boulder' ? 'bg-accent' : 'bg-warning'
         
         return (
           <div key={`${grade.gradeId}-${grade.climbType}-${idx}`} className="flex items-center gap-2">

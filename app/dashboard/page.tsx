@@ -391,8 +391,10 @@ export default function DashboardPage() {
           <h2 className="text-xl font-bold text-fg mb-2">
             🧗 Climbing Volume
           </h2>
-          <p className="text-xs text-muted mb-4">
-            🟣 הובלה  •  🟡 בורד  •  🟤 בולדר
+          <p className="text-xs text-muted mb-4 flex flex-wrap items-center gap-x-4 gap-y-1">
+            <span className="inline-flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-info" />הובלה</span>
+            <span className="inline-flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-warning" />בורד</span>
+            <span className="inline-flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-accent" />בולדר</span>
           </p>
           <ClimbingVolumeChart data={climbingData} />
         </div>
