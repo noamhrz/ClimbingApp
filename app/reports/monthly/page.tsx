@@ -5,7 +5,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useAuth } from '@/context/AuthContext'
 import { supabase } from '@/lib/supabaseClient'
-import { LuCalendarRange, LuChevronLeft, LuChevronRight, LuFileChartColumn, LuMail } from 'react-icons/lu'
+import { LuCalendarRange, LuChevronLeft, LuChevronRight, LuFileChartColumn, LuFileDown, LuMail } from 'react-icons/lu'
 
 const HE_MONTHS = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר']
 
@@ -33,6 +33,17 @@ export default function MonthlyReportPage() {
   const frame = useRef<HTMLIFrameElement>(null)
   const [testState, setTestState] = useState<'idle' | 'sending' | 'sent' | 'failed'>('idle')
   const [testMsg, setTestMsg] = useState('')
+
+  // opens the report in a new window and the print dialog → "Save as PDF"
+  const exportPdf = () => {
+    const w = window.open('', '_blank')
+    if (!w) { setError('הדפדפן חסם את החלון. אפשר חלונות קופצים לאתר ונסה שוב.'); return }
+    w.document.open(); w.document.write(html); w.document.close()
+    const go = () => { w.focus(); w.print() }
+    const fonts = w.document.fonts
+    if (fonts?.ready) fonts.ready.then(() => setTimeout(go, 300))
+    else setTimeout(go, 800)
+  }
 
   const sendTest = async () => {
     setTestState('sending'); setTestMsg('')
@@ -133,6 +144,14 @@ export default function MonthlyReportPage() {
               <LuChevronLeft aria-hidden />
             </button>
           </div>
+
+          <button
+            onClick={exportPdf}
+            disabled={!html || loading}
+            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-line-strong bg-raised text-fg-2 hover:text-fg disabled:opacity-40"
+          >
+            <LuFileDown aria-hidden />ייצוא PDF
+          </button>
         </div>
 
         {error && <p className="mt-6 text-danger">{error}</p>}
