@@ -230,6 +230,11 @@ export function renderMonthlyPage(r: MonthlyReport): string {
 <html lang="he" dir="rtl"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <base target="_top">
+<style>
+  @page { size: A4; margin: 10mm; }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  @media print { html, body { background: #0F0E0C !important; } tr, table { page-break-inside: avoid; break-inside: avoid; } }
+</style>
 <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;700;800&display=swap" rel="stylesheet">
 <title>${esc(r.name)} · ${esc(r.monthLabel)}</title></head>
 <body style="margin:0;padding:0;background:${C.bg};">

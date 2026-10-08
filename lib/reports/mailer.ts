@@ -8,6 +8,12 @@ export function mailerConfigured(): boolean {
   return !!(process.env.SMTP_USER && process.env.SMTP_PASS)
 }
 
+/** Which SMTP variables are missing, and in which Vercel environment (for the error message). */
+export function mailerMissing(): string {
+  const missing = ['SMTP_USER', 'SMTP_PASS'].filter(k => !process.env[k]?.trim())
+  return `חסר: ${missing.join(', ') || 'אין'} · סביבת Vercel: ${process.env.VERCEL_ENV ?? 'לא ידוע'}`
+}
+
 export async function sendReportEmail(subject: string, html: string, text: string) {
   const user = process.env.SMTP_USER
   const pass = process.env.SMTP_PASS
