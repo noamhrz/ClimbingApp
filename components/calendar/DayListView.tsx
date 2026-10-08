@@ -17,6 +17,7 @@ import {
   arrayMove,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
+import { LuCircleCheck, LuBatteryLow, LuCircleX, LuHourglass, LuTimer, LuList, LuCalendar, LuHouse, LuSunMedium, LuClock } from 'react-icons/lu'
 
 interface CalendarEvent {
   id: number
@@ -65,7 +66,7 @@ function EventCardBody({ event, index }: { event: CalendarEvent; index: number }
       <div className="space-y-3 pr-4">
         <h3 className="text-xl font-bold text-fg">{event.title}</h3>
         <div className="flex items-center gap-2 bg-surface rounded-lg px-3 py-2 border w-fit">
-          <span className="text-lg">⏱</span>
+          <LuTimer aria-hidden className="w-5 h-5 shrink-0" />
           <span className="text-base font-semibold text-fg-2">
             {event.EstimatedTotalTime != null
               ? event.EstimatedTotalTime
@@ -75,22 +76,22 @@ function EventCardBody({ event, index }: { event: CalendarEvent; index: number }
         <div className="flex gap-2 flex-wrap">
           {event.completed && (
             <span className="inline-flex items-center gap-2 px-4 py-2 bg-success/15 text-success rounded-lg text-sm font-bold">
-              <span className="text-lg">✅</span><span>הושלם</span>
+              <LuCircleCheck aria-hidden className="w-5 h-5 shrink-0" /><span>הושלם</span>
             </span>
           )}
           {event.Deloading && !event.completed && (
             <span className="inline-flex items-center gap-2 px-4 py-2 bg-info/10 text-info rounded-lg text-sm font-bold">
-              <span className="text-lg">🔵</span><span>דילודינג {event.DeloadingPercentage}%</span>
+              <LuBatteryLow aria-hidden className="w-5 h-5 shrink-0" /><span>דילודינג {event.DeloadingPercentage}%</span>
             </span>
           )}
           {!event.completed && !event.Deloading && new Date(event.end) < new Date() && (
             <span className="inline-flex items-center gap-2 px-4 py-2 bg-danger/15 text-danger rounded-lg text-sm font-bold">
-              <span className="text-lg">❌</span><span>פספס</span>
+              <LuCircleX aria-hidden className="w-5 h-5 shrink-0" /><span>פספס</span>
             </span>
           )}
           {!event.completed && !event.Deloading && new Date(event.end) >= new Date() && (
             <span className="inline-flex items-center gap-2 px-4 py-2 bg-accent/15 text-accent rounded-lg text-sm font-bold">
-              <span className="text-lg">⏳</span><span>ממתין</span>
+              <LuHourglass aria-hidden className="w-5 h-5 shrink-0" /><span>ממתין</span>
             </span>
           )}
         </div>
@@ -140,7 +141,7 @@ function SortableEventCard({
 
       <div className="absolute top-4 left-10 opacity-0 group-hover:opacity-100 transition-opacity">
         <div className="px-3 py-1 bg-accent text-on-accent rounded-lg text-xs font-medium">
-          👆 לחץ להתחלה
+          לחץ להתחלה
         </div>
       </div>
     </div>
@@ -249,16 +250,18 @@ export default function DayListView({
           onClick={onBackToMonth}
           className="w-14 h-14 bg-info hover:bg-info text-on-accent rounded-full flex items-center justify-center text-xl transition-all hover:scale-110 active:scale-95"
           title="חזרה לחודש (M)"
+          aria-label="חזרה לחודש"
         >
-          🗓️
+          <LuCalendar aria-hidden className="w-6 h-6" />
         </button>
         {!isToday && (
           <button
             onClick={goToToday}
             className="w-14 h-14 bg-success hover:bg-success/90 text-on-accent rounded-full flex items-center justify-center text-xl transition-all hover:scale-110 active:scale-95"
             title="קפיצה להיום (T)"
+            aria-label="קפיצה להיום"
           >
-            🏠
+            <LuHouse aria-hidden className="w-6 h-6" />
           </button>
         )}
       </div>
@@ -297,16 +300,16 @@ export default function DayListView({
         <div className="flex gap-2 justify-center">
           <button
             onClick={onBackToMonth}
-            className="px-4 py-2 bg-info/10 hover:bg-info/20 text-info rounded-lg transition-colors text-sm font-medium"
+            className="inline-flex items-center gap-1.5 min-h-11 px-4 bg-info/10 hover:bg-info/20 text-info rounded-full transition-colors text-sm font-medium"
           >
-            🗓️ חזרה לחודש
+            <LuCalendar aria-hidden className="w-4 h-4 shrink-0" />חזרה לחודש
           </button>
           {!isToday && (
             <button
               onClick={goToToday}
-              className="px-4 py-2 bg-success/15 hover:bg-success/15 text-success rounded-lg transition-colors text-sm font-medium"
+              className="inline-flex items-center gap-1.5 min-h-11 px-4 bg-success/15 hover:bg-success/25 text-success rounded-full transition-colors text-sm font-medium"
             >
-              🏠 קפיצה להיום
+              <LuHouse aria-hidden className="w-4 h-4 shrink-0" />קפיצה להיום
             </button>
           )}
         </div>
@@ -314,7 +317,7 @@ export default function DayListView({
         <div className="text-center mt-4">
           <div className="inline-flex items-center gap-3 flex-wrap justify-center">
             <span className="inline-flex items-center gap-2 px-4 py-2 bg-surface text-fg-2 rounded-full text-sm font-medium">
-              <span>📋</span>
+              <LuList aria-hidden className="w-4 h-4 shrink-0" />
               <span>{sortedEvents.length} אימונים</span>
             </span>
             {sortedEvents.length > 0 && (() => {
@@ -329,26 +332,26 @@ export default function DayListView({
                 : `${mins} דק'`
               return (
                 <span className="inline-flex items-center gap-2 px-4 py-2 bg-info/10 text-info rounded-full text-sm font-medium">
-                  <span>⏱</span>
+                  <LuTimer aria-hidden className="w-4 h-4 shrink-0" />
                   <span>{label}</span>
                 </span>
               )
             })()}
             {sortedEvents.filter(e => e.completed).length > 0 && (
               <span className="inline-flex items-center gap-2 px-4 py-2 bg-success/15 text-success rounded-full text-sm font-medium">
-                <span>✅</span>
+                <LuCircleCheck aria-hidden className="w-4 h-4 shrink-0" />
                 <span>{sortedEvents.filter(e => e.completed).length} הושלמו</span>
               </span>
             )}
             {sortedEvents.filter(e => !e.completed && new Date(e.end) < new Date()).length > 0 && (
               <span className="inline-flex items-center gap-2 px-4 py-2 bg-danger/15 text-danger rounded-full text-sm font-medium">
-                <span>❌</span>
+                <LuCircleX aria-hidden className="w-4 h-4 shrink-0" />
                 <span>{sortedEvents.filter(e => !e.completed && new Date(e.end) < new Date()).length} פספסו</span>
               </span>
             )}
             {sortedEvents.filter(e => !e.completed && new Date(e.end) >= new Date()).length > 0 && (
               <span className="inline-flex items-center gap-2 px-4 py-2 bg-accent/15 text-accent rounded-full text-sm font-medium">
-                <span>⏳</span>
+                <LuHourglass aria-hidden className="w-4 h-4 shrink-0" />
                 <span>{sortedEvents.filter(e => !e.completed && new Date(e.end) >= new Date()).length} ממתינים</span>
               </span>
             )}
@@ -366,7 +369,7 @@ export default function DayListView({
       <div className="p-6">
         {sortedEvents.length === 0 ? (
           <div className="text-center py-16">
-            <div className="text-8xl mb-6">🏖️</div>
+            <LuSunMedium aria-hidden className="w-20 h-20 mx-auto mb-6 text-warning" strokeWidth={1.25} />
             <h3 className="text-2xl font-bold text-fg-2 mb-2">יום מנוחה</h3>
             <p className="text-muted">אין אימונים מתוכננים היום</p>
             <p className="text-faint text-sm mt-2">תהנה מהיום החופשי! 😊</p>
@@ -408,7 +411,7 @@ export default function DayListView({
                   <div className="space-y-3 pr-4">
                     <h3 className="text-xl font-bold text-fg">{event.title}</h3>
                     <div className="flex items-center gap-3 bg-surface rounded-lg p-3 border">
-                      <span className="text-2xl">🕐</span>
+                      <LuClock aria-hidden className="w-6 h-6 shrink-0 text-muted" />
                       <div className="flex items-center gap-2 text-lg font-semibold text-fg-2">
                         <span>{moment(event.start).format('HH:mm')}</span>
                         <span className="text-faint">→</span>
@@ -421,29 +424,29 @@ export default function DayListView({
                     <div className="flex gap-2 flex-wrap">
                       {event.completed && (
                         <span className="inline-flex items-center gap-2 px-4 py-2 bg-success/15 text-success rounded-lg text-sm font-bold">
-                          <span className="text-lg">✅</span><span>הושלם</span>
+                          <LuCircleCheck aria-hidden className="w-5 h-5 shrink-0" /><span>הושלם</span>
                         </span>
                       )}
                       {event.Deloading && !event.completed && (
                         <span className="inline-flex items-center gap-2 px-4 py-2 bg-info/10 text-info rounded-lg text-sm font-bold">
-                          <span className="text-lg">🔵</span><span>דילודינג {event.DeloadingPercentage}%</span>
+                          <LuBatteryLow aria-hidden className="w-5 h-5 shrink-0" /><span>דילודינג {event.DeloadingPercentage}%</span>
                         </span>
                       )}
                       {!event.completed && !event.Deloading && new Date(event.end) < new Date() && (
                         <span className="inline-flex items-center gap-2 px-4 py-2 bg-danger/15 text-danger rounded-lg text-sm font-bold">
-                          <span className="text-lg">❌</span><span>פספס</span>
+                          <LuCircleX aria-hidden className="w-5 h-5 shrink-0" /><span>פספס</span>
                         </span>
                       )}
                       {!event.completed && !event.Deloading && new Date(event.end) >= new Date() && (
                         <span className="inline-flex items-center gap-2 px-4 py-2 bg-accent/15 text-accent rounded-lg text-sm font-bold">
-                          <span className="text-lg">⏳</span><span>ממתין</span>
+                          <LuHourglass aria-hidden className="w-5 h-5 shrink-0" /><span>ממתין</span>
                         </span>
                       )}
                     </div>
                   </div>
                   <div className="absolute top-4 left-4 opacity-0 group-hover:opacity-100 transition-opacity">
                     <div className="px-3 py-1 bg-accent text-on-accent rounded-lg text-xs font-medium">
-                      👆 לחץ להתחלה
+                      לחץ להתחלה
                     </div>
                   </div>
                 </div>

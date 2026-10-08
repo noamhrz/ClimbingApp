@@ -20,6 +20,7 @@ import DeleteRangeModal from '@/components/DeleteRangeModal'
 import DayListView from '@/components/calendar/DayListView'
 import CalendarToolbar from '@/components/calendar/CalendarToolbar'
 import { copyPreviousWorkout } from '@/utils/copyPreviousWorkout'
+import { LuPlus, LuCalendarDays, LuList, LuCalendar, LuCopy, LuBatteryLow, LuX, LuTrash2, LuSave } from 'react-icons/lu'
 
 moment.locale('he')
 moment.tz.setDefault('Asia/Jerusalem')
@@ -579,28 +580,28 @@ export default function CalendarPage() {
       <div className="bg-surface border-b">
         <div className="max-w-7xl mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
-            <h1 className="text-xl font-bold text-accent">📅 לוח אימונים</h1>
+            <h1 className="text-xl font-bold text-fg inline-flex items-center gap-2"><LuCalendarDays aria-hidden className="w-5 h-5 text-accent" />לוח אימונים</h1>
             
             <div className="flex gap-2">
               <button
                 onClick={() => setView('day')}
-                className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                className={`inline-flex items-center gap-1.5 min-h-11 px-4 rounded-full font-medium transition-all ${
  view === 'day'
  ? 'bg-accent text-on-accent '
- : 'bg-surface text-fg-2 hover:bg-raised'
+ : 'bg-surface text-fg-2 border border-line-strong hover:bg-raised'
  }`}
               >
-                📋 יום
+                <LuList aria-hidden className="w-4 h-4 shrink-0" />יום
               </button>
               <button
                 onClick={() => setView('month')}
-                className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                className={`inline-flex items-center gap-1.5 min-h-11 px-4 rounded-full font-medium transition-all ${
  view === 'month'
  ? 'bg-accent text-on-accent '
- : 'bg-surface text-fg-2 hover:bg-raised'
+ : 'bg-surface text-fg-2 border border-line-strong hover:bg-raised'
  }`}
               >
-                🗓️ חודש
+                <LuCalendar aria-hidden className="w-4 h-4 shrink-0" />חודש
               </button>
             </div>
           </div>
@@ -615,8 +616,9 @@ export default function CalendarPage() {
  : 'bg-accent hover:bg-accent-hover'
  }`}
         title={isSelectingDate ? 'בחר תאריך בלוח' : 'הוספת אימון חדש'}
+        aria-label={isSelectingDate ? 'בחר תאריך בלוח' : 'הוספת אימון חדש'}
       >
-        +
+        <LuPlus aria-hidden className="w-8 h-8" strokeWidth={2.5} />
       </button>
 
       {isSelectingDate && (
@@ -699,49 +701,49 @@ export default function CalendarPage() {
         <div className="fixed bottom-28 right-6 flex flex-col gap-2 z-40">
           <button
             onClick={() => setShowDuplicateModal(true)}
-            className="bg-info hover:bg-info text-on-accent px-4 py-2 rounded-lg text-sm font-medium transition-all"
+            className="inline-flex items-center gap-1.5 bg-info hover:bg-info text-on-accent px-4 py-2 rounded-lg text-sm font-medium transition-all"
             title="שכפול שבוע"
           >
-            📋 שכפול שבוע
+            <LuCopy aria-hidden className="w-4 h-4 shrink-0" />שכפול שבוע
           </button>
           <button
             onClick={handleApplyDeloading}
-            className="bg-info hover:bg-info text-on-accent px-4 py-2 rounded-lg text-sm font-medium transition-all"
+            className="inline-flex items-center gap-1.5 bg-info hover:bg-info text-on-accent px-4 py-2 rounded-lg text-sm font-medium transition-all"
             title="החל דילודינג"
           >
-            🔵 דילודינג
+            <LuBatteryLow aria-hidden className="w-4 h-4 shrink-0" />דילודינג
           </button>
           <button
             onClick={handleRemoveDeloading}
-            className="bg-raised hover:bg-raised/90 text-fg px-4 py-2 rounded-lg text-sm font-medium transition-all"
+            className="inline-flex items-center gap-1.5 bg-raised hover:bg-raised/90 text-fg px-4 py-2 rounded-lg text-sm font-medium transition-all"
             title="הסר דילודינג"
           >
-            ❌ הסר דילודינג
+            <LuX aria-hidden className="w-4 h-4 shrink-0" />הסר דילודינג
           </button>
           <button
             onClick={() => setShowDeleteRangeModal(true)}
-            className="bg-danger hover:bg-danger/90 text-on-accent px-4 py-2 rounded-lg text-sm font-medium transition-all"
+            className="inline-flex items-center gap-1.5 bg-danger hover:bg-danger/90 text-on-accent px-4 py-2 rounded-lg text-sm font-medium transition-all"
             title="נקה טווח תאריכים"
           >
-            🗑️ נקה טווח
+            <LuTrash2 aria-hidden className="w-4 h-4 shrink-0" />נקה טווח
           </button>
         </div>
       )}
 
       {!isMobile && hasPendingChanges && (
-        <div className="fixed top-14 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 bg-warning/10 border border-warning/30 text-warning px-6 py-3 rounded-xl shadow-lg whitespace-nowrap">
+        <div className="fixed top-14 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 bg-raised border border-warning/40 text-warning px-6 py-3 rounded-xl shadow-lg whitespace-nowrap">
           <span className="font-medium text-sm">יש שינויים שלא נשמרו</span>
           <button
             onClick={handleSavePendingChanges}
-            className="px-4 py-1.5 bg-accent hover:bg-accent-hover text-on-accent rounded-lg text-sm font-medium transition-all"
+            className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-accent hover:bg-accent-hover text-on-accent rounded-lg text-sm font-medium transition-all"
           >
-            💾 שמור שינויים
+            <LuSave aria-hidden className="w-4 h-4 shrink-0" />שמור שינויים
           </button>
           <button
             onClick={handleCancelPendingChanges}
-            className="px-4 py-1.5 bg-raised hover:bg-raised/90 text-fg-2 rounded-lg text-sm font-medium transition-all"
+            className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-raised hover:bg-raised/90 text-fg-2 rounded-lg text-sm font-medium transition-all"
           >
-            ✕ בטל
+            <LuX aria-hidden className="w-4 h-4 shrink-0" />בטל
           </button>
         </div>
       )}

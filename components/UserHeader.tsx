@@ -5,12 +5,19 @@ import { useRouter, usePathname } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
 import { getRoleConfig } from '@/lib/permissions'
 import { useState, useRef, useEffect, createContext, useContext } from 'react'
+import {
+  LuUser, LuLogOut, LuLayoutDashboard, LuCalendarDays, LuDumbbell, LuChartLine, LuBookOpen,
+  LuChartColumn, LuTrendingUp, LuMap, LuSettings, LuSiren, LuClipboardList, LuPuzzle, LuUsers,
+  LuTarget, LuFolder, LuEye, LuChevronDown, LuCalendarCheck, LuNotebookPen,
+} from 'react-icons/lu'
+
+const ic = 'w-4 h-4 shrink-0'
 
 // ─── Dropdown primitives ────────────────────────────────────────────────────
 
 const DropdownClose = createContext<() => void>(() => {})
 
-function NavDropdown({ label, children }: { label: string; children: React.ReactNode }) {
+function NavDropdown({ label, children }: { label: React.ReactNode; children: React.ReactNode }) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   const close = () => setOpen(false)
@@ -28,10 +35,10 @@ function NavDropdown({ label, children }: { label: string; children: React.React
       <div ref={ref} className="relative">
         <button
           onClick={() => setOpen(v => !v)}
-          className={`${btnBase} ${open ? 'border-fg-3 text-fg' : ''} gap-1`}
+          className={`${btnBase} ${open ? 'border-fg-3 text-fg' : ''}`}
         >
           {label}
-          <span className={`text-[10px] inline-block transition-transform duration-200 ${open ? 'rotate-180' : ''}`}>▾</span>
+          <LuChevronDown aria-hidden className={`w-3.5 h-3.5 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
         </button>
 
         {open && (
@@ -59,8 +66,8 @@ function DropdownItem({ href, children }: { href: string; children: React.ReactN
 
 // ─── Header ─────────────────────────────────────────────────────────────────
 
-const btnBase = 'inline-flex items-center min-h-10 px-3.5 rounded-full whitespace-nowrap text-sm font-semibold border border-line-strong bg-surface text-fg-2 hover:text-fg hover:border-fg-3 transition-colors'
-const btnActive = 'inline-flex items-center min-h-10 px-3.5 rounded-full whitespace-nowrap text-sm font-bold border border-accent bg-accent text-on-accent'
+const btnBase = 'inline-flex items-center gap-1.5 min-h-10 px-3.5 rounded-full whitespace-nowrap text-sm font-semibold border border-line-strong bg-surface text-fg-2 hover:text-fg hover:border-fg-3 transition-colors'
+const btnActive = 'inline-flex items-center gap-1.5 min-h-10 px-3.5 rounded-full whitespace-nowrap text-sm font-bold border border-accent bg-accent text-on-accent'
 
 export default function UserHeader() {
   const { activeUser, currentUser, isImpersonating, switchToSelf, logout } = useAuth()
@@ -131,7 +138,7 @@ export default function UserHeader() {
                 className="font-bold text-lg leading-tight text-fg hover:text-accent transition-colors inline-flex items-center gap-1 group"
               >
                 <span>{displayUser.Name}</span>
-                <span className="opacity-0 group-hover:opacity-100 transition-opacity text-sm">👤</span>
+                <LuUser aria-hidden className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity" />
               </Link>
               <p className="text-xs text-muted truncate">{displayUser.Email}</p>
             </div>
@@ -144,7 +151,7 @@ export default function UserHeader() {
                 className="min-h-11 bg-warning/15 hover:bg-warning/25 text-warning border border-warning/30 font-semibold px-4 rounded-full transition-colors flex items-center gap-2"
                 title="חזור לעצמי"
               >
-                <span>👤</span>
+                <LuUser aria-hidden className={ic} />
                 <span className="hidden sm:inline">חזור ל-{currentUser?.Name}</span>
                 <span className="sm:hidden">חזור</span>
               </button>
@@ -154,7 +161,7 @@ export default function UserHeader() {
               className="min-h-11 min-w-11 justify-center bg-surface hover:bg-danger/15 text-fg-2 hover:text-danger border border-line-strong hover:border-danger/40 font-semibold px-3.5 rounded-full transition-colors flex items-center gap-2"
               title="התנתק"
             >
-              <span>🚪</span>
+              <LuLogOut aria-hidden className={ic} />
               <span className="hidden sm:inline">התנתק</span>
             </button>
           </div>
@@ -164,38 +171,38 @@ export default function UserHeader() {
         <nav className="flex gap-2 items-center flex-wrap">
 
           {/* Pinned */}
-          <Link href="/dashboard" className={navCls('/dashboard')}>📊 Dashboard</Link>
-          <Link href="/calendar"  className={navCls('/calendar')}>📅 לוח</Link>
-          <Link href="/workouts"  className={navCls('/workouts')}>🏋️ אימונים</Link>
+          <Link href="/dashboard" className={navCls('/dashboard')}><LuLayoutDashboard aria-hidden className={ic} />Dashboard</Link>
+          <Link href="/calendar"  className={navCls('/calendar')}><LuCalendarDays aria-hidden className={ic} />לוח</Link>
+          <Link href="/workouts"  className={navCls('/workouts')}><LuDumbbell aria-hidden className={ic} />אימונים</Link>
 
           {/* נתונים */}
-          <NavDropdown label="📈 נתונים">
-            <DropdownItem href="/climbing-log">📖 לוג</DropdownItem>
-            <DropdownItem href={statsHref}>📊 סטטיסטיקות</DropdownItem>
-            <DropdownItem href="/exercise-analytics">💪 ניתוח תרגילים</DropdownItem>
-            <DropdownItem href="/roadmap-progress">🗺️ התקדמות Roadmap</DropdownItem>
+          <NavDropdown label={<><LuChartLine aria-hidden className={ic} />נתונים</>}>
+            <DropdownItem href="/climbing-log"><LuBookOpen aria-hidden className={ic} />לוג</DropdownItem>
+            <DropdownItem href={statsHref}><LuChartColumn aria-hidden className={ic} />סטטיסטיקות</DropdownItem>
+            <DropdownItem href="/exercise-analytics"><LuTrendingUp aria-hidden className={ic} />ניתוח תרגילים</DropdownItem>
+            <DropdownItem href="/roadmap-progress"><LuMap aria-hidden className={ic} />התקדמות Roadmap</DropdownItem>
           </NavDropdown>
 
           {/* ניהול — coach / admin only */}
           {isCoachOrAdmin && (
-            <NavDropdown label="⚙️ ניהול">
-              <DropdownItem href="/coach/urgency">🚨 דחיפות</DropdownItem>
-              <DropdownItem href="/admin/assign-workouts">📋 הקצאה</DropdownItem>
-              <DropdownItem href="/exercises">💪 תרגילים</DropdownItem>
-              <DropdownItem href="/exercises/dynamic">🧩 תרגילים דינמיים</DropdownItem>
-              <DropdownItem href="/workouts-editor">🏋️ עורך אימונים</DropdownItem>
-              {isAdmin && <DropdownItem href="/admin/roadmap-builder">🗺️ בניית Roadmap</DropdownItem>}
-              {isAdmin && <DropdownItem href="/admin/roadmap-progress">📊 התקדמות Roadmap</DropdownItem>}
+            <NavDropdown label={<><LuSettings aria-hidden className={ic} />ניהול</>}>
+              <DropdownItem href="/coach/urgency"><LuSiren aria-hidden className={ic} />דחיפות</DropdownItem>
+              <DropdownItem href="/admin/assign-workouts"><LuClipboardList aria-hidden className={ic} />הקצאה</DropdownItem>
+              <DropdownItem href="/exercises"><LuDumbbell aria-hidden className={ic} />תרגילים</DropdownItem>
+              <DropdownItem href="/exercises/dynamic"><LuPuzzle aria-hidden className={ic} />תרגילים דינמיים</DropdownItem>
+              <DropdownItem href="/workouts-editor"><LuNotebookPen aria-hidden className={ic} />עורך אימונים</DropdownItem>
+              {isAdmin && <DropdownItem href="/admin/roadmap-builder"><LuMap aria-hidden className={ic} />בניית Roadmap</DropdownItem>}
+              {isAdmin && <DropdownItem href="/admin/roadmap-progress"><LuChartColumn aria-hidden className={ic} />התקדמות Roadmap</DropdownItem>}
             </NavDropdown>
           )}
 
           {/* תוכן */}
-          <NavDropdown label="👤 תוכן">
-            {isAdmin && <DropdownItem href="/admin/users">👥 משתמשים</DropdownItem>}
-            <DropdownItem href="/profile">👤 פרופיל</DropdownItem>
-            <DropdownItem href={goalsHref}>🎯 יעדים</DropdownItem>
-            <DropdownItem href="/monthly-sessions">📋 פגישות חודשיות</DropdownItem>
-            <DropdownItem href="/media">📁 מדיה</DropdownItem>
+          <NavDropdown label={<><LuUser aria-hidden className={ic} />תוכן</>}>
+            {isAdmin && <DropdownItem href="/admin/users"><LuUsers aria-hidden className={ic} />משתמשים</DropdownItem>}
+            <DropdownItem href="/profile"><LuUser aria-hidden className={ic} />פרופיל</DropdownItem>
+            <DropdownItem href={goalsHref}><LuTarget aria-hidden className={ic} />יעדים</DropdownItem>
+            <DropdownItem href="/monthly-sessions"><LuCalendarCheck aria-hidden className={ic} />פגישות חודשיות</DropdownItem>
+            <DropdownItem href="/media"><LuFolder aria-hidden className={ic} />מדיה</DropdownItem>
           </NavDropdown>
 
         </nav>
@@ -205,7 +212,7 @@ export default function UserHeader() {
           <div className="mt-3 bg-warning/10 border border-warning/30 rounded-xl px-4 py-2.5 text-fg-2">
             <div className="flex items-center justify-between text-sm">
               <div className="flex items-center gap-2">
-                <span>🔍</span>
+                <LuEye aria-hidden className={`${ic} text-warning`} />
                 <span>
                   אתה ({currentConfig?.icon} {currentUser.Name}) צופה כ-{' '}
                   <strong>{activeConfig.icon} {displayUser.Name}</strong>

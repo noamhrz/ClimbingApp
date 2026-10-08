@@ -1,6 +1,8 @@
 // components/dashboard/StatsCards.tsx - COMPACT FOR MOBILE
 'use client'
 
+import { LuCircleCheck, LuHourglass, LuCircleX } from 'react-icons/lu'
+
 interface Props {
   stats: {
     completedThisWeek: number
@@ -19,7 +21,7 @@ export default function StatsCards({ stats }: Props) {
             <p className="text-[10px] md:text-sm opacity-90 leading-tight">בוצעו השבוע</p>
             <p className="text-2xl md:text-4xl font-bold mt-1 md:mt-2">{stats.completedThisWeek}</p>
           </div>
-          <div className="hidden md:block text-5xl opacity-80">✅</div>
+          <div className="hidden md:block text-success"><LuCircleCheck aria-hidden className="w-10 h-10" strokeWidth={1.5} /></div>
         </div>
       </div>
 
@@ -30,7 +32,7 @@ export default function StatsCards({ stats }: Props) {
             <p className="text-[10px] md:text-sm opacity-90 leading-tight">עדיין לא בוצעו</p>
             <p className="text-2xl md:text-4xl font-bold mt-1 md:mt-2">{stats.pendingThisWeek}</p>
           </div>
-          <div className="hidden md:block text-5xl opacity-80">⏳</div>
+          <div className="hidden md:block text-warning"><LuHourglass aria-hidden className="w-10 h-10" strokeWidth={1.5} /></div>
         </div>
       </div>
 
@@ -41,7 +43,7 @@ export default function StatsCards({ stats }: Props) {
             <p className="text-[10px] md:text-sm opacity-90 leading-tight">פספסתי השבוע</p>
             <p className="text-2xl md:text-4xl font-bold mt-1 md:mt-2">{stats.missedThisWeek}</p>
           </div>
-          <div className="hidden md:block text-5xl opacity-80">❌</div>
+          <div className="hidden md:block text-danger"><LuCircleX aria-hidden className="w-10 h-10" strokeWidth={1.5} /></div>
         </div>
       </div>
     </div>

@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useAuth } from '@/context/AuthContext'
 import { canImpersonate, getRoleConfig, Role } from '@/lib/permissions'
+import { LuEye, LuUsers, LuChevronDown } from 'react-icons/lu'
 
 // User type matching AuthContext
 interface User {
@@ -55,7 +56,7 @@ export default function Footer() {
             {/* Center: Impersonation Status */}
             {isImpersonating && activeUser && (
               <div className="hidden md:flex items-center gap-2 bg-warning/10 px-4 py-2 rounded-full border border-warning/30 text-fg-2">
-                <span className="text-sm">🔍 צופה כ:</span>
+                <span className="text-sm inline-flex items-center gap-1.5"><LuEye aria-hidden className="w-4 h-4 shrink-0" />צופה כ:</span>
                 <span className="font-semibold">{activeConfig?.icon} {activeUser.Name}</span>
                 <button
                   onClick={switchToSelf}
@@ -71,19 +72,17 @@ export default function Footer() {
               onClick={() => setShowUserMenu(!showUserMenu)}
               className="min-h-11 bg-accent hover:bg-accent-hover text-on-accent px-5 rounded-full font-bold transition-colors flex items-center gap-2"
             >
-              <span>👥</span>
+              <LuUsers aria-hidden className="w-4 h-4 shrink-0" />
               <span className="hidden sm:inline">החלף מתאמן</span>
               <span className="sm:hidden">החלף</span>
-              <span className={`transition-transform ${showUserMenu ? 'rotate-180' : ''}`}>
-                ▼
-              </span>
+              <LuChevronDown aria-hidden className={`w-4 h-4 transition-transform ${showUserMenu ? 'rotate-180' : ''}`} />
             </button>
           </div>
 
           {/* Mobile Impersonation Status */}
           {isImpersonating && activeUser && (
             <div className="md:hidden mt-2 bg-warning/10 px-3 py-2 rounded-xl border border-warning/30 text-xs text-fg-2 flex items-center justify-between gap-2">
-              <span>🔍 צופה כ: <strong>{activeConfig?.icon} {activeUser.Name}</strong></span>
+              <span className="inline-flex items-center gap-1.5"><LuEye aria-hidden className="w-4 h-4 shrink-0" />צופה כ: <strong>{activeConfig?.icon} {activeUser.Name}</strong></span>
               <button
                 onClick={switchToSelf}
                 className="text-warning font-semibold underline min-h-9 px-1"

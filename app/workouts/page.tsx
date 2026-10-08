@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { useAuth } from '@/context/AuthContext'
 import Link from 'next/link'
+import { LuDumbbell, LuStar } from 'react-icons/lu'
 
 interface Workout {
   WorkoutID: number
@@ -136,8 +137,8 @@ export default function WorkoutsPage() {
       {/* Header */}
       <div className="bg-surface border-b sticky top-0 z-30">
         <div className="max-w-7xl mx-auto px-4 py-4">
-          <h1 className="text-2xl font-bold text-accent mb-4">
-            🏋️ האימונים של {userToShow?.Name || 'המשתמש'}
+          <h1 className="text-2xl font-bold text-fg mb-4 flex items-center gap-2">
+            <LuDumbbell aria-hidden className="w-6 h-6 shrink-0 text-accent" />האימונים של {userToShow?.Name || 'המשתמש'}
           </h1>
           
           {/* Filters */}
@@ -166,7 +167,7 @@ export default function WorkoutsPage() {
           <div className="mt-3 flex gap-4 text-sm text-fg-3">
             <span>סה"כ: {workouts.length} אימונים</span>
             {keyWorkouts.length > 0 && (
-              <span className="text-warning font-semibold">⭐ {keyWorkouts.length} אימוני מפתח</span>
+              <span className="text-warning font-semibold inline-flex items-center gap-1"><LuStar aria-hidden className="w-4 h-4 fill-current" />{keyWorkouts.length} אימוני מפתח</span>
             )}
           </div>
         </div>
@@ -191,7 +192,7 @@ export default function WorkoutsPage() {
             {keyWorkouts.length > 0 && (
               <div>
                 <h2 className="text-xl font-bold text-warning mb-4 flex items-center gap-2">
-                  ⭐ אימוני מפתח
+                  <LuStar aria-hidden className="w-5 h-5 fill-current" />אימוני מפתח
                   <span className="text-sm font-normal text-muted">
                     ({keyWorkouts.length})
                   </span>
@@ -203,11 +204,11 @@ export default function WorkoutsPage() {
                       href={`/workout/${workout.WorkoutID}`}
                       className="block"
                     >
-                      <div className="border-2 border-warning rounded-xl p-5 transition-all hover:scale-105 bg-surface border border-line">
+                      <div className="border-2 border-warning rounded-xl p-5 transition-all hover:scale-105 bg-surface">
                         <div className="flex items-start justify-between mb-3">
                           <div className="flex items-center gap-2">
                             <span className="text-3xl">{getCategoryEmoji(workout.Category)}</span>
-                            <span className="text-2xl">⭐</span>
+                            <LuStar aria-hidden className="w-6 h-6 text-warning fill-current" />
                           </div>
                           {workout.Category && (
                             <span className="px-2 py-1 bg-warning/15 text-warning text-xs rounded font-medium">
@@ -254,7 +255,7 @@ export default function WorkoutsPage() {
               <div>
                 {keyWorkouts.length > 0 && (
                   <h2 className="text-xl font-bold text-fg-2 mb-4 flex items-center gap-2">
-                    🏋️ אימונים נוספים
+                    <LuDumbbell aria-hidden className="w-5 h-5 text-accent" />אימונים נוספים
                     <span className="text-sm font-normal text-muted">
                       ({regularWorkouts.length})
                     </span>
