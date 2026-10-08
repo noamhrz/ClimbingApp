@@ -215,14 +215,7 @@ export default function LoginPage() {
 
           <p className="mt-auto text-center text-sm text-fg-3">
             אין לך חשבון?{' '}
-            <a
-              href="https://noam-herz-climbing.com/%D7%AA%D7%9B%D7%A0%D7%99%D7%95%D7%AA-%D7%90%D7%99%D7%9E%D7%95%D7%9F/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-accent hover:text-accent-hover font-bold"
-            >
-              להצטרפות לתכנית
-            </a>
+            <span className="text-fg font-semibold">פנה למאמן שלך</span>
           </p>
           <p className="text-center text-xs text-faint">© {new Date().getFullYear()} Noam Herz Climbing</p>
         </div>
