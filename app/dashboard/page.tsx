@@ -14,6 +14,7 @@ import WellnessModal from '@/components/dashboard/WellnessModal'
 import { subDays, format, startOfWeek, endOfWeek, differenceInWeeks, eachDayOfInterval, eachWeekOfInterval, setHours, setMinutes, setSeconds, isBefore, startOfDay, endOfDay } from 'date-fns'
 import { LuLayoutDashboard, LuCalendarDays, LuMountain, LuHeartPulse, LuCircleCheck } from 'react-icons/lu'
 import { PageSkeleton } from '@/components/ui/Skeleton'
+import TodayWorkouts from '@/components/dashboard/TodayWorkouts'
 
 // WEEK CONFIGURATION - SUNDAY TO SATURDAY (for stats cards only)
 const WEEK_STARTS_ON = 0 // 0 = Sunday, 6 = Saturday
@@ -382,6 +383,7 @@ export default function DashboardPage() {
       </div>
 
       <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
+        <TodayWorkouts email={userToShow?.Email} />
         <StatsCards stats={stats} />
 
         <div className="bg-surface rounded-xl border p-6">

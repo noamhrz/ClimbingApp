@@ -12,7 +12,7 @@ import ExerciseAccordion from "@/components/exercises/ExerciseAccordion"
 import moment from 'moment-timezone'
 import LoadLastWorkoutButton from './LoadLastWorkoutButton'
 import { useFormDraft } from '@/lib/useFormDraft'
-import { LuAlarmClock, LuBicepsFlexed, LuCalendarDays, LuCircleCheck, LuHourglass, LuLightbulb, LuLoaderCircle, LuMapPin, LuMountain, LuNotebookPen, LuPackage, LuPlus, LuRefreshCw, LuTriangleAlert, LuVideo } from 'react-icons/lu'
+import { LuAlarmClock, LuBicepsFlexed, LuCalendarDays, LuCircleCheck, LuHourglass, LuLightbulb, LuLoaderCircle, LuMapPin, LuMessageSquare, LuMountain, LuNotebookPen, LuPackage, LuPlus, LuRefreshCw, LuTriangleAlert, LuVideo } from 'react-icons/lu'
 import { PageSkeleton } from '@/components/ui/Skeleton'
 
 export default function WorkoutDetailClient({ id }: { id: number }) {
@@ -30,6 +30,25 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
   const [workout, setWorkout] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [calendarRow, setCalendarRow] = useState<any>(null)
+
+  // Personal coach note for this trainee + workout (set in workout assignment)
+  const [personalNote, setPersonalNote] = useState<string>('')
+  useEffect(() => {
+    if (!email || !id) return
+    let cancelled = false
+    supabase
+      .from('WorkoutsForUser')
+      .select('Notes, CoachNote')
+      .eq('Email', email)
+      .eq('WorkoutID', id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (cancelled) return
+        const note = (data?.Notes || data?.CoachNote || '').trim()
+        setPersonalNote(note)
+      })
+    return () => { cancelled = true }
+  }, [email, id])
 
   const [exercises, setExercises] = useState<any[]>([])
   const [exerciseForms, setExerciseForms] = useState<any[]>([])
@@ -903,7 +922,17 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
                 <h3 className="font-semibold text-warning mb-2 flex items-center gap-2">
                   👨‍🏫 הערות מאמן
                 </h3>
-                <p className="text-warning whitespace-pre-wrap">{workout.WorkoutNotes}</p>
+                <p className="text-fg-2 whitespace-pre-wrap">{workout.WorkoutNotes}</p>
+              </div>
+            )}
+
+            {/* Personal coach note (from assignment) */}
+            {personalNote && (
+              <div className="bg-warning/10 border border-warning/40 rounded-lg p-4">
+                <h3 className="font-semibold text-warning mb-2 flex items-center gap-2">
+                  <LuMessageSquare aria-hidden className="w-5 h-5 shrink-0" />הערת המאמן אליך
+                </h3>
+                <p className="text-fg-2 whitespace-pre-wrap">{personalNote}</p>
               </div>
             )}
 
