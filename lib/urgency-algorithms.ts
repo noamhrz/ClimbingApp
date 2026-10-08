@@ -38,8 +38,8 @@ export function calculateVitalityAverage(
   let totalVitality = 0
   
   wellnessData.forEach(day => {
-    if (day.VitalityLevel === null || day.VitalityLevel === 0) {
-      days--  // לא דיווח - הורד יום
+    if (day.VitalityLevel === null) {
+      days--  // לא דיווח - הורד יום (0 = "אין כוח לכלום", ערך לגיטימי)
     } else {
       totalVitality += day.VitalityLevel
     }
@@ -115,13 +115,13 @@ export function createSleepFlag(
 
 // ═══════════════════════════════════════════════════════
 // יצירת דגל לפי ממוצע חיוניות
-// ספים: < 5 🔴 | 5-7 🟡 | 7+ 🟢
+// סקאלה 0–3 (WellnessModal). ספים: ≤ 1 🔴 | < 2 🟡 | 2+ 🟢
 // ═══════════════════════════════════════════════════════
 export function createVitalityFlag(
   avgVitality: number,
   daysReported: number
 ): UrgencyFlag {
-  if (avgVitality < 5) {
+  if (avgVitality <= 1) {
     return {
       type: 'red',
       category: 'vitality',
@@ -129,7 +129,7 @@ export function createVitalityFlag(
       average: avgVitality,
       daysReported
     }
-  } else if (avgVitality < 7) {
+  } else if (avgVitality < 2) {
     return {
       type: 'yellow',
       category: 'vitality',
@@ -150,13 +150,13 @@ export function createVitalityFlag(
 
 // ═══════════════════════════════════════════════════════
 // יצירת דגל לפי ממוצע כאב
-// ספים: > 4 🔴🔴 | > 3 🔴 | > 2 🟡 | ≤ 2 🟢
+// סקאלה 0–3 (WellnessModal). ספים: ≥ 2.5 🔴🔴 | ≥ 2 🔴 | ≥ 1.5 🟡 | < 1.5 🟢
 // ═══════════════════════════════════════════════════════
 export function createPainFlag(
   avgPain: number,
   daysReported: number
 ): UrgencyFlag {
-  if (avgPain > 4) {
+  if (avgPain >= 2.5) {
     return {
       type: 'critical',
       category: 'pain',
@@ -164,7 +164,7 @@ export function createPainFlag(
       average: avgPain,
       daysReported
     }
-  } else if (avgPain > 3) {
+  } else if (avgPain >= 2) {
     return {
       type: 'red',
       category: 'pain',
@@ -172,7 +172,7 @@ export function createPainFlag(
       average: avgPain,
       daysReported
     }
-  } else if (avgPain > 2) {
+  } else if (avgPain >= 1.5) {
     return {
       type: 'yellow',
       category: 'pain',
