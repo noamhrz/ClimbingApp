@@ -106,14 +106,22 @@ export async function GET(request: NextRequest) {
     }
 
     const results: Record<string, unknown> = {}
+    let failed = false
     for (const k of kinds) {
-      const e = await build(k)
-      // daily: only when there are alerts; weekly: only when there is something to act on
-      if (!force && k !== 'monthly' && !e.count) { results[k] = { sent: false, reason: 'nothing to report' }; continue }
-      await sendReportEmail(e.subject, e.html, e.text)
-      results[k] = { sent: true, count: e.count }
+      // each report on its own: a failure in one doesn't block the others
+      try {
+        const e = await build(k)
+        // daily: only when there are alerts; weekly: only when there is something to act on
+        if (!force && k !== 'monthly' && !e.count) { results[k] = { sent: false, reason: 'nothing to report' }; continue }
+        await sendReportEmail(e.subject, e.html, e.text)
+        results[k] = { sent: true, count: e.count }
+      } catch (err) {
+        failed = true
+        console.error(`coach report ${k} failed:`, err)
+        results[k] = { sent: false, error: err instanceof Error ? err.message : String(err) }
+      }
     }
-    return NextResponse.json({ date: today, trainees: trainees.length, results })
+    return NextResponse.json({ date: today, trainees: trainees.length, results }, { status: failed ? 500 : 200 })
   } catch (err) {
     console.error('coach reports failed:', err)
     return NextResponse.json({ error: err instanceof Error ? err.message : String(err) }, { status: 500 })
