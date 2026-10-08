@@ -23,6 +23,12 @@ const karantina = Karantina({
 export const metadata = {
   title: 'Climbing Training App',
   description: 'אפליקציית אימוני טיפוס',
+  applicationName: 'MY WAY',
+  appleWebApp: {
+    capable: true,
+    title: 'MY WAY',
+    statusBarStyle: 'black' as const,
+  },
 }
 
 export const viewport: Viewport = {
