@@ -403,10 +403,10 @@ Daily wellness tracking per user.
 | WellnessID | uuid PK | NO (gen_random_uuid()) |
 | Email | text | NO → Users |
 | Date | date | NO |
-| VitalityLevel | integer | YES (1–10) |
+| VitalityLevel | integer | YES (0–3: 0 אין כוח, 1 תנועה קלה, 2 אימון משמעותי, 3 לפרק את הקיר) |
 | SleepHours | numeric | YES |
 | PainArea | text | YES |
-| PainLevel | integer | YES (1–10) |
+| PainLevel | integer | YES (0–3: 0 ללא כאב, 1 קל, 2 בינוני, 3 חזק) |
 | Comments | text | YES |
 | CreatedAt / UpdatedAt | timestamp | YES |
 
