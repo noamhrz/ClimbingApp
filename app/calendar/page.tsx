@@ -183,11 +183,14 @@ export default function CalendarPage() {
     const getDisplayTime = (workoutId: number): number | null => {
       const w = workoutDetailsMap[workoutId]
       if (!w) return null
+      // EstimatedTotalTime is the workout's total (exercises + climbing, or the
+      // manual value); fall back to the parts only when it is missing.
+      if (w.EstimatedTotalTime && w.EstimatedTotalTime > 0) return w.EstimatedTotalTime
       if (w.containClimbing || w.containExercise) {
         const sum = (w.CalculatedExercisesTime || 0) + (w.EstimatedClimbingTime || 0)
         if (sum > 0) return sum
       }
-      return w.EstimatedTotalTime ?? null
+      return null
     }
 
     const mapped = data.map((item) => {
