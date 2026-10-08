@@ -118,7 +118,9 @@ export default function TodayWorkouts({ email }: { email?: string }) {
                   </p>
                 </div>
                 <Link
-                  href={`/workout/${item.workoutId}?calendar=${item.calendarId}`}
+                  href={item.completed
+                    ? `/calendar-edit/${item.calendarId}`
+                    : `/workout/${item.workoutId}?calendar=${item.calendarId}`}
                   className={`inline-flex items-center gap-1.5 min-h-11 px-5 rounded-full font-bold transition-colors ${
                     item.completed
                       ? 'border border-line-strong text-fg-2 hover:border-fg-3 hover:text-fg'
