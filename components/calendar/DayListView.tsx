@@ -46,11 +46,19 @@ interface Props {
   isDesktop?: boolean
 }
 
+// A workout counts as missed only after its day is over: today's workouts that
+// are not done yet are shown as "מחכה לך היום", never as missed.
+function isTodayDate(d: Date | string) {
+  return new Date(d).toDateString() === new Date().toDateString()
+}
+function isPastEvent(e: { end: Date; start: Date }): boolean {
+  return new Date(e.end) < new Date() && !isTodayDate(e.start)
+}
+
 function getEventColor(event: CalendarEvent): string {
-  const now = new Date()
   if (event.completed) return '#5FB37A'
   if (event.Deloading) return '#7FB0C9'
-  if (new Date(event.end) < now) return '#E06A5F'
+  if (isPastEvent(event)) return '#E06A5F'
   return '#E0763A'
 }
 
@@ -85,14 +93,14 @@ function EventCardBody({ event, index }: { event: CalendarEvent; index: number }
               <LuBatteryLow aria-hidden className="w-5 h-5 shrink-0" /><span>דילודינג {event.DeloadingPercentage}%</span>
             </span>
           )}
-          {!event.completed && !event.Deloading && new Date(event.end) < new Date() && (
+          {!event.completed && !event.Deloading && isPastEvent(event) && (
             <span className="inline-flex items-center gap-2 px-4 py-2 bg-danger/15 text-danger rounded-lg text-sm font-bold">
               <LuCircleX aria-hidden className="w-5 h-5 shrink-0" /><span>פספס</span>
             </span>
           )}
-          {!event.completed && !event.Deloading && new Date(event.end) >= new Date() && (
+          {!event.completed && !event.Deloading && !isPastEvent(event) && (
             <span className="inline-flex items-center gap-2 px-4 py-2 bg-accent/15 text-accent rounded-lg text-sm font-bold">
-              <LuHourglass aria-hidden className="w-5 h-5 shrink-0" /><span>ממתין</span>
+              <LuHourglass aria-hidden className="w-5 h-5 shrink-0" /><span>{isTodayDate(event.start) ? 'מחכה לך היום' : 'ממתין'}</span>
             </span>
           )}
         </div>
@@ -352,16 +360,16 @@ export default function DayListView({
                 <span>{sortedEvents.filter(e => e.completed).length} הושלמו</span>
               </span>
             )}
-            {sortedEvents.filter(e => !e.completed && new Date(e.end) < new Date()).length > 0 && (
+            {sortedEvents.filter(e => !e.completed && isPastEvent(e)).length > 0 && (
               <span className="inline-flex items-center gap-2 px-4 py-2 bg-danger/15 text-danger rounded-full text-sm font-medium">
                 <LuCircleX aria-hidden className="w-4 h-4 shrink-0" />
-                <span>{sortedEvents.filter(e => !e.completed && new Date(e.end) < new Date()).length} פספסו</span>
+                <span>{sortedEvents.filter(e => !e.completed && isPastEvent(e)).length} פספסו</span>
               </span>
             )}
-            {sortedEvents.filter(e => !e.completed && new Date(e.end) >= new Date()).length > 0 && (
+            {sortedEvents.filter(e => !e.completed && !isPastEvent(e)).length > 0 && (
               <span className="inline-flex items-center gap-2 px-4 py-2 bg-accent/15 text-accent rounded-full text-sm font-medium">
                 <LuHourglass aria-hidden className="w-4 h-4 shrink-0" />
-                <span>{sortedEvents.filter(e => !e.completed && new Date(e.end) >= new Date()).length} ממתינים</span>
+                <span>{sortedEvents.filter(e => !e.completed && !isPastEvent(e)).length} {isToday ? 'מחכים לך היום' : 'ממתינים'}</span>
               </span>
             )}
           </div>
@@ -441,14 +449,14 @@ export default function DayListView({
                           <LuBatteryLow aria-hidden className="w-5 h-5 shrink-0" /><span>דילודינג {event.DeloadingPercentage}%</span>
                         </span>
                       )}
-                      {!event.completed && !event.Deloading && new Date(event.end) < new Date() && (
+                      {!event.completed && !event.Deloading && isPastEvent(event) && (
                         <span className="inline-flex items-center gap-2 px-4 py-2 bg-danger/15 text-danger rounded-lg text-sm font-bold">
                           <LuCircleX aria-hidden className="w-5 h-5 shrink-0" /><span>פספס</span>
                         </span>
                       )}
-                      {!event.completed && !event.Deloading && new Date(event.end) >= new Date() && (
+                      {!event.completed && !event.Deloading && !isPastEvent(event) && (
                         <span className="inline-flex items-center gap-2 px-4 py-2 bg-accent/15 text-accent rounded-lg text-sm font-bold">
-                          <LuHourglass aria-hidden className="w-5 h-5 shrink-0" /><span>ממתין</span>
+                          <LuHourglass aria-hidden className="w-5 h-5 shrink-0" /><span>{isTodayDate(event.start) ? 'מחכה לך היום' : 'ממתין'}</span>
                         </span>
                       )}
                     </div>
@@ -491,15 +499,15 @@ export default function DayListView({
               </div>
               <div className="text-center p-4 bg-surface rounded-lg ">
                 <div className="text-3xl font-bold text-danger mb-1">
-                  {sortedEvents.filter(e => !e.completed && new Date(e.end) < new Date()).length}
+                  {sortedEvents.filter(e => !e.completed && isPastEvent(e)).length}
                 </div>
                 <div className="text-sm text-fg-3">פספסו</div>
               </div>
               <div className="text-center p-4 bg-surface rounded-lg ">
                 <div className="text-3xl font-bold text-accent mb-1">
-                  {sortedEvents.filter(e => !e.completed && new Date(e.end) >= new Date()).length}
+                  {sortedEvents.filter(e => !e.completed && !isPastEvent(e)).length}
                 </div>
-                <div className="text-sm text-fg-3">ממתינים</div>
+                <div className="text-sm text-fg-3">{isToday ? 'מחכים לך היום' : 'ממתינים'}</div>
               </div>
             </div>
           </div>

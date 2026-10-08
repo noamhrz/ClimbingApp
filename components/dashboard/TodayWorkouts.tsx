@@ -113,7 +113,7 @@ export default function TodayWorkouts({ email }: { email?: string }) {
                   <p className={`text-sm flex items-center gap-1.5 mt-0.5 ${item.completed ? 'text-success' : 'text-warning'}`}>
                     {item.completed
                       ? <><LuCircleCheck aria-hidden className="w-4 h-4" />בוצע</>
-                      : <><LuHourglass aria-hidden className="w-4 h-4" />ממתין</>}
+                      : <><LuHourglass aria-hidden className="w-4 h-4" />מחכה לך היום</>}
                     {item.deloading && <span className="text-info ms-2">· דילודינג</span>}
                   </p>
                 </div>
