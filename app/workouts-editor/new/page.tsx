@@ -8,6 +8,7 @@ import { useAuth, useActiveUserEmail } from '@/context/AuthContext'
 import { WorkoutFormData } from '@/types/workouts'
 import { createWorkout } from '@/lib/workout-api'
 import WorkoutForm from '@/components/workouts/WorkoutForm'
+import { LuCircleX, LuLightbulb, LuSave, LuSparkles } from 'react-icons/lu'
 
 export default function NewWorkoutPage() {
   const router = useRouter()
@@ -101,7 +102,7 @@ export default function NewWorkoutPage() {
     <div className="max-w-4xl mx-auto p-6">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-3xl font-bold mb-2">✨ אימון חדש</h1>
+        <h1 className="text-3xl font-bold mb-2"><LuSparkles aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />אימון חדש</h1>
         <p className="text-fg-3">צור אימון חדש עבור המתאמנים</p>
       </div>
 
@@ -114,7 +115,7 @@ export default function NewWorkoutPage() {
       {formData.containExercise && (
         <div className="mb-6 bg-accent/15 border border-accent rounded-lg p-4">
           <p className="text-sm text-accent">
-            💡 <strong>טיפ:</strong> אחרי יצירת האימון תוכל להוסיף תרגילים ולארגן אותם בבלוקים
+            <LuLightbulb aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" /><strong>טיפ:</strong> אחרי יצירת האימון תוכל להוסיף תרגילים ולארגן אותם בבלוקים
           </p>
         </div>
       )}
@@ -126,14 +127,14 @@ export default function NewWorkoutPage() {
           className="px-6 py-3 border border-line rounded-lg hover:bg-surface font-medium"
           disabled={saving}
         >
-          ❌ ביטול
+          <LuCircleX aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />ביטול
         </button>
         <button
           onClick={handleSave}
           className="px-6 py-3 bg-accent text-on-accent rounded-lg hover:bg-accent-hover font-medium disabled:opacity-50"
           disabled={saving}
         >
-          {saving ? '💾 יוצר...' : '💾 צור אימון'}
+          {saving ? <><LuSave aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />יוצר...</> : <><LuSave aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />צור אימון</>}
         </button>
       </div>
     </div>

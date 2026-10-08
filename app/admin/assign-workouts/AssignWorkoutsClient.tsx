@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { useAuth, useActiveUserEmail } from '@/context/AuthContext'
+import { LuBookOpen, LuCircleCheck, LuCircleX, LuInbox, LuMessageSquare, LuStar, LuUsers } from 'react-icons/lu'
 
 // Types
 interface User {
@@ -315,7 +316,7 @@ export default function AssignWorkoutsClient() {
       {/* Header */}
       <div className="bg-surface border-b sticky top-0 z-30">
         <div className="max-w-7xl mx-auto px-4 py-4">
-          <h1 className="text-2xl font-bold text-accent mb-4">👥 הקצאת אימונים</h1>
+          <h1 className="text-2xl font-bold text-accent mb-4"><LuUsers aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />הקצאת אימונים</h1>
           
           {/* User Selection */}
           <div className="flex items-center gap-4">
@@ -349,7 +350,7 @@ export default function AssignWorkoutsClient() {
             {/* Available Workouts */}
             <div className="bg-surface rounded-xl border border-line">
               <div className="p-4 border-b border-line bg-surface">
-                <h2 className="text-lg font-bold text-accent mb-3">📚 אימונים זמינים</h2>
+                <h2 className="text-lg font-bold text-accent mb-3"><LuBookOpen aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />אימונים זמינים</h2>
                 
                 {/* Filters */}
                 <div className="flex gap-2">
@@ -420,7 +421,7 @@ export default function AssignWorkoutsClient() {
             <div className="bg-surface rounded-xl border border-line">
               <div className="p-4 border-b border-line bg-surface">
                 <h2 className="text-lg font-bold text-success">
-                  ✅ אימונים של {selectedUser?.Name}
+                  <LuCircleCheck aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />אימונים של {selectedUser?.Name}
                 </h2>
                 <p className="text-sm text-success mt-1">
                   {userWorkouts.length} אימונים מוקצים
@@ -441,7 +442,7 @@ export default function AssignWorkoutsClient() {
                   </div>
                 ) : userWorkouts.length === 0 ? (
                   <div className="text-center py-8 text-muted">
-                    <div className="text-4xl mb-2">📭</div>
+                    <div className="text-4xl mb-2"><LuInbox aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></div>
                     <p>עדיין לא הוקצו אימונים</p>
                   </div>
                 ) : (
@@ -455,7 +456,7 @@ export default function AssignWorkoutsClient() {
                           <div className="flex items-center gap-2 mb-1">
                             <span className="text-2xl">{getCategoryEmoji(workout.category)}</span>
                             <h3 className="font-bold text-fg">{workout.name}</h3>
-                            {workout.IsKeyWorkout && <span className="text-xl">⭐</span>}
+                            {workout.IsKeyWorkout && <span className="text-xl"><LuStar aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></span>}
                           </div>
                           {workout.description && (
                             <p className="text-sm text-fg-3 line-clamp-2">{workout.description}</p>
@@ -470,7 +471,7 @@ export default function AssignWorkoutsClient() {
                           onClick={() => handleRemoveWorkout(workout)}
                           className="px-4 py-2 bg-danger hover:bg-danger/90 text-on-accent rounded-lg text-sm font-medium transition-colors"
                         >
-                          ❌ הסר
+                          <LuCircleX aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />הסר
                         </button>
                       </div>
 
@@ -485,14 +486,14 @@ export default function AssignWorkoutsClient() {
                             className="w-4 h-4 cursor-pointer"
                           />
                           <span className="text-sm font-medium text-fg-2 group-hover:text-accent">
-                            ⭐ אימון מפתח
+                            <LuStar aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />אימון מפתח
                           </span>
                         </label>
 
                         {/* הערה */}
                         <div>
                           <label className="block text-xs font-medium text-fg-3 mb-1">
-                            💬 הערה למתאמן:
+                            <LuMessageSquare aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />הערה למתאמן:
                           </label>
                           <textarea
                             value={workout.Notes || ''}

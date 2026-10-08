@@ -6,6 +6,7 @@
 import { useState, useEffect } from 'react'
 import { Exercise, DateRange, FilterState } from '@/types/analytics'
 import { supabase } from '@/lib/supabaseClient'
+import { LuCalendarDays, LuDumbbell, LuFolderOpen } from 'react-icons/lu'
 
 interface ExerciseFiltersProps {
   filters: FilterState
@@ -59,7 +60,7 @@ export default function ExerciseFilters({
         {/* Exercise Autocomplete */}
         <div className="relative">
           <label className="block text-sm font-medium text-fg-2 mb-2">
-            🏋️ תרגיל
+            <LuDumbbell aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />תרגיל
           </label>
           <div className="relative">
             <input
@@ -108,7 +109,7 @@ export default function ExerciseFilters({
         {/* Category Filter */}
         <div>
           <label className="block text-sm font-medium text-fg-2 mb-2">
-            📂 קטגוריה
+            <LuFolderOpen aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />קטגוריה
           </label>
           <select
             value={filters.category || 'all'}
@@ -125,7 +126,7 @@ export default function ExerciseFilters({
         {/* Date Range Filter */}
         <div>
           <label className="block text-sm font-medium text-fg-2 mb-2">
-            📅 טווח תאריכים
+            <LuCalendarDays aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />טווח תאריכים
           </label>
           <select
             value={filters.dateRange}

@@ -3,6 +3,7 @@
 
 import { useState } from 'react'
 import type { GeneralGoalsData } from '@/lib/goals-api'
+import { LuPin, LuSave, LuTarget } from 'react-icons/lu'
 
 interface Props {
   initialData: GeneralGoalsData | null
@@ -45,7 +46,7 @@ export default function GeneralGoalsForm({ initialData, onSave }: Props) {
       {/* Overarching Goal */}
       <div>
         <label className="block text-sm font-semibold text-fg-2 mb-2">
-          🎯 מטרת על
+          <LuTarget aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />מטרת על
         </label>
         <input
           type="text"
@@ -60,7 +61,7 @@ export default function GeneralGoalsForm({ initialData, onSave }: Props) {
       {[1, 2, 3, 4, 5].map((num) => (
         <div key={num}>
           <label className="block text-sm font-semibold text-fg-2 mb-2">
-            📌 יעד {num}
+            <LuPin aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />יעד {num}
           </label>
           <input
             type="text"
@@ -79,7 +80,7 @@ export default function GeneralGoalsForm({ initialData, onSave }: Props) {
           disabled={saving}
           className="px-6 py-3 bg-accent text-on-accent font-semibold rounded-lg hover:bg-accent-hover transition disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {saving ? '💾 שומר...' : '💾 שמור'}
+          {saving ? <><LuSave aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />שומר...</> : <><LuSave aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />שמור</>}
         </button>
         
         {message && (

@@ -4,6 +4,7 @@
 import { useState, useEffect } from 'react'
 import { WorkoutFormData } from '@/types/workouts'
 import { fetchCategories } from '@/lib/workout-api'
+import { LuBicepsFlexed, LuMountainSnow } from 'react-icons/lu'
 
 interface Props {
   initialData?: Partial<WorkoutFormData>
@@ -175,7 +176,7 @@ export default function WorkoutForm({ initialData, onChange }: Props) {
               onChange={(e) => handleChange('containExercise', e.target.checked)}
               className="w-4 h-4"
             />
-            <span>💪 תרגילי כוח (Exercises)</span>
+            <span><LuBicepsFlexed aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />תרגילי כוח (Exercises)</span>
           </label>
           <label className="flex items-center gap-2 cursor-pointer">
             <input
@@ -184,7 +185,7 @@ export default function WorkoutForm({ initialData, onChange }: Props) {
               onChange={(e) => handleChange('containClimbing', e.target.checked)}
               className="w-4 h-4"
             />
-            <span>🏔️ טיפוס (Climbing)</span>
+            <span><LuMountainSnow aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />טיפוס (Climbing)</span>
           </label>
         </div>
       </div>

@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabaseClient'
 import { useAuth, useActiveUserEmail } from '@/context/AuthContext'
 
 import { useRouter } from 'next/navigation'
+import { LuMap } from 'react-icons/lu'
 
 interface RoadmapCategory {
   CategoryID: number
@@ -134,7 +135,7 @@ export default function RoadmapProgressPage() {
       {/* Header */}
       <div className="bg-surface border-b sticky top-0 z-30">
         <div className="max-w-4xl mx-auto px-4 py-4">
-          <h1 className="text-2xl font-bold text-fg">🗺️ מפת ההתקדמות שלי</h1>
+          <h1 className="text-2xl font-bold text-fg"><LuMap aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />מפת ההתקדמות שלי</h1>
           <p className="text-sm text-muted mt-0.5">
             {startedCategories} מתוך {totalCategories} תחומים התחלת
           </p>

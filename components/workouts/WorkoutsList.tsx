@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { Workout, WorkoutFilters } from '@/types/workouts'
 import { fetchWorkouts, fetchCategories } from '@/lib/workout-api'
 import WorkoutCard from './WorkoutCard'
+import { LuDumbbell, LuSearch } from 'react-icons/lu'
 
 export default function WorkoutsList() {
   const router = useRouter()
@@ -59,7 +60,7 @@ export default function WorkoutsList() {
             </svg>
           </button>
           
-          <h1 className="text-3xl font-bold">🏋️ ניהול אימונים</h1>
+          <h1 className="text-3xl font-bold"><LuDumbbell aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />ניהול אימונים</h1>
         </div>
         
         <div className="flex gap-3 flex-wrap items-center">
@@ -86,7 +87,7 @@ export default function WorkoutsList() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Search */}
           <div>
-            <label className="block text-sm font-medium mb-1">🔍 חיפוש</label>
+            <label className="block text-sm font-medium mb-1"><LuSearch aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />חיפוש</label>
             <input
               type="text"
               value={filters.search}

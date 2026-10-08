@@ -4,6 +4,7 @@
 'use client'
 
 import { useState } from 'react'
+import { LuBicepsFlexed, LuHash, LuNotebookPen, LuScale, LuTimer } from 'react-icons/lu'
 
 interface Exercise {
   ExerciseID: number
@@ -51,7 +52,7 @@ export default function ExerciseExecutionForm({ exercise, value, onChange, disab
         {/* Reps or Duration */}
         {isDuration ? (
           <div>
-            <label className="block text-xs text-fg-3 mb-1">⏱️ זמן (שניות)</label>
+            <label className="block text-xs text-fg-3 mb-1"><LuTimer aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />זמן (שניות)</label>
             <input
               type="number"
               min="0"
@@ -65,7 +66,7 @@ export default function ExerciseExecutionForm({ exercise, value, onChange, disab
           </div>
         ) : (
           <div>
-            <label className="block text-xs text-fg-3 mb-1">🔢 חזרות</label>
+            <label className="block text-xs text-fg-3 mb-1"><LuHash aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />חזרות</label>
             <input
               type="number"
               min="0"
@@ -81,7 +82,7 @@ export default function ExerciseExecutionForm({ exercise, value, onChange, disab
 
         {/* Weight */}
         <div>
-          <label className="block text-xs text-fg-3 mb-1">⚖️ משקל (ק״ג)</label>
+          <label className="block text-xs text-fg-3 mb-1"><LuScale aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />משקל (ק״ג)</label>
           <input
             type="number"
             step="0.5"
@@ -96,7 +97,7 @@ export default function ExerciseExecutionForm({ exercise, value, onChange, disab
 
         {/* RPE */}
         <div>
-          <label className="block text-xs text-fg-3 mb-1">💪 RPE (1-10)</label>
+          <label className="block text-xs text-fg-3 mb-1"><LuBicepsFlexed aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />RPE (1-10)</label>
           <input
             type="number"
             min="1"
@@ -113,7 +114,7 @@ export default function ExerciseExecutionForm({ exercise, value, onChange, disab
 
       {/* Notes */}
       <div>
-        <label className="block text-xs text-fg-3 mb-1">📝 הערות</label>
+        <label className="block text-xs text-fg-3 mb-1"><LuNotebookPen aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />הערות</label>
         <textarea
           value={value.Notes ?? ''}
           onChange={(e) => handleChange('Notes', e.target.value)}
@@ -141,7 +142,7 @@ export default function ExerciseExecutionForm({ exercise, value, onChange, disab
             {/* Reps or Duration - Right */}
             {isDuration ? (
               <div>
-                <label className="block text-xs text-fg-3 mb-1">⏱️ זמן (שניות)</label>
+                <label className="block text-xs text-fg-3 mb-1"><LuTimer aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />זמן (שניות)</label>
                 <input
                   type="number"
                   min="0"
@@ -155,7 +156,7 @@ export default function ExerciseExecutionForm({ exercise, value, onChange, disab
               </div>
             ) : (
               <div>
-                <label className="block text-xs text-fg-3 mb-1">🔢 חזרות</label>
+                <label className="block text-xs text-fg-3 mb-1"><LuHash aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />חזרות</label>
                 <input
                   type="number"
                   min="0"
@@ -171,7 +172,7 @@ export default function ExerciseExecutionForm({ exercise, value, onChange, disab
 
             {/* Weight - Right */}
             <div>
-              <label className="block text-xs text-fg-3 mb-1">⚖️ משקל</label>
+              <label className="block text-xs text-fg-3 mb-1"><LuScale aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />משקל</label>
               <input
                 type="number"
                 step="0.5"
@@ -186,7 +187,7 @@ export default function ExerciseExecutionForm({ exercise, value, onChange, disab
 
             {/* RPE - Right */}
             <div>
-              <label className="block text-xs text-fg-3 mb-1">💪 RPE</label>
+              <label className="block text-xs text-fg-3 mb-1"><LuBicepsFlexed aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />RPE</label>
               <input
                 type="number"
                 min="1"
@@ -203,7 +204,7 @@ export default function ExerciseExecutionForm({ exercise, value, onChange, disab
 
           {/* Notes - Right */}
           <div>
-            <label className="block text-xs text-fg-3 mb-1">📝 הערות</label>
+            <label className="block text-xs text-fg-3 mb-1"><LuNotebookPen aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />הערות</label>
             <textarea
               value={value.Notes ?? ''}
               onChange={(e) => handleChange('Notes', e.target.value)}
@@ -228,7 +229,7 @@ export default function ExerciseExecutionForm({ exercise, value, onChange, disab
             {/* Reps or Duration - Left */}
             {isDuration ? (
               <div>
-                <label className="block text-xs text-fg-3 mb-1">⏱️ זמן (שניות)</label>
+                <label className="block text-xs text-fg-3 mb-1"><LuTimer aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />זמן (שניות)</label>
                 <input
                   type="number"
                   min="0"
@@ -242,7 +243,7 @@ export default function ExerciseExecutionForm({ exercise, value, onChange, disab
               </div>
             ) : (
               <div>
-                <label className="block text-xs text-fg-3 mb-1">🔢 חזרות</label>
+                <label className="block text-xs text-fg-3 mb-1"><LuHash aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />חזרות</label>
                 <input
                   type="number"
                   min="0"
@@ -258,7 +259,7 @@ export default function ExerciseExecutionForm({ exercise, value, onChange, disab
 
             {/* Weight - Left */}
             <div>
-              <label className="block text-xs text-fg-3 mb-1">⚖️ משקל</label>
+              <label className="block text-xs text-fg-3 mb-1"><LuScale aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />משקל</label>
               <input
                 type="number"
                 step="0.5"
@@ -273,7 +274,7 @@ export default function ExerciseExecutionForm({ exercise, value, onChange, disab
 
             {/* RPE - Left */}
             <div>
-              <label className="block text-xs text-fg-3 mb-1">💪 RPE</label>
+              <label className="block text-xs text-fg-3 mb-1"><LuBicepsFlexed aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />RPE</label>
               <input
                 type="number"
                 min="1"
@@ -290,7 +291,7 @@ export default function ExerciseExecutionForm({ exercise, value, onChange, disab
 
           {/* Notes - Left */}
           <div>
-            <label className="block text-xs text-fg-3 mb-1">📝 הערות</label>
+            <label className="block text-xs text-fg-3 mb-1"><LuNotebookPen aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />הערות</label>
             <textarea
               value={value.NotesLeft ?? ''}
               onChange={(e) => handleChange('NotesLeft', e.target.value)}

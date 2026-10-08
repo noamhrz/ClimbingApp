@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { useAuth, useActiveUserEmail } from '@/context/AuthContext'
 import { Exercise } from '@/types/exercises'
+import { LuPuzzle } from 'react-icons/lu'
 
 export default function DynamicExercisesPage() {
   const router = useRouter()
@@ -45,7 +46,7 @@ export default function DynamicExercisesPage() {
     <div className="max-w-4xl mx-auto p-6">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-3xl font-bold">🧩 תרגילים דינמיים</h1>
+          <h1 className="text-3xl font-bold"><LuPuzzle aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />תרגילים דינמיים</h1>
           <p className="text-muted mt-1">תרגילים המוגדרים לפי רמות רודמאפ</p>
         </div>
         <button
@@ -82,7 +83,7 @@ export default function DynamicExercisesPage() {
               <div className="flex items-start justify-between gap-2 mb-2">
                 <h3 className="font-semibold text-fg leading-tight">{ex.Name}</h3>
                 <span className="shrink-0 text-xs bg-success/15 text-success px-2 py-0.5 rounded-full">
-                  🧩 דינמי
+                  <LuPuzzle aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />דינמי
                 </span>
               </div>
               {ex.Category && (

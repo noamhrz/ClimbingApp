@@ -6,6 +6,7 @@
 import { useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import moment from 'moment-timezone'
+import { LuClipboardList, LuLightbulb, LuLoaderCircle } from 'react-icons/lu'
 
 interface Props {
   isOpen: boolean
@@ -151,7 +152,7 @@ export default function WeekDuplicateModal({ isOpen, onClose, onSuccess, email }
         <div className="sticky top-0 bg-surface border-b px-6 py-4">
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-bold text-fg">
-              📋 שכפול שבוע
+              <LuClipboardList aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />שכפול שבוע
             </h2>
             <button
               onClick={onClose}
@@ -168,7 +169,7 @@ export default function WeekDuplicateModal({ isOpen, onClose, onSuccess, email }
           {/* Instructions */}
           <div className="bg-accent/15 border border-accent rounded-lg p-4">
             <p className="text-sm text-accent">
-              💡 בחר שבוע קיים ושכפל אותו למספר שבועות קדימה.
+              <LuLightbulb aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />בחר שבוע קיים ושכפל אותו למספר שבועות קדימה.
               כל האימונים בשבוע המקורי יועתקו עם אותם פרטים.
             </p>
           </div>
@@ -247,7 +248,7 @@ export default function WeekDuplicateModal({ isOpen, onClose, onSuccess, email }
               disabled={loading || !startDate || !endDate}
               className="flex-1 py-3 bg-accent text-on-accent rounded-lg hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed font-medium transition"
             >
-              {loading ? '⏳ משכפל...' : '📋 שכפל שבוע'}
+              {loading ? <><LuLoaderCircle aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] animate-spin me-1.5" />משכפל...</> : <><LuClipboardList aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />שכפל שבוע</>}
             </button>
             <button
               onClick={onClose}

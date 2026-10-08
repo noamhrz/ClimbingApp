@@ -9,6 +9,7 @@ import { getAthletesByUrgency, getUrgencyIcon, getUrgencyColor, getFlagIcon } fr
 import type { AthleteUrgency } from '@/lib/urgency-checker'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
+import { LuChartColumn, LuCrown, LuEye, LuGraduationCap, LuHourglass, LuLock, LuMessageSquare, LuPartyPopper, LuRefreshCw, LuSiren, LuUsers, LuZap } from 'react-icons/lu'
 
 export default function UrgencyDashboard() {
   const { activeUser, currentUser, loading: authLoading } = useAuth()
@@ -68,7 +69,7 @@ export default function UrgencyDashboard() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <div className="text-2xl mb-2">⏳</div>
+          <div className="text-2xl mb-2"><LuHourglass aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></div>
           <div className="text-xl">טוען נתוני דחיפות...</div>
         </div>
       </div>
@@ -80,7 +81,7 @@ export default function UrgencyDashboard() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center bg-danger/15 border border-danger rounded-lg p-8 max-w-md">
-          <div className="text-5xl mb-4">🔒</div>
+          <div className="text-5xl mb-4"><LuLock aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></div>
           <h2 className="text-2xl font-bold text-danger mb-2">אין הרשאת גישה</h2>
           <p className="text-danger mb-6">{error}</p>
           <button
@@ -100,12 +101,12 @@ export default function UrgencyDashboard() {
       <div className="max-w-7xl mx-auto p-6" dir="rtl">
         <div className="mb-8">
           <h1 className="text-4xl font-bold mb-2 flex items-center gap-3">
-            🚨 טבלת דחיפות מתאמנים
+            <LuSiren aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />טבלת דחיפות מתאמנים
           </h1>
         </div>
         
         <div className="bg-warning/15 border border-warning rounded-lg p-12 text-center">
-          <div className="text-6xl mb-4">👥</div>
+          <div className="text-6xl mb-4"><LuUsers aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></div>
           <h2 className="text-2xl font-bold text-fg mb-2">אין מתאמנים משויכים</h2>
           <p className="text-fg-3">
             {activeUser?.Role === 'coach' 
@@ -124,7 +125,7 @@ export default function UrgencyDashboard() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-4xl font-bold mb-2 flex items-center gap-3">
-              🚨 טבלת דחיפות מתאמנים
+              <LuSiren aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />טבלת דחיפות מתאמנים
             </h1>
             <p className="text-fg-3 text-lg">ממוין מהדחוף ביותר לפחות דחוף</p>
           </div>
@@ -137,7 +138,7 @@ export default function UrgencyDashboard() {
  : 'bg-accent/15 text-accent border border-accent'
  }`}>
               <span className="text-xl">
-                {activeUser?.Role === 'admin' ? '👑' : '🎓'}
+                {activeUser?.Role === 'admin' ? <LuCrown aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /> : <LuGraduationCap aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" />}
               </span>
               <div>
                 <div className="text-xs opacity-75">מחובר כ</div>
@@ -209,7 +210,7 @@ export default function UrgencyDashboard() {
           onClick={loadAthletes}
           className="mr-auto px-5 py-2.5 bg-surface border border-line rounded-lg hover:bg-surface/90 transition font-medium"
         >
-          🔄 רענן
+          <LuRefreshCw aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />רענן
         </button>
       </div>
 
@@ -290,13 +291,13 @@ export default function UrgencyDashboard() {
                         onClick={() => router.push(`/athlete-stats/${athlete.email}`)}
                         className="px-4 py-2 bg-accent text-on-accent text-sm rounded-lg hover:bg-accent-hover transition font-medium"
                       >
-                        👁️ צפה
+                        <LuEye aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />צפה
                       </button>
                       <button
                         onClick={() => {/* TODO: implement messaging */}}
                         className="px-4 py-2 bg-raised text-fg-2 text-sm rounded-lg hover:bg-raised/90 transition font-medium"
                       >
-                        💬
+                        <LuMessageSquare aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" />
                       </button>
                     </div>
                   </td>
@@ -309,7 +310,7 @@ export default function UrgencyDashboard() {
         {/* Empty State */}
         {filteredAthletes.length === 0 && (
           <div className="text-center py-16">
-            <div className="text-6xl mb-4">🎉</div>
+            <div className="text-6xl mb-4"><LuPartyPopper aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></div>
             <div className="text-xl font-medium text-fg-2 mb-2">
               אין מתאמנים בסינון זה
             </div>
@@ -323,14 +324,14 @@ export default function UrgencyDashboard() {
 
       {/* Legend */}
       <div className="mt-6 bg-surface rounded-lg p-6">
-        <h3 className="font-bold text-lg mb-3">📊 מקרא:</h3>
+        <h3 className="font-bold text-lg mb-3"><LuChartColumn aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />מקרא:</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
           <div>
             <div className="font-medium mb-1">😴 שינה</div>
             <div className="text-fg-3">{'<'} 6h = 🔴 | 6-8h = 🟡 | 8+h = 🟢</div>
           </div>
           <div>
-            <div className="font-medium mb-1">⚡ חיוניות</div>
+            <div className="font-medium mb-1"><LuZap aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />חיוניות</div>
             <div className="text-fg-3">{'<'} 5 = 🔴 | 5-7 = 🟡 | 7+ = 🟢</div>
           </div>
           <div>

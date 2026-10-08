@@ -5,6 +5,7 @@
 
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Label, ReferenceLine, LabelList } from 'recharts'
 import { ChartDataPoint } from '@/types/analytics'
+import { LuCalendarDays, LuChartColumn, LuFlame, LuLightbulb, LuRepeat, LuScale, LuTrendingUp } from 'react-icons/lu'
 
 interface ProgressChartProps {
   data: ChartDataPoint[]
@@ -103,7 +104,7 @@ export default function ProgressChart({ data, isSingleHand, bodyWeight }: Progre
     return (
       <div className="bg-surface rounded-xl border border-line p-8 mb-6">
         <div className="text-center text-muted">
-          <div className="text-4xl mb-2">📈</div>
+          <div className="text-4xl mb-2"><LuTrendingUp aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></div>
           <div>אין נתונים להצגה</div>
         </div>
       </div>
@@ -116,17 +117,17 @@ export default function ProgressChart({ data, isSingleHand, bodyWeight }: Progre
       const data = payload[0].payload
       return (
         <div className="bg-surface p-4 rounded-lg border-2 border-line">
-          <p className="font-bold text-fg mb-3 text-base border-b pb-2">📅 {label}</p>
+          <p className="font-bold text-fg mb-3 text-base border-b pb-2"><LuCalendarDays aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />{label}</p>
           <div className="space-y-2">
             {data.weight !== null && data.weight !== undefined && (
               <>
                 <div className="flex items-center justify-between gap-4">
-                  <span className="text-sm font-medium text-fg-2">⚖️ משקל:</span>
+                  <span className="text-sm font-medium text-fg-2"><LuScale aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />משקל:</span>
                   <span className="text-sm font-bold text-accent">{data.weight.toFixed(1)} ק״ג</span>
                 </div>
                 {bodyWeight && (
                   <div className="flex items-center justify-between gap-4">
-                    <span className="text-sm font-medium text-fg-2">📊 % ממשקל גוף:</span>
+                    <span className="text-sm font-medium text-fg-2"><LuChartColumn aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />% ממשקל גוף:</span>
                     <span className="text-sm font-bold text-info">{((data.weight / bodyWeight) * 100).toFixed(1)}%</span>
                   </div>
                 )}
@@ -134,13 +135,13 @@ export default function ProgressChart({ data, isSingleHand, bodyWeight }: Progre
             )}
             {data.reps !== null && data.reps !== undefined && (
               <div className="flex items-center justify-between gap-4">
-                <span className="text-sm font-medium text-fg-2">🔁 חזרות:</span>
+                <span className="text-sm font-medium text-fg-2"><LuRepeat aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />חזרות:</span>
                 <span className="text-sm font-bold text-success">{Math.round(data.reps)}</span>
               </div>
             )}
             {data.rpe !== null && data.rpe !== undefined && (
               <div className="flex items-center justify-between gap-4">
-                <span className="text-sm font-medium text-fg-2">🔥 RPE:</span>
+                <span className="text-sm font-medium text-fg-2"><LuFlame aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />RPE:</span>
                 <span className="text-sm font-bold text-warning">{data.rpe}</span>
               </div>
             )}
@@ -153,13 +154,13 @@ export default function ProgressChart({ data, isSingleHand, bodyWeight }: Progre
                 </div>
                 {bodyWeight && (
                   <div className="flex items-center justify-between gap-4">
-                    <span className="text-sm font-medium text-fg-2">📊 % ממשקל גוף:</span>
+                    <span className="text-sm font-medium text-fg-2"><LuChartColumn aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />% ממשקל גוף:</span>
                     <span className="text-sm font-bold text-info">{((data.right / bodyWeight) * 100).toFixed(1)}%</span>
                   </div>
                 )}
                 {data.rightReps && (
                   <div className="flex items-center justify-between gap-4">
-                    <span className="text-sm font-medium text-fg-2">🔁 חזרות:</span>
+                    <span className="text-sm font-medium text-fg-2"><LuRepeat aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />חזרות:</span>
                     <span className="text-sm font-bold text-accent">{data.rightReps}</span>
                   </div>
                 )}
@@ -173,13 +174,13 @@ export default function ProgressChart({ data, isSingleHand, bodyWeight }: Progre
                 </div>
                 {bodyWeight && (
                   <div className="flex items-center justify-between gap-4">
-                    <span className="text-sm font-medium text-fg-2">📊 % ממשקל גוף:</span>
+                    <span className="text-sm font-medium text-fg-2"><LuChartColumn aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />% ממשקל גוף:</span>
                     <span className="text-sm font-bold text-info">{((data.left / bodyWeight) * 100).toFixed(1)}%</span>
                   </div>
                 )}
                 {data.leftReps && (
                   <div className="flex items-center justify-between gap-4">
-                    <span className="text-sm font-medium text-fg-2">🔁 חזרות:</span>
+                    <span className="text-sm font-medium text-fg-2"><LuRepeat aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />חזרות:</span>
                     <span className="text-sm font-bold text-success">{data.leftReps}</span>
                   </div>
                 )}
@@ -223,9 +224,9 @@ export default function ProgressChart({ data, isSingleHand, bodyWeight }: Progre
     return (
       <div className="bg-surface rounded-xl border border-line p-6 mb-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-bold text-fg">📈 התקדמות משקל - ימין vs שמאל</h3>
+          <h3 className="text-lg font-bold text-fg"><LuTrendingUp aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />התקדמות משקל - ימין vs שמאל</h3>
           <div className="text-sm text-muted">
-            💡 לחץ על עמודה לפרטים מלאים
+            <LuLightbulb aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />לחץ על עמודה לפרטים מלאים
           </div>
         </div>
         
@@ -312,16 +313,16 @@ export default function ProgressChart({ data, isSingleHand, bodyWeight }: Progre
   return (
     <div className="bg-surface rounded-xl border border-line p-6 mb-6">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-bold text-fg">📈 התקדמות משקל</h3>
+        <h3 className="text-lg font-bold text-fg"><LuTrendingUp aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />התקדמות משקל</h3>
         <div className="text-sm text-muted">
-          💡 לחץ על עמודה לפרטים מלאים
+          <LuLightbulb aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />לחץ על עמודה לפרטים מלאים
         </div>
       </div>
       
       <div className="flex items-center gap-4 text-sm mb-4 bg-accent/15 p-3 rounded-lg">
         <div className="flex items-center gap-2">
           <div className="w-4 h-3 bg-accent border-2 border-line-strong "></div>
-          <span className="font-medium">⚖️ משקל (ק״ג)</span>
+          <span className="font-medium"><LuScale aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />משקל (ק״ג)</span>
         </div>
       </div>
       
@@ -382,7 +383,7 @@ export default function ProgressChart({ data, isSingleHand, bodyWeight }: Progre
       </ResponsiveContainer>
       
       <div className="mt-4 text-center text-sm bg-surface p-3 rounded-lg">
-        <div className="font-medium text-fg-2 mb-1">📊 איך לקרוא את הגרף:</div>
+        <div className="font-medium text-fg-2 mb-1"><LuChartColumn aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />איך לקרוא את הגרף:</div>
         <div className="text-fg-3">
           כל עמודה = משקל באותו יום • לחץ על עמודה לפרטים מלאים (חזרות, RPE וכו')
         </div>

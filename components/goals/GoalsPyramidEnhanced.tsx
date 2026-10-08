@@ -3,6 +3,7 @@
 'use client'
 
 import { useMemo } from 'react'
+import { LuTarget } from 'react-icons/lu'
 
 interface Props {
   type: 'boulder' | 'board' | 'lead'
@@ -52,7 +53,7 @@ export default function GoalsPyramidEnhanced({
         {title && <h3 className="text-xl font-bold mb-4">{title}</h3>}
         <div className="flex items-center justify-center h-48 text-faint bg-surface rounded-lg">
           <div className="text-center">
-            <div className="text-4xl mb-2">🎯</div>
+            <div className="text-4xl mb-2"><LuTarget aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></div>
             <div>אין יעדים להצגה</div>
           </div>
         </div>

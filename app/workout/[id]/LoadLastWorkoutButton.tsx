@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
+import { LuRefreshCw } from 'react-icons/lu'
 
 interface LoadLastWorkoutButtonProps {
   email: string | null
@@ -127,7 +128,7 @@ export default function LoadLastWorkoutButton({
             <span>טוען...</span>
           </>
         ) : (
-          <>🔄 טען נתונים מאימון אחרון</>
+          <><LuRefreshCw aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />טען נתונים מאימון אחרון</>
         )}
       </button>
       <p className="text-muted text-sm mt-2">

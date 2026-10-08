@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabaseClient'
+import { LuBicepsFlexed, LuRefreshCw } from 'react-icons/lu'
 
 interface Quote {
   QuoteID: number
@@ -44,7 +45,7 @@ export default function MotivationalQuote() {
   if (loading || !quote) {
     return (
       <div className="text-fg rounded-xl p-8 text-center bg-surface border border-line">
-        <div className="text-5xl mb-4">💪</div>
+        <div className="text-5xl mb-4"><LuBicepsFlexed aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></div>
         <div className="text-xl">טוען ציטוט...</div>
       </div>
     )
@@ -53,7 +54,7 @@ export default function MotivationalQuote() {
   return (
     <div className="text-fg rounded-xl p-8 text-center bg-surface border border-line">
       {/* אייקון */}
-      <div className="text-5xl mb-4">💪</div>
+      <div className="text-5xl mb-4"><LuBicepsFlexed aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></div>
       
       {/* הציטוט בעברית */}
       <blockquote className="text-2xl font-bold mb-2">
@@ -83,7 +84,7 @@ export default function MotivationalQuote() {
         className="mt-4 px-6 py-2 bg-raised border border-line-strong hover:bg-line-strong rounded-lg 
                    text-white font-medium transition-all hover:scale-105"
       >
-        🔄 ציטוט אחר
+        <LuRefreshCw aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />ציטוט אחר
       </button>
     </div>
   )

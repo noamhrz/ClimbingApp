@@ -6,6 +6,7 @@
 import { useState } from 'react'
 import { ExerciseLog } from '@/types/analytics'
 import moment from 'moment'
+import { LuClipboardList } from 'react-icons/lu'
 
 interface SessionsTableProps {
   logs: ExerciseLog[]
@@ -20,7 +21,7 @@ export default function SessionsTable({ logs, isSingleHand }: SessionsTableProps
     return (
       <div className="bg-surface rounded-xl border border-line p-8">
         <div className="text-center text-muted">
-          <div className="text-4xl mb-2">📋</div>
+          <div className="text-4xl mb-2"><LuClipboardList aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></div>
           <div>אין סשנים להצגה</div>
         </div>
       </div>

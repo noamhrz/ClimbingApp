@@ -14,6 +14,7 @@ import Link from 'next/link'
 import { useUserContext } from '@/context/UserContext'
 import type { ExercisePerformance, ExerciseStats, HandStats, ImbalanceStats } from '@/lib/exercise-stats-metrics'
 import { formatValue } from '@/lib/exercise-stats-metrics'
+import { LuBicepsFlexed, LuChartColumn, LuTrendingUp } from 'react-icons/lu'
 
 interface ExerciseStatsDisplayProps {
   performance: ExercisePerformance
@@ -32,7 +33,7 @@ export function ExerciseStatsDisplay({ performance, selectedEmail }: ExerciseSta
   if (performance.exercises.length === 0) {
     return (
       <div className="bg-accent/15 border border-accent rounded-lg p-8 text-center">
-        <div className="text-4xl mb-3">💪</div>
+        <div className="text-4xl mb-3"><LuBicepsFlexed aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></div>
         <h3 className="text-xl font-bold text-fg mb-2">אין נתוני תרגילים</h3>
         <p className="text-fg-3">לא נמצאו תרגילים שבוצעו בטווח התאריכים הנבחר</p>
       </div>
@@ -53,7 +54,7 @@ export function ExerciseStatsDisplay({ performance, selectedEmail }: ExerciseSta
       {/* Header with filter */}
       <div className="rounded-lg p-6 text-fg bg-surface border border-line">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-2xl font-bold">💪 סטטיסטיקות תרגילים</h2>
+          <h2 className="text-2xl font-bold"><LuBicepsFlexed aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />סטטיסטיקות תרגילים</h2>
           
           {/* Category Filter */}
           <div className="flex items-center gap-2">
@@ -228,7 +229,7 @@ export function ExerciseCard({
         >
           <span>{exercise.exerciseName}</span>
           <span className="text-sm opacity-0 group-hover:opacity-100 transition-opacity">
-            📊
+            <LuChartColumn aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" />
           </span>
         </Link>
       </div>
@@ -323,7 +324,7 @@ function HandStatsBar({
         )}
         {isBodyWeight && (
           <span className="text-sm font-medium text-info">
-            💪 משקל גוף
+            <LuBicepsFlexed aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />משקל גוף
           </span>
         )}
       </div>
@@ -464,8 +465,8 @@ function ImbalanceWarning({ imbalance }: { imbalance: ImbalanceStats }) {
         {imbalance.message}
       </div>
       <div className="text-sm text-fg-2 space-y-1">
-        <div>📊 Current Gap: <strong>{Math.abs(imbalance.currentGap).toFixed(1)}%</strong></div>
-        <div>📈 Average Gap: <strong>{Math.abs(imbalance.avgGap).toFixed(1)}%</strong></div>
+        <div><LuChartColumn aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />Current Gap: <strong>{Math.abs(imbalance.currentGap).toFixed(1)}%</strong></div>
+        <div><LuTrendingUp aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />Average Gap: <strong>{Math.abs(imbalance.avgGap).toFixed(1)}%</strong></div>
         <div>🔝 Max Gap: <strong>{Math.abs(imbalance.maxGap).toFixed(1)}%</strong></div>
       </div>
     </div>

@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
 import Link from 'next/link'
 import Image from 'next/image'
+import { LuLoaderCircle, LuLogIn } from 'react-icons/lu'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -157,7 +158,7 @@ export default function LoginPage() {
             disabled={loading}
             className="w-full py-3 min-h-12 bg-accent text-on-accent rounded-full font-bold hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {loading ? '⏳ מתחבר...' : '🚀 התחבר'}
+            {loading ? <><LuLoaderCircle aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] animate-spin me-1.5" />מתחבר...</> : <><LuLogIn aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />התחבר</>}
           </button>
         </form>
 

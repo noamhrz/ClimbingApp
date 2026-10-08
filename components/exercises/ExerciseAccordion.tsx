@@ -3,6 +3,7 @@
 
 import { useState } from 'react'
 import ExerciseExecutionForm from './ExerciseExecutionForm'
+import { LuImage, LuSearch, LuVideo } from 'react-icons/lu'
 
 interface Exercise {
   ExerciseID: number
@@ -110,10 +111,10 @@ export default function ExerciseAccordion({
           {!isExpanded && (
             <>
               {exercise.ImageURL && (
-                <span className="text-accent text-sm">🖼️</span>
+                <span className="text-accent text-sm"><LuImage aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></span>
               )}
               {exercise.VideoURL && (
-                <span className="text-accent text-sm">🎥</span>
+                <span className="text-accent text-sm"><LuVideo aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></span>
               )}
             </>
           )}
@@ -170,7 +171,7 @@ export default function ExerciseAccordion({
               {exercise.ImageURL && (
                 <div>
                   <label className="block text-sm font-medium text-fg-2 mb-2">
-                    🖼️ תמונה להדגמה:
+                    <LuImage aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />תמונה להדגמה:
                   </label>
                   <a
                     href={exercise.ImageURL}
@@ -186,7 +187,7 @@ export default function ExerciseAccordion({
                     {/* Hover overlay */}
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-all rounded-lg flex items-center justify-center">
                       <span className="opacity-0 group-hover:opacity-100 text-on-accent font-bold text-lg bg-accent px-4 py-2 rounded-lg ">
-                        🔍 לחץ להגדלה
+                        <LuSearch aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />לחץ להגדלה
                       </span>
                     </div>
                   </a>
@@ -197,7 +198,7 @@ export default function ExerciseAccordion({
               {exercise.VideoURL && (
                 <div>
                   <label className="block text-sm font-medium text-fg-2 mb-2">
-                    🎥 וידאו הדגמה:
+                    <LuVideo aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />וידאו הדגמה:
                   </label>
                   <a
                     href={exercise.VideoURL}

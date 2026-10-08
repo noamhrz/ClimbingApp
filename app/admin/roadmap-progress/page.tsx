@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { useAuth, useActiveUserEmail } from '@/context/AuthContext'
 import { useRouter } from 'next/navigation'
+import { LuChartColumn, LuCircleCheck, LuLoaderCircle, LuSave } from 'react-icons/lu'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -175,7 +176,7 @@ export default function RoadmapProgressPage() {
       {/* Header */}
       <div className="bg-surface border-b sticky top-0 z-30">
         <div className="max-w-7xl mx-auto px-4 py-4">
-          <h1 className="text-2xl font-bold text-fg">📊 עדכון התקדמות Roadmap</h1>
+          <h1 className="text-2xl font-bold text-fg"><LuChartColumn aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />עדכון התקדמות Roadmap</h1>
           <p className="text-sm text-muted mt-0.5">עדכן את רמות ההתקדמות של המתאמנים</p>
         </div>
       </div>
@@ -248,7 +249,7 @@ export default function RoadmapProgressPage() {
  : 'bg-surface text-faint cursor-not-allowed'
  } disabled:opacity-60`}
                 >
-                  {saving ? '⏳ שומר...' : saveSuccess ? '✅ נשמר!' : '💾 שמור שינויים'}
+                  {saving ? <><LuLoaderCircle aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] animate-spin me-1.5" />שומר...</> : saveSuccess ? <><LuCircleCheck aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />נשמר!</> : <><LuSave aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />שמור שינויים</>}
                 </button>
               </div>
 

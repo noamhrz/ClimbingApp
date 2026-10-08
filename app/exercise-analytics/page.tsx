@@ -21,6 +21,7 @@ import ExerciseFilters from '@/components/analytics/ExerciseFilters'
 import StatsCards from '@/components/analytics/StatsCards'
 import ProgressChart from '@/components/analytics/ProgressChart'
 import SessionsTable from '@/components/analytics/SessionsTable'
+import { LuBicepsFlexed, LuChartColumn, LuHourglass, LuSearch, LuUser, LuUsers } from 'react-icons/lu'
 
 export default function ExerciseAnalyticsPage() {
   const router = useRouter()
@@ -524,12 +525,12 @@ export default function ExerciseAnalyticsPage() {
         <div className="max-w-7xl mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold">📊 ניתוח תרגילים</h1>
+              <h1 className="text-3xl font-bold"><LuChartColumn aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />ניתוח תרגילים</h1>
               <p className="text-fg-2 mt-1">
                 מעקב אחר התקדמות ושיפור ביצועים
                 {targetEmail && targetEmail !== activeUser?.Email && (
                   <span className="mr-2 bg-accent/50 px-2 py-1 rounded text-sm">
-                    👤 {targetEmail}
+                    <LuUser aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />{targetEmail}
                   </span>
                 )}
               </p>
@@ -551,7 +552,7 @@ export default function ExerciseAnalyticsPage() {
         {canViewOthers && (
           <div className="rounded-xl p-5 mb-6 border-2 border-info/30 bg-surface border border-line">
             <div className="flex items-center gap-3 mb-3">
-              <div className="text-2xl">👥</div>
+              <div className="text-2xl"><LuUsers aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></div>
               <div>
                 <h3 className="text-lg font-bold text-fg">בחירת מתאמן לניתוח</h3>
                 <p className="text-sm text-fg-3">
@@ -578,7 +579,7 @@ export default function ExerciseAnalyticsPage() {
               </select>
             ) : (
               <div className="text-center py-3 text-muted animate-pulse">
-                ⏳ טוען משתמשים...
+                <LuHourglass aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />טוען משתמשים...
               </div>
             )}
           </div>
@@ -595,7 +596,7 @@ export default function ExerciseAnalyticsPage() {
         {/* Show message if no exercise selected */}
         {!filters.exerciseId && !filters.category && (
           <div className="bg-accent/15 border border-accent rounded-xl p-8 text-center">
-            <div className="text-4xl mb-3">🔍</div>
+            <div className="text-4xl mb-3"><LuSearch aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></div>
             <h3 className="text-lg font-bold text-accent mb-2">
               בחר תרגיל או קטגוריה
             </h3>
@@ -612,7 +613,7 @@ export default function ExerciseAnalyticsPage() {
             {selectedExercise && (
               <div className="mb-6">
                 <h2 className="text-2xl font-bold text-fg">
-                  💪 {selectedExercise.Name}
+                  <LuBicepsFlexed aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />{selectedExercise.Name}
                   {selectedExercise.IsSingleHand && (
                     <span className="text-sm text-accent mr-2">(יד בודדת)</span>
                   )}

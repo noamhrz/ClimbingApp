@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react'
 import { ClimbingRoute, BoulderGrade, LeadGrade, BoardType } from '@/types/climbing'
 import { RouteTable } from './RouteTable'
 import { generateTempId, getGradeDisplay } from '@/lib/climbing-helpers'
+import { LuCircleCheck, LuDumbbell, LuPartyPopper, LuRocket } from 'react-icons/lu'
 
 interface RouteTypeBlockProps {
   type: 'Boulder' | 'Board' | 'Lead'
@@ -122,7 +123,7 @@ export function RouteTypeBlock({
           {type === 'Board' && (
             <div className="p-4 bg-info/10 border-b">
               <label className="block text-sm font-medium mb-2">
-                🏋️ סוג Board:
+                <LuDumbbell aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />סוג Board:
               </label>
               <select
                 value={selectedBoardType || ''}
@@ -150,7 +151,7 @@ export function RouteTypeBlock({
           <div className={`p-4 border-b transition-all duration-300 ${
  justAdded ? 'bg-success/15' : 'bg-accent/15'
  }`}>
-            <div className="text-sm font-medium mb-2">🚀 הוספה מהירה:</div>
+            <div className="text-sm font-medium mb-2"><LuRocket aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />הוספה מהירה:</div>
             
             {/* Grade and Count - Same Row */}
             <div className="flex items-center gap-2 mb-3">
@@ -215,7 +216,7 @@ export function RouteTypeBlock({
                 </span>
               ) : justAdded ? (
                 <span className="flex items-center justify-center gap-2">
-                  ✅ נוסף בהצלחה!
+                  <LuCircleCheck aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />נוסף בהצלחה!
                 </span>
               ) : (
                 '⚡ הוסף'
@@ -225,7 +226,7 @@ export function RouteTypeBlock({
             {/* Success Message */}
             {justAdded && (
               <div className="mt-2 text-center text-sm text-success font-medium animate-pulse">
-                🎉 {countValue} מסלולים נוספו!
+                <LuPartyPopper aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />{countValue} מסלולים נוספו!
               </div>
             )}
           </div>

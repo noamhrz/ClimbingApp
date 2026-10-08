@@ -4,6 +4,7 @@
 'use client'
 
 import { Exercise } from '@/types/exercises'
+import { LuClipboardList, LuImage, LuPencil, LuPuzzle, LuTimer, LuTrash2, LuUser, LuVideo } from 'react-icons/lu'
 
 interface Props {
   exercise: Exercise
@@ -64,12 +65,12 @@ export default function ExerciseCard({ exercise, canEdit, onEdit, onDelete, onDu
             </span>
             {exercise.isDuration && (
               <span className="inline-block px-2 py-0.5 text-xs rounded-full bg-info/10 text-info">
-                ⏱️ זמן
+                <LuTimer aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />זמן
               </span>
             )}
             {exercise.is_dynamic && (
               <span className="inline-block px-2 py-0.5 text-xs rounded-full bg-success/15 text-success">
-                🧩 דינמי
+                <LuPuzzle aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />דינמי
               </span>
             )}
             {exercise.Status === 'Inactive' && (
@@ -85,7 +86,7 @@ export default function ExerciseCard({ exercise, canEdit, onEdit, onDelete, onDu
             <span className="text-xl ml-2" title="תרגיל יד אחת">🖐️</span>
           )}
           {exercise.isDuration && (
-            <span className="text-xl" title="תרגיל מבוסס זמן">⏱️</span>
+            <span className="text-xl" title="תרגיל מבוסס זמן"><LuTimer aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></span>
           )}
         </div>
       </div>
@@ -108,7 +109,7 @@ export default function ExerciseCard({ exercise, canEdit, onEdit, onDelete, onDu
               className="text-xs px-2 py-1 bg-danger/15 text-danger rounded hover:bg-danger/15 transition flex items-center gap-1"
               onClick={(e) => e.stopPropagation()}
             >
-              <span>📹</span>
+              <span><LuVideo aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></span>
               <span>וידאו</span>
             </a>
           )}
@@ -120,7 +121,7 @@ export default function ExerciseCard({ exercise, canEdit, onEdit, onDelete, onDu
               className="text-xs px-2 py-1 bg-info/10 text-info rounded hover:bg-info/10 transition flex items-center gap-1"
               onClick={(e) => e.stopPropagation()}
             >
-              <span>🖼️</span>
+              <span><LuImage aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></span>
               <span>תמונה</span>
             </a>
           )}
@@ -135,7 +136,7 @@ export default function ExerciseCard({ exercise, canEdit, onEdit, onDelete, onDu
               👤 {exercise.CreatedBy.split('@')[0]}
             </span>
           ) : (
-            <span>👤 מערכת</span>
+            <span><LuUser aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />מערכת</span>
           )}
         </div>
 
@@ -146,27 +147,27 @@ export default function ExerciseCard({ exercise, canEdit, onEdit, onDelete, onDu
                 onClick={onOpenDynamicEditor}
                 className="text-xs px-3 py-1 bg-success/15 text-success rounded hover:bg-success/15 transition font-medium"
               >
-                🧩 עורך דינמי
+                <LuPuzzle aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />עורך דינמי
               </button>
             )}
             <button
               onClick={onEdit}
               className="text-xs px-3 py-1 bg-accent/15 text-accent rounded hover:bg-accent/15 transition font-medium"
             >
-              ✏️ ערוך
+              <LuPencil aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />ערוך
             </button>
             <button
               onClick={onDuplicate}
               className="text-xs px-3 py-1 bg-surface text-fg-3 rounded hover:bg-surface/90 transition font-medium"
               title="שכפל תרגיל"
             >
-              📋
+              <LuClipboardList aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" />
             </button>
             <button
               onClick={onDelete}
               className="text-xs px-3 py-1 bg-danger/15 text-danger rounded hover:bg-danger/15 transition font-medium"
             >
-              🗑️ מחק
+              <LuTrash2 aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />מחק
             </button>
           </div>
         )}

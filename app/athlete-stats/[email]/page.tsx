@@ -19,6 +19,7 @@ import type { WorkoutPerformance } from '@/lib/workout-stats-metrics'
 import { WorkoutStatsDisplay } from '@/components/workout-stats-display'
 import { getExercisePerformance } from '@/lib/exercise-stats-metrics'
 import type { ExercisePerformance } from '@/lib/exercise-stats-metrics'
+import { LuCalendarDays, LuChartColumn, LuCircleCheck, LuClipboardList, LuHourglass, LuTriangleAlert, LuUser } from 'react-icons/lu'
 
 export default function ProfilePage() {
   const params = useParams()
@@ -159,7 +160,7 @@ export default function ProfilePage() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <div className="text-2xl mb-2">⏳</div>
+          <div className="text-2xl mb-2"><LuHourglass aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></div>
           <div className="text-xl">טוען נתונים...</div>
         </div>
       </div>
@@ -170,7 +171,7 @@ export default function ProfilePage() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <div className="text-2xl mb-2">⏳</div>
+          <div className="text-2xl mb-2"><LuHourglass aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></div>
           <div className="text-xl">טוען...</div>
         </div>
       </div>
@@ -183,7 +184,7 @@ export default function ProfilePage() {
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className="text-4xl font-bold mb-2">📊 סטטיסטיקות מתאמן</h1>
+            <h1 className="text-4xl font-bold mb-2"><LuChartColumn aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />סטטיסטיקות מתאמן</h1>
             <p className="text-fg-3">
               {isViewingSelf ? 'הנתונים שלך' : `נתונים עבור ${metrics?.userName || selectedEmail}`}
             </p>
@@ -193,7 +194,7 @@ export default function ProfilePage() {
           {canViewOthers && users.length > 0 && (
             <div className="bg-surface rounded-lg p-4 border-2 border-accent">
               <label className="block text-sm font-medium text-fg-2 mb-2">
-                👤 בחר משתמש:
+                <LuUser aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />בחר משתמש:
               </label>
               <select
                 value={selectedEmail}
@@ -219,7 +220,7 @@ export default function ProfilePage() {
           <div className="flex items-center gap-4 flex-wrap">
             <div className="flex-1 min-w-[200px]">
               <label className="block text-sm font-medium text-fg-2 mb-1">
-                📅 מתאריך:
+                <LuCalendarDays aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />מתאריך:
               </label>
               <input
                 type="date"
@@ -232,7 +233,7 @@ export default function ProfilePage() {
             </div>
             <div className="flex-1 min-w-[200px]">
               <label className="block text-sm font-medium text-fg-2 mb-1">
-                📅 עד תאריך:
+                <LuCalendarDays aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />עד תאריך:
               </label>
               <input
                 type="date"
@@ -252,7 +253,7 @@ export default function ProfilePage() {
               >
                 {refreshLoading ? (
                   <>
-                    <span className="animate-spin">⏳</span>
+                    <span className="animate-spin"><LuHourglass aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></span>
                     טוען...
                   </>
                 ) : (
@@ -268,7 +269,7 @@ export default function ProfilePage() {
       {error && (
         <div className="bg-danger/15 border border-danger rounded-lg p-6 mb-6">
           <div className="flex items-center gap-3">
-            <span className="text-3xl">⚠️</span>
+            <span className="text-3xl"><LuTriangleAlert aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></span>
             <div>
               <div className="font-bold text-danger">שגיאה בטעינת נתונים</div>
               <div className="text-danger">{error}</div>
@@ -283,7 +284,7 @@ export default function ProfilePage() {
           {/* Workout Completion Card */}
           <div className="bg-surface rounded-lg p-6 border-r-4 border-accent">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-bold text-fg">✅ אחוז השלמת אימונים</h3>
+              <h3 className="text-xl font-bold text-fg"><LuCircleCheck aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />אחוז השלמת אימונים</h3>
             </div>
             
             <div className="text-center">
@@ -296,8 +297,8 @@ export default function ProfilePage() {
               </div>
               
               <div className="text-fg-3 text-sm space-y-1">
-                <div>✅ הושלמו: <strong>{metrics.completedWorkouts}</strong></div>
-                <div>📋 סה"כ: <strong>{metrics.totalWorkouts}</strong></div>
+                <div><LuCircleCheck aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />הושלמו: <strong>{metrics.completedWorkouts}</strong></div>
+                <div><LuClipboardList aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />סה"כ: <strong>{metrics.totalWorkouts}</strong></div>
               </div>
 
               {/* Progress Bar */}
@@ -383,7 +384,7 @@ export default function ProfilePage() {
       {/* No Data State */}
       {metrics && metrics.totalWorkouts === 0 && metrics.sleepAverage === 0 && (
         <div className="bg-warning/15 border border-warning rounded-lg p-12 text-center mt-6">
-          <div className="text-6xl mb-4">📊</div>
+          <div className="text-6xl mb-4"><LuChartColumn aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></div>
           <h2 className="text-2xl font-bold text-fg mb-2">אין נתונים לתקופה זו</h2>
           <p className="text-fg-3">
             נסה לבחור טווח תאריכים אחר או בדוק שיש רשומות במערכת.

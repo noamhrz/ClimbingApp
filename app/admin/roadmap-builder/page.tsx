@@ -6,6 +6,7 @@ import { useAuth, useActiveUserEmail } from '@/context/AuthContext'
 import { useRouter } from 'next/navigation'
 import { DndProvider, useDrag, useDrop } from 'react-dnd'
 import { HTML5Backend } from 'react-dnd-html5-backend'
+import { LuCircleCheck, LuLoaderCircle, LuMap, LuPencil, LuPlus, LuSave, LuTrash2 } from 'react-icons/lu'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -149,7 +150,7 @@ function LevelModal({ level, categories, onClose, onSave, saving }: LevelModalPr
       <div className="bg-raised border border-line-strong rounded-xl max-w-lg w-full p-6 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-bold text-fg">
-            {form.id ? '✏️ עריכת רמה' : '➕ רמה חדשה'}
+            {form.id ? <><LuPencil aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />עריכת רמה</> : <><LuPlus aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />רמה חדשה</>}
           </h2>
           <button onClick={onClose} className="text-faint hover:text-fg-3 text-2xl leading-none">×</button>
         </div>
@@ -258,7 +259,7 @@ function LevelModal({ level, categories, onClose, onSave, saving }: LevelModalPr
               disabled={saving || !form.Name}
               className="flex-1 py-2.5 bg-accent text-on-accent rounded-lg hover:bg-accent-hover disabled:opacity-50 font-medium"
             >
-              {saving ? '⏳ שומר...' : '💾 שמור'}
+              {saving ? <><LuLoaderCircle aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] animate-spin me-1.5" />שומר...</> : <><LuSave aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />שמור</>}
             </button>
             <button
               onClick={onClose}
@@ -293,7 +294,7 @@ function CategoryModal({ onClose, onSave, saving }: CategoryModalProps) {
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-raised border border-line-strong rounded-xl max-w-md w-full p-6">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-fg">➕ קטגוריה חדשה</h2>
+          <h2 className="text-xl font-bold text-fg"><LuPlus aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />קטגוריה חדשה</h2>
           <button onClick={onClose} className="text-faint hover:text-fg-3 text-2xl leading-none">×</button>
         </div>
 
@@ -350,7 +351,7 @@ function CategoryModal({ onClose, onSave, saving }: CategoryModalProps) {
               disabled={saving || !name.trim()}
               className="flex-1 py-2.5 bg-success text-on-accent rounded-lg hover:bg-success/90 disabled:opacity-50 font-medium"
             >
-              {saving ? '⏳ שומר...' : '✅ צור קטגוריה'}
+              {saving ? <><LuLoaderCircle aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] animate-spin me-1.5" />שומר...</> : <><LuCircleCheck aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />צור קטגוריה</>}
             </button>
             <button
               onClick={onClose}
@@ -381,7 +382,7 @@ function EditCategoryModal({ cat, onClose, onSave, saving }: EditCategoryModalPr
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-raised border border-line-strong rounded-xl max-w-md w-full p-6">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-fg">✏️ עריכת קטגוריה</h2>
+          <h2 className="text-xl font-bold text-fg"><LuPencil aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />עריכת קטגוריה</h2>
           <button onClick={onClose} className="text-faint hover:text-fg-3 text-2xl leading-none">×</button>
         </div>
 
@@ -437,7 +438,7 @@ function EditCategoryModal({ cat, onClose, onSave, saving }: EditCategoryModalPr
               disabled={saving || !form.Name.trim()}
               className="flex-1 py-2.5 bg-accent text-on-accent rounded-lg hover:bg-accent-hover disabled:opacity-50 font-medium"
             >
-              {saving ? '⏳ שומר...' : '💾 שמור'}
+              {saving ? <><LuLoaderCircle aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] animate-spin me-1.5" />שומר...</> : <><LuSave aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />שמור</>}
             </button>
             <button
               onClick={onClose}
@@ -528,14 +529,14 @@ function DraggableLevelRow({ level, index, categories, onEdit, onDelete, onMove 
           className="px-2.5 py-1.5 bg-accent text-on-accent rounded-lg hover:bg-accent/90 text-sm"
           title="ערוך"
         >
-          ✏️
+          <LuPencil aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" />
         </button>
         <button
           onClick={() => onDelete(level)}
           className="px-2.5 py-1.5 bg-danger text-on-accent rounded-lg hover:bg-danger/90 text-sm"
           title="מחק"
         >
-          🗑
+          <LuTrash2 aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" />
         </button>
       </div>
     </div>
@@ -790,7 +791,7 @@ export default function RoadmapBuilderPage() {
       {/* Header */}
       <div className="bg-surface border-b sticky top-0 z-30">
         <div className="max-w-7xl mx-auto px-4 py-4">
-          <h1 className="text-2xl font-bold text-fg">🗺️ בניית Roadmap</h1>
+          <h1 className="text-2xl font-bold text-fg"><LuMap aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />בניית Roadmap</h1>
           <p className="text-sm text-muted mt-0.5">ניהול קטגוריות ורמות מסלול ההתקדמות</p>
         </div>
       </div>
@@ -853,7 +854,7 @@ export default function RoadmapBuilderPage() {
                                 className="text-faint hover:text-accent transition-colors text-lg leading-none opacity-0 group-hover:opacity-100"
                                 title="ערוך קטגוריה"
                               >
-                                ✏️
+                                <LuPencil aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" />
                               </button>
                               <button
                                 type="button"
@@ -861,7 +862,7 @@ export default function RoadmapBuilderPage() {
                                 className="text-faint hover:text-danger transition-colors text-lg leading-none opacity-0 group-hover:opacity-100"
                                 title="מחק קטגוריה"
                               >
-                                🗑
+                                <LuTrash2 aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" />
                               </button>
                             </div>
                           </div>
@@ -908,14 +909,14 @@ export default function RoadmapBuilderPage() {
                       disabled={saving}
                       className="px-3 py-1.5 text-sm bg-success text-on-accent rounded-lg hover:bg-success/90 disabled:opacity-50 font-medium"
                     >
-                      {saving ? '⏳ שומר...' : '💾 שמור סדר'}
+                      {saving ? <><LuLoaderCircle aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] animate-spin me-1.5" />שומר...</> : <><LuSave aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />שמור סדר</>}
                     </button>
                   )}
                   <button
                     onClick={() => handleDeleteCategory(selectedCat!)}
                     className="px-3 py-1.5 text-sm text-danger border border-danger rounded-lg hover:bg-danger/15"
                   >
-                    🗑 מחק קטגוריה
+                    <LuTrash2 aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />מחק קטגוריה
                   </button>
                 </div>
               </div>
@@ -969,7 +970,7 @@ export default function RoadmapBuilderPage() {
                         className="px-3 py-1.5 bg-accent text-on-accent rounded-lg text-sm hover:bg-accent-hover"
                         title="פתח עורך מלא"
                       >
-                        ✏️ עורך מלא
+                        <LuPencil aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />עורך מלא
                       </button>
                       <button
                         onClick={() => setShowNewLevelRow(false)}

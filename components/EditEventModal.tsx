@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import moment from 'moment-timezone'
+import { LuCalendarDays, LuClock } from 'react-icons/lu'
 
 interface EditEventModalProps {
   isOpen: boolean
@@ -86,7 +87,7 @@ export default function EditEventModal({
               {/* Header */}
               <div className="px-6 py-4 bg-surface border border-line">
                 <h2 className="text-2xl font-bold text-fg text-center">
-                  📅 שינוי תאריך וזמן
+                  <LuCalendarDays aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />שינוי תאריך וזמן
                 </h2>
                 <p className="text-fg-2 text-center text-sm mt-1">
                   {eventTitle}
@@ -98,7 +99,7 @@ export default function EditEventModal({
                 {/* Date Picker */}
                 <div>
                   <label className="block text-sm font-semibold text-fg-2 mb-2">
-                    📅 תאריך חדש
+                    <LuCalendarDays aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />תאריך חדש
                   </label>
                   <input
                     type="date"
@@ -112,7 +113,7 @@ export default function EditEventModal({
                 {/* Time Selector */}
                 <div>
                   <label className="block text-sm font-semibold text-fg-2 mb-2">
-                    🕐 זמן
+                    <LuClock aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />זמן
                   </label>
                   <div className="grid grid-cols-3 gap-2">
                     <button

@@ -21,6 +21,7 @@ import GeneralGoalsForm from '@/components/goals/GeneralGoalsForm'
 import GradeGoalsForm from '@/components/goals/GradeGoalsForm'
 import GoalsPyramidEnhanced from '@/components/goals/GoalsPyramidEnhanced'
 import GoalsProgressPyramid from '@/components/goals/GoalsProgressPyramid'
+import { LuCalendarDays, LuChartColumn, LuHourglass, LuLink, LuMountain, LuNotebookPen, LuTarget } from 'react-icons/lu'
 
 export default function GoalsEditPage() {
   const params = useParams()
@@ -131,7 +132,7 @@ export default function GoalsEditPage() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <div className="text-2xl mb-2">⏳</div>
+          <div className="text-2xl mb-2"><LuHourglass aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></div>
           <div className="text-xl">טוען יעדים...</div>
         </div>
       </div>
@@ -149,7 +150,7 @@ export default function GoalsEditPage() {
           ← חזרה לרשימת משתמשים
         </button>
         
-        <h1 className="text-4xl font-bold mb-2">🎯 הגדרת יעדים</h1>
+        <h1 className="text-4xl font-bold mb-2"><LuTarget aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />הגדרת יעדים</h1>
         <p className="text-fg-3 text-lg">{userName || targetEmail}</p>
       </div>
 
@@ -158,7 +159,7 @@ export default function GoalsEditPage() {
         <div className="flex items-center gap-6">
           <div className="flex-1">
             <label className="block text-sm font-semibold text-fg-2 mb-2">
-              📅 שנה
+              <LuCalendarDays aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />שנה
             </label>
             <select
               value={year}
@@ -173,7 +174,7 @@ export default function GoalsEditPage() {
           
           <div className="flex-1">
             <label className="block text-sm font-semibold text-fg-2 mb-2">
-              📊 רבעון
+              <LuChartColumn aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />רבעון
             </label>
             <select
               value={quarter}
@@ -199,7 +200,7 @@ export default function GoalsEditPage() {
           >
             <div className="flex items-center gap-3">
               <span className="text-2xl">{openSection === 'general' ? '▼' : '▶'}</span>
-              <span className="text-xl font-bold">📝 מטרות כלליות</span>
+              <span className="text-xl font-bold"><LuNotebookPen aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />מטרות כלליות</span>
             </div>
           </button>
           
@@ -248,7 +249,7 @@ export default function GoalsEditPage() {
           >
             <div className="flex items-center gap-3">
               <span className="text-2xl">{openSection === 'board' ? '▼' : '▶'}</span>
-              <span className="text-xl font-bold">🧗 יעדי בורד</span>
+              <span className="text-xl font-bold"><LuMountain aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />יעדי בורד</span>
             </div>
           </button>
           
@@ -273,7 +274,7 @@ export default function GoalsEditPage() {
           >
             <div className="flex items-center gap-3">
               <span className="text-2xl">{openSection === 'lead' ? '▼' : '▶'}</span>
-              <span className="text-xl font-bold">🔗 יעדי ליד</span>
+              <span className="text-xl font-bold"><LuLink aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />יעדי ליד</span>
             </div>
           </button>
           
@@ -293,7 +294,7 @@ export default function GoalsEditPage() {
 
       {/* Progress Section - 3 Separate Pyramids */}
       <div className="mt-12">
-        <h2 className="text-3xl font-bold mb-2 text-center text-fg">📊 התקדמות ביעדים</h2>
+        <h2 className="text-3xl font-bold mb-2 text-center text-fg"><LuChartColumn aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />התקדמות ביעדים</h2>
         <p className="text-center text-muted mb-8">
           מעקב אחר ההתקדמות שלך מול היעדים שהגדרת
         </p>

@@ -4,6 +4,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { format, parseISO, differenceInDays } from 'date-fns'
+import { LuCalendarDays, LuChartColumn, LuCircleCheck, LuCircleX, LuLoaderCircle, LuSearch, LuTrash2, LuTriangleAlert, LuWrench } from 'react-icons/lu'
 
 interface DeleteRangeModalProps {
   isOpen: boolean
@@ -221,7 +222,7 @@ export default function DeleteRangeModal({ isOpen, onClose, onSuccess, email }: 
           <div className="sticky top-0 bg-surface border-b px-6 py-4 rounded-t-xl">
             <div className="flex justify-between items-center">
               <h2 className="text-2xl font-bold text-fg">
-                🗑️ נקה אימונים בטווח תאריכים
+                <LuTrash2 aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />נקה אימונים בטווח תאריכים
               </h2>
               <button
                 onClick={onClose}
@@ -237,7 +238,7 @@ export default function DeleteRangeModal({ isOpen, onClose, onSuccess, email }: 
             {/* Date Range Selection */}
             <div>
               <label className="block text-sm font-medium text-fg-2 mb-2">
-                📅 בחר טווח תאריכים
+                <LuCalendarDays aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />בחר טווח תאריכים
               </label>
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -269,13 +270,13 @@ export default function DeleteRangeModal({ isOpen, onClose, onSuccess, email }: 
               disabled={loading || deleting}
               className="w-full py-3 bg-accent text-on-accent rounded-lg hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed font-medium transition"
             >
-              {loading ? '⏳ מחפש...' : '🔍 חפש אימונים בטווח'}
+              {loading ? <><LuLoaderCircle aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] animate-spin me-1.5" />מחפש...</> : <><LuSearch aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />חפש אימונים בטווח</>}
             </button>
 
             {/* V2: Filters */}
             {allEvents.length > 0 && (
               <div className="space-y-3">
-                <h3 className="font-semibold text-fg">🔧 סינון:</h3>
+                <h3 className="font-semibold text-fg"><LuWrench aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />סינון:</h3>
                 
                 <div className="grid grid-cols-2 gap-4">
                   {/* Status Filter */}
@@ -315,7 +316,7 @@ export default function DeleteRangeModal({ isOpen, onClose, onSuccess, email }: 
               <div>
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="font-semibold text-fg">
-                    📊 נמצאו {filteredEvents.length} אימונים:
+                    <LuChartColumn aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />נמצאו {filteredEvents.length} אימונים:
                   </h3>
                   {filteredEvents.length !== allEvents.length && (
                     <span className="text-xs text-muted">
@@ -341,7 +342,7 @@ export default function DeleteRangeModal({ isOpen, onClose, onSuccess, email }: 
  }`}
                       >
                         <span className="text-base">
-                          {event.Completed ? '✅' : missed ? '❌' : '⏳'}
+                          {event.Completed ? <LuCircleCheck aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /> : missed ? <LuCircleX aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /> : <LuLoaderCircle aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] animate-spin" />}
                         </span>
                         <span className="font-medium">
                           {format(eventDate, 'dd/MM')}
@@ -358,7 +359,7 @@ export default function DeleteRangeModal({ isOpen, onClose, onSuccess, email }: 
                 {/* Warning */}
                 <div className="bg-warning/15 border border-warning rounded-lg p-4">
                   <p className="text-sm text-warning flex items-start gap-2">
-                    <span className="text-lg">⚠️</span>
+                    <span className="text-lg"><LuTriangleAlert aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></span>
                     <span>
                       פעולה זו תמחק את כל {filteredEvents.length} האימונים בטווח זה לצמיתות!
                       אין אפשרות לשחזור.
@@ -396,7 +397,7 @@ export default function DeleteRangeModal({ isOpen, onClose, onSuccess, email }: 
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[60] p-4">
           <div className="bg-raised border border-line-strong rounded-xl max-w-md w-full p-6" dir="rtl">
             <h3 className="text-xl font-bold text-fg mb-4">
-              ⚠️ האם אתה בטוח?
+              <LuTriangleAlert aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />האם אתה בטוח?
             </h3>
             
             <div className="mb-6 space-y-3">
@@ -424,7 +425,7 @@ export default function DeleteRangeModal({ isOpen, onClose, onSuccess, email }: 
                 disabled={deleting}
                 className="flex-1 py-3 bg-danger text-on-accent rounded-lg hover:bg-danger/90 disabled:opacity-50 font-medium transition"
               >
-                {deleting ? '⏳ מוחק...' : 'כן, אני בטוח - מחק'}
+                {deleting ? <><LuLoaderCircle aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] animate-spin me-1.5" />מוחק...</> : 'כן, אני בטוח - מחק'}
               </button>
             </div>
           </div>

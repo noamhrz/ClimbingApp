@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabaseClient'
 import { useAuth, useActiveUserEmail } from '@/context/AuthContext'
 import { useRouter } from 'next/navigation'
 import AdminPasswordReset from '@/components/admin/AdminPasswordReset'
+import { LuCircleCheck, LuLoaderCircle, LuLock, LuPencil, LuPlus, LuSave, LuTrash2, LuUsers } from 'react-icons/lu'
 
 interface User {
   UserID: number
@@ -344,12 +345,12 @@ export default function UserManagementPage() {
       <div className="bg-surface border-b sticky top-0 z-30">
         <div className="max-w-7xl mx-auto px-4 py-6">
           <div className="flex justify-between items-center mb-4">
-            <h1 className="text-3xl font-bold text-info">👥 ניהול משתמשים</h1>
+            <h1 className="text-3xl font-bold text-info"><LuUsers aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />ניהול משתמשים</h1>
             <button
               onClick={() => setShowAddUser(true)}
               className="px-4 py-2 bg-success text-on-accent rounded-lg hover:bg-success/90 transition-colors font-medium"
             >
-              ➕ הוסף משתמש
+              <LuPlus aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />הוסף משתמש
             </button>
           </div>
 
@@ -443,14 +444,14 @@ export default function UserManagementPage() {
                           className="px-3 py-1 bg-accent text-on-accent rounded hover:bg-accent/90 text-sm"
                           title="ערוך"
                         >
-                          ✏️
+                          <LuPencil aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" />
                         </button>
                         <button
                           onClick={() => setResetPasswordUser(user)}
                           className="px-3 py-1 bg-warning text-on-accent rounded hover:bg-warning/90 text-sm"
                           title="איפוס סיסמה"
                         >
-                          🔐
+                          <LuLock aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" />
                         </button>
                         {user.Role !== 'admin' && user.Email !== currentUser?.Email && (
                           <button
@@ -458,7 +459,7 @@ export default function UserManagementPage() {
                             className="px-3 py-1 bg-danger text-on-accent rounded hover:bg-danger/90 text-sm"
                             title="מחק"
                           >
-                            🗑️
+                            <LuTrash2 aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" />
                           </button>
                         )}
                         <button
@@ -492,7 +493,7 @@ export default function UserManagementPage() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-raised border border-line-strong rounded-xl max-w-md w-full p-6">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-fg">➕ הוסף משתמש חדש</h2>
+              <h2 className="text-2xl font-bold text-fg"><LuPlus aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />הוסף משתמש חדש</h2>
               <button
                 onClick={() => setShowAddUser(false)}
                 className="text-faint hover:text-fg-3 text-2xl"
@@ -554,7 +555,7 @@ export default function UserManagementPage() {
                   disabled={loading}
                   className="flex-1 py-3 bg-success text-on-accent rounded-lg hover:bg-success/90 disabled:opacity-50 font-medium"
                 >
-                  {loading ? '⏳ מוסיף...' : '✅ הוסף משתמש'}
+                  {loading ? <><LuLoaderCircle aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] animate-spin me-1.5" />מוסיף...</> : <><LuCircleCheck aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />הוסף משתמש</>}
                 </button>
                 <button
                   onClick={() => setShowAddUser(false)}
@@ -573,7 +574,7 @@ export default function UserManagementPage() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-raised border border-line-strong rounded-xl max-w-md w-full p-6">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-fg">✏️ עריכת משתמש</h2>
+              <h2 className="text-2xl font-bold text-fg"><LuPencil aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />עריכת משתמש</h2>
               <button
                 onClick={() => setEditingUser(null)}
                 className="text-faint hover:text-fg-3 text-2xl"
@@ -623,7 +624,7 @@ export default function UserManagementPage() {
                   disabled={loading}
                   className="flex-1 py-3 bg-accent text-on-accent rounded-lg hover:bg-accent-hover disabled:opacity-50 font-medium"
                 >
-                  {loading ? '⏳ שומר...' : '💾 שמור שינויים'}
+                  {loading ? <><LuLoaderCircle aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] animate-spin me-1.5" />שומר...</> : <><LuSave aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />שמור שינויים</>}
                 </button>
                 <button
                   onClick={() => setEditingUser(null)}

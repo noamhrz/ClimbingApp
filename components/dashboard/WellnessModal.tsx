@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { format } from 'date-fns'
+import { LuCircleCheck, LuLoaderCircle, LuSave } from 'react-icons/lu'
 
 interface WellnessModalProps {
   isOpen: boolean
@@ -291,7 +292,7 @@ export default function WellnessModal({ isOpen, onClose, currentUser, onSave }: 
               disabled={loading}
               className="flex-1 py-3 bg-success text-on-accent rounded-lg hover:bg-success/90 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-colors"
             >
-              {loading ? '⏳ שומר...' : isExistingEntry ? '💾 עדכן' : '✅ שמור'}
+              {loading ? <><LuLoaderCircle aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] animate-spin me-1.5" />שומר...</> : isExistingEntry ? <><LuSave aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />עדכן</> : <><LuCircleCheck aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />שמור</>}
             </button>
             <button
               type="button"

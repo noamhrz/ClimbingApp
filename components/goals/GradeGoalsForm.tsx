@@ -3,6 +3,7 @@
 
 import { useState } from 'react'
 import type { BoulderGoalsData, LeadGoalsData } from '@/lib/goals-api'
+import { LuSave } from 'react-icons/lu'
 
 interface Props {
   type: 'boulder' | 'board' | 'lead'
@@ -97,7 +98,7 @@ export default function GradeGoalsForm({ type, initialData, onSave }: Props) {
           disabled={saving}
           className="px-6 py-3 bg-accent text-on-accent font-semibold rounded-lg hover:bg-accent-hover transition disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {saving ? '💾 שומר...' : '💾 שמור'}
+          {saving ? <><LuSave aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />שומר...</> : <><LuSave aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />שמור</>}
         </button>
         
         {message && (

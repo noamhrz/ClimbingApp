@@ -10,6 +10,7 @@ import { useAuth, useActiveUserEmail } from '@/context/AuthContext'
 import { Exercise, ExerciseFormData } from '@/types/exercises'
 import ExerciseCard from '@/components/exercises/ExerciseCard'
 import ExerciseModal from '@/components/exercises/ExerciseModal'
+import { LuChartColumn, LuDumbbell, LuFolderOpen, LuPlus, LuSearch } from 'react-icons/lu'
 
 export default function ExercisesClient() {
   const router = useRouter()
@@ -255,7 +256,7 @@ export default function ExercisesClient() {
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 gap-4">
         <div>
           <h1 className="text-3xl font-bold text-fg">
-            🏋️ ניהול תרגילים
+            <LuDumbbell aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />ניהול תרגילים
           </h1>
           <p className="text-fg-3 mt-1">
             {isAdmin ? 'ניהול כל התרגילים במערכת' : 'ניהול התרגילים שלך'}
@@ -269,7 +270,7 @@ export default function ExercisesClient() {
           }}
           className="px-4 py-2 bg-accent text-on-accent rounded-lg hover:bg-accent-hover transition flex items-center gap-2 "
         >
-          <span className="text-xl">➕</span>
+          <span className="text-xl"><LuPlus aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></span>
           <span>תרגיל חדש</span>
         </button>
       </div>
@@ -280,7 +281,7 @@ export default function ExercisesClient() {
           {/* Search */}
           <div>
             <label className="block text-sm font-medium text-fg-2 mb-2">
-              🔍 חיפוש
+              <LuSearch aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />חיפוש
             </label>
             <input
               type="text"
@@ -294,7 +295,7 @@ export default function ExercisesClient() {
           {/* Category filter */}
           <div>
             <label className="block text-sm font-medium text-fg-2 mb-2">
-              📂 קטגוריה
+              <LuFolderOpen aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />קטגוריה
             </label>
             <select
               value={filterCategory}
@@ -319,7 +320,7 @@ export default function ExercisesClient() {
           {/* Status filter */}
           <div>
             <label className="block text-sm font-medium text-fg-2 mb-2">
-              📊 סטטוס
+              <LuChartColumn aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />סטטוס
             </label>
             <select
               value={filterStatus}

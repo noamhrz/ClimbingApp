@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { useAuth } from '@/context/AuthContext'
 import Link from 'next/link'
-import { LuDumbbell, LuStar } from 'react-icons/lu'
+import { LuDumbbell, LuInbox, LuMessageSquare, LuSearch, LuStar } from 'react-icons/lu'
 
 interface Workout {
   WorkoutID: number
@@ -177,13 +177,13 @@ export default function WorkoutsPage() {
       <div className="max-w-7xl mx-auto px-4 py-6">
         {workouts.length === 0 ? (
           <div className="text-center py-12">
-            <div className="text-6xl mb-4">📭</div>
+            <div className="text-6xl mb-4"><LuInbox aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></div>
             <p className="text-xl text-fg-3 mb-2">עדיין לא הוקצו אימונים ל-{userToShow?.Name}</p>
             <p className="text-muted">פנה למאמן להקצאת אימונים</p>
           </div>
         ) : filteredWorkouts.length === 0 ? (
           <div className="text-center py-12">
-            <div className="text-6xl mb-4">🔍</div>
+            <div className="text-6xl mb-4"><LuSearch aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></div>
             <p className="text-xl text-fg-3">לא נמצאו אימונים מתאימים</p>
           </div>
         ) : (
@@ -230,7 +230,7 @@ export default function WorkoutsPage() {
                         {workout.Notes && (
                           <div className="mt-3 p-3 bg-warning/10 rounded-lg border border-warning/40">
                             <p className="text-xs font-semibold text-warning mb-1">
-                              💬 הערת המאמן:
+                              <LuMessageSquare aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />הערת המאמן:
                             </p>
                             <p className="text-sm text-fg-2">
                               {workout.Notes}
@@ -291,7 +291,7 @@ export default function WorkoutsPage() {
                         {workout.Notes && (
                           <div className="mt-3 p-3 bg-accent/15 rounded-lg border border-accent">
                             <p className="text-xs font-semibold text-accent mb-1">
-                              💬 הערת המאמן:
+                              <LuMessageSquare aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />הערת המאמן:
                             </p>
                             <p className="text-sm text-fg-2">
                               {workout.Notes}

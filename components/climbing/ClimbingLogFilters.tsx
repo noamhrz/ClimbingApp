@@ -2,6 +2,7 @@
 'use client'
 
 import { BoulderGrade, LeadGrade } from '@/types/climbing'
+import { LuRefreshCw, LuSearch } from 'react-icons/lu'
 
 export interface ClimbingLogFilters {
   startDate: string
@@ -32,7 +33,7 @@ export default function ClimbingLogFilters({ filters, onChange, boulderGrades, l
 
   return (
     <div className="bg-surface rounded-lg p-4 mb-6">
-      <h3 className="font-bold mb-4">🔍 סינונים</h3>
+      <h3 className="font-bold mb-4"><LuSearch aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />סינונים</h3>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         {/* Start Date */}
@@ -140,7 +141,7 @@ export default function ClimbingLogFilters({ filters, onChange, boulderGrades, l
           }}
           className="text-sm text-accent hover:underline"
         >
-          🔄 איפוס סינונים
+          <LuRefreshCw aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />איפוס סינונים
         </button>
       </div>
     </div>

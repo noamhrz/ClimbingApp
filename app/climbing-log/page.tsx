@@ -20,6 +20,7 @@ import ClimbingLogChart from '@/components/climbing/ClimbingLogChart'
 import ClimbingLogFilters, { ClimbingLogFilters as FiltersType } from '@/components/climbing/ClimbingLogFilters'
 import ClimbingLogList from '@/components/climbing/ClimbingLogList'
 import AddClimbingLogModal from '@/components/climbing/AddClimbingLogModal'
+import { LuMountain } from 'react-icons/lu'
 
 export default function ClimbingLogPage() {
   const router = useRouter()
@@ -180,7 +181,7 @@ export default function ClimbingLogPage() {
             </svg>
           </button>
 
-          <h1 className="text-3xl font-bold">🧗 יומן טיפוס</h1>
+          <h1 className="text-3xl font-bold"><LuMountain aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />יומן טיפוס</h1>
         </div>
 
         <div className="flex gap-3 flex-wrap items-center">
@@ -218,7 +219,7 @@ export default function ClimbingLogPage() {
           {/* List */}
           {filteredLogs.length === 0 ? (
             <div className="bg-surface rounded-lg p-12 text-center">
-              <div className="text-6xl mb-4">🧗</div>
+              <div className="text-6xl mb-4"><LuMountain aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></div>
               <p className="text-fg-3 text-lg mb-4">
                 {allLogs.length > 0
                   ? 'לא נמצאו מסלולים עם הסינון הנוכחי'

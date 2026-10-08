@@ -5,6 +5,7 @@
 
 import { useState } from 'react'
 import type { ClimbingPerformance, ClimbTypeStats, GradeStats } from '@/lib/climbing-stats-metrics'
+import { LuChartColumn, LuCircleCheck, LuClipboardList, LuMountain, LuRefreshCw, LuTarget, LuTrendingUp } from 'react-icons/lu'
 
 interface ClimbingStatsDisplayProps {
   performance: ClimbingPerformance
@@ -15,7 +16,7 @@ export function ClimbingStatsDisplay({ performance }: ClimbingStatsDisplayProps)
   if (performance.totalRoutes === 0) {
     return (
       <div className="bg-accent/15 border border-accent rounded-lg p-8 text-center">
-        <div className="text-4xl mb-3">🧗</div>
+        <div className="text-4xl mb-3"><LuMountain aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></div>
         <h3 className="text-xl font-bold text-fg mb-2">אין נתוני טיפוס</h3>
         <p className="text-fg-3">לא נמצאו רשומות טיפוס בטווח התאריכים הנבחר</p>
       </div>
@@ -29,11 +30,11 @@ export function ClimbingStatsDisplay({ performance }: ClimbingStatsDisplayProps)
     <div className="space-y-6">
       {/* Overall Summary - Simplified */}
       <div className="rounded-lg p-6 text-fg bg-surface border border-line">
-        <h2 className="text-2xl font-bold mb-4">🧗 סיכום טיפוס</h2>
+        <h2 className="text-2xl font-bold mb-4"><LuMountain aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />סיכום טיפוס</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Boulder Points */}
           <div className="bg-raised border border-line rounded-lg p-4">
-            <div className="text-sm opacity-90 mb-1">🧗 בולדר</div>
+            <div className="text-sm opacity-90 mb-1"><LuMountain aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />בולדר</div>
             <div className="text-3xl font-bold">
               {combinedBoulderBoard?.grades
                 .filter(g => g.climbType === 'Boulder' && g.successfulRoutes > 0)
@@ -44,7 +45,7 @@ export function ClimbingStatsDisplay({ performance }: ClimbingStatsDisplayProps)
 
           {/* Board Points */}
           <div className="bg-raised border border-line rounded-lg p-4">
-            <div className="text-sm opacity-90 mb-1">🎯 בורד</div>
+            <div className="text-sm opacity-90 mb-1"><LuTarget aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />בורד</div>
             <div className="text-3xl font-bold">
               {combinedBoulderBoard?.grades
                 .filter(g => g.climbType === 'Board' && g.successfulRoutes > 0)
@@ -136,7 +137,7 @@ function ClimbTypeCardCombined({ stats }: { stats: ClimbTypeStats }) {
       >
         <div className="flex items-center justify-between">
           <h3 className="text-2xl font-bold text-fg flex items-center gap-2">
-            <span>🧗</span>
+            <span><LuMountain aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></span>
             <span>בולדר + בורד</span>
           </h3>
           <div className="flex items-center gap-4">
@@ -155,7 +156,7 @@ function ClimbTypeCardCombined({ stats }: { stats: ClimbTypeStats }) {
             {/* Mini Pyramid */}
             <div className="lg:col-span-1">
               <div className="bg-surface rounded-lg p-4 border border-line h-full">
-                <h4 className="text-sm font-bold text-fg-2 mb-3 text-center">📊 פירמידת מסלולים</h4>
+                <h4 className="text-sm font-bold text-fg-2 mb-3 text-center"><LuChartColumn aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />פירמידת מסלולים</h4>
                 <MiniPyramidCombined grades={stats.grades} />
               </div>
             </div>
@@ -167,7 +168,7 @@ function ClimbTypeCardCombined({ stats }: { stats: ClimbTypeStats }) {
                 onClick={() => setTableOpen(t => !t)}
                 className="w-full text-right flex items-center justify-between px-3 py-2 bg-surface hover:bg-raised rounded-lg border border-line transition mb-2 focus:outline-none"
               >
-                <span className="text-sm font-bold text-fg-2">📋 טבלה מפורטת</span>
+                <span className="text-sm font-bold text-fg-2"><LuClipboardList aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />טבלה מפורטת</span>
                 <span className="text-faint text-sm">{tableOpen ? '▲' : '▼'}</span>
               </button>
               {tableOpen && (
@@ -176,9 +177,9 @@ function ClimbTypeCardCombined({ stats }: { stats: ClimbTypeStats }) {
                     <thead>
                       <tr className="border-b-2 border-line text-fg-2">
                         <th className="text-right p-2 font-bold">דירוג</th>
-                        <th className="text-center p-2 font-bold">✅ הצלחות</th>
-                        <th className="text-center p-2 font-bold">🔄 ניסיונות+</th>
-                        <th className="text-center p-2 font-bold">📈 ממוצע</th>
+                        <th className="text-center p-2 font-bold"><LuCircleCheck aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />הצלחות</th>
+                        <th className="text-center p-2 font-bold"><LuRefreshCw aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />ניסיונות+</th>
+                        <th className="text-center p-2 font-bold"><LuTrendingUp aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />ממוצע</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -233,7 +234,7 @@ function ClimbTypeCard({ stats, icon, title }: { stats: ClimbTypeStats; icon: st
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-1">
               <div className="bg-surface rounded-lg p-4 border border-line h-full">
-                <h4 className="text-sm font-bold text-fg-2 mb-3 text-center">📊 פירמידת מסלולים</h4>
+                <h4 className="text-sm font-bold text-fg-2 mb-3 text-center"><LuChartColumn aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />פירמידת מסלולים</h4>
                 <MiniPyramid grades={stats.grades} />
               </div>
             </div>
@@ -245,7 +246,7 @@ function ClimbTypeCard({ stats, icon, title }: { stats: ClimbTypeStats; icon: st
                 onClick={() => setTableOpen(t => !t)}
                 className="w-full text-right flex items-center justify-between px-3 py-2 bg-surface hover:bg-raised rounded-lg border border-line transition mb-2 focus:outline-none"
               >
-                <span className="text-sm font-bold text-fg-2">📋 טבלה מפורטת</span>
+                <span className="text-sm font-bold text-fg-2"><LuClipboardList aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />טבלה מפורטת</span>
                 <span className="text-faint text-sm">{tableOpen ? '▲' : '▼'}</span>
               </button>
               {tableOpen && (
@@ -254,9 +255,9 @@ function ClimbTypeCard({ stats, icon, title }: { stats: ClimbTypeStats; icon: st
                     <thead>
                       <tr className="border-b-2 border-line text-fg-2">
                         <th className="text-right p-2 font-bold">דירוג</th>
-                        <th className="text-center p-2 font-bold">✅ הצלחות</th>
-                        <th className="text-center p-2 font-bold">🔄 ניסיונות+</th>
-                        <th className="text-center p-2 font-bold">📈 ממוצע</th>
+                        <th className="text-center p-2 font-bold"><LuCircleCheck aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />הצלחות</th>
+                        <th className="text-center p-2 font-bold"><LuRefreshCw aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />ניסיונות+</th>
+                        <th className="text-center p-2 font-bold"><LuTrendingUp aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />ממוצע</th>
                       </tr>
                     </thead>
                     <tbody>

@@ -4,6 +4,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { format } from 'date-fns'
 import { supabase } from '@/lib/supabaseClient'
+import { LuCircleCheck, LuCircleX, LuLightbulb, LuLoaderCircle, LuMapPin, LuMountain, LuPlus, LuSave } from 'react-icons/lu'
 
 interface Props {
   isOpen: boolean
@@ -162,7 +163,7 @@ export default function AddClimbingLogModal({
         <div className="bg-raised border border-line-strong rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" dir="rtl">
           <div className="sticky top-0 bg-surface border-b px-6 py-4">
             <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-bold">🧗 הוסף מסלול</h2>
+              <h2 className="text-2xl font-bold"><LuMountain aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />הוסף מסלול</h2>
               <button
                 onClick={onClose}
                 className="text-muted hover:text-fg-2 text-2xl"
@@ -289,7 +290,7 @@ export default function AddClimbingLogModal({
  : 'bg-surface text-fg-2 hover:bg-raised'
  }`}
                   >
-                    ✅ כן
+                    <LuCircleCheck aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />כן
                   </button>
                   <button
                     type="button"
@@ -300,7 +301,7 @@ export default function AddClimbingLogModal({
  : 'bg-surface text-fg-2 hover:bg-raised'
  }`}
                   >
-                    ❌ לא
+                    <LuCircleX aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />לא
                   </button>
                 </div>
               </div>
@@ -348,7 +349,7 @@ export default function AddClimbingLogModal({
                   onClick={() => setShowAddLocationModal(true)}
                   className="w-full py-2 px-4 border-2 border-dashed border-line rounded-lg text-fg-3 hover:border-accent hover:text-accent hover:bg-accent/15 transition-all font-medium"
                 >
-                  ➕ הוסף מיקום חדש
+                  <LuPlus aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />הוסף מיקום חדש
                 </button>
               </div>
             </div>
@@ -395,7 +396,7 @@ export default function AddClimbingLogModal({
                 disabled={saving}
                 className="flex-1 bg-accent text-on-accent py-3 rounded-lg font-medium hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {saving ? '💾 שומר...' : '💾 שמור מסלול'}
+                {saving ? <><LuSave aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />שומר...</> : <><LuSave aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />שמור מסלול</>}
               </button>
               <button
                 type="button"
@@ -416,7 +417,7 @@ export default function AddClimbingLogModal({
             {/* Header */}
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-xl font-bold text-fg">
-                📍 הוספת מיקום חדש
+                <LuMapPin aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />הוספת מיקום חדש
               </h3>
               <button
                 onClick={() => setShowAddLocationModal(false)}
@@ -430,7 +431,7 @@ export default function AddClimbingLogModal({
             {/* Info */}
             <div className="mb-4 p-3 bg-accent/15 border border-accent rounded-lg">
               <p className="text-sm text-accent">
-                💡 הוסף מיקום חדש לרשימה. המיקום יהיה זמין לכולם.
+                <LuLightbulb aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />הוסף מיקום חדש לרשימה. המיקום יהיה זמין לכולם.
               </p>
             </div>
 
@@ -463,7 +464,7 @@ export default function AddClimbingLogModal({
                 disabled={savingLocation || !newLocationName.trim()}
                 className="flex-1 py-3 bg-accent text-on-accent rounded-lg hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed font-medium transition"
               >
-                {savingLocation ? '⏳ שומר...' : '✅ הוסף מיקום'}
+                {savingLocation ? <><LuLoaderCircle aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] animate-spin me-1.5" />שומר...</> : <><LuCircleCheck aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />הוסף מיקום</>}
               </button>
               <button
                 onClick={() => setShowAddLocationModal(false)}

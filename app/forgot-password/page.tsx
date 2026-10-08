@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import Link from 'next/link'
+import { LuLightbulb, LuLoaderCircle, LuLock, LuMail } from 'react-icons/lu'
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('')
@@ -48,7 +49,7 @@ export default function ForgotPasswordPage() {
       <div className="min-h-screen flex items-center justify-center px-4 bg-bg">
         <div className="bg-surface rounded-2xl border border-line shadow-2xl shadow-black/40 p-8 max-w-md w-full">
           <div className="text-center">
-            <div className="text-6xl mb-4">📧</div>
+            <div className="text-6xl mb-4"><LuMail aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></div>
             <h1 className="text-2xl font-bold text-fg mb-2">
               נשלח מייל!
             </h1>
@@ -59,7 +60,7 @@ export default function ForgotPasswordPage() {
             
             <div className="bg-accent/15 rounded-lg p-4 mb-6 text-start">
               <p className="text-sm text-accent">
-                <strong>💡 שים לב:</strong>
+                <strong><LuLightbulb aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />שים לב:</strong>
               </p>
               <ul className="text-sm text-accent mt-2 space-y-1 ms-4">
                 <li>• בדוק את תיבת הדואר הנכנס</li>
@@ -95,7 +96,7 @@ export default function ForgotPasswordPage() {
     <div className="min-h-screen flex items-center justify-center px-4 bg-bg">
       <div className="bg-surface rounded-2xl border border-line shadow-2xl shadow-black/40 p-8 max-w-md w-full">
         <div className="text-center mb-8">
-          <div className="text-6xl mb-4">🔐</div>
+          <div className="text-6xl mb-4"><LuLock aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></div>
           <h1 className="text-3xl font-bold text-fg mb-2">
             שכחת סיסמה?
           </h1>
@@ -135,7 +136,7 @@ export default function ForgotPasswordPage() {
             disabled={loading}
             className="w-full py-3 min-h-12 bg-accent text-on-accent rounded-full font-bold hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {loading ? '⏳ שולח...' : '📧 שלח לינק לאיפוס'}
+            {loading ? <><LuLoaderCircle aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] animate-spin me-1.5" />שולח...</> : <><LuMail aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />שלח לינק לאיפוס</>}
           </button>
         </form>
 
@@ -150,7 +151,7 @@ export default function ForgotPasswordPage() {
 
         <div className="mt-8 bg-surface rounded-lg p-4">
           <p className="text-xs text-fg-3 text-start">
-            <strong>💡 איך זה עובד?</strong>
+            <strong><LuLightbulb aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />איך זה עובד?</strong>
           </p>
           <ol className="text-xs text-fg-3 mt-2 space-y-1 ms-4">
             <li>1. הזן את כתובת המייל שלך</li>

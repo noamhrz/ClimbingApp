@@ -7,6 +7,7 @@ import { Workout } from '@/types/workouts'
 import { duplicateWorkout, deleteWorkout } from '@/lib/workout-api'
 import { formatTimeMinutes } from '@/lib/workout-calculations'
 import { useActiveUserEmail } from '@/context/AuthContext'
+import { LuCalendarDays, LuClipboardList, LuMountainSnow, LuPencil, LuTimer, LuTrash2, LuVideo } from 'react-icons/lu'
 
 interface Props {
   workout: Workout
@@ -91,12 +92,12 @@ export default function WorkoutCard({ workout, onUpdate }: Props) {
       <div className="flex gap-4 text-sm text-fg-3 mb-3">
         {workout.containExercise && (
           <div>
-            <span className="font-medium">⏱️ {formatTimeMinutes(workout.CalculatedExercisesTime * 60)}</span>
+            <span className="font-medium"><LuTimer aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />{formatTimeMinutes(workout.CalculatedExercisesTime * 60)}</span>
           </div>
         )}
         {workout.containClimbing && (
           <div>
-            <span className="font-medium">🏔️ {workout.EstimatedClimbingTime} דק'</span>
+            <span className="font-medium"><LuMountainSnow aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />{workout.EstimatedClimbingTime} דק'</span>
           </div>
         )}
       </div>
@@ -111,12 +112,12 @@ export default function WorkoutCard({ workout, onUpdate }: Props) {
             className="flex items-center gap-1 hover:text-accent"
             onClick={(e) => e.stopPropagation()}
           >
-            🎬 וידאו
+            <LuVideo aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />וידאו
           </a>
         )}
         {workout.WhenToPractice && (
           <span className="flex items-center gap-1">
-            📅 {workout.WhenToPractice}
+            <LuCalendarDays aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />{workout.WhenToPractice}
           </span>
         )}
       </div>
@@ -128,7 +129,7 @@ export default function WorkoutCard({ workout, onUpdate }: Props) {
           className="flex-1 bg-accent text-on-accent px-3 py-2 rounded hover:bg-accent-hover text-sm font-medium disabled:opacity-50"
           disabled={loading}
         >
-          ✏️ עריכה
+          <LuPencil aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />עריכה
         </button>
         <button
           onClick={handleDuplicate}
@@ -136,7 +137,7 @@ export default function WorkoutCard({ workout, onUpdate }: Props) {
           disabled={loading}
           title="שכפול"
         >
-          📋
+          <LuClipboardList aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" />
         </button>
         <button
           onClick={handleDelete}
@@ -144,7 +145,7 @@ export default function WorkoutCard({ workout, onUpdate }: Props) {
           disabled={loading}
           title={workout.IsActive ? 'מחק/השבת' : 'מחק לצמיתות'}
         >
-          {workout.IsActive ? '😴' : '🗑️'}
+          {workout.IsActive ? '😴' : <LuTrash2 aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" />}
         </button>
       </div>
     </div>

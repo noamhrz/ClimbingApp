@@ -3,6 +3,7 @@
 
 import { ClimbingLogEntry, BoulderGrade, LeadGrade } from '@/types/climbing'
 import { getGradeDisplay } from '@/lib/climbing-helpers'
+import { LuCalendarDays, LuCircleCheck, LuCircleX, LuClipboardList, LuMountain, LuRefreshCw, LuTrash2 } from 'react-icons/lu'
 
 interface Props {
   logs: ClimbingLogEntry[]
@@ -53,7 +54,7 @@ export default function ClimbingLogList({ logs, boulderGrades, leadGrades, onDel
           <div className="flex-1">
             {/* Date */}
             <div className="text-xs text-muted mb-1">
-              📅 {formatDate(log.LogDateTime)}
+              <LuCalendarDays aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />{formatDate(log.LogDateTime)}
             </div>
 
             {/* Grade & Route Name */}
@@ -64,9 +65,9 @@ export default function ClimbingLogList({ logs, boulderGrades, leadGrades, onDel
 
             {/* Attempts & Success */}
             <div className="flex items-center gap-3 text-sm text-fg-3 mb-1">
-              <span>🔄 {log.Attempts} ניסיונות</span>
+              <span><LuRefreshCw aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />{log.Attempts} ניסיונות</span>
               <span className={log.Successful ? 'text-success font-medium' : 'text-danger'}>
-                {log.Successful ? '✅ הצליח' : '❌ לא הצליח'}
+                {log.Successful ? <><LuCircleCheck aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />הצליח</> : <><LuCircleX aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />לא הצליח</>}
               </span>
               {log.ClimbType === 'Board' && (
                 <span className="bg-info/10 text-info px-2 py-0.5 rounded text-xs">
@@ -90,7 +91,7 @@ export default function ClimbingLogList({ logs, boulderGrades, leadGrades, onDel
             title="מחק"
             disabled={!log.ClimbingLogID}
           >
-            🗑️
+            <LuTrash2 aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" />
           </button>
         </div>
       </div>
@@ -100,7 +101,7 @@ export default function ClimbingLogList({ logs, boulderGrades, leadGrades, onDel
   return (
     <div className="bg-surface rounded-lg mb-6">
       <div className="p-4 border-b">
-        <h3 className="text-lg font-bold">📋 היסטוריית מסלולים</h3>
+        <h3 className="text-lg font-bold"><LuClipboardList aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />היסטוריית מסלולים</h3>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 divide-x divide-line">
@@ -112,7 +113,7 @@ export default function ClimbingLogList({ logs, boulderGrades, leadGrades, onDel
           <div className="max-h-[600px] overflow-y-auto">
             {leadLogs.length === 0 ? (
               <div className="p-8 text-center text-muted">
-                <div className="text-4xl mb-2">🧗</div>
+                <div className="text-4xl mb-2"><LuMountain aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></div>
                 <p>אין מסלולי Lead עדיין</p>
               </div>
             ) : (

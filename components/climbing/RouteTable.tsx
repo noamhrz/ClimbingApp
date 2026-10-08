@@ -2,6 +2,7 @@
 
 import { ClimbingRoute } from '@/types/climbing'
 import { useState } from 'react'
+import { LuMountain, LuTrash2, LuTriangleAlert } from 'react-icons/lu'
 
 interface RouteTableProps {
   routes: ClimbingRoute[]
@@ -42,7 +43,7 @@ export function RouteTable({ routes, onUpdate, onDelete }: RouteTableProps) {
   if (routes.length === 0) {
     return (
       <div className="px-4 py-12 text-center text-muted">
-        <div className="text-4xl mb-2">🧗</div>
+        <div className="text-4xl mb-2"><LuMountain aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></div>
         <p>אין מסלולים עדיין</p>
         <p className="text-sm mt-1">השתמש בהוספה מהירה למעלה</p>
       </div>
@@ -128,7 +129,7 @@ export function RouteTable({ routes, onUpdate, onDelete }: RouteTableProps) {
                     className="text-danger hover:text-danger/90 hover:bg-danger/15 p-2 rounded transition disabled:opacity-50"
                     title="מחק מסלול"
                   >
-                    🗑️
+                    <LuTrash2 aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" />
                   </button>
                 </td>
               </tr>
@@ -157,7 +158,7 @@ export function RouteTable({ routes, onUpdate, onDelete }: RouteTableProps) {
                 className="text-danger hover:text-danger/90 p-2 disabled:opacity-50"
                 title="מחק מסלול"
               >
-                🗑️
+                <LuTrash2 aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" />
               </button>
             </div>
 
@@ -233,7 +234,7 @@ export function RouteTable({ routes, onUpdate, onDelete }: RouteTableProps) {
           <div className="bg-raised border border-line-strong rounded-lg max-w-md w-full p-6 animate-in fade-in zoom-in duration-200">
             {/* Header */}
             <div className="flex items-center gap-3 mb-4">
-              <div className="text-3xl">🗑️</div>
+              <div className="text-3xl"><LuTrash2 aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></div>
               <h3 className="text-xl font-bold text-fg">מחיקת מסלול</h3>
             </div>
 
@@ -251,7 +252,7 @@ export function RouteTable({ routes, onUpdate, onDelete }: RouteTableProps) {
                 )}
               </div>
               <p className="text-sm text-muted mt-2">
-                ⚠️ פעולה זו לא ניתנת לביטול
+                <LuTriangleAlert aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />פעולה זו לא ניתנת לביטול
               </p>
             </div>
 
@@ -267,7 +268,7 @@ export function RouteTable({ routes, onUpdate, onDelete }: RouteTableProps) {
                 onClick={handleConfirmDelete}
                 className="flex-1 px-4 py-2 bg-danger hover:bg-danger/90 text-on-accent rounded-lg font-medium transition"
               >
-                🗑️ מחק
+                <LuTrash2 aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />מחק
               </button>
             </div>
           </div>

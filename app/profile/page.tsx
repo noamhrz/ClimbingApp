@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '@/context/AuthContext'
 import { supabase } from '@/lib/supabaseClient'
 import { useRouter } from 'next/navigation'
+import { LuCircle, LuCircleCheck, LuHourglass, LuLightbulb, LuLoaderCircle, LuLock, LuLogOut, LuMail, LuMessageSquare, LuPencil, LuRefreshCw, LuSave, LuScale, LuSmartphone, LuUser } from 'react-icons/lu'
 
 interface ProfileData {
   Email: string
@@ -241,7 +242,7 @@ export default function UserProfilePage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-surface">
         <div className="text-center">
-          <div className="text-6xl mb-4">🔒</div>
+          <div className="text-6xl mb-4"><LuLock aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></div>
           <p className="text-xl text-fg-3">אנא התחבר</p>
           <button
             onClick={() => router.push('/')}
@@ -259,7 +260,7 @@ export default function UserProfilePage() {
       {/* Header */}
       <div className="bg-surface border-b">
         <div className="max-w-2xl mx-auto px-4 py-6">
-          <h1 className="text-3xl font-bold text-accent">👤 הפרופיל שלי</h1>
+          <h1 className="text-3xl font-bold text-accent"><LuUser aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />הפרופיל שלי</h1>
         </div>
       </div>
 
@@ -293,7 +294,7 @@ export default function UserProfilePage() {
           <div className="space-y-4">
             <div className="flex items-center justify-between py-3 border-b">
               <div className="flex items-center gap-3">
-                <span className="text-2xl">📧</span>
+                <span className="text-2xl"><LuMail aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></span>
                 <div>
                   <p className="text-sm text-muted">אימייל</p>
                   <p className="font-medium text-fg">{activeUser?.Email}</p>
@@ -303,7 +304,7 @@ export default function UserProfilePage() {
 
             <div className="flex items-center justify-between py-3 border-b">
               <div className="flex items-center gap-3">
-                <span className="text-2xl">👤</span>
+                <span className="text-2xl"><LuUser aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></span>
                 <div>
                   <p className="text-sm text-muted">שם מלא</p>
                   <p className="font-medium text-fg">{activeUser?.Name}</p>
@@ -331,7 +332,7 @@ export default function UserProfilePage() {
         <div className="bg-surface rounded-xl border p-6 mb-6">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              <span className="text-2xl">⚖️</span>
+              <span className="text-2xl"><LuScale aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></span>
               <h3 className="text-xl font-bold text-fg">נתוני מתאמן</h3>
             </div>
             {!isEditingProfile && canEdit && (
@@ -339,14 +340,14 @@ export default function UserProfilePage() {
                 onClick={() => setIsEditingProfile(true)}
                 className="px-4 py-2 bg-accent text-on-accent rounded-lg hover:bg-accent-hover transition-colors text-sm"
               >
-                ✏️ ערוך
+                <LuPencil aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />ערוך
               </button>
             )}
           </div>
 
           {loadingProfile ? (
             <div className="text-center py-8">
-              <div className="text-4xl mb-2">⏳</div>
+              <div className="text-4xl mb-2"><LuHourglass aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></div>
               <p className="text-fg-3">טוען נתונים...</p>
             </div>
           ) : !isEditingProfile ? (
@@ -354,7 +355,7 @@ export default function UserProfilePage() {
               {/* Body Weight */}
               <div className="flex items-center justify-between py-3 border-b">
                 <div className="flex items-center gap-3">
-                  <span className="text-2xl">⚖️</span>
+                  <span className="text-2xl"><LuScale aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></span>
                   <div>
                     <p className="text-sm text-muted">משקל גוף</p>
                     <p className="font-bold text-2xl text-accent">{bodyWeight} ק"ג</p>
@@ -365,7 +366,7 @@ export default function UserProfilePage() {
               {/* Phone */}
               <div className="flex items-center justify-between py-3 border-b">
                 <div className="flex items-center gap-3">
-                  <span className="text-2xl">📱</span>
+                  <span className="text-2xl"><LuSmartphone aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></span>
                   <div>
                     <p className="text-sm text-muted">טלפון</p>
                     <p className="font-medium text-fg">
@@ -378,7 +379,7 @@ export default function UserProfilePage() {
               {/* WhatsApp Toggle */}
               <div className="flex items-center justify-between py-3 border-b">
                 <div className="flex items-center gap-3">
-                  <span className="text-2xl">💬</span>
+                  <span className="text-2xl"><LuMessageSquare aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></span>
                   <div>
                     <p className="text-sm text-muted">תזכורות WhatsApp</p>
                     <p className={`font-medium text-sm ${whatsappActive ? 'text-success' : 'text-faint'}`}>
@@ -405,7 +406,7 @@ export default function UserProfilePage() {
               {/* Info Box */}
               <div className="bg-accent/15 rounded-lg p-4 border border-accent mt-4">
                 <p className="text-sm text-accent">
-                  <strong>💡 למה צריך משקל גוף?</strong><br/>
+                  <strong><LuLightbulb aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />למה צריך משקל גוף?</strong><br/>
                   משקל הגוף משמש לחישוב מדויק של סטטיסטיקות תרגילים שכוללים משקל גוף
                   (כמו מתחים, שכיבות סמיכה וכו').
                 </p>
@@ -451,7 +452,7 @@ export default function UserProfilePage() {
               {/* WhatsApp Toggle in edit mode */}
               <div className="flex items-center justify-between py-3 border rounded-lg px-4">
                 <div className="flex items-center gap-3">
-                  <span className="text-2xl">💬</span>
+                  <span className="text-2xl"><LuMessageSquare aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></span>
                   <div>
                     <p className="font-medium text-fg-2">תזכורות WhatsApp</p>
                     <p className={`text-sm ${whatsappActive ? 'text-success' : 'text-faint'}`}>
@@ -481,7 +482,7 @@ export default function UserProfilePage() {
                   disabled={loading}
                   className="flex-1 px-4 py-3 bg-success text-on-accent rounded-lg hover:bg-success/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
                 >
-                  {loading ? '💾 שומר...' : '💾 שמור נתונים'}
+                  {loading ? <><LuSave aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />שומר...</> : <><LuSave aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />שמור נתונים</>}
                 </button>
                 <button
                   onClick={() => {
@@ -502,7 +503,7 @@ export default function UserProfilePage() {
         {/* Security Card - only shown when viewing own profile */}
         {!isImpersonating && <div className="bg-surface rounded-xl border p-6 mb-6">
           <div className="flex items-center gap-2 mb-4">
-            <span className="text-2xl">🔐</span>
+            <span className="text-2xl"><LuLock aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></span>
             <h3 className="text-xl font-bold text-fg">שינוי סיסמה</h3>
           </div>
 
@@ -517,13 +518,13 @@ export default function UserProfilePage() {
                   onClick={() => setShowPasswordForm(true)}
                   className="px-4 py-2 bg-accent text-on-accent rounded-lg hover:bg-accent-hover transition-colors"
                 >
-                  🔄 שנה סיסמה
+                  <LuRefreshCw aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />שנה סיסמה
                 </button>
               </div>
 
               <div className="bg-accent/15 rounded-lg p-4 border border-accent">
                 <p className="text-sm text-accent">
-                  <strong>💡 טיפ:</strong> לחיצה על "שנה סיסמה" תאפשר לך להזין סיסמה חדשה ישירות
+                  <strong><LuLightbulb aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />טיפ:</strong> לחיצה על "שנה סיסמה" תאפשר לך להזין סיסמה חדשה ישירות
                 </p>
               </div>
             </div>
@@ -562,11 +563,11 @@ export default function UserProfilePage() {
                   <p className="text-xs font-medium text-fg-2 mb-2">חוזק סיסמה:</p>
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                      <span>{newPassword.length >= 6 ? '✅' : '⭕'}</span>
+                      <span>{newPassword.length >= 6 ? <LuCircleCheck aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /> : <LuCircle aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" />}</span>
                       <span className="text-xs text-fg-3">לפחות 6 תווים</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span>{newPassword === confirmPassword && confirmPassword ? '✅' : '⭕'}</span>
+                      <span>{newPassword === confirmPassword && confirmPassword ? <LuCircleCheck aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /> : <LuCircle aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" />}</span>
                       <span className="text-xs text-fg-3">הסיסמאות תואמות</span>
                     </div>
                   </div>
@@ -579,7 +580,7 @@ export default function UserProfilePage() {
                   disabled={loading || !newPassword || !confirmPassword}
                   className="flex-1 px-4 py-2 bg-accent text-on-accent rounded-lg hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
-                  {loading ? '⏳ שומר...' : '💾 שמור סיסמה'}
+                  {loading ? <><LuLoaderCircle aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] animate-spin me-1.5" />שומר...</> : <><LuSave aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />שמור סיסמה</>}
                 </button>
                 <button
                   onClick={() => {
@@ -607,7 +608,7 @@ export default function UserProfilePage() {
             }}
             className="w-full px-6 py-3 bg-danger text-on-accent rounded-lg hover:bg-danger/90 transition-colors font-medium"
           >
-            🚪 התנתק
+            <LuLogOut aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />התנתק
           </button>
         </div>
       </div>

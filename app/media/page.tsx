@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { useAuth } from '@/context/AuthContext'
 import { supabase } from '@/lib/supabaseClient'
 import MediaComments from '@/components/media/MediaComments'
+import { LuChartColumn, LuFileText, LuFolder, LuFolderOpen, LuRefreshCw, LuTrash2, LuTriangleAlert, LuVideo } from 'react-icons/lu'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -88,7 +89,7 @@ function FileCard({
           />
         ) : (
           <div className="flex items-center justify-center h-40 text-4xl text-faint">
-            📄
+            <LuFileText aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" />
           </div>
         )}
       </div>
@@ -123,7 +124,7 @@ function FileCard({
  }`}
                 title={hasAnalysis ? 'צפה בניתוח' : 'נתח סרטון'}
               >
-                {hasAnalysis ? 'צפה בניתוח' : '📊 נתח'}
+                {hasAnalysis ? 'צפה בניתוח' : <><LuChartColumn aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />נתח</>}
               </Link>
             )}
             {canDelete && (
@@ -133,7 +134,7 @@ function FileCard({
                 className="text-xs text-danger hover:text-danger/90 disabled:opacity-40 transition-colors p-1"
                 title="מחק"
               >
-                🗑️
+                <LuTrash2 aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" />
               </button>
             )}
           </div>
@@ -160,7 +161,7 @@ function DropZone({ onFiles }: { onFiles: (files: FileList) => void }) {
  dragOver ? 'border-accent bg-accent/15' : 'border-line hover:border-accent/90 hover:bg-surface'
  }`}
     >
-      <p className="text-3xl mb-2">📁</p>
+      <p className="text-3xl mb-2"><LuFolder aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></p>
       <p className="text-sm font-medium text-fg-2">גרור קובץ לכאן או לחץ לבחירה</p>
       <p className="text-xs text-faint mt-1">וידאו, תמונות, מסמכים</p>
       <input ref={inputRef} type="file" multiple className="hidden" onChange={e => e.target.files && onFiles(e.target.files)} />
@@ -587,7 +588,7 @@ function MediaContent() {
 
       {/* ── Upload tips card ── */}
       <div className="bg-accent/15 border border-accent rounded-xl px-4 py-3 mb-4 text-sm text-accent" dir="rtl">
-        <p className="font-semibold mb-1.5">🎥 דגשים להעלאת סרטון לניתוח:</p>
+        <p className="font-semibold mb-1.5"><LuVideo aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />דגשים להעלאת סרטון לניתוח:</p>
         <ul className="space-y-1 text-xs text-accent list-disc list-inside">
           <li><span className="font-medium">חיתוך הסרטון (Trim):</span> מומלץ לחתוך בגלריה את תחילת וסוף הסרטון כך שיכיל רק את הטיפוס עצמו. זה יחסוך זמן העלאה ויאפשר ניתוח מדויק יותר.</li>
           <li><span className="font-medium">מגבלת זמן:</span> המערכת מותאמת לניתוח של עד 6 דקות טיפוס נטו.</li>
@@ -638,7 +639,7 @@ function MediaContent() {
       {/* ── Drive sync error banner ── */}
       {syncError && (
         <div className="flex items-start justify-between gap-2 bg-danger/15 border border-danger text-danger rounded-xl px-4 py-3 mb-3 text-sm">
-          <span>⚠️ שגיאת Drive: {syncError}</span>
+          <span><LuTriangleAlert aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />שגיאת Drive: {syncError}</span>
           <button onClick={() => setSyncError('')} className="shrink-0 text-danger hover:text-danger/90 font-bold leading-none">✕</button>
         </div>
       )}
@@ -650,7 +651,7 @@ function MediaContent() {
           disabled={syncing || !selectedEmail}
           className="text-xs text-muted hover:text-accent disabled:opacity-40 flex items-center gap-1.5 transition-colors"
         >
-          <span className={syncing ? 'animate-spin' : ''}>🔄</span>
+          <span className={syncing ? 'animate-spin' : ''}><LuRefreshCw aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></span>
           {syncing ? 'מסנכרן...' : 'סנכרן עם Drive'}
         </button>
       </div>
@@ -662,7 +663,7 @@ function MediaContent() {
         </div>
       ) : files.length === 0 ? (
         <div className="bg-surface rounded-xl border border-line p-10 text-center">
-          <p className="text-4xl mb-3">📂</p>
+          <p className="text-4xl mb-3"><LuFolderOpen aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></p>
           <p className="text-muted">אין קבצים עדיין</p>
           <p className="text-faint text-sm mt-1">גרור קבצים לאזור ההעלאה למעלה</p>
         </div>

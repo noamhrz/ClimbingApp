@@ -17,7 +17,7 @@ import {
   arrayMove,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { LuCircleCheck, LuBatteryLow, LuCircleX, LuHourglass, LuTimer, LuList, LuCalendar, LuHouse, LuSunMedium, LuClock } from 'react-icons/lu'
+import { LuBatteryLow, LuCalendar, LuCircleCheck, LuCircleX, LuClock, LuHourglass, LuHouse, LuLightbulb, LuList, LuSunMedium, LuTimer } from 'react-icons/lu'
 
 interface CalendarEvent {
   id: number
@@ -490,7 +490,7 @@ export default function DayListView({
       )}
 
       <div className="lg:hidden text-center py-4 text-xs text-faint">
-        💡 החלק ימינה/שמאלה למעבר בין ימים | החלק למטה לחודש
+        <LuLightbulb aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />החלק ימינה/שמאלה למעבר בין ימים | החלק למטה לחודש
       </div>
     </div>
   )

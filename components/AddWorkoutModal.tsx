@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '@/lib/supabaseClient'
 import moment from 'moment-timezone'
+import { LuCalendarDays, LuClipboardList, LuPin, LuPlus, LuSparkles, LuTrash2 } from 'react-icons/lu'
 
 interface Workout {
   id: number
@@ -298,7 +299,7 @@ export default function AddWorkoutModal({
               {/* Header — fixed */}
               <div className="flex-shrink-0 px-6 py-4 rounded-t-2xl bg-surface border border-line">
                 <h2 className="text-2xl font-bold text-fg text-center">
-                  ➕ הוספת אימונים ללוח
+                  <LuPlus aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />הוספת אימונים ללוח
                 </h2>
               </div>
 
@@ -309,7 +310,7 @@ export default function AddWorkoutModal({
                   {/* Step 1: Date Picker */}
                   <div>
                     <label className="block text-sm font-semibold text-fg-2 mb-2">
-                      📅 תאריך אימון
+                      <LuCalendarDays aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />תאריך אימון
                     </label>
                     <input
                       type="date"
@@ -428,19 +429,19 @@ export default function AddWorkoutModal({
                       <div className="mt-3 text-center flex gap-2 justify-center flex-wrap">
                         {existingCalendarMap.size > 0 && (
                           <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-success/15 text-success rounded-lg text-sm font-medium">
-                            <span>📌</span>
+                            <span><LuPin aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></span>
                             <span>{[...existingCalendarMap.keys()].filter(id => selectedWorkoutIds.includes(id)).length} קיימים</span>
                           </span>
                         )}
                         {selectedWorkoutIds.filter(id => !existingCalendarMap.has(id)).length > 0 && (
                           <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-accent/15 text-accent rounded-lg text-sm font-medium">
-                            <span>✨</span>
+                            <span><LuSparkles aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></span>
                             <span>{selectedWorkoutIds.filter(id => !existingCalendarMap.has(id)).length} חדשים</span>
                           </span>
                         )}
                         {[...existingCalendarMap.keys()].filter(id => !selectedWorkoutIds.includes(id)).length > 0 && (
                           <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-danger/15 text-danger rounded-lg text-sm font-medium">
-                            <span>🗑️</span>
+                            <span><LuTrash2 aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></span>
                             <span>{[...existingCalendarMap.keys()].filter(id => !selectedWorkoutIds.includes(id)).length} יוסרו</span>
                           </span>
                         )}
@@ -451,7 +452,7 @@ export default function AddWorkoutModal({
                   {/* Step 4: Day Order */}
                   <div>
                     <label className="block text-sm font-semibold text-fg-2 mb-2">
-                      📋 סדר ביום — אפשר לגרור לשינוי
+                      <LuClipboardList aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />סדר ביום — אפשר לגרור לשינוי
                     </label>
                     {orderedWorkouts.length === 0 ? (
                       <div className="text-center py-5 text-sm text-faint border-2 border-dashed border-line rounded-lg">
@@ -477,7 +478,7 @@ export default function AddWorkoutModal({
                             <span className="text-accent font-bold text-sm w-6">{index + 1}.</span>
                             <span className="font-medium text-fg flex-1">{workout.name}</span>
                             {isExistingWorkout(workout.id) && (
-                              <span className="text-xs text-success font-medium">📌</span>
+                              <span className="text-xs text-success font-medium"><LuPin aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></span>
                             )}
                           </div>
                         ))}

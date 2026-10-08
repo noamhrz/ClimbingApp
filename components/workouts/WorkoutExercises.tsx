@@ -16,6 +16,7 @@ import { WorkoutExerciseWithDetails, Exercise, DEFAULT_WORKOUT_EXERCISE } from '
 import { supabase } from '@/lib/supabaseClient'
 import BlockContainer from './BlockContainer'
 import ExerciseSidebar from './ExerciseSidebar'
+import { LuSave } from 'react-icons/lu'
 
 export interface WorkoutExercisesHandle {
   saveExercises: () => Promise<boolean>
@@ -306,7 +307,7 @@ const WorkoutExercises = forwardRef<WorkoutExercisesHandle, Props>(function Work
                 disabled={saving}
                 className="px-4 py-2 bg-success text-on-accent rounded-lg hover:bg-success/90 font-medium disabled:opacity-50 text-sm"
               >
-                {saving ? '💾 שומר...' : '💾 שמור תרגילים'}
+                {saving ? <><LuSave aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />שומר...</> : <><LuSave aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />שמור תרגילים</>}
               </button>
             </div>
           </div>

@@ -4,6 +4,7 @@
 'use client'
 
 import { StatsData } from '@/types/analytics'
+import { LuChartColumn } from 'react-icons/lu'
 
 interface StatsCardsProps {
   rightStats: StatsData | null
@@ -24,7 +25,7 @@ export default function StatsCards({
     return (
       <div className="mb-6">
         <div className="rounded-xl p-6 text-fg bg-surface border border-line">
-          <h3 className="text-xl font-bold mb-4">📊 סטטיסטיקות כלליות</h3>
+          <h3 className="text-xl font-bold mb-4"><LuChartColumn aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />סטטיסטיקות כלליות</h3>
           
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             {/* Weight Stats */}

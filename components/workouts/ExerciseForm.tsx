@@ -4,6 +4,7 @@
 import { useState, useEffect } from 'react'
 import { WorkoutExercise, Exercise, DEFAULT_WORKOUT_EXERCISE } from '@/types/workouts'
 import { calculateExerciseTime, formatTimeMinutes, formatRestTime } from '@/lib/workout-calculations'
+import { LuTimer } from 'react-icons/lu'
 
 interface Props {
   workoutExercise: WorkoutExercise
@@ -140,7 +141,7 @@ export default function ExerciseForm({
 
       {/* Estimated Time */}
       <div className="mt-2 pt-2 border-t border-line text-xs text-fg-3 flex items-center justify-between">
-        <span>⏱️ זמן משוער:</span>
+        <span><LuTimer aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />זמן משוער:</span>
         <span className="font-medium">{formatTimeMinutes(estimatedTime)}</span>
       </div>
     </div>

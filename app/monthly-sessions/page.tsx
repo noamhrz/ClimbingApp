@@ -12,6 +12,7 @@ import {
   getAchievements, addAchievement, updateAchievement, deleteAchievement,
   getUsersForSessions,
 } from '@/lib/monthly-sessions-api'
+import { LuCircleCheck, LuNotebookPen, LuPencil, LuPin, LuStar, LuTarget, LuTrash2 } from 'react-icons/lu'
 
 const MONTH_NAMES = [
   'ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני',
@@ -396,7 +397,7 @@ function MonthlySessionsContent() {
 
           {/* Notes */}
           <div className="bg-surface rounded-xl border border-line p-5">
-            <h3 className="font-semibold text-fg mb-3">📝 הערות מאמן</h3>
+            <h3 className="font-semibold text-fg mb-3"><LuNotebookPen aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />הערות מאמן</h3>
             {canEdit ? (
               <div className="relative">
                 <textarea
@@ -420,7 +421,7 @@ function MonthlySessionsContent() {
 
           {/* Coach Todos */}
           <div className="bg-surface rounded-xl border border-line p-5">
-            <h3 className="font-semibold text-fg mb-4">✅ משימות מאמן</h3>
+            <h3 className="font-semibold text-fg mb-4"><LuCircleCheck aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />משימות מאמן</h3>
             <div className="space-y-1">
               {coachTodos.length === 0 && <p className="text-faint text-sm py-1">אין משימות</p>}
               {coachTodos.map(todo => (
@@ -453,8 +454,8 @@ function MonthlySessionsContent() {
                       )}
                       {canEdit && (
                         <div className="opacity-0 group-hover:opacity-100 flex gap-0.5 transition-opacity">
-                          <button onClick={() => setEditingCoachTodo({ id: todo.TodoID, task: todo.Task })} className="p-1.5 text-faint hover:text-accent rounded" title="ערוך">✏️</button>
-                          <button onClick={() => handleDeleteCoachTodo(todo.TodoID)} className="p-1.5 text-faint hover:text-danger rounded" title="מחק">🗑️</button>
+                          <button onClick={() => setEditingCoachTodo({ id: todo.TodoID, task: todo.Task })} className="p-1.5 text-faint hover:text-accent rounded" title="ערוך"><LuPencil aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></button>
+                          <button onClick={() => handleDeleteCoachTodo(todo.TodoID)} className="p-1.5 text-faint hover:text-danger rounded" title="מחק"><LuTrash2 aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></button>
                         </div>
                       )}
                     </>
@@ -469,7 +470,7 @@ function MonthlySessionsContent() {
 
           {/* Athlete Todos */}
           <div className="bg-surface rounded-xl border border-line p-5">
-            <h3 className="font-semibold text-fg mb-4">🎯 משימות ספורטאי</h3>
+            <h3 className="font-semibold text-fg mb-4"><LuTarget aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />משימות ספורטאי</h3>
             <div className="space-y-1">
               {athleteTodos.length === 0 && <p className="text-faint text-sm py-1">אין משימות</p>}
               {athleteTodos.map(todo => (
@@ -494,8 +495,8 @@ function MonthlySessionsContent() {
                       </span>
                       {canEdit && (
                         <div className="opacity-0 group-hover:opacity-100 flex gap-0.5 transition-opacity">
-                          <button onClick={() => setEditingAthleteTodo({ id: todo.TodoID, task: todo.Task })} className="p-1.5 text-faint hover:text-accent rounded" title="ערוך">✏️</button>
-                          <button onClick={() => handleDeleteAthleteTodo(todo.TodoID)} className="p-1.5 text-faint hover:text-danger rounded" title="מחק">🗑️</button>
+                          <button onClick={() => setEditingAthleteTodo({ id: todo.TodoID, task: todo.Task })} className="p-1.5 text-faint hover:text-accent rounded" title="ערוך"><LuPencil aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></button>
+                          <button onClick={() => handleDeleteAthleteTodo(todo.TodoID)} className="p-1.5 text-faint hover:text-danger rounded" title="מחק"><LuTrash2 aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></button>
                         </div>
                       )}
                     </>
@@ -510,12 +511,12 @@ function MonthlySessionsContent() {
 
           {/* Achievements */}
           <div className="bg-surface rounded-xl border border-line p-5">
-            <h3 className="font-semibold text-fg mb-4">⭐ הישגים חודשיים</h3>
+            <h3 className="font-semibold text-fg mb-4"><LuStar aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />הישגים חודשיים</h3>
             <div className="space-y-1">
               {achievements.length === 0 && <p className="text-faint text-sm py-1">אין הישגים</p>}
               {achievements.map(ac => (
                 <div key={ac.AchievementID} className="flex items-start gap-2 px-2 py-2 rounded-lg hover:bg-surface group">
-                  <span className="text-warning flex-shrink-0 mt-0.5">⭐</span>
+                  <span className="text-warning flex-shrink-0 mt-0.5"><LuStar aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></span>
                   {canEdit && editingAchievement?.id === ac.AchievementID ? (
                     <InlineEditInput
                       value={editingAchievement.content}
@@ -528,8 +529,8 @@ function MonthlySessionsContent() {
                       <span className="flex-1 text-sm text-fg">{ac.Content}</span>
                       {canEdit && (
                         <div className="opacity-0 group-hover:opacity-100 flex gap-0.5 transition-opacity">
-                          <button onClick={() => setEditingAchievement({ id: ac.AchievementID, content: ac.Content })} className="p-1.5 text-faint hover:text-accent rounded" title="ערוך">✏️</button>
-                          <button onClick={() => handleDeleteAchievement(ac.AchievementID)} className="p-1.5 text-faint hover:text-danger rounded" title="מחק">🗑️</button>
+                          <button onClick={() => setEditingAchievement({ id: ac.AchievementID, content: ac.Content })} className="p-1.5 text-faint hover:text-accent rounded" title="ערוך"><LuPencil aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></button>
+                          <button onClick={() => handleDeleteAchievement(ac.AchievementID)} className="p-1.5 text-faint hover:text-danger rounded" title="מחק"><LuTrash2 aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></button>
                         </div>
                       )}
                     </>
@@ -544,12 +545,12 @@ function MonthlySessionsContent() {
 
           {/* Highlights */}
           <div className="bg-surface rounded-xl border border-line p-5">
-            <h3 className="font-semibold text-fg mb-4">📌 דגשים חודשיים</h3>
+            <h3 className="font-semibold text-fg mb-4"><LuPin aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />דגשים חודשיים</h3>
             <div className="space-y-1">
               {highlights.length === 0 && <p className="text-faint text-sm py-1">אין דגשים</p>}
               {highlights.map(hl => (
                 <div key={hl.HighlightID} className="flex items-start gap-2 px-2 py-2 rounded-lg hover:bg-surface group">
-                  <span className="flex-shrink-0 mt-0.5">📌</span>
+                  <span className="flex-shrink-0 mt-0.5"><LuPin aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></span>
                   {canEdit && editingHighlight?.id === hl.HighlightID ? (
                     <InlineEditInput
                       value={editingHighlight.content}
@@ -562,8 +563,8 @@ function MonthlySessionsContent() {
                       <span className="flex-1 text-sm text-fg">{hl.Content}</span>
                       {canEdit && (
                         <div className="opacity-0 group-hover:opacity-100 flex gap-0.5 transition-opacity">
-                          <button onClick={() => setEditingHighlight({ id: hl.HighlightID, content: hl.Content })} className="p-1.5 text-faint hover:text-accent rounded" title="ערוך">✏️</button>
-                          <button onClick={() => handleDeleteHighlight(hl.HighlightID)} className="p-1.5 text-faint hover:text-danger rounded" title="מחק">🗑️</button>
+                          <button onClick={() => setEditingHighlight({ id: hl.HighlightID, content: hl.Content })} className="p-1.5 text-faint hover:text-accent rounded" title="ערוך"><LuPencil aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></button>
+                          <button onClick={() => handleDeleteHighlight(hl.HighlightID)} className="p-1.5 text-faint hover:text-danger rounded" title="מחק"><LuTrash2 aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></button>
                         </div>
                       )}
                     </>

@@ -8,6 +8,7 @@ import { useEffect } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import type { WorkoutPerformance, WorkoutStats } from '@/lib/workout-stats-metrics'
 import { getCompletionRateColor, getRPEColor } from '@/lib/workout-stats-metrics'
+import { LuBicepsFlexed, LuChartColumn, LuCircleCheck, LuCircleX, LuMountain, LuTrendingUp, LuTriangleAlert } from 'react-icons/lu'
 
 interface WorkoutStatsDisplayProps {
   performance: WorkoutPerformance
@@ -21,7 +22,7 @@ export function WorkoutStatsDisplay({ performance, email }: WorkoutStatsDisplayP
   if (performance.workouts.length === 0) {
     return (
       <div className="bg-accent/15 border border-accent rounded-lg p-8 text-center">
-        <div className="text-4xl mb-3">💪</div>
+        <div className="text-4xl mb-3"><LuBicepsFlexed aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></div>
         <h3 className="text-xl font-bold text-fg mb-2">אין נתוני אימונים</h3>
         <p className="text-fg-3">לא נמצאו אימונים בטווח התאריכים הנבחר</p>
       </div>
@@ -51,7 +52,7 @@ export function WorkoutStatsDisplay({ performance, email }: WorkoutStatsDisplayP
       {/* Overall Summary */}
       <div className="rounded-lg p-6 text-fg bg-surface border border-line">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-2xl font-bold">💪 סיכום אימונים</h2>
+          <h2 className="text-2xl font-bold"><LuBicepsFlexed aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />סיכום אימונים</h2>
           
           {/* Category Filter */}
           <div className="flex items-center gap-2">
@@ -180,7 +181,7 @@ function CategorySection({
                 <th className="text-center p-2 font-bold w-12">#</th>
                 <th className="text-right p-2 font-bold">שם אימון</th>
                 <th className="text-center p-2 font-bold w-16">סה"כ</th>
-                <th className="text-center p-2 font-bold w-16">✅</th>
+                <th className="text-center p-2 font-bold w-16"><LuCircleCheck aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></th>
                 <th className="text-center p-2 font-bold w-16">%</th>
                 <th className="text-center p-2 font-bold w-16">RPE</th>
                 <th className="text-center p-2 font-bold w-8"></th>
@@ -588,14 +589,14 @@ function WorkoutExercisesPanel({ workoutId, lastCalendarId, containClimbing, ema
   return (
     <div className="px-4 py-3 space-y-4" dir="rtl">
       {!lastCalendarId && (
-        <p className="text-xs text-warning">⚠️ האימון לא בוצע — מציג תוכנית בלבד</p>
+        <p className="text-xs text-warning"><LuTriangleAlert aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />האימון לא בוצע — מציג תוכנית בלבד</p>
       )}
 
       {/* Climbing logbook */}
       {climbSessions.length > 0 && (
         <div>
           <div className="flex items-center gap-3 mb-2">
-            <h4 className="text-xs font-bold text-fg-2">🧗 לוג טיפוס</h4>
+            <h4 className="text-xs font-bold text-fg-2"><LuMountain aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />לוג טיפוס</h4>
             <span className="text-xs text-muted bg-surface rounded-full px-2 py-0.5">
               {sessionCount} אימונים בטווח
             </span>
@@ -605,7 +606,7 @@ function WorkoutExercisesPanel({ workoutId, lastCalendarId, containClimbing, ema
             const maxVol = Math.max(...climbSessions.map(s => s.totalVolumeScore))
             return (
               <div className="mb-3 space-y-1">
-                <div className="text-xs text-muted font-semibold mb-1">📊 נפח טיפוס — נקודות</div>
+                <div className="text-xs text-muted font-semibold mb-1"><LuChartColumn aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />נפח טיפוס — נקודות</div>
                 {climbSessions.map(s => {
                   const pct = maxVol > 0 ? (s.totalVolumeScore / maxVol) * 100 : 0
                   return (
@@ -678,8 +679,8 @@ function WorkoutExercisesPanel({ workoutId, lastCalendarId, containClimbing, ema
                               return sorted.map(([gradeId, g]) => (
                                 <span key={gradeId} className="inline-flex items-center gap-0.5 text-xs font-mono bg-surface border border-line rounded px-1.5 py-0.5">
                                   <span className="font-semibold text-fg">{g.grade}</span>
-                                  {g.success > 0 && <span className="text-success font-bold"> ✅{g.success}</span>}
-                                  {g.fail > 0 && <span className="text-danger font-bold"> ❌{g.fail}</span>}
+                                  {g.success > 0 && <span className="text-success font-bold"> <LuCircleCheck aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />{g.success}</span>}
+                                  {g.fail > 0 && <span className="text-danger font-bold"> <LuCircleX aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />{g.fail}</span>}
                                 </span>
                               ))
                             })()}
@@ -732,7 +733,7 @@ function WorkoutExercisesPanel({ workoutId, lastCalendarId, containClimbing, ema
                 </td>
                 <td className="text-center py-1.5">
                   {done
-                    ? <span className="text-success font-bold">✅ בוצע</span>
+                    ? <span className="text-success font-bold"><LuCircleCheck aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />בוצע</span>
                     : <span className="text-faint">לא בוצע</span>}
                 </td>
               </tr>
@@ -755,7 +756,7 @@ function WorkoutExercisesPanel({ workoutId, lastCalendarId, containClimbing, ema
                   {firstLog?.weightKG ? `${firstLog.weightKG} KG` : '—'}
                 </td>
                 <td className="text-center py-1.5">
-                  <span className="text-accent font-bold">✅ בוצע</span>
+                  <span className="text-accent font-bold"><LuCircleCheck aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />בוצע</span>
                 </td>
               </tr>
             )
@@ -767,7 +768,7 @@ function WorkoutExercisesPanel({ workoutId, lastCalendarId, containClimbing, ema
       {exercisesWithHistory.length > 0 && (
         <div className="border-t border-line pt-3" dir="ltr">
           <div className="flex items-center gap-3 mb-2" dir="rtl">
-            <h4 className="text-xs font-bold text-fg-2">📈 היסטוריית ביצועים</h4>
+            <h4 className="text-xs font-bold text-fg-2"><LuTrendingUp aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />היסטוריית ביצועים</h4>
             <span className="text-xs text-muted bg-surface rounded-full px-2 py-0.5">
               בוצע {sessionCount} פעמים בטווח
             </span>

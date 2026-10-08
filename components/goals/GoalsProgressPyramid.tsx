@@ -4,6 +4,7 @@
 
 import { useEffect, useState } from 'react'
 import { getBoulderProgress, getLeadProgress, getBoardProgress, GoalProgress } from '@/lib/goals-progress-api'
+import { LuTarget } from 'react-icons/lu'
 
 interface Props {
   email: string
@@ -64,7 +65,7 @@ export default function GoalsProgressPyramid({
         {title && <h3 className="text-2xl font-bold mb-6 text-fg">{title}</h3>}
         <div className="flex items-center justify-center h-64 bg-surface rounded-xl">
           <div className="text-center">
-            <div className="text-6xl mb-4">🎯</div>
+            <div className="text-6xl mb-4"><LuTarget aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></div>
             <div className="text-muted font-medium">אין יעדים מוגדרים</div>
             <div className="text-sm text-faint mt-2">הגדר יעדים כדי לראות התקדמות</div>
           </div>

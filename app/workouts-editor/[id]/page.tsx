@@ -9,6 +9,7 @@ import { WorkoutFormData, WorkoutWithExercises } from '@/types/workouts'
 import { fetchWorkoutWithExercises, updateWorkout } from '@/lib/workout-api'
 import WorkoutForm from '@/components/workouts/WorkoutForm'
 import WorkoutExercises, { WorkoutExercisesHandle } from '@/components/workouts/WorkoutExercises'
+import { LuCircleX, LuPencil, LuSave } from 'react-icons/lu'
 
 export default function EditWorkoutPage() {
   const params = useParams()
@@ -192,7 +193,7 @@ export default function EditWorkoutPage() {
       {/* Header */}
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold mb-2">✏️ עריכת אימון</h1>
+          <h1 className="text-3xl font-bold mb-2"><LuPencil aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />עריכת אימון</h1>
           <p className="text-fg-3">עורך את: {workout.Name}</p>
         </div>
         {autoSaving && (
@@ -227,14 +228,14 @@ export default function EditWorkoutPage() {
           className="px-6 py-3 border border-line rounded-lg hover:bg-surface font-medium"
           disabled={saving}
         >
-          ❌ סגור
+          <LuCircleX aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />סגור
         </button>
         <button
           onClick={handleSave}
           className="px-6 py-3 bg-accent text-on-accent rounded-lg hover:bg-accent-hover font-medium disabled:opacity-50"
           disabled={saving}
         >
-          {saving ? '💾 שומר...' : '💾 שמור וסגור'}
+          {saving ? <><LuSave aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />שומר...</> : <><LuSave aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />שמור וסגור</>}
         </button>
       </div>
     </div>

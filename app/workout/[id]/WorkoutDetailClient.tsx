@@ -12,6 +12,7 @@ import ExerciseAccordion from "@/components/exercises/ExerciseAccordion"
 import moment from 'moment-timezone'
 import LoadLastWorkoutButton from './LoadLastWorkoutButton'
 import { useFormDraft } from '@/lib/useFormDraft'
+import { LuAlarmClock, LuBicepsFlexed, LuCalendarDays, LuCircleCheck, LuHourglass, LuLightbulb, LuLoaderCircle, LuMapPin, LuMountain, LuNotebookPen, LuPackage, LuPlus, LuRefreshCw, LuTriangleAlert, LuVideo } from 'react-icons/lu'
 
 export default function WorkoutDetailClient({ id }: { id: number }) {
   const { activeUser, loading: authLoading } = useAuth()
@@ -837,11 +838,11 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
             {calendarRow && (
               <div className="flex items-center gap-3 text-sm">
                 <span className="text-fg-3">
-                  📅 {formatDate(calendarRow.StartTime)}
+                  <LuCalendarDays aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />{formatDate(calendarRow.StartTime)}
                 </span>
                 {isPastWorkout && (
                   <span className="bg-danger/15 text-danger px-3 py-1 rounded-full font-medium">
-                    ⚠️ אימון עבר
+                    <LuTriangleAlert aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />אימון עבר
                   </span>
                 )}
                 {isFutureWorkout && (
@@ -851,7 +852,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
                 )}
                 {isTodayWorkout && (
                   <span className="bg-success/15 text-success px-3 py-1 rounded-full font-medium">
-                    ✅ אימון היום
+                    <LuCircleCheck aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />אימון היום
                   </span>
                 )}
               </div>
@@ -863,7 +864,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
                 onClick={handleConvertToToday}
                 className="mt-3 bg-accent hover:bg-accent/90 text-on-accent px-4 py-2 rounded-lg text-sm font-medium transition"
               >
-                🔄 העבר להיום
+                <LuRefreshCw aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />העבר להיום
               </button>
             )}
           </div>
@@ -874,7 +875,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
             {workout.VideoURL && (
               <div className="bg-accent/15 border border-accent rounded-lg p-4">
                 <h3 className="font-semibold text-accent mb-2 flex items-center gap-2">
-                  🎥 וידאו הדרכה
+                  <LuVideo aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />וידאו הדרכה
                 </h3>
                 <a 
                   href={workout.VideoURL} 
@@ -891,7 +892,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
             {workout.Description && (
               <div className="bg-surface border border-line rounded-lg p-4">
                 <h3 className="font-semibold text-fg mb-2 flex items-center gap-2">
-                  📝 תיאור האימון
+                  <LuNotebookPen aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />תיאור האימון
                 </h3>
                 <p className="text-fg-2 whitespace-pre-wrap">{workout.Description}</p>
               </div>
@@ -911,7 +912,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
             {workout.WhenToPractice && (
               <div className="bg-success/15 border border-success rounded-lg p-4">
                 <h3 className="font-semibold text-success mb-2 flex items-center gap-2">
-                  ⏰ מתי להתאמן
+                  <LuAlarmClock aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />מתי להתאמן
                 </h3>
                 <p className="text-success">{workout.WhenToPractice}</p>
               </div>
@@ -933,7 +934,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
           {/* ✨ UPDATED: Exercises by Blocks */}
           {containsExercises && (
             <section className="mb-8">
-              <h2 className="font-semibold text-xl mb-6">💪 תרגילים</h2>
+              <h2 className="font-semibold text-xl mb-6"><LuBicepsFlexed aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />תרגילים</h2>
 
               {blockNumbers.map(blockNum => {
                 const blockOpen = isBlockAllOpen(blockNum)
@@ -946,7 +947,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
                       className="text-fg rounded-t-lg px-4 py-3 font-bold text-lg cursor-pointer hover: hover: transition-all flex justify-between items-center select-none bg-surface border border-line"
                       onClick={() => toggleBlock(blockNum)}
                     >
-                      <span>📦 בלוק {blockNum}</span>
+                      <span><LuPackage aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />בלוק {blockNum}</span>
                       <div className="flex items-center gap-3 text-sm">
                         <span className="opacity-90 font-normal">
                           {exerciseCount} {exerciseCount === 1 ? 'תרגיל' : 'תרגילים'}
@@ -985,11 +986,11 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
           {/* Climbing Section */}
           {containsClimbing && (
             <section className="mb-8">
-              <h2 className="font-semibold text-xl mb-4">🧗 רישומי טיפוס</h2>
+              <h2 className="font-semibold text-xl mb-4"><LuMountain aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />רישומי טיפוס</h2>
 
               {/* Location Selector WITH SEARCH */}
               <div className="mb-6">
-                <label className="block font-medium mb-2">📍 מיקום:</label>
+                <label className="block font-medium mb-2"><LuMapPin aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />מיקום:</label>
                 <div className="space-y-2">
                   {/* Search input */}
                   <input
@@ -1031,13 +1032,13 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
                     onClick={() => setShowAddLocationModal(true)}
                     className="w-full py-2 px-4 border-2 border-dashed border-line rounded-lg text-fg-3 hover:border-accent hover:text-accent hover:bg-accent/15 transition-all font-medium"
                   >
-                    ➕ הוסף מיקום חדש
+                    <LuPlus aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />הוסף מיקום חדש
                   </button>
                 </div>
                 
                 {routes.length > 0 && !selectedLocation && (
                   <p className="text-danger text-sm mt-1">
-                    ⚠️ חובה לבחור מיקום כאשר יש מסלולים
+                    <LuTriangleAlert aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />חובה לבחור מיקום כאשר יש מסלולים
                   </p>
                 )}
               </div>
@@ -1122,17 +1123,17 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
               disabled={isSaving || (workout.containClimbing && routes.length > 0 && !selectedLocation)}
             >
               {isSaving ? (
-                <>⏳ שומר...</>
+                <><LuHourglass aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />שומר...</>
               ) : (
                 <>
-                  ✅ סיום אימון ושמירה
+                  <LuCircleCheck aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />סיום אימון ושמירה
                   {workout.containClimbing && routes.length > 0 && ` (${routes.length} מסלולים)`}
                 </>
               )}
             </button>
             {workout.containClimbing && routes.length > 0 && !selectedLocation && (
               <p className="text-danger text-sm mt-2">
-                ⚠️ נא לבחור מיקום לפני שמירה
+                <LuTriangleAlert aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />נא לבחור מיקום לפני שמירה
               </p>
             )}
           </div>
@@ -1166,7 +1167,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
             {/* Header */}
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-xl font-bold text-fg">
-                📍 הוספת מיקום חדש
+                <LuMapPin aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />הוספת מיקום חדש
               </h3>
               <button
                 onClick={() => setShowAddLocationModal(false)}
@@ -1180,7 +1181,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
             {/* Info */}
             <div className="mb-4 p-3 bg-accent/15 border border-accent rounded-lg">
               <p className="text-sm text-accent">
-                💡 הוסף מיקום חדש לרשימה. המיקום יהיה זמין לכולם.
+                <LuLightbulb aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />הוסף מיקום חדש לרשימה. המיקום יהיה זמין לכולם.
               </p>
             </div>
 
@@ -1213,7 +1214,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
                 disabled={savingLocation || !newLocationName.trim()}
                 className="flex-1 py-3 bg-accent text-on-accent rounded-lg hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed font-medium transition"
               >
-                {savingLocation ? '⏳ שומר...' : '✅ הוסף מיקום'}
+                {savingLocation ? <><LuLoaderCircle aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] animate-spin me-1.5" />שומר...</> : <><LuCircleCheck aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />הוסף מיקום</>}
               </button>
               <button
                 onClick={() => setShowAddLocationModal(false)}

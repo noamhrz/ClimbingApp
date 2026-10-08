@@ -7,6 +7,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { Exercise, ExerciseFormData } from '@/types/exercises'
 import { RoadmapCategory } from '@/types/dynamic-exercise'
+import { LuPlus, LuSave, LuTimer } from 'react-icons/lu'
 
 interface Props {
   exercise: Exercise | null
@@ -322,7 +323,7 @@ export default function ExerciseModal({ exercise, onSave, onClose, isDuplicate =
               />
               <div>
                 <span className="text-sm font-medium text-fg">
-                  ⏱️ תרגיל מבוסס זמן
+                  <LuTimer aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />תרגיל מבוסס זמן
                 </span>
                 <p className="text-xs text-fg-3 mt-0.5">
                   סמן אם התרגיל נמדד בשניות (למשל: פלאנק, הנג, מתיחה) במקום חזרות
@@ -397,7 +398,7 @@ export default function ExerciseModal({ exercise, onSave, onClose, isDuplicate =
               type="submit"
               className="flex-1 px-4 py-3 bg-accent text-on-accent rounded-lg hover:bg-accent-hover transition font-medium "
             >
-              {isEditing ? '💾 שמור שינויים' : '➕ צור תרגיל'}
+              {isEditing ? <><LuSave aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />שמור שינויים</> : <><LuPlus aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />צור תרגיל</>}
             </button>
             <button
               type="button"

@@ -20,6 +20,7 @@ import { CSS } from '@dnd-kit/utilities'
 import { supabase } from '@/lib/supabaseClient'
 import { Exercise } from '@/types/exercises'
 import { RoadmapCategory, RoadmapLevel } from '@/types/dynamic-exercise'
+import { LuPuzzle, LuSave, LuTriangleAlert } from 'react-icons/lu'
 
 interface LocalItem {
   id: number
@@ -431,7 +432,7 @@ export default function DynamicExerciseEditorPage() {
           ← חזרה
         </button>
         <div>
-          <h1 className="text-2xl font-bold">🧩 עורך דינמי</h1>
+          <h1 className="text-2xl font-bold"><LuPuzzle aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />עורך דינמי</h1>
           <p className="text-muted text-sm">{dynamicExercise.Name}</p>
         </div>
       </div>
@@ -451,7 +452,7 @@ export default function DynamicExerciseEditorPage() {
         )
       })() : (
         <div className="bg-warning/15 border border-warning rounded-xl p-5 mb-4 text-sm text-warning">
-          ⚠️ לתרגיל זה אין קטגוריית רודמאפ. ערוך את התרגיל מדף התרגילים כדי להוסיף קטגוריה.
+          <LuTriangleAlert aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />לתרגיל זה אין קטגוריית רודמאפ. ערוך את התרגיל מדף התרגילים כדי להוסיף קטגוריה.
         </div>
       )}
 
@@ -585,7 +586,7 @@ export default function DynamicExerciseEditorPage() {
           disabled={saving || !dynamicExercise?.RoadmapCategoryID}
           className="px-5 py-2.5 bg-accent text-on-accent rounded-lg text-sm font-medium hover:bg-accent-hover disabled:opacity-50"
         >
-          {saving ? 'שומר...' : '💾 שמור'}
+          {saving ? 'שומר...' : <><LuSave aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />שמור</>}
         </button>
       </div>
     </div>

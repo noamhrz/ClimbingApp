@@ -9,6 +9,7 @@ import {
   ClimbingAnalysis, ThirdByMoves, ThirdByTime, RestPeriod,
 } from '@/lib/climbing-analysis-api'
 import MediaComments from '@/components/media/MediaComments'
+import { LuChartColumn, LuTimer, LuVideo } from 'react-icons/lu'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -1206,13 +1207,13 @@ export default function AnalysisPage() {
                 <div className="text-center py-14 text-faint">
                   {canCapture ? (
                     <>
-                      <p className="text-4xl mb-3">🎬</p>
+                      <p className="text-4xl mb-3"><LuVideo aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></p>
                       <p className="text-sm font-medium text-fg-3">לחץ חץ למעלה להתחלה</p>
                       <p className="text-xs mt-1">הפעל את הסרטון, לחץ ↑ בתחילת הטיפוס</p>
                     </>
                   ) : (
                     <>
-                      <p className="text-4xl mb-3">📊</p>
+                      <p className="text-4xl mb-3"><LuChartColumn aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></p>
                       <p className="text-sm">ניתוח כמותי עדיין לא בוצע לסרטון זה</p>
                     </>
                   )}
@@ -1223,7 +1224,7 @@ export default function AnalysisPage() {
                 <div className="text-center py-10">
                   {moves.length === 0 ? (
                     <>
-                      <div className="text-3xl mb-2">⏱</div>
+                      <div className="text-3xl mb-2"><LuTimer aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></div>
                       <p className="text-sm font-medium text-success">מקליט...</p>
                       <p className="text-xs text-faint mt-1">לחץ ← / → לתיעוד מהלכים</p>
                     </>

@@ -4,6 +4,7 @@ import { useDroppable } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { WorkoutExerciseWithDetails } from '@/types/workouts'
 import SortableExerciseItem from './SortableExerciseItem'
+import { LuPin, LuTrash2 } from 'react-icons/lu'
 
 interface Props {
   blockNumber: number
@@ -42,12 +43,12 @@ export default function BlockContainer({
     >
       {/* Block Header */}
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-lg font-bold">📌 בלוק {blockNumber}</h3>
+        <h3 className="text-lg font-bold"><LuPin aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />בלוק {blockNumber}</h3>
         <button
           onClick={onDeleteBlock}
           className="text-danger hover:text-danger/90 text-sm font-medium"
         >
-          🗑️ מחק בלוק
+          <LuTrash2 aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />מחק בלוק
         </button>
       </div>
 

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { useRouter } from 'next/navigation'
+import { LuCircle, LuCircleCheck, LuEye, LuEyeOff, LuLightbulb, LuLoaderCircle, LuLock, LuSave, LuTriangleAlert } from 'react-icons/lu'
 
 export default function ResetPasswordPage() {
   const router = useRouter()
@@ -87,7 +88,7 @@ export default function ResetPasswordPage() {
     return (
       <div className="min-h-screen flex items-center justify-center px-4 bg-bg">
         <div className="bg-surface rounded-2xl border border-line shadow-2xl shadow-black/40 p-8 max-w-md w-full text-center">
-          <div className="text-6xl mb-4">⚠️</div>
+          <div className="text-6xl mb-4"><LuTriangleAlert aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></div>
           <h1 className="text-2xl font-bold text-fg mb-4">
             לינק לא תקף
           </h1>
@@ -109,7 +110,7 @@ export default function ResetPasswordPage() {
     <div className="min-h-screen flex items-center justify-center px-4 bg-bg">
       <div className="bg-surface rounded-2xl border border-line shadow-2xl shadow-black/40 p-8 max-w-md w-full">
         <div className="text-center mb-8">
-          <div className="text-6xl mb-4">🔐</div>
+          <div className="text-6xl mb-4"><LuLock aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></div>
           <h1 className="text-3xl font-bold text-fg mb-2">
             סיסמה חדשה
           </h1>
@@ -151,7 +152,7 @@ export default function ResetPasswordPage() {
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute end-3 top-1/2 -translate-y-1/2 text-muted hover:text-fg-2"
               >
-                {showPassword ? '🙈' : '👁️'}
+                {showPassword ? <LuEyeOff aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /> : <LuEye aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" />}
               </button>
             </div>
           </div>
@@ -178,25 +179,25 @@ export default function ResetPasswordPage() {
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
                   <span className={newPassword.length >= 6 ? '✅' : '❌'}>
-                    {newPassword.length >= 6 ? '✅' : '⭕'}
+                    {newPassword.length >= 6 ? <LuCircleCheck aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /> : <LuCircle aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" />}
                   </span>
                   <span className="text-xs text-fg-3">לפחות 6 תווים</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className={/[A-Z]/.test(newPassword) ? '✅' : '⭕'}>
-                    {/[A-Z]/.test(newPassword) ? '✅' : '⭕'}
+                    {/[A-Z]/.test(newPassword) ? <LuCircleCheck aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /> : <LuCircle aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" />}
                   </span>
                   <span className="text-xs text-fg-3">אות גדולה (מומלץ)</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className={/[0-9]/.test(newPassword) ? '✅' : '⭕'}>
-                    {/[0-9]/.test(newPassword) ? '✅' : '⭕'}
+                    {/[0-9]/.test(newPassword) ? <LuCircleCheck aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /> : <LuCircle aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" />}
                   </span>
                   <span className="text-xs text-fg-3">מספר (מומלץ)</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className={newPassword === confirmPassword && confirmPassword ? '✅' : '⭕'}>
-                    {newPassword === confirmPassword && confirmPassword ? '✅' : '⭕'}
+                    {newPassword === confirmPassword && confirmPassword ? <LuCircleCheck aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /> : <LuCircle aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" />}
                   </span>
                   <span className="text-xs text-fg-3">הסיסמאות תואמות</span>
                 </div>
@@ -209,13 +210,13 @@ export default function ResetPasswordPage() {
             disabled={loading || !newPassword || !confirmPassword}
             className="w-full py-3 min-h-12 bg-accent text-on-accent rounded-full font-bold hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {loading ? '⏳ מעדכן...' : '💾 עדכן סיסמה'}
+            {loading ? <><LuLoaderCircle aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] animate-spin me-1.5" />מעדכן...</> : <><LuSave aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />עדכן סיסמה</>}
           </button>
         </form>
 
         <div className="mt-8 bg-accent/15 rounded-lg p-4">
           <p className="text-xs text-accent">
-            <strong>💡 טיפים לסיסמה חזקה:</strong>
+            <strong><LuLightbulb aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />טיפים לסיסמה חזקה:</strong>
           </p>
           <ul className="text-xs text-accent mt-2 space-y-1 ms-4">
             <li>• השתמש בשילוב של אותיות גדולות וקטנות</li>

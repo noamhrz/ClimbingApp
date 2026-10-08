@@ -1,5 +1,6 @@
 // components/dashboard/TimeRangeSelector.tsx - UPDATED
 'use client'
+import { LuCalendarDays } from 'react-icons/lu'
 
 interface Props {
   selected: '10days' | '6weeks' | '12weeks'
@@ -17,7 +18,7 @@ export default function TimeRangeSelector({ selected, onChange }: Props) {
  : 'bg-raised text-fg-2 hover:bg-raised/90'
  }`}
       >
-        📅 10 ימים
+        <LuCalendarDays aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />10 ימים
       </button>
       
       <button
@@ -28,7 +29,7 @@ export default function TimeRangeSelector({ selected, onChange }: Props) {
  : 'bg-raised text-fg-2 hover:bg-raised/90'
  }`}
       >
-        📅 6 שבועות
+        <LuCalendarDays aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />6 שבועות
       </button>
       
       <button
@@ -39,7 +40,7 @@ export default function TimeRangeSelector({ selected, onChange }: Props) {
  : 'bg-raised text-fg-2 hover:bg-raised/90'
  }`}
       >
-        📅 12 שבועות
+        <LuCalendarDays aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />12 שבועות
       </button>
     </div>
   )
