@@ -20,7 +20,7 @@ nextjs-portal {
   
   main,
   .page-container,
-  div[dir="rtl"] {
+  div[dir="rtl"]:not([data-flow]) {
     padding-bottom: 80px !important;
   }
   
@@ -32,23 +32,23 @@ nextjs-portal {
   }
   
   /* כל div בתוך המודל */
-  [role="dialog"] * {
+  [role="dialog"]:not([data-flow]) * {
     scroll-padding-bottom: 300px !important;
   }
   
   /* הקונטיינר הראשי של המודל */
-  [role="dialog"] > div {
+  [role="dialog"]:not([data-flow]) > div {
     min-height: calc(100vh - 50px) !important;
     padding-bottom: 250px !important;
   }
   
   /* כל טופס */
-  [role="dialog"] form {
+  [role="dialog"]:not([data-flow]) form {
     padding-bottom: 250px !important;
   }
   
   /* כל div עם max-w (זה בדרך כלל הקונטיינר של המודל) */
-  [role="dialog"] div[class*="max-w"] {
+  [role="dialog"]:not([data-flow]) div[class*="max-w"] {
     padding-bottom: 250px !important;
   }
   
@@ -86,8 +86,8 @@ nextjs-portal {
     padding-bottom: 100px !important;
   }
   
-  [role="dialog"] > div,
-  [role="dialog"] form {
+  [role="dialog"]:not([data-flow]) > div,
+  [role="dialog"]:not([data-flow]) form {
     padding-bottom: 300px !important;
   }
 }
