@@ -12,6 +12,9 @@ import ExerciseAmountChart from '@/components/dashboard/ExerciseAmountChart'
 import MotivationalQuote from '@/components/dashboard/MotivationalQuote'
 import WellnessModal from '@/components/dashboard/WellnessModal'
 import { subDays, format, startOfWeek, endOfWeek, differenceInWeeks, eachDayOfInterval, eachWeekOfInterval, setHours, setMinutes, setSeconds, isBefore, startOfDay, endOfDay } from 'date-fns'
+import { LuLayoutDashboard, LuCalendarDays, LuMountain, LuHeartPulse, LuCircleCheck } from 'react-icons/lu'
+import { PageSkeleton } from '@/components/ui/Skeleton'
+import TodayWorkouts from '@/components/dashboard/TodayWorkouts'
 
 // WEEK CONFIGURATION - SUNDAY TO SATURDAY (for stats cards only)
 const WEEK_STARTS_ON = 0 // 0 = Sunday, 6 = Saturday
@@ -343,29 +346,24 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-6xl mb-4">📊</div>
-          <div className="text-xl text-gray-600">טוען Dashboard...</div>
-        </div>
-      </div>
+      <PageSkeleton variant="dashboard" label="טוען Dashboard..." />
     )
   }
 
   return (
-    <div dir="rtl" className="min-h-screen bg-gray-50 pb-20">
-      <div className="bg-white shadow-sm border-b">
+    <div dir="rtl" className="min-h-screen bg-surface pb-20">
+      <div className="bg-surface border-b">
         <div className="max-w-4xl mx-auto px-4 py-6">
           <div className="flex justify-between items-center mb-4">
-            <h1 className="text-3xl font-bold text-blue-600">
-              📊 Dashboard - {userToShow?.Name}
+            <h1 className="text-3xl font-bold text-fg inline-flex items-center gap-2">
+              <LuLayoutDashboard aria-hidden className="w-7 h-7 shrink-0 text-accent" />Dashboard - {userToShow?.Name}
             </h1>
             
             {/* Show wellness button only when viewing own data */}
             {userToShow?.Email === currentUser?.Email && (
               <button
                 onClick={() => setIsWellnessModalOpen(true)}
-                className="flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                className="flex items-center gap-2 bg-success hover:bg-success/90 text-on-accent px-4 py-2 rounded-lg font-medium transition-colors"
               >
                 <span className="text-xl">+</span>
                 <span>Wellness</span>
@@ -378,31 +376,34 @@ export default function DashboardPage() {
             onChange={setTimeRange} 
           />
           
-          <p className="text-sm text-gray-600 mt-2 text-center">
-            {timeRange === '10days' ? '📅 תצוגה לפי ימים' : '📅 תצוגה לפי שבועות'}
+          <p className="text-sm text-fg-3 mt-2 flex items-center justify-center gap-1.5">
+            <LuCalendarDays aria-hidden className="w-4 h-4 shrink-0" />{timeRange === '10days' ? 'תצוגה לפי ימים' : 'תצוגה לפי שבועות'}
           </p>
         </div>
       </div>
 
       <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
+        <TodayWorkouts email={userToShow?.Email} />
         <StatsCards stats={stats} />
 
-        <div className="bg-white rounded-xl shadow-sm border p-6">
-          <h2 className="text-xl font-bold text-gray-800 mb-2">
-            🧗 Climbing Volume
+        <div className="bg-surface rounded-xl border p-6">
+          <h2 className="text-xl font-bold text-fg mb-2 flex items-center gap-2">
+            <LuMountain aria-hidden className="w-5 h-5 shrink-0 text-accent" />Climbing Volume
           </h2>
-          <p className="text-xs text-gray-500 mb-4">
-            🟣 הובלה  •  🟡 בורד  •  🟤 בולדר
+          <p className="text-xs text-muted mb-4 flex flex-wrap items-center gap-x-4 gap-y-1">
+            <span className="inline-flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-info" />הובלה</span>
+            <span className="inline-flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-warning" />בורד</span>
+            <span className="inline-flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-accent" />בולדר</span>
           </p>
           <ClimbingVolumeChart data={climbingData} />
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border p-6">
+        <div className="bg-surface rounded-xl border p-6">
           <div className="flex items-start justify-between mb-4" dir="rtl">
-            <h2 className="text-xl font-bold text-gray-800">💚 Wellness</h2>
-            <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 text-xs text-gray-500 text-right">
-              <span className="font-semibold text-red-500 col-span-1">🤕 כאב</span>
-              <span className="font-semibold text-green-500 col-span-1">⚡ אנרגיה</span>
+            <h2 className="text-xl font-bold text-fg inline-flex items-center gap-2"><LuHeartPulse aria-hidden className="w-5 h-5 shrink-0 text-accent" />Wellness</h2>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 text-xs text-muted text-right">
+              <span className="font-semibold text-danger col-span-1">🤕 כאב</span>
+              <span className="font-semibold text-success col-span-1">⚡ אנרגיה</span>
               <span>0 — ללא כאב 🟢</span>
               <span>0 — אין כוח לכלום 😴</span>
               <span>1 — כאב קל, להתאמן 🟡</span>
@@ -416,9 +417,9 @@ export default function DashboardPage() {
           <WellnessChart data={wellnessData} />
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border p-6">
-          <h2 className="text-xl font-bold text-gray-800 mb-4">
-            ✅ אימונים שבוצעו
+        <div className="bg-surface rounded-xl border p-6">
+          <h2 className="text-xl font-bold text-fg mb-4 flex items-center gap-2">
+            <LuCircleCheck aria-hidden className="w-5 h-5 shrink-0 text-accent" />אימונים שבוצעו
           </h2>
           <ExerciseAmountChart data={exerciseData} />
         </div>

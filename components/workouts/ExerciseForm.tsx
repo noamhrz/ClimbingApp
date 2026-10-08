@@ -4,6 +4,7 @@
 import { useState, useEffect } from 'react'
 import { WorkoutExercise, Exercise, DEFAULT_WORKOUT_EXERCISE } from '@/types/workouts'
 import { calculateExerciseTime, formatTimeMinutes, formatRestTime } from '@/lib/workout-calculations'
+import { LuTimer } from 'react-icons/lu'
 
 interface Props {
   workoutExercise: WorkoutExercise
@@ -35,27 +36,27 @@ export default function ExerciseForm({
   const estimatedTime = calculateExerciseTime(localData, exercise)
 
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-3 hover:shadow-md transition-shadow group">
+    <div className="bg-surface border border-line rounded-lg p-3 transition-shadow group">
       {/* Header — drag handle covers icon + name, not the remove button */}
       <div className="flex items-center gap-2 mb-3">
         <div
           {...dragHandleProps}
           className="flex items-center gap-2 flex-1 min-w-0 cursor-grab active:cursor-grabbing"
         >
-          <svg className="w-5 h-5 shrink-0 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+          <svg className="w-5 h-5 shrink-0 text-faint" fill="currentColor" viewBox="0 0 20 20">
             <path d="M7 2a2 2 0 00-2 2v12a2 2 0 002 2h6a2 2 0 002-2V4a2 2 0 00-2-2H7zm3 14a1 1 0 100-2 1 1 0 000 2zm0-4a1 1 0 100-2 1 1 0 000 2zm0-4a1 1 0 100-2 1 1 0 000 2z" />
           </svg>
           <div className="flex-1 min-w-0">
             <div className="font-medium text-sm truncate">{exercise.Name}</div>
-            <div className="text-xs text-gray-500">
+            <div className="text-xs text-muted">
               {exercise.Category}
               {exercise.IsSingleHand && (
-                <span className="ml-2 bg-purple-100 text-purple-700 px-2 py-0.5 rounded">
+                <span className="ml-2 bg-info/10 text-info px-2 py-0.5 rounded">
                   Single Hand
                 </span>
               )}
               {exercise.isDuration && (
-                <span className="ml-2 bg-blue-100 text-blue-700 px-2 py-0.5 rounded">
+                <span className="ml-2 bg-accent/15 text-accent px-2 py-0.5 rounded">
                   Duration
                 </span>
               )}
@@ -67,7 +68,7 @@ export default function ExerciseForm({
         <button
           onClick={onRemove}
           onPointerDown={e => e.stopPropagation()}
-          className="opacity-0 group-hover:opacity-100 text-red-600 hover:text-red-700 transition-opacity shrink-0"
+          className="opacity-0 group-hover:opacity-100 text-danger hover:text-danger/90 transition-opacity shrink-0"
           title="הסר תרגיל"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -80,7 +81,7 @@ export default function ExerciseForm({
       <div className="grid grid-cols-4 gap-2">
         {/* Sets */}
         <div>
-          <label className="block text-xs text-gray-600 mb-1">סטים</label>
+          <label className="block text-xs text-fg-3 mb-1">סטים</label>
           <input
             type="number"
             value={localData.Sets}
@@ -93,7 +94,7 @@ export default function ExerciseForm({
         {/* Reps or Duration */}
         {exercise.isDuration ? (
           <div>
-            <label className="block text-xs text-gray-600 mb-1">זמן (שניות)</label>
+            <label className="block text-xs text-fg-3 mb-1">זמן (שניות)</label>
             <input
               type="number"
               value={localData.Duration ?? DEFAULT_WORKOUT_EXERCISE.Duration}
@@ -109,7 +110,7 @@ export default function ExerciseForm({
           </div>
         ) : (
           <div>
-            <label className="block text-xs text-gray-600 mb-1">חזרות</label>
+            <label className="block text-xs text-fg-3 mb-1">חזרות</label>
             <input
               type="number"
               value={localData.Reps}
@@ -122,7 +123,7 @@ export default function ExerciseForm({
 
         {/* Rest */}
         <div className="col-span-2">
-          <label className="block text-xs text-gray-600 mb-1">מנוחה</label>
+          <label className="block text-xs text-fg-3 mb-1">מנוחה</label>
           <div className="flex gap-1">
             <input
               type="number"
@@ -131,7 +132,7 @@ export default function ExerciseForm({
               min="0"
               className="flex-1 border rounded px-2 py-1 text-sm"
             />
-            <span className="text-xs text-gray-500 self-center whitespace-nowrap">
+            <span className="text-xs text-muted self-center whitespace-nowrap">
               {formatRestTime(localData.Rest)}
             </span>
           </div>
@@ -139,8 +140,8 @@ export default function ExerciseForm({
       </div>
 
       {/* Estimated Time */}
-      <div className="mt-2 pt-2 border-t border-gray-100 text-xs text-gray-600 flex items-center justify-between">
-        <span>⏱️ זמן משוער:</span>
+      <div className="mt-2 pt-2 border-t border-line text-xs text-fg-3 flex items-center justify-between">
+        <span><LuTimer aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />זמן משוער:</span>
         <span className="font-medium">{formatTimeMinutes(estimatedTime)}</span>
       </div>
     </div>

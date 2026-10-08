@@ -3,6 +3,7 @@
 
 import { useState } from 'react'
 import type { GeneralGoalsData } from '@/lib/goals-api'
+import { LuPin, LuSave, LuTarget } from 'react-icons/lu'
 
 interface Props {
   initialData: GeneralGoalsData | null
@@ -44,14 +45,14 @@ export default function GeneralGoalsForm({ initialData, onSave }: Props) {
     <div className="space-y-4">
       {/* Overarching Goal */}
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-2">
-          🎯 מטרת על
+        <label className="block text-sm font-semibold text-fg-2 mb-2">
+          <LuTarget aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />מטרת על
         </label>
         <input
           type="text"
           value={data.OverarchingGoal}
           onChange={(e) => setData({ ...data, OverarchingGoal: e.target.value })}
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          className="w-full px-4 py-3 border border-line rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent"
           placeholder="לדוגמה: להשתפר בסיבולת ובטכניקה"
         />
       </div>
@@ -59,14 +60,14 @@ export default function GeneralGoalsForm({ initialData, onSave }: Props) {
       {/* 5 Goals */}
       {[1, 2, 3, 4, 5].map((num) => (
         <div key={num}>
-          <label className="block text-sm font-semibold text-gray-700 mb-2">
-            📌 יעד {num}
+          <label className="block text-sm font-semibold text-fg-2 mb-2">
+            <LuPin aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />יעד {num}
           </label>
           <input
             type="text"
             value={data[`Goal${num}` as keyof GeneralGoalsData] as string}
             onChange={(e) => setData({ ...data, [`Goal${num}`]: e.target.value })}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-4 py-3 border border-line rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent"
             placeholder={`יעד ${num}`}
           />
         </div>
@@ -77,15 +78,15 @@ export default function GeneralGoalsForm({ initialData, onSave }: Props) {
         <button
           onClick={handleSave}
           disabled={saving}
-          className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-6 py-3 bg-accent text-on-accent font-semibold rounded-lg hover:bg-accent-hover transition disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {saving ? '💾 שומר...' : '💾 שמור'}
+          {saving ? <><LuSave aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />שומר...</> : <><LuSave aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />שמור</>}
         </button>
         
         {message && (
           <div className={`px-4 py-2 rounded-lg ${
-            message.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-          }`}>
+ message.type === 'success' ? 'bg-success/15 text-success' : 'bg-danger/15 text-danger'
+ }`}>
             {message.text}
           </div>
         )}

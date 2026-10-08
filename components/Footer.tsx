@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useAuth } from '@/context/AuthContext'
 import { canImpersonate, getRoleConfig, Role } from '@/lib/permissions'
+import { LuEye, LuUsers, LuChevronDown } from 'react-icons/lu'
 
 // User type matching AuthContext
 interface User {
@@ -36,16 +37,16 @@ export default function Footer() {
       <div className="h-20"></div>
 
       {/* Fixed Footer */}
-      <footer className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-gray-800 to-gray-900 text-white shadow-lg z-50 border-t-2 border-gray-700">
-        <div className="max-w-7xl mx-auto px-4 py-3">
+      <footer className="fixed bottom-0 max-md:bottom-[calc(3.5rem+env(safe-area-inset-bottom))] left-0 right-0 text-fg z-50 border-t border-line bg-bg/95 backdrop-blur-md pb-[env(safe-area-inset-bottom)] max-md:pb-0">
+        <div className="max-w-7xl mx-auto px-4 py-2.5">
           <div className="flex items-center justify-between">
             {/* Left: Current User Role + Quick Links */}
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
-                <span className="text-2xl">{currentConfig.icon}</span>
+                <span className="text-2xl leading-none">{currentConfig.icon}</span>
                 <div className="text-sm">
-                  <p className="font-semibold">{currentConfig.label}</p>
-                  <p className="text-xs text-gray-400">מחובר</p>
+                  <p className="font-bold text-fg">{currentConfig.label}</p>
+                  <p className="text-xs text-faint">מחובר</p>
                 </div>
               </div>
 
@@ -54,12 +55,12 @@ export default function Footer() {
 
             {/* Center: Impersonation Status */}
             {isImpersonating && activeUser && (
-              <div className="hidden md:flex items-center gap-2 bg-yellow-500/20 px-4 py-2 rounded-lg border border-yellow-500/30">
-                <span className="text-sm">🔍 צופה כ:</span>
+              <div className="hidden md:flex items-center gap-2 bg-warning/10 px-4 py-2 rounded-full border border-warning/30 text-fg-2">
+                <span className="text-sm inline-flex items-center gap-1.5"><LuEye aria-hidden className="w-4 h-4 shrink-0" />צופה כ:</span>
                 <span className="font-semibold">{activeConfig?.icon} {activeUser.Name}</span>
                 <button
                   onClick={switchToSelf}
-                  className="ml-2 text-xs bg-yellow-500 hover:bg-yellow-600 px-2 py-1 rounded transition-colors"
+                  className="ms-2 text-xs font-semibold text-warning hover:text-fg underline px-1"
                 >
                   חזור לעצמי
                 </button>
@@ -69,24 +70,22 @@ export default function Footer() {
             {/* Right: User Menu Toggle */}
             <button
               onClick={() => setShowUserMenu(!showUserMenu)}
-              className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg font-medium transition-all shadow-md flex items-center gap-2"
+              className="min-h-11 bg-accent hover:bg-accent-hover text-on-accent px-5 rounded-full font-bold transition-colors flex items-center gap-2"
             >
-              <span>👥</span>
+              <LuUsers aria-hidden className="w-4 h-4 shrink-0" />
               <span className="hidden sm:inline">החלף מתאמן</span>
               <span className="sm:hidden">החלף</span>
-              <span className={`transition-transform ${showUserMenu ? 'rotate-180' : ''}`}>
-                ▼
-              </span>
+              <LuChevronDown aria-hidden className={`w-4 h-4 transition-transform ${showUserMenu ? 'rotate-180' : ''}`} />
             </button>
           </div>
 
           {/* Mobile Impersonation Status */}
           {isImpersonating && activeUser && (
-            <div className="md:hidden mt-2 bg-yellow-500/20 px-3 py-2 rounded-lg border border-yellow-500/30 text-xs">
-              <span>🔍 צופה כ: <strong>{activeConfig?.icon} {activeUser.Name}</strong></span>
+            <div className="md:hidden mt-2 bg-warning/10 px-3 py-2 rounded-xl border border-warning/30 text-xs text-fg-2 flex items-center justify-between gap-2">
+              <span className="inline-flex items-center gap-1.5"><LuEye aria-hidden className="w-4 h-4 shrink-0" />צופה כ: <strong>{activeConfig?.icon} {activeUser.Name}</strong></span>
               <button
                 onClick={switchToSelf}
-                className="ml-2 bg-yellow-500 hover:bg-yellow-600 px-2 py-1 rounded"
+                className="text-warning font-semibold underline min-h-9 px-1"
               >
                 חזור
               </button>
@@ -126,19 +125,19 @@ function UserSelectionMenu({
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/50 z-40"
+        className="fixed inset-0 bg-black/60 z-40"
         onClick={onClose}
       />
 
       {/* Menu */}
-      <div className="fixed bottom-20 left-0 right-0 bg-white text-gray-900 shadow-2xl z-50 max-h-[60vh] overflow-y-auto">
+      <div className="fixed bottom-20 max-md:bottom-36 left-0 right-0 mx-2 bg-raised text-fg rounded-2xl border border-line-strong shadow-2xl shadow-black/60 z-50 max-h-[60vh] overflow-y-auto">
         <div className="max-w-7xl mx-auto">
           {/* Header */}
-          <div className="sticky top-0 bg-gradient-to-r from-blue-600 to-blue-700 text-white px-4 py-3 flex justify-between items-center">
+          <div className="sticky top-0 text-fg px-4 py-3 flex justify-between items-center bg-raised border-b border-line">
             <h3 className="font-bold text-lg">בחר מתאמן</h3>
             <button
               onClick={onClose}
-              className="text-2xl hover:bg-white/20 w-8 h-8 rounded-full flex items-center justify-center transition-colors"
+              className="text-2xl text-muted hover:text-fg hover:bg-line w-11 h-11 rounded-full flex items-center justify-center transition-colors" aria-label="סגור"
             >
               ×
             </button>
@@ -147,8 +146,8 @@ function UserSelectionMenu({
           {/* Loading State */}
           {loading && (
             <div className="p-8 text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
-              <p className="text-gray-600">טוען מתאמנים...</p>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent mx-auto mb-2"></div>
+              <p className="text-fg-3">טוען מתאמנים...</p>
             </div>
           )}
 
@@ -165,28 +164,28 @@ function UserSelectionMenu({
                   <button
                     key={user.Email}
                     onClick={() => onSelectUser(user.Email)}
-                    className={`p-4 rounded-lg border-2 transition-all text-right ${
-                      isInactive
-                        ? 'border-gray-200 bg-gray-50 opacity-60'
-                        : isActive
-                          ? 'border-blue-500 bg-blue-50 shadow-md'
-                          : 'border-gray-200 hover:border-blue-300 hover:bg-blue-50'
-                    }`}
+                    className={`p-4 rounded-xl border transition-colors text-start ${
+ isInactive
+ ? 'border-line bg-surface opacity-50'
+ : isActive
+ ? 'border-accent bg-accent/10'
+ : 'border-line bg-surface hover:border-accent/60 hover:bg-accent/5'
+ }`}
                   >
                     <div className="flex items-start gap-3">
                       <span className="text-3xl">{config.icon}</span>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <span className="font-semibold text-gray-900 truncate">
+                          <span className="font-semibold text-fg truncate">
                             {user.Name}
                           </span>
                           {isInactive && (
-                            <span className="text-xs bg-gray-200 text-gray-500 px-2 py-0.5 rounded shrink-0">
+                            <span className="text-xs bg-raised text-muted px-2 py-0.5 rounded shrink-0">
                               לא פעיל
                             </span>
                           )}
                         </div>
-                        <div className="text-xs text-gray-500 truncate">
+                        <div className="text-xs text-muted truncate">
                           {user.Email}
                         </div>
                         <div className="flex items-center gap-2 mt-2">
@@ -194,12 +193,12 @@ function UserSelectionMenu({
                             {config.label}
                           </span>
                           {isSelf && (
-                            <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
+                            <span className="text-xs bg-success/15 text-success px-2 py-1 rounded">
                               אני
                             </span>
                           )}
                           {isActive && !isSelf && (
-                            <span className="text-xs bg-blue-600 text-white px-2 py-1 rounded">
+                            <span className="text-xs bg-accent text-on-accent font-bold px-2 py-1 rounded">
                               פעיל
                             </span>
                           )}
@@ -214,7 +213,7 @@ function UserSelectionMenu({
 
           {/* Empty State */}
           {!loading && (!trainees || trainees.length === 0) && (
-            <div className="p-8 text-center text-gray-500">
+            <div className="p-8 text-center text-muted">
               <p>לא נמצאו מתאמנים</p>
             </div>
           )}

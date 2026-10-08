@@ -13,12 +13,12 @@ export default function AdminFooter() {
   }
 
   return (
-    <footer className="fixed bottom-0 left-0 right-0 bg-gray-900 text-gray-100 text-sm py-2 px-4 flex justify-between items-center shadow-md z-50">
+    <footer className="fixed bottom-0 left-0 right-0 bg-bg text-fg text-sm py-2 px-4 flex justify-between items-center z-50">
       <div>
         {selectedUser ? (
           <span>
             👤 משתמש פעיל: <strong>{selectedUser.Name}</strong>{' '}
-            <span className="text-blue-300">({selectedUser.userEmail})</span>
+            <span className="text-accent">({selectedUser.userEmail})</span>
           </span>
         ) : (
           <span>אין משתמש פעיל</span>
@@ -27,7 +27,7 @@ export default function AdminFooter() {
 
       <button
         onClick={handleSwitchUser}
-        className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs"
+        className="bg-accent hover:bg-accent-hover text-on-accent px-3 py-1 rounded text-xs"
       >
         החלף משתמש
       </button>

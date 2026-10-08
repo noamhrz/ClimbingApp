@@ -57,12 +57,12 @@ export async function POST(request: NextRequest) {
   // Fetch coach note from WorkoutsForUser
   const { data: wfu } = await supabase
     .from('WorkoutsForUser')
-    .select('CoachNote')
+    .select('Notes, CoachNote')
     .eq('Email', entry.Email)
     .eq('WorkoutID', entry.WorkoutID)
     .single()
 
-  const coachNote = wfu?.CoachNote || 'אין הערות מאמן'
+  const coachNote = (wfu?.Notes || wfu?.CoachNote || '').trim() || 'אין הערות מאמן'
 
   // Fetch exercises
   const { data: workoutExercises } = await supabase

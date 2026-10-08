@@ -4,6 +4,7 @@ import { useDroppable } from '@dnd-kit/core'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { WorkoutExerciseWithDetails } from '@/types/workouts'
 import SortableExerciseItem from './SortableExerciseItem'
+import { LuPin, LuTrash2 } from 'react-icons/lu'
 
 interface Props {
   blockNumber: number
@@ -35,19 +36,19 @@ export default function BlockContainer({
       ref={setNodeRef}
       onPointerDownCapture={onSelectBlock}
       className={`rounded-lg p-4 border-2 transition-colors ${
-        isOver || isSelectedForAdd
-          ? 'border-blue-400 bg-blue-50'
-          : 'border-gray-200 bg-gray-50'
-      }`}
+ isOver || isSelectedForAdd
+ ? 'border-accent bg-accent/15'
+ : 'border-line bg-surface'
+ }`}
     >
       {/* Block Header */}
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-lg font-bold">📌 בלוק {blockNumber}</h3>
+        <h3 className="text-lg font-bold"><LuPin aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />בלוק {blockNumber}</h3>
         <button
           onClick={onDeleteBlock}
-          className="text-red-600 hover:text-red-700 text-sm font-medium"
+          className="text-danger hover:text-danger/90 text-sm font-medium"
         >
-          🗑️ מחק בלוק
+          <LuTrash2 aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />מחק בלוק
         </button>
       </div>
 
@@ -58,7 +59,7 @@ export default function BlockContainer({
       >
         <div className="space-y-3">
           {sortedExercises.length === 0 && (
-            <div className="py-6 text-center text-gray-400 text-sm border border-dashed border-gray-300 rounded-lg">
+            <div className="py-6 text-center text-faint text-sm border border-dashed border-line rounded-lg">
               גרור תרגיל לכאן
             </div>
           )}
@@ -77,10 +78,10 @@ export default function BlockContainer({
           <button
             onClick={onAddExercise}
             className={`w-full border-2 border-dashed rounded-lg py-3 text-sm transition-colors ${
-              isSelectedForAdd
-                ? 'border-blue-500 text-blue-600 bg-blue-50'
-                : 'border-gray-300 text-gray-500 hover:border-blue-500 hover:text-blue-600'
-            }`}
+ isSelectedForAdd
+ ? 'border-accent text-accent bg-accent/15'
+ : 'border-line text-muted hover:border-accent/90 hover:text-accent/90'
+ }`}
           >
             {isSelectedForAdd ? '👉 בחר תרגיל מהסיידבר' : `+ הוסף תרגיל לבלוק ${blockNumber}`}
           </button>

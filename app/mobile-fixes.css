@@ -69,13 +69,13 @@ nextjs-portal {
   [class*="bg-black/50"] {
     z-index: 9997 !important;
     opacity: 1 !important;
-    background-color: rgba(0, 0, 0, 0.5) !important;
+    background-color: rgba(0, 0, 0, 0.6) !important;
   }
   
   /* התפריט עצמו */
   .fixed.bottom-20.left-0.right-0 {
     z-index: 9998 !important;
-    background-color: white !important;
+    background-color: var(--color-raised) !important;
     opacity: 1 !important;
   }
 }

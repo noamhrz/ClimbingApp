@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react'
 import { ClimbingRoute, BoulderGrade, LeadGrade, BoardType } from '@/types/climbing'
 import { RouteTable } from './RouteTable'
 import { generateTempId, getGradeDisplay } from '@/lib/climbing-helpers'
+import { LuCircleCheck, LuDumbbell, LuPartyPopper, LuRocket } from 'react-icons/lu'
 
 interface RouteTypeBlockProps {
   type: 'Boulder' | 'Board' | 'Lead'
@@ -101,11 +102,11 @@ export function RouteTypeBlock({
   }
   
   return (
-    <div className="mb-6 border rounded-lg overflow-hidden shadow-sm">
+    <div className="mb-6 border rounded-lg overflow-hidden ">
       {/* Accordion Header - Clickable */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-3 flex items-center justify-between hover:from-blue-600 hover:to-blue-700 transition-all"
+        className="w-full text-fg px-4 py-3 flex items-center justify-between hover: hover: transition-all bg-surface border border-line"
       >
         <span className="font-bold text-lg">
           {icon} {type} ({routes.length} מסלולים)
@@ -120,14 +121,14 @@ export function RouteTypeBlock({
         <>
           {/* Board Type Selector - Only for Board */}
           {type === 'Board' && (
-            <div className="p-4 bg-purple-50 border-b">
+            <div className="p-4 bg-info/10 border-b">
               <label className="block text-sm font-medium mb-2">
-                🏋️ סוג Board:
+                <LuDumbbell aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />סוג Board:
               </label>
               <select
                 value={selectedBoardType || ''}
                 onChange={(e) => onBoardTypeChange(Number(e.target.value) || null)}
-                className="w-full px-3 py-2 border rounded focus:ring-2 focus:ring-purple-500"
+                className="w-full px-3 py-2 border rounded focus:ring-2 focus:ring-info"
               >
                 <option value="">בחר סוג Board</option>
                 {(boardTypes || []).map(board => (
@@ -139,7 +140,7 @@ export function RouteTypeBlock({
                 ))}
               </select>
               {selectedBoardType && (boardTypes || []).find(b => b.BoardID === selectedBoardType) && (
-                <p className="text-xs text-gray-600 mt-1">
+                <p className="text-xs text-fg-3 mt-1">
                   {(boardTypes || []).find(b => b.BoardID === selectedBoardType)?.Description}
                 </p>
               )}
@@ -148,9 +149,9 @@ export function RouteTypeBlock({
 
           {/* Quick Add */}
           <div className={`p-4 border-b transition-all duration-300 ${
-            justAdded ? 'bg-green-50' : 'bg-blue-50'
-          }`}>
-            <div className="text-sm font-medium mb-2">🚀 הוספה מהירה:</div>
+ justAdded ? 'bg-success/15' : 'bg-accent/15'
+ }`}>
+            <div className="text-sm font-medium mb-2"><LuRocket aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />הוספה מהירה:</div>
             
             {/* Grade and Count - Same Row */}
             <div className="flex items-center gap-2 mb-3">
@@ -159,7 +160,7 @@ export function RouteTypeBlock({
                 value={gradeValue}
                 onChange={(e) => setGradeValue(Number(e.target.value))}
                 disabled={isAdding}
-                className="flex-1 px-3 py-2 border rounded focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                className="flex-1 px-3 py-2 border rounded focus:ring-2 focus:ring-accent disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               >
                 {isLead ? (
                   // Lead grades (1-30)
@@ -189,7 +190,7 @@ export function RouteTypeBlock({
                 max="50"
                 onFocus={(e) => e.target.select()}
                 disabled={isAdding}
-                className="w-20 px-3 py-2 border rounded text-center focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                className="w-20 px-3 py-2 border rounded text-center focus:ring-2 focus:ring-accent disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               />
             </div>
             
@@ -198,12 +199,12 @@ export function RouteTypeBlock({
               onClick={handleQuickAdd}
               disabled={countValue < 1 || isAdding}
               className={`w-full px-4 py-2 rounded font-medium transition-all duration-300 ${
-                justAdded
-                  ? 'bg-green-600 text-white scale-105'
-                  : isAdding
-                  ? 'bg-gray-400 text-white cursor-not-allowed'
-                  : 'bg-blue-600 text-white hover:bg-blue-700'
-              } disabled:bg-gray-300 disabled:cursor-not-allowed`}
+ justAdded
+ ? 'bg-success text-on-accent scale-105'
+ : isAdding
+ ? 'bg-raised text-faint cursor-not-allowed'
+ : 'bg-accent text-on-accent hover:bg-accent-hover'
+ } disabled:bg-raised disabled:text-faint disabled:cursor-not-allowed`}
             >
               {isAdding ? (
                 <span className="flex items-center justify-center gap-2">
@@ -215,7 +216,7 @@ export function RouteTypeBlock({
                 </span>
               ) : justAdded ? (
                 <span className="flex items-center justify-center gap-2">
-                  ✅ נוסף בהצלחה!
+                  <LuCircleCheck aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />נוסף בהצלחה!
                 </span>
               ) : (
                 '⚡ הוסף'
@@ -224,8 +225,8 @@ export function RouteTypeBlock({
             
             {/* Success Message */}
             {justAdded && (
-              <div className="mt-2 text-center text-sm text-green-700 font-medium animate-pulse">
-                🎉 {countValue} מסלולים נוספו!
+              <div className="mt-2 text-center text-sm text-success font-medium animate-pulse">
+                <LuPartyPopper aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />{countValue} מסלולים נוספו!
               </div>
             )}
           </div>

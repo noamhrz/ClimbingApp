@@ -12,6 +12,7 @@ import {
   getAchievements, addAchievement, updateAchievement, deleteAchievement,
   getUsersForSessions,
 } from '@/lib/monthly-sessions-api'
+import { LuCircleCheck, LuNotebookPen, LuPencil, LuPin, LuStar, LuTarget, LuTrash2 } from 'react-icons/lu'
 
 const MONTH_NAMES = [
   'ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני',
@@ -30,11 +31,11 @@ function InlineEditInput({
         value={value}
         onChange={e => onChange(e.target.value)}
         onKeyDown={e => { if (e.key === 'Enter') onSave(); if (e.key === 'Escape') onCancel() }}
-        className="flex-1 border border-blue-400 rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+        className="flex-1 border border-accent rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-accent"
         autoFocus
       />
-      <button onClick={onSave} className="text-blue-600 text-sm font-medium hover:text-blue-800 whitespace-nowrap">שמור</button>
-      <button onClick={onCancel} className="text-gray-400 text-sm hover:text-gray-600 whitespace-nowrap">ביטול</button>
+      <button onClick={onSave} className="text-accent text-sm font-medium hover:text-accent/90 whitespace-nowrap">שמור</button>
+      <button onClick={onCancel} className="text-faint text-sm hover:text-fg-3 whitespace-nowrap">ביטול</button>
     </div>
   )
 }
@@ -50,12 +51,12 @@ function AddRow({
         onChange={e => onChange(e.target.value)}
         onKeyDown={e => { if (e.key === 'Enter') onAdd() }}
         placeholder={placeholder}
-        className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="flex-1 border border-line rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent"
       />
       <button
         onClick={onAdd}
         disabled={!value.trim()}
-        className="bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+        className="bg-accent hover:bg-accent-hover disabled:opacity-40 text-on-accent px-4 py-2 rounded-lg text-sm font-medium transition-colors"
       >
         הוסף
       </button>
@@ -308,25 +309,25 @@ function MonthlySessionsContent() {
   if (!usersLoaded) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <p className="text-gray-400">טוען...</p>
+        <p className="text-faint">טוען...</p>
       </div>
     )
   }
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-6 pb-24" dir="rtl">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">פגישות חודשיות</h1>
+      <h1 className="text-2xl font-bold text-fg mb-6">פגישות חודשיות</h1>
 
       {/* ── Filters ── */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">
+      <div className="bg-surface rounded-xl border border-line p-4 mb-6">
         <div className="flex flex-wrap gap-3">
 
           <div className="flex flex-col gap-1 flex-1 min-w-[150px]">
-            <label className="text-xs font-medium text-gray-500">ספורטאי</label>
+            <label className="text-xs font-medium text-muted">ספורטאי</label>
             <select
               value={selectedEmail}
               onChange={e => updateUrl({ email: e.target.value })}
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="border border-line rounded-lg px-3 py-2 text-sm bg-surface focus:outline-none focus:ring-2 focus:ring-accent"
             >
               {users.map(u => (
                 <option key={u.Email} value={u.Email}>{u.Name}</option>
@@ -335,11 +336,11 @@ function MonthlySessionsContent() {
           </div>
 
           <div className="flex flex-col gap-1 min-w-[130px]">
-            <label className="text-xs font-medium text-gray-500">חודש</label>
+            <label className="text-xs font-medium text-muted">חודש</label>
             <select
               value={selectedMonth}
               onChange={e => updateUrl({ month: Number(e.target.value) })}
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="border border-line rounded-lg px-3 py-2 text-sm bg-surface focus:outline-none focus:ring-2 focus:ring-accent"
             >
               {MONTH_NAMES.map((name, i) => (
                 <option key={i + 1} value={i + 1}>{name}</option>
@@ -348,11 +349,11 @@ function MonthlySessionsContent() {
           </div>
 
           <div className="flex flex-col gap-1 min-w-[100px]">
-            <label className="text-xs font-medium text-gray-500">שנה</label>
+            <label className="text-xs font-medium text-muted">שנה</label>
             <select
               value={selectedYear}
               onChange={e => updateUrl({ year: Number(e.target.value) })}
-              className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="border border-line rounded-lg px-3 py-2 text-sm bg-surface focus:outline-none focus:ring-2 focus:ring-accent"
             >
               {years.map(y => (
                 <option key={y} value={y}>{y}</option>
@@ -366,20 +367,20 @@ function MonthlySessionsContent() {
       {/* ── Session content ── */}
       {sessionLoading ? (
         <div className="flex items-center justify-center py-16">
-          <p className="text-gray-400">טוען פגישה...</p>
+          <p className="text-faint">טוען פגישה...</p>
         </div>
       ) : !session ? (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-10 text-center">
-          <p className="text-gray-500 text-base mb-1">
+        <div className="bg-surface rounded-xl border border-line p-10 text-center">
+          <p className="text-muted text-base mb-1">
             אין פגישה עבור {selectedUserName}
           </p>
-          <p className="text-gray-400 text-sm mb-6">
+          <p className="text-faint text-sm mb-6">
             {MONTH_NAMES[selectedMonth - 1]} {selectedYear}
           </p>
           {canEdit && (
             <button
               onClick={handleCreateSession}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2.5 rounded-lg transition-colors"
+              className="bg-accent hover:bg-accent-hover text-on-accent font-semibold px-6 py-2.5 rounded-lg transition-colors"
             >
               + צור פגישה חדשה
             </button>
@@ -389,14 +390,14 @@ function MonthlySessionsContent() {
         <div className="space-y-5">
 
           {/* Session header */}
-          <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl px-5 py-4">
+          <div className="text-fg rounded-xl px-5 py-4 bg-surface border border-line">
             <h2 className="font-bold text-lg">{MONTH_NAMES[session.Month - 1]} {session.Year}</h2>
-            <p className="text-blue-200 text-sm mt-0.5">{selectedUserName}</p>
+            <p className="text-fg-2 text-sm mt-0.5">{selectedUserName}</p>
           </div>
 
           {/* Notes */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-            <h3 className="font-semibold text-gray-900 mb-3">📝 הערות מאמן</h3>
+          <div className="bg-surface rounded-xl border border-line p-5">
+            <h3 className="font-semibold text-fg mb-3"><LuNotebookPen aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />הערות מאמן</h3>
             {canEdit ? (
               <div className="relative">
                 <textarea
@@ -405,26 +406,26 @@ function MonthlySessionsContent() {
                   onBlur={handleNotesBlur}
                   placeholder="הוסף הערות לפגישה..."
                   rows={4}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-line rounded-lg px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-accent"
                 />
                 {notesSaving && (
-                  <span className="absolute bottom-3 left-3 text-xs text-gray-400">שומר...</span>
+                  <span className="absolute bottom-3 left-3 text-xs text-faint">שומר...</span>
                 )}
               </div>
             ) : (
-              <p className="text-gray-700 text-sm whitespace-pre-wrap min-h-[3rem]">
-                {notes || <span className="text-gray-400">אין הערות</span>}
+              <p className="text-fg-2 text-sm whitespace-pre-wrap min-h-[3rem]">
+                {notes || <span className="text-faint">אין הערות</span>}
               </p>
             )}
           </div>
 
           {/* Coach Todos */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-            <h3 className="font-semibold text-gray-900 mb-4">✅ משימות מאמן</h3>
+          <div className="bg-surface rounded-xl border border-line p-5">
+            <h3 className="font-semibold text-fg mb-4"><LuCircleCheck aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />משימות מאמן</h3>
             <div className="space-y-1">
-              {coachTodos.length === 0 && <p className="text-gray-400 text-sm py-1">אין משימות</p>}
+              {coachTodos.length === 0 && <p className="text-faint text-sm py-1">אין משימות</p>}
               {coachTodos.map(todo => (
-                <div key={todo.TodoID} className="flex items-center gap-2 px-2 py-2 rounded-lg hover:bg-gray-50 group">
+                <div key={todo.TodoID} className="flex items-center gap-2 px-2 py-2 rounded-lg hover:bg-surface group">
                   <input
                     type="checkbox"
                     checked={todo.Completed}
@@ -441,20 +442,20 @@ function MonthlySessionsContent() {
                     />
                   ) : (
                     <>
-                      <span className={`flex-1 text-sm ${todo.Completed ? 'line-through text-gray-400' : 'text-gray-800'}`}>
+                      <span className={`flex-1 text-sm ${todo.Completed ? 'line-through text-faint' : 'text-fg'}`}>
                         {todo.Task}
                       </span>
                       {!canEdit && (
                         <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                          todo.Completed ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
-                        }`}>
+ todo.Completed ? 'bg-success/15 text-success' : 'bg-warning/15 text-warning'
+ }`}>
                           {todo.Completed ? 'הושלם' : 'ממתין'}
                         </span>
                       )}
                       {canEdit && (
                         <div className="opacity-0 group-hover:opacity-100 flex gap-0.5 transition-opacity">
-                          <button onClick={() => setEditingCoachTodo({ id: todo.TodoID, task: todo.Task })} className="p-1.5 text-gray-400 hover:text-blue-600 rounded" title="ערוך">✏️</button>
-                          <button onClick={() => handleDeleteCoachTodo(todo.TodoID)} className="p-1.5 text-gray-400 hover:text-red-500 rounded" title="מחק">🗑️</button>
+                          <button onClick={() => setEditingCoachTodo({ id: todo.TodoID, task: todo.Task })} className="p-1.5 text-faint hover:text-accent rounded" title="ערוך"><LuPencil aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></button>
+                          <button onClick={() => handleDeleteCoachTodo(todo.TodoID)} className="p-1.5 text-faint hover:text-danger rounded" title="מחק"><LuTrash2 aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></button>
                         </div>
                       )}
                     </>
@@ -468,12 +469,12 @@ function MonthlySessionsContent() {
           </div>
 
           {/* Athlete Todos */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-            <h3 className="font-semibold text-gray-900 mb-4">🎯 משימות ספורטאי</h3>
+          <div className="bg-surface rounded-xl border border-line p-5">
+            <h3 className="font-semibold text-fg mb-4"><LuTarget aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />משימות ספורטאי</h3>
             <div className="space-y-1">
-              {athleteTodos.length === 0 && <p className="text-gray-400 text-sm py-1">אין משימות</p>}
+              {athleteTodos.length === 0 && <p className="text-faint text-sm py-1">אין משימות</p>}
               {athleteTodos.map(todo => (
-                <div key={todo.TodoID} className="flex items-center gap-2 px-2 py-2 rounded-lg hover:bg-gray-50 group">
+                <div key={todo.TodoID} className="flex items-center gap-2 px-2 py-2 rounded-lg hover:bg-surface group">
                   <input
                     type="checkbox"
                     checked={todo.Completed}
@@ -489,13 +490,13 @@ function MonthlySessionsContent() {
                     />
                   ) : (
                     <>
-                      <span className={`flex-1 text-sm ${todo.Completed ? 'line-through text-gray-400' : 'text-gray-800'}`}>
+                      <span className={`flex-1 text-sm ${todo.Completed ? 'line-through text-faint' : 'text-fg'}`}>
                         {todo.Task}
                       </span>
                       {canEdit && (
                         <div className="opacity-0 group-hover:opacity-100 flex gap-0.5 transition-opacity">
-                          <button onClick={() => setEditingAthleteTodo({ id: todo.TodoID, task: todo.Task })} className="p-1.5 text-gray-400 hover:text-blue-600 rounded" title="ערוך">✏️</button>
-                          <button onClick={() => handleDeleteAthleteTodo(todo.TodoID)} className="p-1.5 text-gray-400 hover:text-red-500 rounded" title="מחק">🗑️</button>
+                          <button onClick={() => setEditingAthleteTodo({ id: todo.TodoID, task: todo.Task })} className="p-1.5 text-faint hover:text-accent rounded" title="ערוך"><LuPencil aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></button>
+                          <button onClick={() => handleDeleteAthleteTodo(todo.TodoID)} className="p-1.5 text-faint hover:text-danger rounded" title="מחק"><LuTrash2 aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></button>
                         </div>
                       )}
                     </>
@@ -509,13 +510,13 @@ function MonthlySessionsContent() {
           </div>
 
           {/* Achievements */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-            <h3 className="font-semibold text-gray-900 mb-4">⭐ הישגים חודשיים</h3>
+          <div className="bg-surface rounded-xl border border-line p-5">
+            <h3 className="font-semibold text-fg mb-4"><LuStar aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />הישגים חודשיים</h3>
             <div className="space-y-1">
-              {achievements.length === 0 && <p className="text-gray-400 text-sm py-1">אין הישגים</p>}
+              {achievements.length === 0 && <p className="text-faint text-sm py-1">אין הישגים</p>}
               {achievements.map(ac => (
-                <div key={ac.AchievementID} className="flex items-start gap-2 px-2 py-2 rounded-lg hover:bg-gray-50 group">
-                  <span className="text-yellow-400 flex-shrink-0 mt-0.5">⭐</span>
+                <div key={ac.AchievementID} className="flex items-start gap-2 px-2 py-2 rounded-lg hover:bg-surface group">
+                  <span className="text-warning flex-shrink-0 mt-0.5"><LuStar aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></span>
                   {canEdit && editingAchievement?.id === ac.AchievementID ? (
                     <InlineEditInput
                       value={editingAchievement.content}
@@ -525,11 +526,11 @@ function MonthlySessionsContent() {
                     />
                   ) : (
                     <>
-                      <span className="flex-1 text-sm text-gray-800">{ac.Content}</span>
+                      <span className="flex-1 text-sm text-fg">{ac.Content}</span>
                       {canEdit && (
                         <div className="opacity-0 group-hover:opacity-100 flex gap-0.5 transition-opacity">
-                          <button onClick={() => setEditingAchievement({ id: ac.AchievementID, content: ac.Content })} className="p-1.5 text-gray-400 hover:text-blue-600 rounded" title="ערוך">✏️</button>
-                          <button onClick={() => handleDeleteAchievement(ac.AchievementID)} className="p-1.5 text-gray-400 hover:text-red-500 rounded" title="מחק">🗑️</button>
+                          <button onClick={() => setEditingAchievement({ id: ac.AchievementID, content: ac.Content })} className="p-1.5 text-faint hover:text-accent rounded" title="ערוך"><LuPencil aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></button>
+                          <button onClick={() => handleDeleteAchievement(ac.AchievementID)} className="p-1.5 text-faint hover:text-danger rounded" title="מחק"><LuTrash2 aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></button>
                         </div>
                       )}
                     </>
@@ -543,13 +544,13 @@ function MonthlySessionsContent() {
           </div>
 
           {/* Highlights */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-            <h3 className="font-semibold text-gray-900 mb-4">📌 דגשים חודשיים</h3>
+          <div className="bg-surface rounded-xl border border-line p-5">
+            <h3 className="font-semibold text-fg mb-4"><LuPin aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />דגשים חודשיים</h3>
             <div className="space-y-1">
-              {highlights.length === 0 && <p className="text-gray-400 text-sm py-1">אין דגשים</p>}
+              {highlights.length === 0 && <p className="text-faint text-sm py-1">אין דגשים</p>}
               {highlights.map(hl => (
-                <div key={hl.HighlightID} className="flex items-start gap-2 px-2 py-2 rounded-lg hover:bg-gray-50 group">
-                  <span className="flex-shrink-0 mt-0.5">📌</span>
+                <div key={hl.HighlightID} className="flex items-start gap-2 px-2 py-2 rounded-lg hover:bg-surface group">
+                  <span className="flex-shrink-0 mt-0.5"><LuPin aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></span>
                   {canEdit && editingHighlight?.id === hl.HighlightID ? (
                     <InlineEditInput
                       value={editingHighlight.content}
@@ -559,11 +560,11 @@ function MonthlySessionsContent() {
                     />
                   ) : (
                     <>
-                      <span className="flex-1 text-sm text-gray-800">{hl.Content}</span>
+                      <span className="flex-1 text-sm text-fg">{hl.Content}</span>
                       {canEdit && (
                         <div className="opacity-0 group-hover:opacity-100 flex gap-0.5 transition-opacity">
-                          <button onClick={() => setEditingHighlight({ id: hl.HighlightID, content: hl.Content })} className="p-1.5 text-gray-400 hover:text-blue-600 rounded" title="ערוך">✏️</button>
-                          <button onClick={() => handleDeleteHighlight(hl.HighlightID)} className="p-1.5 text-gray-400 hover:text-red-500 rounded" title="מחק">🗑️</button>
+                          <button onClick={() => setEditingHighlight({ id: hl.HighlightID, content: hl.Content })} className="p-1.5 text-faint hover:text-accent rounded" title="ערוך"><LuPencil aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></button>
+                          <button onClick={() => handleDeleteHighlight(hl.HighlightID)} className="p-1.5 text-faint hover:text-danger rounded" title="מחק"><LuTrash2 aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></button>
                         </div>
                       )}
                     </>
@@ -588,7 +589,7 @@ export default function MonthlySessionsPage() {
   return (
     <Suspense fallback={
       <div className="flex items-center justify-center min-h-[60vh]" dir="rtl">
-        <p className="text-gray-400">טוען...</p>
+        <p className="text-faint">טוען...</p>
       </div>
     }>
       <MonthlySessionsContent />

@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { Workout, WorkoutFilters } from '@/types/workouts'
 import { fetchWorkouts, fetchCategories } from '@/lib/workout-api'
 import WorkoutCard from './WorkoutCard'
+import { LuDumbbell, LuSearch } from 'react-icons/lu'
 
 export default function WorkoutsList() {
   const router = useRouter()
@@ -51,7 +52,7 @@ export default function WorkoutsList() {
           {/* Back Button */}
           <button
             onClick={() => router.push('/dashboard')}
-            className="text-gray-600 hover:text-gray-900"
+            className="text-fg-3 hover:text-fg"
             title="חזור לדף הבית"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -59,13 +60,13 @@ export default function WorkoutsList() {
             </svg>
           </button>
           
-          <h1 className="text-3xl font-bold">🏋️ ניהול אימונים</h1>
+          <h1 className="text-3xl font-bold"><LuDumbbell aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />ניהול אימונים</h1>
         </div>
         
         <div className="flex gap-3 flex-wrap items-center">
           <button
             onClick={() => router.push('/workouts-editor/new')}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-medium"
+            className="bg-accent text-on-accent px-4 py-2 rounded-lg hover:bg-accent-hover font-medium"
           >
             + אימון חדש
           </button>
@@ -82,11 +83,11 @@ export default function WorkoutsList() {
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-lg shadow p-4 mb-6">
+      <div className="bg-surface rounded-lg p-4 mb-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Search */}
           <div>
-            <label className="block text-sm font-medium mb-1">🔍 חיפוש</label>
+            <label className="block text-sm font-medium mb-1"><LuSearch aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />חיפוש</label>
             <input
               type="text"
               value={filters.search}
@@ -134,15 +135,15 @@ export default function WorkoutsList() {
       {/* Workouts List */}
       {loading ? (
         <div className="text-center py-12">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-          <p className="mt-4 text-gray-600">טוען אימונים...</p>
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-accent"></div>
+          <p className="mt-4 text-fg-3">טוען אימונים...</p>
         </div>
       ) : workouts.length === 0 ? (
-        <div className="text-center py-12 bg-gray-50 rounded-lg">
-          <p className="text-gray-600 text-lg">לא נמצאו אימונים</p>
+        <div className="text-center py-12 bg-surface rounded-lg">
+          <p className="text-fg-3 text-lg">לא נמצאו אימונים</p>
           <button
             onClick={() => router.push('/workouts-editor/new')}
-            className="mt-4 text-blue-600 hover:underline"
+            className="mt-4 text-accent hover:underline"
           >
             צור אימון חדש
           </button>

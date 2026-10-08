@@ -10,6 +10,7 @@ import { useAuth, useActiveUserEmail } from '@/context/AuthContext'
 import { Exercise, ExerciseFormData } from '@/types/exercises'
 import ExerciseCard from '@/components/exercises/ExerciseCard'
 import ExerciseModal from '@/components/exercises/ExerciseModal'
+import { LuChartColumn, LuDumbbell, LuFolderOpen, LuPlus, LuSearch } from 'react-icons/lu'
 
 export default function ExercisesClient() {
   const router = useRouter()
@@ -231,8 +232,8 @@ export default function ExercisesClient() {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4 mx-auto"></div>
-          <p className="text-gray-600">בודק הרשאות...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent mb-4 mx-auto"></div>
+          <p className="text-fg-3">בודק הרשאות...</p>
         </div>
       </div>
     )
@@ -242,8 +243,8 @@ export default function ExercisesClient() {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4 mx-auto"></div>
-          <p className="text-gray-600">טוען תרגילים...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent mb-4 mx-auto"></div>
+          <p className="text-fg-3">טוען תרגילים...</p>
         </div>
       </div>
     )
@@ -254,10 +255,10 @@ export default function ExercisesClient() {
       {/* Header */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">
-            🏋️ ניהול תרגילים
+          <h1 className="text-3xl font-bold text-fg">
+            <LuDumbbell aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />ניהול תרגילים
           </h1>
-          <p className="text-gray-600 mt-1">
+          <p className="text-fg-3 mt-1">
             {isAdmin ? 'ניהול כל התרגילים במערכת' : 'ניהול התרגילים שלך'}
           </p>
         </div>
@@ -267,39 +268,39 @@ export default function ExercisesClient() {
             setIsDuplicating(false)
             setShowModal(true)
           }}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center gap-2 shadow-sm"
+          className="px-4 py-2 bg-accent text-on-accent rounded-lg hover:bg-accent-hover transition flex items-center gap-2 "
         >
-          <span className="text-xl">➕</span>
+          <span className="text-xl"><LuPlus aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></span>
           <span>תרגיל חדש</span>
         </button>
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
+      <div className="bg-surface rounded-lg p-4 mb-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Search */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              🔍 חיפוש
+            <label className="block text-sm font-medium text-fg-2 mb-2">
+              <LuSearch aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />חיפוש
             </label>
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="חפש לפי שם או תיאור..."
-              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-accent focus:border-accent"
             />
           </div>
 
           {/* Category filter */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              📂 קטגוריה
+            <label className="block text-sm font-medium text-fg-2 mb-2">
+              <LuFolderOpen aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />קטגוריה
             </label>
             <select
               value={filterCategory}
               onChange={(e) => setFilterCategory(e.target.value)}
-              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-accent focus:border-accent"
             >
               <option value="all">הכל ({exercises.length})</option>
               {categories.map((cat) => {
@@ -311,15 +312,15 @@ export default function ExercisesClient() {
                 )
               })}
             </select>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-muted mt-1">
               {categories.length} קטגוריות זמינות
             </p>
           </div>
 
           {/* Status filter */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              📊 סטטוס
+            <label className="block text-sm font-medium text-fg-2 mb-2">
+              <LuChartColumn aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />סטטוס
             </label>
             <select
               value={filterStatus}
@@ -327,7 +328,7 @@ export default function ExercisesClient() {
                 setFilterStatus(e.target.value)
                 loadExercises()
               }}
-              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-accent focus:border-accent"
             >
               <option value="Active">פעילים</option>
               <option value="Inactive">לא פעילים</option>
@@ -337,7 +338,7 @@ export default function ExercisesClient() {
         </div>
 
         {/* Stats */}
-        <div className="mt-4 flex gap-4 text-sm text-gray-600">
+        <div className="mt-4 flex gap-4 text-sm text-fg-3">
           <span>סה"כ: {filteredExercises.length} תרגילים</span>
           <span>•</span>
           <span>פעילים: {filteredExercises.filter(e => e.Status === 'Active').length}</span>
@@ -352,9 +353,9 @@ export default function ExercisesClient() {
 
       {/* Exercise Grid */}
       {filteredExercises.length === 0 ? (
-        <div className="text-center py-12 bg-gray-50 rounded-lg">
-          <p className="text-gray-600 text-lg mb-2">😕 לא נמצאו תרגילים</p>
-          <p className="text-gray-500 text-sm">נסה לשנות את החיפוש או הסינון</p>
+        <div className="text-center py-12 bg-surface rounded-lg">
+          <p className="text-fg-3 text-lg mb-2">😕 לא נמצאו תרגילים</p>
+          <p className="text-muted text-sm">נסה לשנות את החיפוש או הסינון</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

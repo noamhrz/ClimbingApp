@@ -5,6 +5,7 @@ import { Calendar as BigCalendar, momentLocalizer, View } from 'react-big-calend
 import withDragAndDrop from 'react-big-calendar/lib/addons/dragAndDrop'
 import 'react-big-calendar/lib/css/react-big-calendar.css'
 import 'react-big-calendar/lib/addons/dragAndDrop/styles.css'
+import './calendar-custom.css'
 import { supabase } from '@/lib/supabaseClient'
 import { useAuth, useActiveUserEmail } from '@/context/AuthContext'
 import moment from 'moment-timezone'
@@ -19,6 +20,8 @@ import DeleteRangeModal from '@/components/DeleteRangeModal'
 import DayListView from '@/components/calendar/DayListView'
 import CalendarToolbar from '@/components/calendar/CalendarToolbar'
 import { copyPreviousWorkout } from '@/utils/copyPreviousWorkout'
+import { LuPlus, LuCalendarDays, LuList, LuCalendar, LuCopy, LuBatteryLow, LuX, LuTrash2, LuSave } from 'react-icons/lu'
+import { PageSkeleton } from '@/components/ui/Skeleton'
 
 moment.locale('he')
 moment.tz.setDefault('Asia/Jerusalem')
@@ -39,6 +42,7 @@ interface CalendarEvent {
   StartTime?: string | Date
   Order?: number | null
   EstimatedTotalTime?: number | null
+  CoachNote?: string
 }
 
 interface Workout {
@@ -153,6 +157,15 @@ export default function CalendarPage() {
       return
     }
 
+    // Personal coach notes for this trainee (set in workout assignment)
+    const { data: notesData } = await supabase
+      .from('WorkoutsForUser')
+      .select('WorkoutID, Notes, CoachNote')
+      .eq('Email', activeEmail)
+    const noteMap: Record<number, string> = Object.fromEntries(
+      (notesData || []).map((n) => [n.WorkoutID, ((n.Notes || n.CoachNote || '') as string).trim()])
+    )
+
     const { data: workoutsData } = await supabase
       .from('Workouts')
       .select('WorkoutID, Name, EstimatedTotalTime, EstimatedClimbingTime, CalculatedExercisesTime, containClimbing, containExercise')
@@ -170,10 +183,14 @@ export default function CalendarPage() {
     const getDisplayTime = (workoutId: number): number | null => {
       const w = workoutDetailsMap[workoutId]
       if (!w) return null
+      // EstimatedTotalTime is the workout's total (exercises + climbing, or the
+      // manual value); fall back to the parts only when it is missing.
+      if (w.EstimatedTotalTime && w.EstimatedTotalTime > 0) return w.EstimatedTotalTime
       if (w.containClimbing || w.containExercise) {
-        return (w.CalculatedExercisesTime || 0) + (w.EstimatedClimbingTime || 0)
+        const sum = (w.CalculatedExercisesTime || 0) + (w.EstimatedClimbingTime || 0)
+        if (sum > 0) return sum
       }
-      return w.EstimatedTotalTime ?? null
+      return null
     }
 
     const mapped = data.map((item) => {
@@ -202,6 +219,7 @@ export default function CalendarPage() {
         StartTime: item.StartTime,
         Order: item.Order ?? null,
         EstimatedTotalTime: getDisplayTime(item.WorkoutID),
+        CoachNote: noteMap[item.WorkoutID] || '',
       }
     })
 
@@ -543,12 +561,7 @@ export default function CalendarPage() {
 
   if (authLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4 mx-auto"></div>
-          <p className="text-gray-600">טוען...</p>
-        </div>
-      </div>
+      <PageSkeleton variant="calendar" label="טוען..." />
     )
   }
 
@@ -556,7 +569,7 @@ export default function CalendarPage() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
-          <p className="text-gray-600">אנא בחר משתמש</p>
+          <p className="text-fg-3">אנא בחר משתמש</p>
         </div>
       </div>
     )
@@ -564,42 +577,37 @@ export default function CalendarPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="text-2xl mb-2">⌛</div>
-          <p className="text-gray-600">טוען לוח שנה...</p>
-        </div>
-      </div>
+      <PageSkeleton variant="calendar" label="טוען לוח שנה..." />
     )
   }
 
   return (
-    <div dir="rtl" className="min-h-screen bg-gray-50 pb-20">
-      <div className="bg-white shadow-sm border-b">
+    <div dir="rtl" className="min-h-screen bg-surface pb-20">
+      <div className="bg-surface border-b">
         <div className="max-w-7xl mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
-            <h1 className="text-xl font-bold text-blue-600">📅 לוח אימונים</h1>
+            <h1 className="text-xl font-bold text-fg inline-flex items-center gap-2"><LuCalendarDays aria-hidden className="w-5 h-5 text-accent" />לוח אימונים</h1>
             
             <div className="flex gap-2">
               <button
                 onClick={() => setView('day')}
-                className={`px-4 py-2 rounded-lg font-medium transition-all ${
-                  view === 'day'
-                    ? 'bg-blue-600 text-white shadow-md'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
+                className={`inline-flex items-center gap-1.5 min-h-11 px-4 rounded-full font-medium transition-all ${
+ view === 'day'
+ ? 'bg-accent text-on-accent '
+ : 'bg-surface text-fg-2 border border-line-strong hover:bg-raised'
+ }`}
               >
-                📋 יום
+                <LuList aria-hidden className="w-4 h-4 shrink-0" />יום
               </button>
               <button
                 onClick={() => setView('month')}
-                className={`px-4 py-2 rounded-lg font-medium transition-all ${
-                  view === 'month'
-                    ? 'bg-blue-600 text-white shadow-md'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
+                className={`inline-flex items-center gap-1.5 min-h-11 px-4 rounded-full font-medium transition-all ${
+ view === 'month'
+ ? 'bg-accent text-on-accent '
+ : 'bg-surface text-fg-2 border border-line-strong hover:bg-raised'
+ }`}
               >
-                🗓️ חודש
+                <LuCalendar aria-hidden className="w-4 h-4 shrink-0" />חודש
               </button>
             </div>
           </div>
@@ -608,25 +616,26 @@ export default function CalendarPage() {
 
       <button
         onClick={handleAddButtonClick}
-        className={`fixed bottom-28 left-6 text-white text-3xl rounded-full w-16 h-16 shadow-lg hover:shadow-xl transition-all duration-200 z-40 flex items-center justify-center ${
-          isSelectingDate 
-            ? 'bg-orange-600 hover:bg-orange-700 animate-pulse' 
-            : 'bg-blue-600 hover:bg-blue-700'
-        }`}
+        className={`fixed bottom-28 max-md:bottom-40 left-6 text-on-accent text-3xl rounded-full w-16 h-16 shadow-lg transition-all duration-200 z-40 flex items-center justify-center ${
+ isSelectingDate 
+ ? 'bg-warning hover:bg-warning/90 animate-pulse' 
+ : 'bg-accent hover:bg-accent-hover'
+ }`}
         title={isSelectingDate ? 'בחר תאריך בלוח' : 'הוספת אימון חדש'}
+        aria-label={isSelectingDate ? 'בחר תאריך בלוח' : 'הוספת אימון חדש'}
       >
-        +
+        <LuPlus aria-hidden className="w-8 h-8" strokeWidth={2.5} />
       </button>
 
       {isSelectingDate && (
-        <div className="fixed top-20 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-orange-500 to-orange-600 text-white px-6 py-4 rounded-xl shadow-2xl z-50 animate-bounce pointer-events-none">
+        <div className="fixed top-20 left-1/2 transform -translate-x-1/2 text-fg px-6 py-4 rounded-xl shadow-2xl z-50 animate-bounce pointer-events-none bg-surface border border-line">
           <div className="text-center">
             <div className="text-2xl mb-2">👆</div>
             <div className="font-bold text-lg mb-1">בחר תאריך בלוח</div>
             <div className="text-sm opacity-90">לחץ על המשבצת הרצויה</div>
             <button
               onClick={handleCancelSelection}
-              className="mt-3 px-4 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg text-sm transition-all pointer-events-auto"
+              className="mt-3 px-4 py-2 bg-raised border border-line-strong hover:bg-line-strong rounded-lg text-sm transition-all pointer-events-auto"
             >
               ביטול
             </button>
@@ -695,58 +704,58 @@ export default function CalendarPage() {
       )}
 
       {isAdmin && (
-        <div className="fixed bottom-28 right-6 flex flex-col gap-2 z-40">
+        <div className="fixed bottom-28 max-md:bottom-40 right-4 md:right-6 flex flex-col gap-2 z-40">
           <button
             onClick={() => setShowDuplicateModal(true)}
-            className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg shadow-lg text-sm font-medium transition-all"
+            className="inline-flex items-center gap-1.5 bg-info hover:bg-info text-on-accent px-4 py-2 rounded-lg text-sm font-medium transition-all"
             title="שכפול שבוע"
           >
-            📋 שכפול שבוע
+            <LuCopy aria-hidden className="w-4 h-4 shrink-0" />שכפול שבוע
           </button>
           <button
             onClick={handleApplyDeloading}
-            className="bg-cyan-600 hover:bg-cyan-700 text-white px-4 py-2 rounded-lg shadow-lg text-sm font-medium transition-all"
+            className="inline-flex items-center gap-1.5 bg-info hover:bg-info text-on-accent px-4 py-2 rounded-lg text-sm font-medium transition-all"
             title="החל דילודינג"
           >
-            🔵 דילודינג
+            <LuBatteryLow aria-hidden className="w-4 h-4 shrink-0" />דילודינג
           </button>
           <button
             onClick={handleRemoveDeloading}
-            className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg shadow-lg text-sm font-medium transition-all"
+            className="inline-flex items-center gap-1.5 bg-raised hover:bg-raised/90 text-fg px-4 py-2 rounded-lg text-sm font-medium transition-all"
             title="הסר דילודינג"
           >
-            ❌ הסר דילודינג
+            <LuX aria-hidden className="w-4 h-4 shrink-0" />הסר דילודינג
           </button>
           <button
             onClick={() => setShowDeleteRangeModal(true)}
-            className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg shadow-lg text-sm font-medium transition-all"
+            className="inline-flex items-center gap-1.5 bg-danger hover:bg-danger/90 text-on-accent px-4 py-2 rounded-lg text-sm font-medium transition-all"
             title="נקה טווח תאריכים"
           >
-            🗑️ נקה טווח
+            <LuTrash2 aria-hidden className="w-4 h-4 shrink-0" />נקה טווח
           </button>
         </div>
       )}
 
       {!isMobile && hasPendingChanges && (
-        <div className="fixed top-14 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 bg-amber-50 border border-amber-300 text-amber-800 px-6 py-3 rounded-xl shadow-lg whitespace-nowrap">
+        <div className="fixed top-14 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 bg-raised border border-warning/40 text-warning px-6 py-3 rounded-xl shadow-lg whitespace-nowrap">
           <span className="font-medium text-sm">יש שינויים שלא נשמרו</span>
           <button
             onClick={handleSavePendingChanges}
-            className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-all"
+            className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-accent hover:bg-accent-hover text-on-accent rounded-lg text-sm font-medium transition-all"
           >
-            💾 שמור שינויים
+            <LuSave aria-hidden className="w-4 h-4 shrink-0" />שמור שינויים
           </button>
           <button
             onClick={handleCancelPendingChanges}
-            className="px-4 py-1.5 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg text-sm font-medium transition-all"
+            className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-raised hover:bg-raised/90 text-fg-2 rounded-lg text-sm font-medium transition-all"
           >
-            ✕ בטל
+            <LuX aria-hidden className="w-4 h-4 shrink-0" />בטל
           </button>
         </div>
       )}
 
       <div className="max-w-7xl mx-auto p-4">
-        <div className="bg-white rounded-xl shadow-sm p-4 overflow-hidden">
+        <div className="bg-surface rounded-xl p-4 overflow-hidden">
           {view === 'day' ? (
             <DayListView
               events={events}

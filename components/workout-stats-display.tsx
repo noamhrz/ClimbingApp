@@ -8,6 +8,7 @@ import { useEffect } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import type { WorkoutPerformance, WorkoutStats } from '@/lib/workout-stats-metrics'
 import { getCompletionRateColor, getRPEColor } from '@/lib/workout-stats-metrics'
+import { LuBicepsFlexed, LuChartColumn, LuCircleCheck, LuCircleX, LuMountain, LuTrendingUp, LuTriangleAlert } from 'react-icons/lu'
 
 interface WorkoutStatsDisplayProps {
   performance: WorkoutPerformance
@@ -20,10 +21,10 @@ export function WorkoutStatsDisplay({ performance, email }: WorkoutStatsDisplayP
   
   if (performance.workouts.length === 0) {
     return (
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-8 text-center">
-        <div className="text-4xl mb-3">💪</div>
-        <h3 className="text-xl font-bold text-gray-900 mb-2">אין נתוני אימונים</h3>
-        <p className="text-gray-600">לא נמצאו אימונים בטווח התאריכים הנבחר</p>
+      <div className="bg-accent/15 border border-accent rounded-lg p-8 text-center">
+        <div className="text-4xl mb-3"><LuBicepsFlexed aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></div>
+        <h3 className="text-xl font-bold text-fg mb-2">אין נתוני אימונים</h3>
+        <p className="text-fg-3">לא נמצאו אימונים בטווח התאריכים הנבחר</p>
       </div>
     )
   }
@@ -49,9 +50,9 @@ export function WorkoutStatsDisplay({ performance, email }: WorkoutStatsDisplayP
   return (
     <div className="space-y-6">
       {/* Overall Summary */}
-      <div className="bg-gradient-to-r from-green-500 to-blue-600 rounded-lg p-6 text-white shadow-lg">
+      <div className="rounded-lg p-6 text-fg bg-surface border border-line">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-2xl font-bold">💪 סיכום אימונים</h2>
+          <h2 className="text-2xl font-bold"><LuBicepsFlexed aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />סיכום אימונים</h2>
           
           {/* Category Filter */}
           <div className="flex items-center gap-2">
@@ -59,11 +60,11 @@ export function WorkoutStatsDisplay({ performance, email }: WorkoutStatsDisplayP
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="px-3 py-2 rounded-lg bg-white/20 backdrop-blur-sm border border-white/30 text-white font-medium focus:outline-none focus:ring-2 focus:ring-white/50 cursor-pointer"
+              className="px-3 py-2 rounded-lg min-h-11 bg-bg border border-line-strong text-fg font-medium focus:outline-none focus:border-accent cursor-pointer"
             >
-              <option value="all" className="text-gray-900">🔍 הכל ({performance.workouts.length})</option>
+              <option value="all" className="text-fg">🔍 הכל ({performance.workouts.length})</option>
               {allCategories.map((category) => (
-                <option key={category} value={category} className="text-gray-900">
+                <option key={category} value={category} className="text-fg">
                   {getCategoryIcon(category)} {category} ({categorizedWorkouts[category]?.length ?? 0})
                 </option>
               ))}
@@ -72,15 +73,15 @@ export function WorkoutStatsDisplay({ performance, email }: WorkoutStatsDisplayP
         </div>
         
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          <div className="bg-white/20 rounded-lg p-4 backdrop-blur-sm">
+          <div className="bg-raised border border-line rounded-lg p-4">
             <div className="text-sm opacity-90">סה"כ אימונים</div>
             <div className="text-3xl font-bold">{performance.totalSessions}</div>
           </div>
-          <div className="bg-white/20 rounded-lg p-4 backdrop-blur-sm">
+          <div className="bg-raised border border-line rounded-lg p-4">
             <div className="text-sm opacity-90">בוצעו</div>
             <div className="text-3xl font-bold">{performance.completedSessions}</div>
           </div>
-          <div className="bg-white/20 rounded-lg p-4 backdrop-blur-sm col-span-2 md:col-span-1">
+          <div className="bg-raised border border-line rounded-lg p-4 col-span-2 md:col-span-1">
             <div className="text-sm opacity-90">אחוז השלמה</div>
             <div className="text-3xl font-bold">
               {performance.overallCompletionRate.toFixed(1)}%
@@ -162,25 +163,25 @@ function CategorySection({
   dateRange: { start: string; end: string }
 }) {
   return (
-    <div className="bg-white rounded-lg shadow-lg border-2 border-gray-200">
-      <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-4 border-b-2 border-gray-200 rounded-t-lg">
-        <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+    <div className="bg-surface rounded-lg border-2 border-line">
+      <div className="p-4 border-b-2 border-line rounded-t-lg bg-surface">
+        <h3 className="text-xl font-bold text-fg flex items-center gap-2">
           <span>{getCategoryIcon(category)}</span>
           <span>{category}</span>
-          <span className="text-sm font-normal text-gray-600">({workouts.length} אימונים)</span>
+          <span className="text-sm font-normal text-fg-3">({workouts.length} אימונים)</span>
         </h3>
       </div>
       <div className="p-4">
         <div className="overflow-x-auto">
           <table className="w-full text-sm" dir="rtl">
             <thead>
-              <tr className="border-b-2 border-gray-200 text-gray-700 text-xs">
+              <tr className="border-b-2 border-line text-fg-2 text-xs">
                 <th className="text-center p-2 font-bold">טווח</th>
                 <th className="text-center p-2 font-bold w-32">ציר זמן</th>
                 <th className="text-center p-2 font-bold w-12">#</th>
                 <th className="text-right p-2 font-bold">שם אימון</th>
                 <th className="text-center p-2 font-bold w-16">סה"כ</th>
-                <th className="text-center p-2 font-bold w-16">✅</th>
+                <th className="text-center p-2 font-bold w-16"><LuCircleCheck aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></th>
                 <th className="text-center p-2 font-bold w-16">%</th>
                 <th className="text-center p-2 font-bold w-16">RPE</th>
                 <th className="text-center p-2 font-bold w-8"></th>
@@ -218,8 +219,8 @@ function WorkoutTimelineRow({ workout, rank, maxSessions, email, dateRange }: {
 }) {
   const [open, setOpen] = useState(false)
 
-  const bgColor = workout.completionRate >= 80 ? 'bg-green-50' :
-                  workout.completionRate >= 50 ? 'bg-yellow-50' : 'bg-red-50'
+  const bgColor = workout.completionRate >= 80 ? 'bg-success/10' :
+                  workout.completionRate >= 50 ? 'bg-warning/10' : 'bg-danger/10'
 
   const timelineWidth = maxSessions > 0 ? (workout.totalSessions / maxSessions) * 100 : 0
 
@@ -233,25 +234,25 @@ function WorkoutTimelineRow({ workout, rank, maxSessions, email, dateRange }: {
   return (
     <>
       <tr
-        className={`border-b border-gray-100 cursor-pointer hover:brightness-95 transition ${bgColor}`}
+        className={`border-b border-line cursor-pointer hover:brightness-95 transition ${bgColor}`}
         onClick={() => setOpen(o => !o)}
       >
-        <td className="text-center p-2 text-xs text-gray-600 font-mono whitespace-nowrap">{dateLabel}</td>
+        <td className="text-center p-2 text-xs text-fg-3 font-mono whitespace-nowrap">{dateLabel}</td>
         <td className="p-2">
-          <div className="w-full bg-gray-200 rounded-full h-2">
+          <div className="w-full bg-raised rounded-full h-2">
             <div
               className={`h-2 rounded-full ${
-                workout.completionRate >= 80 ? 'bg-green-500' :
-                workout.completionRate >= 50 ? 'bg-yellow-500' : 'bg-red-500'
-              }`}
+ workout.completionRate >= 80 ? 'bg-success' :
+ workout.completionRate >= 50 ? 'bg-warning' : 'bg-danger'
+ }`}
               style={{ width: `${timelineWidth}%` }}
             />
           </div>
         </td>
         <td className="text-center p-2 text-xs font-bold">{rankBadge}</td>
-        <td className="text-right p-2 font-semibold text-gray-900">{workout.workoutName}</td>
-        <td className="text-center p-2 font-medium text-gray-700">{workout.totalSessions}</td>
-        <td className="text-center p-2 text-green-700 font-semibold">{workout.completedSessions}</td>
+        <td className="text-right p-2 font-semibold text-fg">{workout.workoutName}</td>
+        <td className="text-center p-2 font-medium text-fg-2">{workout.totalSessions}</td>
+        <td className="text-center p-2 text-success font-semibold">{workout.completedSessions}</td>
         <td className="text-center p-2">
           <span className={`font-bold ${getCompletionRateColor(workout.completionRate)}`}>
             {workout.completionRate.toFixed(0)}%
@@ -262,14 +263,14 @@ function WorkoutTimelineRow({ workout, rank, maxSessions, email, dateRange }: {
             <span className={`font-bold ${getRPEColor(workout.averageRPE)}`}>
               {workout.averageRPE.toFixed(1)}
             </span>
-          ) : <span className="text-gray-400">—</span>}
+          ) : <span className="text-faint">—</span>}
         </td>
-        <td className="text-center p-2 text-gray-400 text-xs">{open ? '▲' : '▼'}</td>
+        <td className="text-center p-2 text-faint text-xs">{open ? '▲' : '▼'}</td>
       </tr>
 
       {open && (
         <tr>
-          <td colSpan={9} className="p-0 bg-gray-50 border-b border-gray-200">
+          <td colSpan={9} className="p-0 bg-surface border-b border-line">
             <WorkoutExercisesPanel
               workoutId={workout.workoutId}
               lastCalendarId={workout.lastCalendarId}
@@ -534,7 +535,7 @@ function WorkoutExercisesPanel({ workoutId, lastCalendarId, containClimbing, ema
   }, [workoutId, lastCalendarId, email, dateRange.start, dateRange.end])
 
   if (loading) {
-    return <div className="p-4 text-sm text-gray-500 text-center">טוען...</div>
+    return <div className="p-4 text-sm text-muted text-center">טוען...</div>
   }
 
   // Group performed logs by exerciseId
@@ -588,15 +589,15 @@ function WorkoutExercisesPanel({ workoutId, lastCalendarId, containClimbing, ema
   return (
     <div className="px-4 py-3 space-y-4" dir="rtl">
       {!lastCalendarId && (
-        <p className="text-xs text-amber-600">⚠️ האימון לא בוצע — מציג תוכנית בלבד</p>
+        <p className="text-xs text-warning"><LuTriangleAlert aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />האימון לא בוצע — מציג תוכנית בלבד</p>
       )}
 
       {/* Climbing logbook */}
       {climbSessions.length > 0 && (
         <div>
           <div className="flex items-center gap-3 mb-2">
-            <h4 className="text-xs font-bold text-gray-700">🧗 לוג טיפוס</h4>
-            <span className="text-xs text-gray-500 bg-gray-100 rounded-full px-2 py-0.5">
+            <h4 className="text-xs font-bold text-fg-2"><LuMountain aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />לוג טיפוס</h4>
+            <span className="text-xs text-muted bg-surface rounded-full px-2 py-0.5">
               {sessionCount} אימונים בטווח
             </span>
           </div>
@@ -605,19 +606,19 @@ function WorkoutExercisesPanel({ workoutId, lastCalendarId, containClimbing, ema
             const maxVol = Math.max(...climbSessions.map(s => s.totalVolumeScore))
             return (
               <div className="mb-3 space-y-1">
-                <div className="text-xs text-gray-500 font-semibold mb-1">📊 נפח טיפוס — נקודות</div>
+                <div className="text-xs text-muted font-semibold mb-1"><LuChartColumn aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />נפח טיפוס — נקודות</div>
                 {climbSessions.map(s => {
                   const pct = maxVol > 0 ? (s.totalVolumeScore / maxVol) * 100 : 0
                   return (
                     <div key={s.calendarId} className="flex items-center gap-2">
-                      <span className="text-xs font-mono text-gray-400 w-10 shrink-0">{s.date}</span>
-                      <div className="flex-1 bg-gray-200 rounded-full h-3">
+                      <span className="text-xs font-mono text-faint w-10 shrink-0">{s.date}</span>
+                      <div className="flex-1 bg-raised rounded-full h-3">
                         <div
-                          className="h-3 rounded-full bg-purple-500 transition-all"
+                          className="h-3 rounded-full bg-info transition-all"
                           style={{ width: `${pct}%` }}
                         />
                       </div>
-                      <span className="text-xs font-semibold text-purple-700 w-10 text-left shrink-0">
+                      <span className="text-xs font-semibold text-info w-10 text-left shrink-0">
                         {s.totalVolumeScore.toFixed(1)}
                       </span>
                     </div>
@@ -645,8 +646,8 @@ function WorkoutExercisesPanel({ workoutId, lastCalendarId, containClimbing, ema
               }
 
               return (
-                <div key={session.calendarId} className="bg-gray-50 rounded border border-gray-200 p-2">
-                  <div className="text-xs font-semibold text-gray-500 font-mono mb-1.5">{session.date}</div>
+                <div key={session.calendarId} className="bg-surface rounded border border-line p-2">
+                  <div className="text-xs font-semibold text-muted font-mono mb-1.5">{session.date}</div>
                   <div className="space-y-1.5">
                     {types.map(type => {
                       const entries = byType.get(type)!
@@ -660,7 +661,7 @@ function WorkoutExercisesPanel({ workoutId, lastCalendarId, containClimbing, ema
 
                       return (
                         <div key={type} className="flex items-start gap-2">
-                          <span className="text-xs text-gray-500 shrink-0 w-20 pt-0.5">{typeLabel[type]}</span>
+                          <span className="text-xs text-muted shrink-0 w-20 pt-0.5">{typeLabel[type]}</span>
                           <div className="flex flex-wrap items-center gap-1">
                                 {(() => {
                               // Group by gradeId → count successes & fails
@@ -676,15 +677,15 @@ function WorkoutExercisesPanel({ workoutId, lastCalendarId, containClimbing, ema
                               const sorted = [...gradeMap.entries()].sort(([a], [b]) => a - b)
 
                               return sorted.map(([gradeId, g]) => (
-                                <span key={gradeId} className="inline-flex items-center gap-0.5 text-xs font-mono bg-white border border-gray-200 rounded px-1.5 py-0.5">
-                                  <span className="font-semibold text-gray-800">{g.grade}</span>
-                                  {g.success > 0 && <span className="text-green-700 font-bold"> ✅{g.success}</span>}
-                                  {g.fail > 0 && <span className="text-red-600 font-bold"> ❌{g.fail}</span>}
+                                <span key={gradeId} className="inline-flex items-center gap-0.5 text-xs font-mono bg-surface border border-line rounded px-1.5 py-0.5">
+                                  <span className="font-semibold text-fg">{g.grade}</span>
+                                  {g.success > 0 && <span className="text-success font-bold"> <LuCircleCheck aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />{g.success}</span>}
+                                  {g.fail > 0 && <span className="text-danger font-bold"> <LuCircleX aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />{g.fail}</span>}
                                 </span>
                               ))
                             })()}
                             {maxEntry && (
-                              <span className="text-xs text-gray-400 mr-1">| 🏆 {maxEntry.grade}</span>
+                              <span className="text-xs text-faint mr-1">| 🏆 {maxEntry.grade}</span>
                             )}
                           </div>
                         </div>
@@ -700,12 +701,12 @@ function WorkoutExercisesPanel({ workoutId, lastCalendarId, containClimbing, ema
 
       {/* Planned vs performed table — skip if no exercises */}
       {planned.length === 0 && climbSessions.length === 0 && (
-        <div className="text-sm text-gray-400 text-center">אין נתונים לאימון זה</div>
+        <div className="text-sm text-faint text-center">אין נתונים לאימון זה</div>
       )}
 
-      {planned.length > 0 && <table className="w-full text-xs">
+      {planned.length > 0 && <div className="overflow-x-auto"><table className="w-full min-w-[480px] text-xs">
         <thead>
-          <tr className="border-b border-gray-300 text-gray-500">
+          <tr className="border-b border-line text-muted">
             <th className="text-right py-1 pr-2 font-semibold">תרגיל</th>
             <th className="text-center py-1 font-semibold w-16">סטים מתוכנן</th>
             <th className="text-center py-1 font-semibold w-16">חזרות מתוכנן</th>
@@ -720,20 +721,20 @@ function WorkoutExercisesPanel({ workoutId, lastCalendarId, containClimbing, ema
             const done = logs.length > 0
             const firstLog = logs[0]
             return (
-              <tr key={ex.exerciseId} className={`border-b border-gray-100 ${done ? '' : 'opacity-50'}`}>
-                <td className="py-1.5 pr-2 font-medium text-gray-800">{ex.name}</td>
-                <td className="text-center py-1.5 text-gray-500">{ex.sets ?? '—'}</td>
-                <td className="text-center py-1.5 text-gray-500">{ex.reps ?? '—'}</td>
-                <td className="text-center py-1.5 text-green-700 font-semibold">
-                  {done ? renderPerformedCells(logs) : <span className="text-gray-400">—</span>}
+              <tr key={ex.exerciseId} className={`border-b border-line ${done ? '' : 'opacity-50'}`}>
+                <td className="py-1.5 pr-2 font-medium text-fg">{ex.name}</td>
+                <td className="text-center py-1.5 text-muted">{ex.sets ?? '—'}</td>
+                <td className="text-center py-1.5 text-muted">{ex.reps ?? '—'}</td>
+                <td className="text-center py-1.5 text-success font-semibold">
+                  {done ? renderPerformedCells(logs) : <span className="text-faint">—</span>}
                 </td>
-                <td className="text-center py-1.5 text-gray-700">
+                <td className="text-center py-1.5 text-fg-2">
                   {done && firstLog?.weightKG ? `${firstLog.weightKG} KG` : '—'}
                 </td>
                 <td className="text-center py-1.5">
                   {done
-                    ? <span className="text-green-600 font-bold">✅ בוצע</span>
-                    : <span className="text-gray-400">לא בוצע</span>}
+                    ? <span className="text-success font-bold"><LuCircleCheck aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />בוצע</span>
+                    : <span className="text-faint">לא בוצע</span>}
                 </td>
               </tr>
             )
@@ -742,33 +743,33 @@ function WorkoutExercisesPanel({ workoutId, lastCalendarId, containClimbing, ema
           {[...extraMap.entries()].map(([exerciseId, logs]) => {
             const firstLog = logs[0]
             return (
-              <tr key={`extra-${exerciseId}`} className="border-b border-gray-100 bg-blue-50">
-                <td className="py-1.5 pr-2 font-medium text-blue-800">
-                  {firstLog.name} <span className="text-xs text-blue-500">(לא מתוכנן)</span>
+              <tr key={`extra-${exerciseId}`} className="border-b border-line bg-accent/15">
+                <td className="py-1.5 pr-2 font-medium text-accent">
+                  {firstLog.name} <span className="text-xs text-accent">(לא מתוכנן)</span>
                 </td>
-                <td className="text-center py-1.5 text-gray-400">—</td>
-                <td className="text-center py-1.5 text-gray-400">—</td>
-                <td className="text-center py-1.5 text-green-700 font-semibold">
+                <td className="text-center py-1.5 text-faint">—</td>
+                <td className="text-center py-1.5 text-faint">—</td>
+                <td className="text-center py-1.5 text-success font-semibold">
                   {renderPerformedCells(logs)}
                 </td>
-                <td className="text-center py-1.5 text-gray-700">
+                <td className="text-center py-1.5 text-fg-2">
                   {firstLog?.weightKG ? `${firstLog.weightKG} KG` : '—'}
                 </td>
                 <td className="text-center py-1.5">
-                  <span className="text-blue-600 font-bold">✅ בוצע</span>
+                  <span className="text-accent font-bold"><LuCircleCheck aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />בוצע</span>
                 </td>
               </tr>
             )
           })}
         </tbody>
-      </table>}
+      </table></div>}
 
       {/* Performance history — horizontal table: rows=exercises, columns=dates */}
       {exercisesWithHistory.length > 0 && (
-        <div className="border-t border-gray-200 pt-3" dir="ltr">
+        <div className="border-t border-line pt-3" dir="ltr">
           <div className="flex items-center gap-3 mb-2" dir="rtl">
-            <h4 className="text-xs font-bold text-gray-700">📈 היסטוריית ביצועים</h4>
-            <span className="text-xs text-gray-500 bg-gray-100 rounded-full px-2 py-0.5">
+            <h4 className="text-xs font-bold text-fg-2"><LuTrendingUp aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />היסטוריית ביצועים</h4>
+            <span className="text-xs text-muted bg-surface rounded-full px-2 py-0.5">
               בוצע {sessionCount} פעמים בטווח
             </span>
           </div>
@@ -796,15 +797,15 @@ function WorkoutExercisesPanel({ workoutId, lastCalendarId, containClimbing, ema
               const isSided = sessions.some(s => s.handSide !== null)
 
               return (
-                <div key={exId} className="bg-white rounded border border-gray-200 overflow-x-auto">
+                <div key={exId} className="bg-surface rounded border border-line overflow-x-auto">
                   <table className="text-xs min-w-full">
                     <thead>
-                      <tr className="border-b border-gray-200 bg-gray-50">
-                        <th className="text-right py-1 px-2 font-semibold text-gray-700 whitespace-nowrap min-w-[100px]" dir="rtl">
+                      <tr className="border-b border-line bg-surface">
+                        <th className="text-right py-1 px-2 font-semibold text-fg-2 whitespace-nowrap min-w-[100px]" dir="rtl">
                           {name}
                         </th>
                         {calendarIds.map(calId => (
-                          <th key={calId} className="text-center py-1 px-2 font-mono text-gray-500 whitespace-nowrap">
+                          <th key={calId} className="text-center py-1 px-2 font-mono text-muted whitespace-nowrap">
                             {calIdToDate.get(calId)}
                           </th>
                         ))}
@@ -813,29 +814,29 @@ function WorkoutExercisesPanel({ workoutId, lastCalendarId, containClimbing, ema
                     <tbody>
                       {isSided ? (
                         <>
-                          <tr className="border-b border-gray-100">
-                            <td className="py-1.5 px-2 text-blue-700 font-medium bg-gray-50 whitespace-nowrap" dir="rtl">ימין</td>
+                          <tr className="border-b border-line">
+                            <td className="py-1.5 px-2 text-accent font-medium bg-surface whitespace-nowrap" dir="rtl">ימין</td>
                             {calendarIds.map(calId => (
-                              <td key={calId} className="text-center py-1.5 px-2 font-mono text-gray-700 whitespace-nowrap">
-                                {lookup.get(`${calId}-Right`) ?? <span className="text-gray-300">—</span>}
+                              <td key={calId} className="text-center py-1.5 px-2 font-mono text-fg-2 whitespace-nowrap">
+                                {lookup.get(`${calId}-Right`) ?? <span className="text-faint">—</span>}
                               </td>
                             ))}
                           </tr>
                           <tr>
-                            <td className="py-1.5 px-2 text-purple-700 font-medium bg-gray-50 whitespace-nowrap" dir="rtl">שמאל</td>
+                            <td className="py-1.5 px-2 text-info font-medium bg-surface whitespace-nowrap" dir="rtl">שמאל</td>
                             {calendarIds.map(calId => (
-                              <td key={calId} className="text-center py-1.5 px-2 font-mono text-gray-700 whitespace-nowrap">
-                                {lookup.get(`${calId}-Left`) ?? <span className="text-gray-300">—</span>}
+                              <td key={calId} className="text-center py-1.5 px-2 font-mono text-fg-2 whitespace-nowrap">
+                                {lookup.get(`${calId}-Left`) ?? <span className="text-faint">—</span>}
                               </td>
                             ))}
                           </tr>
                         </>
                       ) : (
                         <tr>
-                          <td className="py-1.5 px-2 text-gray-500 bg-gray-50 whitespace-nowrap" dir="rtl">ביצוע</td>
+                          <td className="py-1.5 px-2 text-muted bg-surface whitespace-nowrap" dir="rtl">ביצוע</td>
                           {calendarIds.map(calId => (
-                            <td key={calId} className="text-center py-1.5 px-2 font-mono text-gray-700 whitespace-nowrap">
-                              {lookup.get(`${calId}-null`) ?? <span className="text-gray-300">—</span>}
+                            <td key={calId} className="text-center py-1.5 px-2 font-mono text-fg-2 whitespace-nowrap">
+                              {lookup.get(`${calId}-null`) ?? <span className="text-faint">—</span>}
                             </td>
                           ))}
                         </tr>

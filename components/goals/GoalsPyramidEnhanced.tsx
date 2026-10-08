@@ -3,6 +3,7 @@
 'use client'
 
 import { useMemo } from 'react'
+import { LuTarget } from 'react-icons/lu'
 
 interface Props {
   type: 'boulder' | 'board' | 'lead'
@@ -48,11 +49,11 @@ export default function GoalsPyramidEnhanced({
 
   if (!data || pyramidLevels.length === 0) {
     return (
-      <div className="bg-white rounded-xl shadow-sm p-8">
+      <div className="bg-surface rounded-xl p-8">
         {title && <h3 className="text-xl font-bold mb-4">{title}</h3>}
-        <div className="flex items-center justify-center h-48 text-gray-400 bg-gray-50 rounded-lg">
+        <div className="flex items-center justify-center h-48 text-faint bg-surface rounded-lg">
           <div className="text-center">
-            <div className="text-4xl mb-2">🎯</div>
+            <div className="text-4xl mb-2"><LuTarget aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></div>
             <div>אין יעדים להצגה</div>
           </div>
         </div>
@@ -68,23 +69,23 @@ export default function GoalsPyramidEnhanced({
     
     if (type === 'lead') {
       // Blue gradient
-      if (position < 0.2) return 'from-blue-200 to-blue-300 border-blue-400 text-blue-900'
-      if (position < 0.4) return 'from-blue-300 to-blue-400 border-blue-500 text-blue-900'
-      if (position < 0.6) return 'from-blue-400 to-blue-500 border-blue-600 text-white'
-      if (position < 0.8) return 'from-blue-500 to-blue-600 border-blue-700 text-white'
-      return 'from-blue-600 to-blue-700 border-blue-800 text-white'
+      if (position < 0.2) return 'bg-accent/15 border-accent text-fg'
+      if (position < 0.4) return 'bg-accent/30 border-accent text-fg'
+      if (position < 0.6) return 'bg-accent/50 border-accent text-fg'
+      if (position < 0.8) return 'bg-accent/75 border-accent text-on-accent'
+      return 'bg-accent border-accent text-on-accent'
     }
     
     // Orange to Red gradient for boulder/board
-    if (position < 0.2) return 'from-orange-200 to-orange-300 border-orange-400 text-orange-900'
-    if (position < 0.4) return 'from-orange-300 to-orange-400 border-orange-500 text-orange-900'
-    if (position < 0.6) return 'from-orange-400 to-orange-500 border-orange-600 text-white'
-    if (position < 0.8) return 'from-red-500 to-red-600 border-red-700 text-white'
-    return 'from-red-600 to-red-700 border-red-800 text-white'
+    if (position < 0.2) return 'bg-warning/15 border-warning text-fg'
+    if (position < 0.4) return 'bg-warning/30 border-warning text-fg'
+    if (position < 0.6) return 'bg-warning/60 border-warning text-on-accent'
+    if (position < 0.8) return 'bg-danger/75 border-danger text-on-accent'
+    return 'bg-danger border-danger text-on-accent'
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-sm p-8" dir="rtl">
+    <div className="bg-surface rounded-xl p-8" dir="rtl">
       {/* Title */}
       {title && (
         <h3 className="text-2xl font-bold mb-6 text-center">{title}</h3>
@@ -92,17 +93,17 @@ export default function GoalsPyramidEnhanced({
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4 mb-8">
-        <div className="bg-gray-50 rounded-lg p-4 text-center">
-          <div className="text-2xl font-bold text-gray-900">{totalGoals}</div>
-          <div className="text-sm text-gray-600">סה"כ יעדים</div>
+        <div className="bg-surface rounded-lg p-4 text-center">
+          <div className="text-2xl font-bold text-fg">{totalGoals}</div>
+          <div className="text-sm text-fg-3">סה"כ יעדים</div>
         </div>
-        <div className="bg-gray-50 rounded-lg p-4 text-center">
-          <div className="text-2xl font-bold text-gray-900">{pyramidLevels.length}</div>
-          <div className="text-sm text-gray-600">דרגות</div>
+        <div className="bg-surface rounded-lg p-4 text-center">
+          <div className="text-2xl font-bold text-fg">{pyramidLevels.length}</div>
+          <div className="text-sm text-fg-3">דרגות</div>
         </div>
-        <div className="bg-gray-50 rounded-lg p-4 text-center">
-          <div className="text-2xl font-bold text-gray-900">{pyramidLevels[0]?.grade || '-'}</div>
-          <div className="text-sm text-gray-600">יעד מרבי</div>
+        <div className="bg-surface rounded-lg p-4 text-center">
+          <div className="text-2xl font-bold text-fg">{pyramidLevels[0]?.grade || '-'}</div>
+          <div className="text-sm text-fg-3">יעד מרבי</div>
         </div>
       </div>
 
@@ -127,16 +128,15 @@ export default function GoalsPyramidEnhanced({
               >
                 <div
                   className={`
-                    bg-gradient-to-r
-                    rounded-lg 
-                    border-2
-                    transition-all
-                    duration-200
-                    cursor-pointer
-                    hover:scale-[1.02]
-                    hover:shadow-xl
-                    ${getGradientClass(index, pyramidLevels.length)}
-                  `}
+ rounded-lg 
+ border-2
+ transition-all
+ duration-200
+ cursor-pointer
+ hover:scale-[1.02]
+ 
+ ${getGradientClass(index, pyramidLevels.length)}
+ `}
                   style={{
                     minHeight: '56px',
                   }}
@@ -184,7 +184,7 @@ export default function GoalsPyramidEnhanced({
                   -top-12
                   left-1/2 
                   -translate-x-1/2
-                  bg-gray-900 
+                  bg-bg 
                   text-white 
                   px-4
                   py-2
@@ -209,7 +209,7 @@ export default function GoalsPyramidEnhanced({
                     -translate-x-1/2 
                     w-2 
                     h-2 
-                    bg-gray-900 
+                    bg-bg 
                     rotate-45
                   "></div>
                 </div>
@@ -220,16 +220,16 @@ export default function GoalsPyramidEnhanced({
       </div>
 
       {/* Legend */}
-      <div className="mt-8 flex items-center justify-center gap-6 text-sm text-gray-600">
+      <div className="mt-8 flex items-center justify-center gap-6 text-sm text-fg-3">
         <div className="flex items-center gap-2">
-          <div className={`w-6 h-6 rounded bg-gradient-to-r ${
-            type === 'lead' 
-              ? 'from-blue-200 to-blue-600' 
-              : 'from-orange-200 to-red-600'
-          }`}></div>
+          <div className={`w-6 h-6 rounded bg-accent/10 ${
+ type === 'lead' 
+ ? '' 
+ : ''
+ }`}></div>
           <span>קל → קשה</span>
         </div>
-        <div className="text-gray-400">|</div>
+        <div className="text-faint">|</div>
         <div>
           רוחב מייצג כמות יעדים
         </div>

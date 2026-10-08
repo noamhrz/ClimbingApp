@@ -52,7 +52,7 @@ export default function GoalsPyramid({
 
   if (!data || pyramidLevels.length === 0) {
     return (
-      <div className="flex items-center justify-center h-64 text-gray-500 bg-gray-50 rounded-xl">
+      <div className="flex items-center justify-center h-64 text-muted bg-surface rounded-xl">
         אין יעדים להצגה
       </div>
     )
@@ -68,22 +68,22 @@ export default function GoalsPyramid({
     if (type === 'lead') {
       // Blue gradient for lead
       const colors = [
-        'bg-blue-200 border-blue-400 text-blue-900',
-        'bg-blue-300 border-blue-500 text-blue-900',
-        'bg-blue-400 border-blue-600 text-white',
-        'bg-blue-500 border-blue-700 text-white',
-        'bg-blue-600 border-blue-800 text-white',
+        'bg-accent/20 border-accent text-accent',
+        'bg-accent/20 border-accent text-accent',
+        'bg-accent border-accent text-on-accent',
+        'bg-accent border-accent text-on-accent',
+        'bg-accent border-accent text-on-accent',
       ]
       return colors[intensity]
     }
     
     // Orange/Red gradient for boulder/board
     const colors = [
-      'bg-orange-200 border-orange-400 text-orange-900',
-      'bg-orange-300 border-orange-500 text-orange-900',
-      'bg-orange-400 border-orange-600 text-white',
-      'bg-red-500 border-red-700 text-white',
-      'bg-red-600 border-red-800 text-white',
+      'bg-warning/20 border-warning text-warning',
+      'bg-warning/20 border-warning text-warning',
+      'bg-warning border-warning text-on-accent',
+      'bg-danger border-danger text-on-accent',
+      'bg-danger border-danger text-on-accent',
     ]
     return colors[intensity]
   }
@@ -101,15 +101,15 @@ export default function GoalsPyramid({
             <div
               key={level.grade}
               className={`
-                relative
-                rounded-lg 
-                border-2
-                transition-all
-                duration-200
-                hover:scale-105
-                hover:shadow-lg
-                ${getColor(level.grade, pyramidLevels.length - index - 1, pyramidLevels.length)}
-              `}
+ relative
+ rounded-lg 
+ border-2
+ transition-all
+ duration-200
+ hover:scale-105
+ 
+ ${getColor(level.grade, pyramidLevels.length - index - 1, pyramidLevels.length)}
+ `}
               style={{
                 width: `${finalWidth}%`,
                 minHeight: '50px',
@@ -141,7 +141,7 @@ export default function GoalsPyramid({
                 -top-10 
                 left-1/2 
                 -translate-x-1/2
-                bg-gray-900 
+                bg-bg 
                 text-white 
                 px-3 
                 py-1 
@@ -161,9 +161,9 @@ export default function GoalsPyramid({
       </div>
 
       {/* Legend */}
-      <div className="mt-8 text-center text-sm text-gray-600">
+      <div className="mt-8 text-center text-sm text-fg-3">
         <div className="flex items-center justify-center gap-2">
-          <div className="w-4 h-4 bg-gradient-to-r from-orange-200 to-red-600 rounded"></div>
+          <div className="w-4 h-4 rounded bg-surface border border-line"></div>
           <span>קל → קשה</span>
         </div>
         <div className="mt-2">

@@ -20,6 +20,7 @@ import { CSS } from '@dnd-kit/utilities'
 import { supabase } from '@/lib/supabaseClient'
 import { Exercise } from '@/types/exercises'
 import { RoadmapCategory, RoadmapLevel } from '@/types/dynamic-exercise'
+import { LuPuzzle, LuSave, LuTriangleAlert } from 'react-icons/lu'
 
 interface LocalItem {
   id: number
@@ -54,12 +55,12 @@ function SortableItem({
     <div
       ref={setNodeRef}
       style={style}
-      className="flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-lg"
+      className="flex items-center gap-3 p-3 bg-surface border border-line rounded-lg"
     >
       <div
         {...attributes}
         {...listeners}
-        className="cursor-grab active:cursor-grabbing text-gray-400 text-xl shrink-0 select-none"
+        className="cursor-grab active:cursor-grabbing text-faint text-xl shrink-0 select-none"
       >
         ⠿
       </div>
@@ -68,18 +69,18 @@ function SortableItem({
         <div className="text-sm font-medium truncate">{item.exercise.Name}</div>
         <div className="flex gap-1 mt-0.5 flex-wrap">
           {item.exercise.isDuration ? (
-            <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded">שניות</span>
+            <span className="text-xs bg-warning/15 text-warning px-2 py-0.5 rounded">שניות</span>
           ) : (
-            <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded">חזרות</span>
+            <span className="text-xs bg-success/15 text-success px-2 py-0.5 rounded">חזרות</span>
           )}
           {item.exercise.IsSingleHand && (
-            <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded">יד אחת</span>
+            <span className="text-xs bg-info/10 text-info px-2 py-0.5 rounded">יד אחת</span>
           )}
         </div>
       </div>
 
       <div className="flex flex-col items-center gap-1 shrink-0">
-        <label className="text-xs text-gray-500">סטים</label>
+        <label className="text-xs text-muted">סטים</label>
         <input
           type="number"
           value={item.Sets}
@@ -90,7 +91,7 @@ function SortableItem({
       </div>
 
       <div className="flex flex-col items-center gap-1 shrink-0">
-        <label className="text-xs text-gray-500">
+        <label className="text-xs text-muted">
           {item.exercise.isDuration ? 'שניות' : 'חזרות'}
         </label>
         {item.exercise.isDuration ? (
@@ -115,7 +116,7 @@ function SortableItem({
       </div>
 
       <div className="flex flex-col items-center gap-1 shrink-0">
-        <label className="text-xs text-gray-500">מנוחה</label>
+        <label className="text-xs text-muted">מנוחה</label>
         <input
           type="number"
           value={item.Rest}
@@ -127,7 +128,7 @@ function SortableItem({
 
       <button
         onClick={() => onRemove(item.id)}
-        className="text-red-400 hover:text-red-600 text-xl leading-none shrink-0 font-medium"
+        className="text-danger hover:text-danger/90 text-xl leading-none shrink-0 font-medium"
       >
         ×
       </button>
@@ -411,8 +412,8 @@ export default function DynamicExerciseEditorPage() {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4 mx-auto" />
-          <p className="text-gray-600">טוען...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent mb-4 mx-auto" />
+          <p className="text-fg-3">טוען...</p>
         </div>
       </div>
     )
@@ -426,13 +427,13 @@ export default function DynamicExerciseEditorPage() {
       <div className="flex items-center gap-3 mb-6">
         <button
           onClick={() => router.push('/exercises')}
-          className="flex items-center gap-1.5 text-sm text-gray-500 border border-gray-300 rounded-lg px-3 py-1.5 hover:bg-gray-50"
+          className="flex items-center gap-1.5 text-sm text-muted border border-line rounded-lg px-3 py-1.5 hover:bg-surface"
         >
           ← חזרה
         </button>
         <div>
-          <h1 className="text-2xl font-bold">🧩 עורך דינמי</h1>
-          <p className="text-gray-500 text-sm">{dynamicExercise.Name}</p>
+          <h1 className="text-2xl font-bold"><LuPuzzle aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />עורך דינמי</h1>
+          <p className="text-muted text-sm">{dynamicExercise.Name}</p>
         </div>
       </div>
 
@@ -440,24 +441,24 @@ export default function DynamicExerciseEditorPage() {
       {dynamicExercise.RoadmapCategoryID ? (() => {
         const cat = categories.find(c => c.CategoryID === dynamicExercise.RoadmapCategoryID)
         return (
-          <div className="bg-white border border-gray-200 rounded-xl p-5 mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">קטגוריית רודמאפ</label>
-            <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-700">
+          <div className="bg-surface border border-line rounded-xl p-5 mb-4">
+            <label className="block text-sm font-medium text-fg-2 mb-2">קטגוריית רודמאפ</label>
+            <div className="flex items-center gap-2 px-3 py-2 bg-surface border border-line rounded-lg text-sm text-fg-2">
               {cat?.Icon && <span>{cat.Icon}</span>}
               <span className="font-medium">{cat?.Name ?? `קטגוריה ${dynamicExercise.RoadmapCategoryID}`}</span>
-              <span className="text-gray-400 text-xs mr-auto">(מוגדר בתרגיל)</span>
+              <span className="text-faint text-xs mr-auto">(מוגדר בתרגיל)</span>
             </div>
           </div>
         )
       })() : (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-5 mb-4 text-sm text-yellow-700">
-          ⚠️ לתרגיל זה אין קטגוריית רודמאפ. ערוך את התרגיל מדף התרגילים כדי להוסיף קטגוריה.
+        <div className="bg-warning/15 border border-warning rounded-xl p-5 mb-4 text-sm text-warning">
+          <LuTriangleAlert aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />לתרגיל זה אין קטגוריית רודמאפ. ערוך את התרגיל מדף התרגילים כדי להוסיף קטגוריה.
         </div>
       )}
 
       {/* Level tabs + content */}
       {levels.length > 0 && (
-        <div className="bg-white border border-gray-200 rounded-xl p-5">
+        <div className="bg-surface border border-line rounded-xl p-5">
           {/* Tabs */}
           <div className="flex gap-2 mb-4 flex-wrap">
             {levels.map((lvl) => {
@@ -468,12 +469,12 @@ export default function DynamicExerciseEditorPage() {
                   key={lvl.LevelID}
                   onClick={() => setActiveLevelId(lvl.LevelID)}
                   className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors max-w-[180px] truncate ${
-                    isActive
-                      ? 'bg-blue-100 text-blue-700 border-transparent'
-                      : hasItems
-                      ? 'bg-white text-green-700 border-green-400 hover:bg-green-50'
-                      : 'bg-white text-gray-500 border-gray-300 hover:bg-gray-50'
-                  }`}
+ isActive
+ ? 'bg-accent/15 text-accent border-transparent'
+ : hasItems
+ ? 'bg-surface text-success border-success hover:bg-success/15'
+ : 'bg-surface text-muted border-line hover:bg-surface/90'
+ }`}
                 >
                   {lvl.Name || `רמה ${lvl.LevelNumber}`}
                 </button>
@@ -484,7 +485,7 @@ export default function DynamicExerciseEditorPage() {
           {/* Active level exercises */}
           {activeLevelId && (
             <div>
-              <p className="text-sm text-gray-500 mb-3">
+              <p className="text-sm text-muted mb-3">
                 {levels.find((l) => l.LevelID === activeLevelId)?.Name || ''} — {activeItems.length} תרגילים
               </p>
 
@@ -499,7 +500,7 @@ export default function DynamicExerciseEditorPage() {
                 >
                   <div className="space-y-2 mb-3">
                     {activeItems.length === 0 && (
-                      <div className="py-8 text-center text-gray-400 text-sm border border-dashed border-gray-300 rounded-lg">
+                      <div className="py-8 text-center text-faint text-sm border border-dashed border-line rounded-lg">
                         אין תרגילים ברמה זו
                       </div>
                     )}
@@ -519,12 +520,12 @@ export default function DynamicExerciseEditorPage() {
               {!showAddDropdown ? (
                 <button
                   onClick={() => setShowAddDropdown(true)}
-                  className="w-full border-2 border-dashed border-gray-300 rounded-lg py-3 text-sm text-gray-500 hover:border-blue-400 hover:text-blue-600 transition-colors"
+                  className="w-full border-2 border-dashed border-line rounded-lg py-3 text-sm text-muted hover:border-accent hover:text-accent transition-colors"
                 >
                   + הוסף תרגיל לרמה
                 </button>
               ) : (
-                <div className="border border-gray-200 rounded-lg p-3 bg-gray-50">
+                <div className="border border-line rounded-lg p-3 bg-surface">
                   <div className="flex gap-2 mb-2">
                     <select
                       value={addFilterCategory}
@@ -561,7 +562,7 @@ export default function DynamicExerciseEditorPage() {
                       setShowAddDropdown(false)
                       setAddFilterCategory('')
                     }}
-                    className="text-xs text-gray-400 hover:text-gray-600"
+                    className="text-xs text-faint hover:text-fg-3"
                   >
                     סגור
                   </button>
@@ -576,16 +577,16 @@ export default function DynamicExerciseEditorPage() {
       <div className="mt-6 flex justify-end gap-3">
         <button
           onClick={() => router.push('/exercises')}
-          className="px-5 py-2.5 border border-gray-300 rounded-lg text-sm hover:bg-gray-50"
+          className="px-5 py-2.5 border border-line rounded-lg text-sm hover:bg-surface"
         >
           סגור
         </button>
         <button
           onClick={handleSave}
           disabled={saving || !dynamicExercise?.RoadmapCategoryID}
-          className="px-5 py-2.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
+          className="px-5 py-2.5 bg-accent text-on-accent rounded-lg text-sm font-medium hover:bg-accent-hover disabled:opacity-50"
         >
-          {saving ? 'שומר...' : '💾 שמור'}
+          {saving ? 'שומר...' : <><LuSave aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />שמור</>}
         </button>
       </div>
     </div>

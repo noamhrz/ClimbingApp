@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { useAuth, useActiveUserEmail } from '@/context/AuthContext'
 import { Exercise } from '@/types/exercises'
+import { LuPuzzle } from 'react-icons/lu'
 
 export default function DynamicExercisesPage() {
   const router = useRouter()
@@ -45,12 +46,12 @@ export default function DynamicExercisesPage() {
     <div className="max-w-4xl mx-auto p-6">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-3xl font-bold">🧩 תרגילים דינמיים</h1>
-          <p className="text-gray-500 mt-1">תרגילים המוגדרים לפי רמות רודמאפ</p>
+          <h1 className="text-3xl font-bold"><LuPuzzle aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />תרגילים דינמיים</h1>
+          <p className="text-muted mt-1">תרגילים המוגדרים לפי רמות רודמאפ</p>
         </div>
         <button
           onClick={() => router.push('/exercises')}
-          className="text-sm text-blue-600 hover:underline"
+          className="text-sm text-accent hover:underline"
         >
           לניהול כל התרגילים ←
         </button>
@@ -58,15 +59,15 @@ export default function DynamicExercisesPage() {
 
       {loading ? (
         <div className="flex items-center justify-center py-16">
-          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600" />
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-accent" />
         </div>
       ) : exercises.length === 0 ? (
-        <div className="text-center py-16 bg-gray-50 rounded-xl border border-dashed border-gray-300">
-          <p className="text-gray-500 text-lg mb-2">אין תרגילים דינמיים עדיין</p>
-          <p className="text-sm text-gray-400">צור תרגיל חדש עם הדגל "דינמי" מדף התרגילים</p>
+        <div className="text-center py-16 bg-surface rounded-xl border border-dashed border-line">
+          <p className="text-muted text-lg mb-2">אין תרגילים דינמיים עדיין</p>
+          <p className="text-sm text-faint">צור תרגיל חדש עם הדגל "דינמי" מדף התרגילים</p>
           <button
             onClick={() => router.push('/exercises')}
-            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700"
+            className="mt-4 px-4 py-2 bg-accent text-on-accent rounded-lg text-sm hover:bg-accent-hover"
           >
             עבור לניהול תרגילים
           </button>
@@ -76,25 +77,25 @@ export default function DynamicExercisesPage() {
           {exercises.map((ex) => (
             <div
               key={ex.ExerciseID}
-              className="bg-white border border-gray-200 rounded-xl p-4 hover:shadow-md transition-shadow cursor-pointer"
+              className="bg-surface border border-line rounded-xl p-4 transition-shadow cursor-pointer"
               onClick={() => router.push(`/exercises/dynamic/${ex.ExerciseID}`)}
             >
               <div className="flex items-start justify-between gap-2 mb-2">
-                <h3 className="font-semibold text-gray-900 leading-tight">{ex.Name}</h3>
-                <span className="shrink-0 text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
-                  🧩 דינמי
+                <h3 className="font-semibold text-fg leading-tight">{ex.Name}</h3>
+                <span className="shrink-0 text-xs bg-success/15 text-success px-2 py-0.5 rounded-full">
+                  <LuPuzzle aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />דינמי
                 </span>
               </div>
               {ex.Category && (
-                <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
+                <span className="text-xs bg-accent/15 text-accent px-2 py-0.5 rounded-full">
                   {ex.Category}
                 </span>
               )}
               {ex.Description && (
-                <p className="text-sm text-gray-500 mt-2 line-clamp-2">{ex.Description}</p>
+                <p className="text-sm text-muted mt-2 line-clamp-2">{ex.Description}</p>
               )}
               <button
-                className="mt-3 w-full text-sm text-blue-600 border border-blue-200 rounded-lg py-1.5 hover:bg-blue-50 transition-colors"
+                className="mt-3 w-full text-sm text-accent border border-accent rounded-lg py-1.5 hover:bg-accent/15 transition-colors"
                 onClick={(e) => { e.stopPropagation(); router.push(`/exercises/dynamic/${ex.ExerciseID}`) }}
               >
                 פתח עורך ←

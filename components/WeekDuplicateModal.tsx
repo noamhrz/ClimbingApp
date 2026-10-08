@@ -6,6 +6,7 @@
 import { useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import moment from 'moment-timezone'
+import { LuClipboardList, LuLightbulb, LuLoaderCircle } from 'react-icons/lu'
 
 interface Props {
   isOpen: boolean
@@ -146,16 +147,16 @@ export default function WeekDuplicateModal({ isOpen, onClose, onSuccess, email }
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-raised border border-line-strong rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="sticky top-0 bg-white border-b px-6 py-4">
+        <div className="sticky top-0 bg-surface border-b px-6 py-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-gray-900">
-              📋 שכפול שבוע
+            <h2 className="text-2xl font-bold text-fg">
+              <LuClipboardList aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />שכפול שבוע
             </h2>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 text-2xl"
+              className="text-faint hover:text-fg-3 text-2xl"
               type="button"
             >
               ×
@@ -166,9 +167,9 @@ export default function WeekDuplicateModal({ isOpen, onClose, onSuccess, email }
         {/* Content */}
         <div className="p-6 space-y-6">
           {/* Instructions */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <p className="text-sm text-blue-900">
-              💡 בחר שבוע קיים ושכפל אותו למספר שבועות קדימה.
+          <div className="bg-accent/15 border border-accent rounded-lg p-4">
+            <p className="text-sm text-accent">
+              <LuLightbulb aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />בחר שבוע קיים ושכפל אותו למספר שבועות קדימה.
               כל האימונים בשבוע המקורי יועתקו עם אותם פרטים.
             </p>
           </div>
@@ -176,27 +177,27 @@ export default function WeekDuplicateModal({ isOpen, onClose, onSuccess, email }
           {/* Date Range Selection */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-fg-2 mb-2">
                 תאריך התחלה *
               </label>
               <input
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-accent"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-fg-2 mb-2">
                 תאריך סיום *
               </label>
               <input
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
-                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-accent"
                 required
               />
             </div>
@@ -204,7 +205,7 @@ export default function WeekDuplicateModal({ isOpen, onClose, onSuccess, email }
 
           {/* Number of Weeks */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-fg-2 mb-2">
               מספר שבועות לשכפול *
             </label>
             <input
@@ -213,26 +214,26 @@ export default function WeekDuplicateModal({ isOpen, onClose, onSuccess, email }
               onChange={(e) => setNumWeeks(parseInt(e.target.value) || 1)}
               min="1"
               max="12"
-              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-accent"
               required
             />
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-muted mt-1">
               מקסימום 12 שבועות
             </p>
           </div>
 
           {/* Preview */}
           {previews.length > 0 && (
-            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-              <h3 className="text-sm font-semibold text-gray-900 mb-3">
+            <div className="bg-surface border border-line rounded-lg p-4">
+              <h3 className="text-sm font-semibold text-fg mb-3">
                 תצוגה מקדימה:
               </h3>
               <div className="space-y-2">
-                <div className="text-sm bg-green-50 text-green-800 px-3 py-2 rounded border border-green-200">
+                <div className="text-sm bg-success/15 text-success px-3 py-2 rounded border border-success">
                   <strong>שבוע מקורי:</strong> {new Date(startDate).toLocaleDateString('he-IL')} - {new Date(endDate).toLocaleDateString('he-IL')}
                 </div>
                 {previews.map((preview) => (
-                  <div key={preview.week} className="text-sm text-gray-700 px-3 py-2 bg-white rounded border">
+                  <div key={preview.week} className="text-sm text-fg-2 px-3 py-2 bg-surface rounded border">
                     <strong>שבוע {preview.week}:</strong> {preview.start} - {preview.end}
                   </div>
                 ))}
@@ -245,14 +246,14 @@ export default function WeekDuplicateModal({ isOpen, onClose, onSuccess, email }
             <button
               onClick={handleDuplicate}
               disabled={loading || !startDate || !endDate}
-              className="flex-1 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition"
+              className="flex-1 py-3 bg-accent text-on-accent rounded-lg hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed font-medium transition"
             >
-              {loading ? '⏳ משכפל...' : '📋 שכפל שבוע'}
+              {loading ? <><LuLoaderCircle aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] animate-spin me-1.5" />משכפל...</> : <><LuClipboardList aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />שכפל שבוע</>}
             </button>
             <button
               onClick={onClose}
               disabled={loading}
-              className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition disabled:opacity-50"
+              className="px-6 py-3 bg-raised text-fg-2 rounded-lg hover:bg-raised/90 transition disabled:opacity-50"
             >
               ביטול
             </button>

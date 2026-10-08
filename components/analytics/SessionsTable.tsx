@@ -6,6 +6,7 @@
 import { useState } from 'react'
 import { ExerciseLog } from '@/types/analytics'
 import moment from 'moment'
+import { LuClipboardList } from 'react-icons/lu'
 
 interface SessionsTableProps {
   logs: ExerciseLog[]
@@ -18,9 +19,9 @@ export default function SessionsTable({ logs, isSingleHand }: SessionsTableProps
   
   if (!logs || logs.length === 0) {
     return (
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
-        <div className="text-center text-gray-500">
-          <div className="text-4xl mb-2">📋</div>
+      <div className="bg-surface rounded-xl border border-line p-8">
+        <div className="text-center text-muted">
+          <div className="text-4xl mb-2"><LuClipboardList aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></div>
           <div>אין סשנים להצגה</div>
         </div>
       </div>
@@ -34,15 +35,15 @@ export default function SessionsTable({ logs, isSingleHand }: SessionsTableProps
   const displayedLogs = logs.slice(startIndex, endIndex)
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-      <div className="p-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
-        <h3 className="text-lg font-bold text-gray-900">
+    <div className="bg-surface rounded-xl border border-line overflow-hidden">
+      <div className="p-4 border-b border-line bg-surface flex justify-between items-center">
+        <h3 className="text-lg font-bold text-fg">
           📊 סשנים מסוננים ({logs.length})
         </h3>
         
         {/* Pagination info */}
         {totalPages > 1 && (
-          <div className="text-sm text-gray-600">
+          <div className="text-sm text-fg-3">
             עמוד {currentPage} מתוך {totalPages}
           </div>
         )}
@@ -50,52 +51,52 @@ export default function SessionsTable({ logs, isSingleHand }: SessionsTableProps
       
       <div className="overflow-x-auto">
         <table className="w-full">
-          <thead className="bg-gray-50 border-b border-gray-200">
+          <thead className="bg-surface border-b border-line">
             <tr>
-              <th className="px-4 py-3 text-right text-xs font-medium text-gray-700 uppercase tracking-wider">
+              <th className="px-4 py-3 text-right text-xs font-medium text-fg-2 uppercase tracking-wider">
                 תאריך
               </th>
               {isSingleHand && (
-                <th className="px-4 py-3 text-right text-xs font-medium text-gray-700 uppercase tracking-wider">
+                <th className="px-4 py-3 text-right text-xs font-medium text-fg-2 uppercase tracking-wider">
                   יד
                 </th>
               )}
-              <th className="px-4 py-3 text-right text-xs font-medium text-gray-700 uppercase tracking-wider">
+              <th className="px-4 py-3 text-right text-xs font-medium text-fg-2 uppercase tracking-wider">
                 סט
               </th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-gray-700 uppercase tracking-wider">
+              <th className="px-4 py-3 text-right text-xs font-medium text-fg-2 uppercase tracking-wider">
                 משקל (ק״ג)
               </th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-gray-700 uppercase tracking-wider">
+              <th className="px-4 py-3 text-right text-xs font-medium text-fg-2 uppercase tracking-wider">
                 חזרות
               </th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-gray-700 uppercase tracking-wider">
+              <th className="px-4 py-3 text-right text-xs font-medium text-fg-2 uppercase tracking-wider">
                 משך (שניות)
               </th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-gray-700 uppercase tracking-wider">
+              <th className="px-4 py-3 text-right text-xs font-medium text-fg-2 uppercase tracking-wider">
                 RPE
               </th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-gray-700 uppercase tracking-wider">
+              <th className="px-4 py-3 text-right text-xs font-medium text-fg-2 uppercase tracking-wider">
                 Volume Score
               </th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-gray-700 uppercase tracking-wider">
+              <th className="px-4 py-3 text-right text-xs font-medium text-fg-2 uppercase tracking-wider">
                 הערות
               </th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody className="bg-surface divide-y divide-line">
             {displayedLogs.map((log, index) => (
               <tr 
                 key={log.ExerciseLogID}
-                className={`hover:bg-gray-50 transition-colors ${
-                  index % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'
-                }`}
+                className={`hover:bg-surface/90 transition-colors ${
+ index % 2 === 0 ? 'bg-surface' : 'bg-surface/50'
+ }`}
               >
-                <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                <td className="px-4 py-3 whitespace-nowrap text-sm text-fg">
                   <div className="font-medium">
                     {moment(log.CreatedAt).format('DD/MM/YYYY')}
                   </div>
-                  <div className="text-xs text-gray-500">
+                  <div className="text-xs text-muted">
                     {moment(log.CreatedAt).format('HH:mm')}
                   </div>
                 </td>
@@ -103,54 +104,54 @@ export default function SessionsTable({ logs, isSingleHand }: SessionsTableProps
                 {isSingleHand && (
                   <td className="px-4 py-3 whitespace-nowrap text-sm">
                     {log.HandSide === 'Right' ? (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-accent/15 text-accent">
                         🫱 ימין
                       </span>
                     ) : log.HandSide === 'Left' ? (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-success/15 text-success">
                         🫲 שמאל
                       </span>
                     ) : (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-surface text-fg">
                         שתיים
                       </span>
                     )}
                   </td>
                 )}
                 
-                <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
+                <td className="px-4 py-3 whitespace-nowrap text-sm text-fg-2">
                   {log.SetNumber || '-'}
                 </td>
                 
-                <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
+                <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-fg">
                   {log.WeightKG !== null ? log.WeightKG.toFixed(1) : '-'}
                 </td>
                 
-                <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
+                <td className="px-4 py-3 whitespace-nowrap text-sm text-fg-2">
                   {log.RepsDone || '-'}
                 </td>
                 
-                <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
+                <td className="px-4 py-3 whitespace-nowrap text-sm text-fg-2">
                   {log.DurationSec || '-'}
                 </td>
                 
                 <td className="px-4 py-3 whitespace-nowrap text-sm">
                   {log.RPE ? (
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      log.RPE >= 8 ? 'bg-red-100 text-red-800' :
-                      log.RPE >= 6 ? 'bg-amber-100 text-amber-800' :
-                      'bg-green-100 text-green-800'
-                    }`}>
+ log.RPE >= 8 ? 'bg-danger/15 text-danger' :
+ log.RPE >= 6 ? 'bg-warning/10 text-warning' :
+ 'bg-success/15 text-success'
+ }`}>
                       {log.RPE}
                     </span>
                   ) : '-'}
                 </td>
                 
-                <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
+                <td className="px-4 py-3 whitespace-nowrap text-sm text-fg-2">
                   {log.VolumeScore || '-'}
                 </td>
                 
-                <td className="px-4 py-3 text-sm text-gray-600 max-w-xs truncate">
+                <td className="px-4 py-3 text-sm text-fg-3 max-w-xs truncate">
                   {log.Notes || '-'}
                 </td>
               </tr>
@@ -161,11 +162,11 @@ export default function SessionsTable({ logs, isSingleHand }: SessionsTableProps
       
       {/* Pagination Controls */}
       {totalPages > 1 && (
-        <div className="px-4 py-3 border-t border-gray-200 bg-gray-50 flex justify-between items-center">
+        <div className="px-4 py-3 border-t border-line bg-surface flex justify-between items-center">
           <button
             onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
             disabled={currentPage === 1}
-            className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="px-4 py-2 bg-surface border border-line rounded-lg text-sm font-medium text-fg-2 hover:bg-surface/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             ← הקודם
           </button>
@@ -189,10 +190,10 @@ export default function SessionsTable({ logs, isSingleHand }: SessionsTableProps
                   key={i}
                   onClick={() => setCurrentPage(pageNum)}
                   className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
-                    currentPage === pageNum
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
-                  }`}
+ currentPage === pageNum
+ ? 'bg-accent text-on-accent'
+ : 'bg-surface border border-line text-fg-2 hover:bg-surface/90'
+ }`}
                 >
                   {pageNum}
                 </button>
@@ -203,7 +204,7 @@ export default function SessionsTable({ logs, isSingleHand }: SessionsTableProps
           <button
             onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
             disabled={currentPage === totalPages}
-            className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="px-4 py-2 bg-surface border border-line rounded-lg text-sm font-medium text-fg-2 hover:bg-surface/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             הבא →
           </button>
