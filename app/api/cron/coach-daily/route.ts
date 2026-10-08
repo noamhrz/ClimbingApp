@@ -13,7 +13,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin, loadTrainees } from '@/lib/reports/data'
 import { buildDaily, buildMonthly, buildWeekly, previousMonth, ReportKind } from '@/lib/reports/build'
-import { mailerConfigured, sendReportEmail } from '@/lib/reports/mailer'
+import { mailerConfigured, mailerMissing, sendReportEmail } from '@/lib/reports/mailer'
 import { ilDate } from '@/lib/reports/dates'
 
 export const dynamic = 'force-dynamic'
@@ -61,7 +61,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (!mailerConfigured()) {
-      return NextResponse.json({ sent: false, reason: 'SMTP_USER / SMTP_PASS not set' }, { status: 500 })
+      return NextResponse.json({ sent: false, reason: mailerMissing() }, { status: 500 })
     }
 
     const results: Record<string, unknown> = {}

@@ -4,7 +4,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin, loadTrainees } from '@/lib/reports/data'
 import { buildDaily, buildMonthly, buildWeekly, previousMonth, ReportKind } from '@/lib/reports/build'
-import { mailerConfigured, sendReportEmail } from '@/lib/reports/mailer'
+import { mailerConfigured, mailerMissing, sendReportEmail } from '@/lib/reports/mailer'
 import { ilDate } from '@/lib/reports/dates'
 
 export const dynamic = 'force-dynamic'
@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
   if (error || !user?.email) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const { data: me } = await db.from('Users').select('Role').eq('Email', user.email).single()
   if (me?.Role !== 'admin' && me?.Role !== 'coach') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-  if (!mailerConfigured()) return NextResponse.json({ error: 'SMTP_USER / SMTP_PASS not set' }, { status: 500 })
+  if (!mailerConfigured()) return NextResponse.json({ error: mailerMissing() }, { status: 500 })
 
   const today = ilDate()
   const [year, month] = previousMonth(today)
