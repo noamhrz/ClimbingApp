@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
 import Link from 'next/link'
 import Image from 'next/image'
-import { LuLoaderCircle, LuLogIn } from 'react-icons/lu'
+import { LuLoaderCircle, LuLogIn, LuSmartphone } from 'react-icons/lu'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -16,6 +16,13 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [pendingStatusCheck, setPendingStatusCheck] = useState(false)
+  // Presentational only: install hint on the login screen
+  const [showInstall, setShowInstall] = useState(false)
+  const [isStandalone, setIsStandalone] = useState(false)
+  useEffect(() => {
+    const nav = window.navigator as Navigator & { standalone?: boolean }
+    setIsStandalone(window.matchMedia('(display-mode: standalone)').matches || nav.standalone === true)
+  }, [])
 
   // ✅ Redirect if already logged in
   useEffect(() => {
@@ -84,96 +91,140 @@ export default function LoginPage() {
 
   // User is not logged in - show login form
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 bg-bg">
-      <div className="bg-surface rounded-2xl border border-line shadow-2xl shadow-black/40 p-8 max-w-md w-full">
-        <div className="text-center mb-8">
-          {/* Logo */}
-          <div className="flex justify-center mb-6">
-            <div className="relative w-32 h-32">
-              <Image
-                src="/noam-herz-logo.png"
-                alt="Noam Herz Climbing"
-                fill
-                sizes="128px"
-                className="object-contain"
-                priority
-              />
-            </div>
+    <div className="min-h-screen bg-bg md:flex md:items-center md:justify-center md:py-10">
+      <div className="relative w-full md:max-w-md mx-auto md:rounded-3xl md:border md:border-line overflow-hidden bg-bg min-h-screen md:min-h-0 flex flex-col">
+        {/* Photo */}
+        <div className="relative h-[38vh] min-h-56 max-h-80 shrink-0">
+          <Image
+            src="/login-hero.jpg"
+            alt="מטפס על קיר גרניט"
+            fill
+            sizes="(min-width: 768px) 448px, 100vw"
+            className="object-cover object-[50%_30%]"
+            priority
+          />
+          <div
+            dir="ltr"
+            className="absolute top-5 end-5 font-display font-bold text-5xl leading-none text-fg bg-bg/75 backdrop-blur-sm px-3 pt-1 rounded-xl"
+          >
+            MY <span className="text-accent">WAY</span>
           </div>
-          
-          <h1 className="text-3xl font-bold text-fg mb-2">
-            Climbing Training
-          </h1>
-          <p className="text-fg-3">התחבר לחשבון שלך</p>
         </div>
 
-        {error && (
-          <div className="mb-6 p-4 bg-danger/15 text-danger rounded-lg border border-danger">
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleLogin} className="space-y-6">
-          <div>
-            <label className="block text-sm font-medium text-fg-2 mb-2 text-start">
-              אימייל
-            </label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="name@example.com"
-              className="w-full min-h-12 px-4 py-3 bg-bg text-fg text-base placeholder:text-faint border border-line-strong rounded-xl focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent text-start"
-              required
-              disabled={loading}
+        {/* Sheet */}
+        <div className="relative -mt-7 flex-1 bg-bg rounded-t-[28px] px-6 pt-7 pb-6 flex flex-col gap-5">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h1 className="font-display font-bold text-6xl leading-[0.85] text-fg">ברוך שובך</h1>
+              <p className="mt-2 text-fg-3">התכנית שלך. הקצב שלך. הדרך שלך.</p>
+            </div>
+            <Image
+              src="/noam-herz-logo.png"
+              alt="Noam Herz Climbing"
+              width={64}
+              height={64}
+              className="rounded-xl shrink-0"
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-fg-2 mb-2 text-start">
-              סיסמה
-            </label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              className="w-full min-h-12 px-4 py-3 bg-bg text-fg text-base placeholder:text-faint border border-line-strong rounded-xl focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent text-start"
-              required
-              disabled={loading}
-            />
-          </div>
+          {error && (
+            <div className="p-4 bg-danger/15 text-danger rounded-xl border border-danger/40">
+              {error}
+            </div>
+          )}
 
-          <div className="flex items-center justify-between">
+          <form onSubmit={handleLogin} className="flex flex-col gap-4">
+            <div>
+              <label htmlFor="login-email" className="block text-sm font-semibold text-fg-2 mb-1.5 text-start">
+                אימייל
+              </label>
+              <input
+                id="login-email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="name@example.com"
+                autoComplete="email"
+                className="w-full min-h-[52px] px-4 bg-surface text-fg text-base placeholder:text-faint border border-line-strong rounded-2xl focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent text-start"
+                required
+                disabled={loading}
+              />
+            </div>
+
+            <div>
+              <label htmlFor="login-password" className="block text-sm font-semibold text-fg-2 mb-1.5 text-start">
+                סיסמה
+              </label>
+              <input
+                id="login-password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                autoComplete="current-password"
+                className="w-full min-h-[52px] px-4 bg-surface text-fg text-base placeholder:text-faint border border-line-strong rounded-2xl focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent text-start"
+                required
+                disabled={loading}
+              />
+            </div>
+
             <Link
               href="/forgot-password"
-              className="text-sm text-accent hover:text-accent-hover font-semibold"
+              className="self-start text-sm text-accent hover:text-accent-hover font-bold"
             >
               שכחתי סיסמה
             </Link>
-          </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-3 min-h-12 bg-accent text-on-accent rounded-full font-bold hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            {loading ? <><LuLoaderCircle aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] animate-spin me-1.5" />מתחבר...</> : <><LuLogIn aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />התחבר</>}
-          </button>
-        </form>
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full min-h-[54px] bg-accent text-on-accent rounded-full text-lg font-extrabold hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors inline-flex items-center justify-center gap-2"
+            >
+              {loading ? <><LuLoaderCircle aria-hidden className="w-5 h-5 animate-spin" />מתחבר...</> : <>התחבר<LuLogIn aria-hidden className="w-5 h-5" /></>}
+            </button>
+          </form>
 
-        <div className="mt-6 text-center text-sm text-fg-3">
-          אין לך חשבון?{' '}
-          <span className="text-fg font-medium">
-            פנה למאמן שלך
-          </span>
-        </div>
+          {/* Add to home screen (hidden when already installed) */}
+          {!isStandalone && (
+            <div className="border border-line-strong bg-surface rounded-2xl p-4">
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 rounded-xl bg-accent/15 text-accent flex items-center justify-center shrink-0">
+                  <LuSmartphone aria-hidden className="w-5 h-5" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-bold text-fg">הוסף למסך הבית</div>
+                  <div className="text-sm text-muted">פתיחה בלחיצה, כמו אפליקציה רגילה</div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowInstall(v => !v)}
+                  aria-expanded={showInstall}
+                  className="min-h-11 px-2 text-accent font-bold text-sm"
+                >
+                  איך?
+                </button>
+              </div>
+              {showInstall && (
+                <ul className="mt-3 pt-3 border-t border-line text-sm text-fg-2 space-y-1.5">
+                  <li><b className="text-fg">אייפון (Safari):</b> כפתור השיתוף ← &quot;הוסף למסך הבית&quot;</li>
+                  <li><b className="text-fg">אנדרואיד (Chrome):</b> תפריט ⋮ ← &quot;התקן אפליקציה&quot;</li>
+                </ul>
+              )}
+            </div>
+          )}
 
-        {/* Footer */}
-        <div className="mt-8 pt-6 border-t border-line text-center">
-          <p className="text-xs text-muted">
-            © {new Date().getFullYear()} Noam Herz Climbing
+          <p className="mt-auto text-center text-sm text-fg-3">
+            אין לך חשבון?{' '}
+            <a
+              href="https://noam-herz-climbing.com/%D7%AA%D7%9B%D7%A0%D7%99%D7%95%D7%AA-%D7%90%D7%99%D7%9E%D7%95%D7%9F/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-accent hover:text-accent-hover font-bold"
+            >
+              להצטרפות לתכנית
+            </a>
           </p>
+          <p className="text-center text-xs text-faint">© {new Date().getFullYear()} Noam Herz Climbing</p>
         </div>
       </div>
     </div>
