@@ -190,6 +190,7 @@ export default function UserHeader() {
           {/* ניהול — coach / admin only */}
           {isCoachOrAdmin && (
             <NavDropdown label={<><LuSettings aria-hidden className={ic} />ניהול</>}>
+              <DropdownItem href="/reports/monthly"><LuFileChartColumn aria-hidden className={ic} />דו״ח חודשי</DropdownItem>
               <DropdownItem href="/admin/assign-workouts"><LuClipboardList aria-hidden className={ic} />הקצאה</DropdownItem>
               <DropdownItem href="/exercises"><LuDumbbell aria-hidden className={ic} />תרגילים</DropdownItem>
               <DropdownItem href="/exercises/dynamic"><LuPuzzle aria-hidden className={ic} />תרגילים דינמיים</DropdownItem>
@@ -269,6 +270,7 @@ export default function UserHeader() {
           </SheetGroup>
           {isCoachOrAdmin && (
             <SheetGroup title="ניהול">
+              <SheetLink href="/reports/monthly" onClick={() => setMoreOpen(false)} icon={<LuFileChartColumn />}>דו״ח חודשי</SheetLink>
               <SheetLink href="/admin/assign-workouts" onClick={() => setMoreOpen(false)} icon={<LuClipboardList />}>הקצאה</SheetLink>
               <SheetLink href="/exercises" onClick={() => setMoreOpen(false)} icon={<LuDumbbell />}>תרגילים</SheetLink>
               <SheetLink href="/exercises/dynamic" onClick={() => setMoreOpen(false)} icon={<LuPuzzle />}>תרגילים דינמיים</SheetLink>
