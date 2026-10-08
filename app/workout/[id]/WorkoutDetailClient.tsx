@@ -12,7 +12,7 @@ import ExerciseAccordion from "@/components/exercises/ExerciseAccordion"
 import moment from 'moment-timezone'
 import LoadLastWorkoutButton from './LoadLastWorkoutButton'
 import { useFormDraft } from '@/lib/useFormDraft'
-import { LuAlarmClock, LuBicepsFlexed, LuCalendarDays, LuCircleCheck, LuHourglass, LuLightbulb, LuLoaderCircle, LuMapPin, LuMessageSquare, LuMountain, LuNotebookPen, LuPackage, LuPlus, LuRefreshCw, LuTriangleAlert, LuVideo } from 'react-icons/lu'
+import { LuAlarmClock, LuBicepsFlexed, LuCalendarDays, LuCircleCheck, LuHourglass, LuInfo, LuLightbulb, LuLoaderCircle, LuMapPin, LuMessageSquare, LuMountain, LuNotebookPen, LuPackage, LuPlus, LuRefreshCw, LuTriangleAlert, LuVideo } from 'react-icons/lu'
 import { PageSkeleton } from '@/components/ui/Skeleton'
 
 export default function WorkoutDetailClient({ id }: { id: number }) {
@@ -887,6 +887,16 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
             )}
           </div>
 
+          {/* Personal coach note (from assignment) — prominent, above workout info */}
+          {personalNote && (
+            <div className="mb-6 rounded-xl border-2 border-accent bg-accent/10 p-4 md:p-5">
+              <h3 className="text-lg font-bold text-accent mb-2 flex items-center gap-2">
+                <LuMessageSquare aria-hidden className="w-6 h-6 shrink-0" />הערת המאמן אליך
+              </h3>
+              <p className="text-fg text-base md:text-lg leading-relaxed whitespace-pre-wrap">{personalNote}</p>
+            </div>
+          )}
+
           {/* ✨ NEW: Workout Info Section */}
           <section className="mb-8 space-y-4">
             {/* Video */}
@@ -920,19 +930,9 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
             {workout.WorkoutNotes && (
               <div className="bg-warning/15 border border-warning rounded-lg p-4">
                 <h3 className="font-semibold text-warning mb-2 flex items-center gap-2">
-                  👨‍🏫 הערות מאמן
+                  <LuInfo aria-hidden className="w-5 h-5 shrink-0" />הערות כלליות
                 </h3>
                 <p className="text-fg-2 whitespace-pre-wrap">{workout.WorkoutNotes}</p>
-              </div>
-            )}
-
-            {/* Personal coach note (from assignment) */}
-            {personalNote && (
-              <div className="bg-warning/10 border border-warning/40 rounded-lg p-4">
-                <h3 className="font-semibold text-warning mb-2 flex items-center gap-2">
-                  <LuMessageSquare aria-hidden className="w-5 h-5 shrink-0" />הערת המאמן אליך
-                </h3>
-                <p className="text-fg-2 whitespace-pre-wrap">{personalNote}</p>
               </div>
             )}
 
