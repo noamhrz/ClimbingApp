@@ -11,54 +11,15 @@
 // Auth: Authorization: Bearer <CRON_SECRET> or ?secret=<CRON_SECRET>
 
 import { NextRequest, NextResponse } from 'next/server'
-import { SupabaseClient } from '@supabase/supabase-js'
-import { getSupabaseAdmin, loadDailyData, loadTrainees, Trainee } from '@/lib/reports/data'
-import { dailyAlerts } from '@/lib/reports/daily-rules'
-import { renderDailyEmail } from '@/lib/reports/daily-email'
-import { weeklyReview } from '@/lib/reports/weekly-rules'
-import { renderWeeklyEmail } from '@/lib/reports/weekly-email'
-import { buildMonthlyReport, MonthlyReport } from '@/lib/reports/monthly-data'
-import { renderMonthlyEmail } from '@/lib/reports/monthly-email'
+import { getSupabaseAdmin, loadTrainees } from '@/lib/reports/data'
+import { buildDaily, buildMonthly, buildWeekly, previousMonth, ReportKind } from '@/lib/reports/build'
 import { mailerConfigured, sendReportEmail } from '@/lib/reports/mailer'
 import { ilDate } from '@/lib/reports/dates'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
 
-/**
- * One-off: on this Israel date the cron sends all three reports even if empty,
- * so the coach gets a sample of each. Safe to remove after that day.
- */
-const SAMPLE_ALL_ON = '2026-10-09'
-
-type Kind = 'daily' | 'weekly' | 'monthly'
-interface Email { subject: string; html: string; text: string; count: number }
-
-const HE_MONTHS = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר']
-
-function previousMonth(today: string): [number, number] {
-  const [y, m] = today.split('-').map(Number)
-  return m === 1 ? [y - 1, 12] : [y, m - 1]
-}
-
-async function buildDaily(db: SupabaseClient, trainees: Trainee[], today: string, now: Date): Promise<Email> {
-  const data = await loadDailyData(db, trainees, today)
-  return renderDailyEmail(today, data.map(t => ({ email: t.email, name: t.name, alerts: dailyAlerts(t, today, now) })))
-}
-
-async function buildWeekly(db: SupabaseClient, trainees: Trainee[], today: string): Promise<Email> {
-  const data = await loadDailyData(db, trainees, today, 35)
-  return renderWeeklyEmail(today, data.map(t => weeklyReview(t, today)))
-}
-
-async function buildMonthly(db: SupabaseClient, trainees: Trainee[], year: number, month: number): Promise<Email> {
-  const reports: MonthlyReport[] = []
-  for (let i = 0; i < trainees.length; i += 5) {
-    reports.push(...await Promise.all(trainees.slice(i, i + 5).map(t => buildMonthlyReport(db, t.email, year, month))))
-  }
-  const e = renderMonthlyEmail(reports, `${HE_MONTHS[month - 1]} ${year}`)
-  return { ...e, count: reports.length }
-}
+type Kind = ReportKind
 
 export async function GET(request: NextRequest) {
   const params = request.nextUrl.searchParams
@@ -78,13 +39,11 @@ export async function GET(request: NextRequest) {
 
   const requested = params.get('report') as Kind | null
   const preview = params.get('preview') === '1' || !!dateParam
-  const sample = !requested && today === SAMPLE_ALL_ON
-  const force = params.get('send') === 'always' || sample
+  const force = params.get('send') === 'always'
 
   // which reports run now
   const weekday = new Date(today + 'T12:00:00Z').getUTCDay()
   const kinds: Kind[] = requested ? [requested]
-    : sample ? ['daily', 'weekly', 'monthly']
     : ['daily', ...(weekday === 0 ? ['weekly' as const] : []), ...(today.endsWith('-01') ? ['monthly' as const] : [])]
 
   try {

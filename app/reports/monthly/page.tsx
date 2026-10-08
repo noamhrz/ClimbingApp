@@ -5,7 +5,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useAuth } from '@/context/AuthContext'
 import { supabase } from '@/lib/supabaseClient'
-import { LuCalendarRange, LuChevronLeft, LuChevronRight, LuFileChartColumn } from 'react-icons/lu'
+import { LuCalendarRange, LuChevronLeft, LuChevronRight, LuFileChartColumn, LuMail } from 'react-icons/lu'
 
 const HE_MONTHS = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר']
 
@@ -31,6 +31,23 @@ export default function MonthlyReportPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const frame = useRef<HTMLIFrameElement>(null)
+  const [testState, setTestState] = useState<'idle' | 'sending' | 'sent' | 'failed'>('idle')
+  const [testMsg, setTestMsg] = useState('')
+
+  const sendTest = async () => {
+    setTestState('sending'); setTestMsg('')
+    try {
+      const res = await fetch('/api/reports/send-test', { method: 'POST', headers: await authHeader() })
+      const body = await res.json().catch(() => ({}))
+      if (res.ok) { setTestState('sent'); setTestMsg(`נשלחו 3 מיילים ל-${body.to ?? 'כתובת הדיווח'}`) }
+      else {
+        setTestState('failed')
+        setTestMsg(body.results ? Object.entries(body.results).filter(([, v]) => v !== 'sent').map(([k, v]) => `${k}: ${v}`).join(' · ') : body.error ?? `שגיאה ${res.status}`)
+      }
+    } catch (e) {
+      setTestState('failed'); setTestMsg(e instanceof Error ? e.message : String(e))
+    }
+  }
 
   // active trainees
   useEffect(() => {
@@ -83,6 +100,17 @@ export default function MonthlyReportPage() {
           <LuFileChartColumn aria-hidden className="w-[1.1em] h-[1.1em]" />דו״ח חודשי
         </h1>
         <p className="text-fg-3 text-sm mt-1">אותו כרטיס שנשלח במייל בתחילת כל חודש</p>
+
+        <div className="mt-3 flex flex-wrap items-center gap-3">
+          <button
+            onClick={sendTest}
+            disabled={testState === 'sending'}
+            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-line-strong bg-raised text-fg-2 hover:text-fg text-sm disabled:opacity-50"
+          >
+            <LuMail aria-hidden />{testState === 'sending' ? 'שולח…' : 'שלח לי מייל בדיקה (יומי, שבועי, חודשי)'}
+          </button>
+          {testMsg && <span className={`text-sm ${testState === 'sent' ? 'text-success' : 'text-danger'}`}>{testMsg}</span>}
+        </div>
 
         <div className="mt-5 flex flex-wrap items-center gap-3">
           <select
