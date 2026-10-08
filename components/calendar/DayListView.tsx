@@ -264,16 +264,16 @@ export default function DayListView({
       {/* Floating Navigation Buttons */}
       <div className="hidden md:flex fixed bottom-48 left-6 z-40 flex-col gap-2">
         <button
-          onClick={goToPrevDay}
+          onClick={goToNextDay}
           className="w-14 h-14 bg-accent hover:bg-accent-hover text-on-accent rounded-full flex items-center justify-center text-2xl transition-all hover:scale-110 active:scale-95"
-          title="יום קודם (←)"
+          title="יום הבא (→)"
         >
           →
         </button>
         <button
-          onClick={goToNextDay}
+          onClick={goToPrevDay}
           className="w-14 h-14 bg-accent hover:bg-accent-hover text-on-accent rounded-full flex items-center justify-center text-2xl transition-all hover:scale-110 active:scale-95"
-          title="יום הבא (→)"
+          title="יום קודם (←)"
         >
           ←
         </button>
@@ -301,8 +301,9 @@ export default function DayListView({
       <div className="sticky top-0 bg-surface border-b px-6 py-4 z-10">
         <div className="flex items-center justify-between mb-4">
           <button
-            onClick={goToPrevDay}
-            className="p-3 hover:bg-surface rounded-lg transition-colors active:bg-raised"
+            onClick={goToNextDay}
+            aria-label="יום הבא"
+            className="min-w-11 min-h-11 p-3 hover:bg-raised rounded-full transition-colors active:bg-raised"
           >
             <span className="text-3xl">→</span>
           </button>
@@ -321,8 +322,9 @@ export default function DayListView({
           </div>
 
           <button
-            onClick={goToNextDay}
-            className="p-3 hover:bg-surface rounded-lg transition-colors active:bg-raised"
+            onClick={goToPrevDay}
+            aria-label="יום קודם"
+            className="min-w-11 min-h-11 p-3 hover:bg-raised rounded-full transition-colors active:bg-raised"
           >
             <span className="text-3xl">←</span>
           </button>
