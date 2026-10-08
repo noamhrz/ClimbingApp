@@ -42,6 +42,7 @@ interface CalendarEvent {
   StartTime?: string | Date
   Order?: number | null
   EstimatedTotalTime?: number | null
+  CoachNote?: string
 }
 
 interface Workout {
@@ -156,6 +157,15 @@ export default function CalendarPage() {
       return
     }
 
+    // Personal coach notes for this trainee (set in workout assignment)
+    const { data: notesData } = await supabase
+      .from('WorkoutsForUser')
+      .select('WorkoutID, Notes, CoachNote')
+      .eq('Email', activeEmail)
+    const noteMap: Record<number, string> = Object.fromEntries(
+      (notesData || []).map((n) => [n.WorkoutID, ((n.Notes || n.CoachNote || '') as string).trim()])
+    )
+
     const { data: workoutsData } = await supabase
       .from('Workouts')
       .select('WorkoutID, Name, EstimatedTotalTime, EstimatedClimbingTime, CalculatedExercisesTime, containClimbing, containExercise')
@@ -205,6 +215,7 @@ export default function CalendarPage() {
         StartTime: item.StartTime,
         Order: item.Order ?? null,
         EstimatedTotalTime: getDisplayTime(item.WorkoutID),
+        CoachNote: noteMap[item.WorkoutID] || '',
       }
     })
 
@@ -601,7 +612,7 @@ export default function CalendarPage() {
 
       <button
         onClick={handleAddButtonClick}
-        className={`fixed bottom-28 left-6 text-on-accent text-3xl rounded-full w-16 h-16 shadow-lg transition-all duration-200 z-40 flex items-center justify-center ${
+        className={`fixed bottom-28 max-md:bottom-40 left-6 text-on-accent text-3xl rounded-full w-16 h-16 shadow-lg transition-all duration-200 z-40 flex items-center justify-center ${
  isSelectingDate 
  ? 'bg-warning hover:bg-warning/90 animate-pulse' 
  : 'bg-accent hover:bg-accent-hover'
@@ -689,7 +700,7 @@ export default function CalendarPage() {
       )}
 
       {isAdmin && (
-        <div className="fixed bottom-28 right-6 flex flex-col gap-2 z-40">
+        <div className="fixed bottom-28 max-md:bottom-40 right-4 md:right-6 flex flex-col gap-2 z-40">
           <button
             onClick={() => setShowDuplicateModal(true)}
             className="inline-flex items-center gap-1.5 bg-info hover:bg-info text-on-accent px-4 py-2 rounded-lg text-sm font-medium transition-all"

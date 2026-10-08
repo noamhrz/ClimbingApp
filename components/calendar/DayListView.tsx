@@ -17,7 +17,7 @@ import {
   arrayMove,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { LuBatteryLow, LuCalendar, LuCircleCheck, LuCircleX, LuClock, LuHourglass, LuHouse, LuLightbulb, LuList, LuSunMedium, LuTimer } from 'react-icons/lu'
+import { LuBatteryLow, LuCalendar, LuCircleCheck, LuCircleX, LuClock, LuHourglass, LuHouse, LuLightbulb, LuList, LuMessageSquare, LuSunMedium, LuTimer } from 'react-icons/lu'
 
 interface CalendarEvent {
   id: number
@@ -32,6 +32,7 @@ interface CalendarEvent {
   StartTime?: string | Date
   Order?: number | null
   EstimatedTotalTime?: number | null
+  CoachNote?: string
 }
 
 interface Props {
@@ -95,6 +96,14 @@ function EventCardBody({ event, index }: { event: CalendarEvent; index: number }
             </span>
           )}
         </div>
+        {event.CoachNote && (
+          <div className="p-3 bg-warning/10 border border-warning/40 rounded-lg">
+            <p className="text-xs font-semibold text-warning mb-1 flex items-center gap-1.5">
+              <LuMessageSquare aria-hidden className="w-3.5 h-3.5" />הערת המאמן:
+            </p>
+            <p className="text-sm text-fg-2 whitespace-pre-wrap line-clamp-4">{event.CoachNote}</p>
+          </div>
+        )}
       </div>
     </>
   )
@@ -231,7 +240,7 @@ export default function DayListView({
   return (
     <div className="bg-surface rounded-xl ">
       {/* Floating Navigation Buttons */}
-      <div className="fixed bottom-32 right-6 z-40 flex flex-col gap-2">
+      <div className="hidden md:flex fixed bottom-48 left-6 z-40 flex-col gap-2">
         <button
           onClick={goToPrevDay}
           className="w-14 h-14 bg-accent hover:bg-accent-hover text-on-accent rounded-full flex items-center justify-center text-2xl transition-all hover:scale-110 active:scale-95"
@@ -443,6 +452,14 @@ export default function DayListView({
                         </span>
                       )}
                     </div>
+                    {event.CoachNote && (
+                      <div className="p-3 bg-warning/10 border border-warning/40 rounded-lg">
+                        <p className="text-xs font-semibold text-warning mb-1 flex items-center gap-1.5">
+                          <LuMessageSquare aria-hidden className="w-3.5 h-3.5" />הערת המאמן:
+                        </p>
+                        <p className="text-sm text-fg-2 whitespace-pre-wrap line-clamp-4">{event.CoachNote}</p>
+                      </div>
+                    )}
                   </div>
                   <div className="absolute top-4 left-4 opacity-0 group-hover:opacity-100 transition-opacity">
                     <div className="px-3 py-1 bg-accent text-on-accent rounded-lg text-xs font-medium">
