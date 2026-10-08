@@ -13,6 +13,7 @@ import MotivationalQuote from '@/components/dashboard/MotivationalQuote'
 import WellnessModal from '@/components/dashboard/WellnessModal'
 import { subDays, format, startOfWeek, endOfWeek, differenceInWeeks, eachDayOfInterval, eachWeekOfInterval, setHours, setMinutes, setSeconds, isBefore, startOfDay, endOfDay } from 'date-fns'
 import { LuLayoutDashboard, LuCalendarDays, LuMountain, LuHeartPulse, LuCircleCheck } from 'react-icons/lu'
+import { PageSkeleton } from '@/components/ui/Skeleton'
 
 // WEEK CONFIGURATION - SUNDAY TO SATURDAY (for stats cards only)
 const WEEK_STARTS_ON = 0 // 0 = Sunday, 6 = Saturday
@@ -344,12 +345,7 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-surface flex items-center justify-center">
-        <div className="text-center">
-          <LuLayoutDashboard aria-hidden className="w-14 h-14 mx-auto mb-4 text-accent animate-pulse" strokeWidth={1.5} />
-          <div className="text-xl text-fg-3">טוען Dashboard...</div>
-        </div>
-      </div>
+      <PageSkeleton variant="dashboard" label="טוען Dashboard..." />
     )
   }
 

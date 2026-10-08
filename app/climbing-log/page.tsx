@@ -21,6 +21,7 @@ import ClimbingLogFilters, { ClimbingLogFilters as FiltersType } from '@/compone
 import ClimbingLogList from '@/components/climbing/ClimbingLogList'
 import AddClimbingLogModal from '@/components/climbing/AddClimbingLogModal'
 import { LuMountain } from 'react-icons/lu'
+import { PageSkeleton } from '@/components/ui/Skeleton'
 
 export default function ClimbingLogPage() {
   const router = useRouter()
@@ -207,10 +208,7 @@ export default function ClimbingLogPage() {
 
       {/* Loading */}
       {loading ? (
-        <div className="text-center py-12">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-accent"></div>
-          <p className="mt-4 text-fg-3">טוען נתונים...</p>
-        </div>
+        <PageSkeleton variant="block" label="טוען נתונים..." />
       ) : (
         <>
           {/* Chart */}

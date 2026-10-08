@@ -20,6 +20,7 @@ import { WorkoutStatsDisplay } from '@/components/workout-stats-display'
 import { getExercisePerformance } from '@/lib/exercise-stats-metrics'
 import type { ExercisePerformance } from '@/lib/exercise-stats-metrics'
 import { LuCalendarDays, LuChartColumn, LuCircleCheck, LuClipboardList, LuHourglass, LuTriangleAlert, LuUser } from 'react-icons/lu'
+import { PageSkeleton } from '@/components/ui/Skeleton'
 
 export default function ProfilePage() {
   const params = useParams()
@@ -158,12 +159,7 @@ export default function ProfilePage() {
 
   if (loading && !metrics) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="text-2xl mb-2"><LuHourglass aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></div>
-          <div className="text-xl">טוען נתונים...</div>
-        </div>
-      </div>
+      <PageSkeleton variant="dashboard" label="טוען נתונים..." />
     )
   }
 

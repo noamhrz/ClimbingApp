@@ -13,6 +13,7 @@ import moment from 'moment-timezone'
 import LoadLastWorkoutButton from './LoadLastWorkoutButton'
 import { useFormDraft } from '@/lib/useFormDraft'
 import { LuAlarmClock, LuBicepsFlexed, LuCalendarDays, LuCircleCheck, LuHourglass, LuLightbulb, LuLoaderCircle, LuMapPin, LuMountain, LuNotebookPen, LuPackage, LuPlus, LuRefreshCw, LuTriangleAlert, LuVideo } from 'react-icons/lu'
+import { PageSkeleton } from '@/components/ui/Skeleton'
 
 export default function WorkoutDetailClient({ id }: { id: number }) {
   const { activeUser, loading: authLoading } = useAuth()
@@ -810,9 +811,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
 
   if (authLoading || loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-lg">טוען...</div>
-      </div>
+      <PageSkeleton variant="detail" label="טוען..." />
     )
   }
 

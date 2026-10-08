@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '@/context/AuthContext'
 import { supabase } from '@/lib/supabaseClient'
 import { useRouter } from 'next/navigation'
-import { LuCircle, LuCircleCheck, LuHourglass, LuLightbulb, LuLoaderCircle, LuLock, LuLogOut, LuMail, LuMessageSquare, LuPencil, LuRefreshCw, LuSave, LuScale, LuSmartphone, LuUser } from 'react-icons/lu'
+import { LuCircle, LuCircleCheck, LuLightbulb, LuLoaderCircle, LuLock, LuLogOut, LuMail, LuMessageSquare, LuPencil, LuRefreshCw, LuSave, LuScale, LuSmartphone, LuUser } from 'react-icons/lu'
+import { PageSkeleton } from '@/components/ui/Skeleton'
 
 interface ProfileData {
   Email: string
@@ -346,10 +347,7 @@ export default function UserProfilePage() {
           </div>
 
           {loadingProfile ? (
-            <div className="text-center py-8">
-              <div className="text-4xl mb-2"><LuHourglass aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></div>
-              <p className="text-fg-3">טוען נתונים...</p>
-            </div>
+            <PageSkeleton variant="block" label="טוען נתונים..." />
           ) : !isEditingProfile ? (
             <div className="space-y-4">
               {/* Body Weight */}

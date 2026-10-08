@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabaseClient'
 import { useAuth } from '@/context/AuthContext'
 import Link from 'next/link'
 import { LuDumbbell, LuInbox, LuMessageSquare, LuSearch, LuStar } from 'react-icons/lu'
+import { PageSkeleton } from '@/components/ui/Skeleton'
 
 interface Workout {
   WorkoutID: number
@@ -123,12 +124,7 @@ export default function WorkoutsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent mx-auto mb-4"></div>
-          <p className="text-fg-3">טוען אימונים...</p>
-        </div>
-      </div>
+      <PageSkeleton variant="list" label="טוען אימונים..." />
     )
   }
 

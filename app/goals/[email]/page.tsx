@@ -21,7 +21,8 @@ import GeneralGoalsForm from '@/components/goals/GeneralGoalsForm'
 import GradeGoalsForm from '@/components/goals/GradeGoalsForm'
 import GoalsPyramidEnhanced from '@/components/goals/GoalsPyramidEnhanced'
 import GoalsProgressPyramid from '@/components/goals/GoalsProgressPyramid'
-import { LuCalendarDays, LuChartColumn, LuHourglass, LuLink, LuMountain, LuNotebookPen, LuTarget } from 'react-icons/lu'
+import { LuCalendarDays, LuChartColumn, LuLink, LuMountain, LuNotebookPen, LuTarget } from 'react-icons/lu'
+import { PageSkeleton } from '@/components/ui/Skeleton'
 
 export default function GoalsEditPage() {
   const params = useParams()
@@ -130,12 +131,7 @@ export default function GoalsEditPage() {
 
   if (authLoading || loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="text-2xl mb-2"><LuHourglass aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></div>
-          <div className="text-xl">טוען יעדים...</div>
-        </div>
-      </div>
+      <PageSkeleton variant="detail" label="טוען יעדים..." />
     )
   }
 

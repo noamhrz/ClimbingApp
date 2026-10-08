@@ -22,6 +22,7 @@ import StatsCards from '@/components/analytics/StatsCards'
 import ProgressChart from '@/components/analytics/ProgressChart'
 import SessionsTable from '@/components/analytics/SessionsTable'
 import { LuBicepsFlexed, LuChartColumn, LuHourglass, LuSearch, LuUser, LuUsers } from 'react-icons/lu'
+import { PageSkeleton } from '@/components/ui/Skeleton'
 
 export default function ExerciseAnalyticsPage() {
   const router = useRouter()
@@ -498,12 +499,7 @@ export default function ExerciseAnalyticsPage() {
   // Loading state
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen bg-surface flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent mb-4 mx-auto"></div>
-          <p className="text-fg-3">טוען נתונים...</p>
-        </div>
-      </div>
+      <PageSkeleton variant="detail" label="טוען נתונים..." />
     )
   }
 

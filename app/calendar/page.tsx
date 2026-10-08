@@ -21,6 +21,7 @@ import DayListView from '@/components/calendar/DayListView'
 import CalendarToolbar from '@/components/calendar/CalendarToolbar'
 import { copyPreviousWorkout } from '@/utils/copyPreviousWorkout'
 import { LuPlus, LuCalendarDays, LuList, LuCalendar, LuCopy, LuBatteryLow, LuX, LuTrash2, LuSave } from 'react-icons/lu'
+import { PageSkeleton } from '@/components/ui/Skeleton'
 
 moment.locale('he')
 moment.tz.setDefault('Asia/Jerusalem')
@@ -545,12 +546,7 @@ export default function CalendarPage() {
 
   if (authLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent mb-4 mx-auto"></div>
-          <p className="text-fg-3">טוען...</p>
-        </div>
-      </div>
+      <PageSkeleton variant="calendar" label="טוען..." />
     )
   }
 
@@ -566,12 +562,7 @@ export default function CalendarPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="text-2xl mb-2">⌛</div>
-          <p className="text-fg-3">טוען לוח שנה...</p>
-        </div>
-      </div>
+      <PageSkeleton variant="calendar" label="טוען לוח שנה..." />
     )
   }
 
