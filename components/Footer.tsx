@@ -37,7 +37,7 @@ export default function Footer() {
       <div className="h-20"></div>
 
       {/* Fixed Footer */}
-      <footer className="fixed bottom-0 left-0 right-0 text-fg z-50 border-t border-line bg-bg/95 backdrop-blur-md pb-[env(safe-area-inset-bottom)]">
+      <footer className="fixed bottom-0 max-md:bottom-[calc(3.5rem+env(safe-area-inset-bottom))] left-0 right-0 text-fg z-50 border-t border-line bg-bg/95 backdrop-blur-md pb-[env(safe-area-inset-bottom)] max-md:pb-0">
         <div className="max-w-7xl mx-auto px-4 py-2.5">
           <div className="flex items-center justify-between">
             {/* Left: Current User Role + Quick Links */}
@@ -130,7 +130,7 @@ function UserSelectionMenu({
       />
 
       {/* Menu */}
-      <div className="fixed bottom-20 left-0 right-0 mx-2 bg-raised text-fg rounded-2xl border border-line-strong shadow-2xl shadow-black/60 z-50 max-h-[60vh] overflow-y-auto">
+      <div className="fixed bottom-20 max-md:bottom-36 left-0 right-0 mx-2 bg-raised text-fg rounded-2xl border border-line-strong shadow-2xl shadow-black/60 z-50 max-h-[60vh] overflow-y-auto">
         <div className="max-w-7xl mx-auto">
           {/* Header */}
           <div className="sticky top-0 text-fg px-4 py-3 flex justify-between items-center bg-raised border-b border-line">

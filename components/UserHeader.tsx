@@ -8,7 +8,7 @@ import { useState, useRef, useEffect, createContext, useContext } from 'react'
 import {
   LuUser, LuLogOut, LuLayoutDashboard, LuCalendarDays, LuDumbbell, LuChartLine, LuBookOpen,
   LuChartColumn, LuTrendingUp, LuMap, LuSettings, LuSiren, LuClipboardList, LuPuzzle, LuUsers,
-  LuTarget, LuFolder, LuEye, LuChevronDown, LuCalendarCheck, LuNotebookPen,
+  LuTarget, LuFolder, LuEye, LuChevronDown, LuCalendarCheck, LuNotebookPen, LuMenu,
 } from 'react-icons/lu'
 
 const ic = 'w-4 h-4 shrink-0'
@@ -73,8 +73,10 @@ export default function UserHeader() {
   const { activeUser, currentUser, isImpersonating, switchToSelf, logout } = useAuth()
   const router = useRouter()
   const pathname = usePathname()
-  const navCls = (href: string) => (pathname === href || pathname.startsWith(href + '/') ? btnActive : btnBase)
+  const isActive = (href: string) => pathname === href || pathname.startsWith(href + '/')
+  const navCls = (href: string) => (isActive(href) ? btnActive : btnBase)
   const headerRef = useRef<HTMLElement>(null)
+  const [moreOpen, setMoreOpen] = useState(false)
 
   // Exposes the header's real (possibly multi-line) height as a CSS var so
   // sticky elements further down the page (e.g. the workout exercise picker)
@@ -118,6 +120,7 @@ export default function UserHeader() {
     : `/goals/${encodeURIComponent((activeUser || currentUser)?.Email || '')}`
 
   return (
+    <>
     <header ref={headerRef} className="text-fg sticky top-0 z-50 bg-bg/95 backdrop-blur-md border-b border-line">
       <div className="max-w-7xl mx-auto px-4 pt-3 pb-3">
 
@@ -168,7 +171,7 @@ export default function UserHeader() {
         </div>
 
         {/* Bottom Row - Navigation */}
-        <nav className="flex gap-2 items-center flex-wrap">
+        <nav className="hidden md:flex gap-2 items-center flex-wrap">
 
           {/* Pinned */}
           <Link href="/dashboard" className={navCls('/dashboard')}><LuLayoutDashboard aria-hidden className={ic} />Dashboard</Link>
@@ -230,5 +233,97 @@ export default function UserHeader() {
 
       </div>
     </header>
+
+    {/* ── Mobile bottom navigation (same links and conditions as the desktop menu) ── */}
+    <nav
+      aria-label="ניווט ראשי"
+      className="md:hidden fixed bottom-0 inset-x-0 z-[60] bg-bg/95 backdrop-blur-md border-t border-line pb-[env(safe-area-inset-bottom)]"
+    >
+      <div className="grid grid-cols-5">
+        <TabLink href="/dashboard" active={isActive('/dashboard')} icon={<LuLayoutDashboard className="w-5 h-5" />} label="ראשי" />
+        <TabLink href="/calendar" active={isActive('/calendar')} icon={<LuCalendarDays className="w-5 h-5" />} label="לוח" />
+        <TabLink href="/workouts" active={isActive('/workouts')} icon={<LuDumbbell className="w-5 h-5" />} label="אימונים" />
+        <TabLink href="/climbing-log" active={isActive('/climbing-log')} icon={<LuBookOpen className="w-5 h-5" />} label="לוג" />
+        <button
+          onClick={() => setMoreOpen(v => !v)}
+          aria-expanded={moreOpen}
+          className={`flex flex-col items-center justify-center gap-0.5 min-h-14 text-[11px] font-semibold transition-colors ${moreOpen ? 'text-accent' : 'text-muted'}`}
+        >
+          <LuMenu aria-hidden className="w-5 h-5" />
+          עוד
+        </button>
+      </div>
+    </nav>
+
+    {moreOpen && (
+      <div className="md:hidden fixed inset-0 z-[55]" dir="rtl">
+        <div className="absolute inset-0 bg-black/60" onClick={() => setMoreOpen(false)} />
+        <div className="absolute inset-x-0 bottom-0 bg-raised border-t border-line-strong rounded-t-2xl pb-[calc(4.5rem+env(safe-area-inset-bottom))] max-h-[80vh] overflow-y-auto">
+          <div className="mx-auto mt-2 mb-1 h-1 w-10 rounded-full bg-line-strong" aria-hidden />
+          <SheetGroup title="נתונים">
+            <SheetLink href="/climbing-log" onClick={() => setMoreOpen(false)} icon={<LuBookOpen />}>לוג</SheetLink>
+            <SheetLink href={statsHref} onClick={() => setMoreOpen(false)} icon={<LuChartColumn />}>סטטיסטיקות</SheetLink>
+            <SheetLink href="/exercise-analytics" onClick={() => setMoreOpen(false)} icon={<LuTrendingUp />}>ניתוח תרגילים</SheetLink>
+            <SheetLink href="/roadmap-progress" onClick={() => setMoreOpen(false)} icon={<LuMap />}>התקדמות Roadmap</SheetLink>
+          </SheetGroup>
+          {isCoachOrAdmin && (
+            <SheetGroup title="ניהול">
+              <SheetLink href="/coach/urgency" onClick={() => setMoreOpen(false)} icon={<LuSiren />}>דחיפות</SheetLink>
+              <SheetLink href="/admin/assign-workouts" onClick={() => setMoreOpen(false)} icon={<LuClipboardList />}>הקצאה</SheetLink>
+              <SheetLink href="/exercises" onClick={() => setMoreOpen(false)} icon={<LuDumbbell />}>תרגילים</SheetLink>
+              <SheetLink href="/exercises/dynamic" onClick={() => setMoreOpen(false)} icon={<LuPuzzle />}>תרגילים דינמיים</SheetLink>
+              <SheetLink href="/workouts-editor" onClick={() => setMoreOpen(false)} icon={<LuNotebookPen />}>עורך אימונים</SheetLink>
+              {isAdmin && <SheetLink href="/admin/roadmap-builder" onClick={() => setMoreOpen(false)} icon={<LuMap />}>בניית Roadmap</SheetLink>}
+              {isAdmin && <SheetLink href="/admin/roadmap-progress" onClick={() => setMoreOpen(false)} icon={<LuChartColumn />}>התקדמות Roadmap</SheetLink>}
+            </SheetGroup>
+          )}
+          <SheetGroup title="תוכן">
+            {isAdmin && <SheetLink href="/admin/users" onClick={() => setMoreOpen(false)} icon={<LuUsers />}>משתמשים</SheetLink>}
+            <SheetLink href="/profile" onClick={() => setMoreOpen(false)} icon={<LuUser />}>פרופיל</SheetLink>
+            <SheetLink href={goalsHref} onClick={() => setMoreOpen(false)} icon={<LuTarget />}>יעדים</SheetLink>
+            <SheetLink href="/monthly-sessions" onClick={() => setMoreOpen(false)} icon={<LuCalendarCheck />}>פגישות חודשיות</SheetLink>
+            <SheetLink href="/media" onClick={() => setMoreOpen(false)} icon={<LuFolder />}>מדיה</SheetLink>
+          </SheetGroup>
+        </div>
+      </div>
+    )}
+    </>
+  )
+}
+
+// ─── Mobile nav primitives ──────────────────────────────────────────────────
+
+function TabLink({ href, active, icon, label }: { href: string; active: boolean; icon: React.ReactNode; label: string }) {
+  return (
+    <Link
+      href={href}
+      aria-current={active ? 'page' : undefined}
+      className={`flex flex-col items-center justify-center gap-0.5 min-h-14 text-[11px] font-semibold transition-colors ${active ? 'text-accent' : 'text-muted hover:text-fg'}`}
+    >
+      <span aria-hidden>{icon}</span>
+      {label}
+    </Link>
+  )
+}
+
+function SheetGroup({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="px-4 pt-3">
+      <p className="text-xs font-semibold text-faint mb-1">{title}</p>
+      <div className="grid grid-cols-2 gap-1">{children}</div>
+    </div>
+  )
+}
+
+function SheetLink({ href, onClick, icon, children }: { href: string; onClick: () => void; icon: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <Link
+      href={href}
+      onClick={onClick}
+      className="flex items-center gap-2 min-h-12 px-3 rounded-xl text-sm text-fg-2 hover:bg-accent/15 hover:text-accent transition-colors"
+    >
+      <span aria-hidden className="w-4 h-4 shrink-0 [&>svg]:w-4 [&>svg]:h-4">{icon}</span>
+      {children}
+    </Link>
   )
 }
