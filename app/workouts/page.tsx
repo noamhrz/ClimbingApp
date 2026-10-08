@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { useAuth } from '@/context/AuthContext'
 import Link from 'next/link'
+import { LuDumbbell, LuInbox, LuMessageSquare, LuSearch, LuStar } from 'react-icons/lu'
+import { PageSkeleton } from '@/components/ui/Skeleton'
 
 interface Workout {
   WorkoutID: number
@@ -122,22 +124,17 @@ export default function WorkoutsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">טוען אימונים...</p>
-        </div>
-      </div>
+      <PageSkeleton variant="list" label="טוען אימונים..." />
     )
   }
 
   return (
-    <div dir="rtl" className="min-h-screen bg-gray-50 pb-20">
+    <div dir="rtl" className="min-h-screen bg-surface pb-20">
       {/* Header */}
-      <div className="bg-white shadow-sm border-b sticky top-0 z-30">
+      <div className="bg-surface border-b sticky top-0 z-30">
         <div className="max-w-7xl mx-auto px-4 py-4">
-          <h1 className="text-2xl font-bold text-blue-600 mb-4">
-            🏋️ האימונים של {userToShow?.Name || 'המשתמש'}
+          <h1 className="text-2xl font-bold text-fg mb-4 flex items-center gap-2">
+            <LuDumbbell aria-hidden className="w-6 h-6 shrink-0 text-accent" />האימונים של {userToShow?.Name || 'המשתמש'}
           </h1>
           
           {/* Filters */}
@@ -145,7 +142,7 @@ export default function WorkoutsPage() {
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="flex-1 max-w-xs px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+              className="flex-1 max-w-xs px-3 py-2 border border-line rounded-lg text-sm focus:ring-2 focus:ring-accent"
             >
               <option value="all">כל הקטגוריות</option>
               {categories.map(cat => (
@@ -158,15 +155,15 @@ export default function WorkoutsPage() {
               placeholder="🔍 חיפוש..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+              className="flex-1 px-3 py-2 border border-line rounded-lg text-sm focus:ring-2 focus:ring-accent"
             />
           </div>
 
           {/* Stats */}
-          <div className="mt-3 flex gap-4 text-sm text-gray-600">
+          <div className="mt-3 flex gap-4 text-sm text-fg-3">
             <span>סה"כ: {workouts.length} אימונים</span>
             {keyWorkouts.length > 0 && (
-              <span className="text-yellow-600 font-semibold">⭐ {keyWorkouts.length} אימוני מפתח</span>
+              <span className="text-warning font-semibold inline-flex items-center gap-1"><LuStar aria-hidden className="w-4 h-4 fill-current" />{keyWorkouts.length} אימוני מפתח</span>
             )}
           </div>
         </div>
@@ -176,23 +173,23 @@ export default function WorkoutsPage() {
       <div className="max-w-7xl mx-auto px-4 py-6">
         {workouts.length === 0 ? (
           <div className="text-center py-12">
-            <div className="text-6xl mb-4">📭</div>
-            <p className="text-xl text-gray-600 mb-2">עדיין לא הוקצו אימונים ל-{userToShow?.Name}</p>
-            <p className="text-gray-500">פנה למאמן להקצאת אימונים</p>
+            <div className="text-6xl mb-4"><LuInbox aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></div>
+            <p className="text-xl text-fg-3 mb-2">עדיין לא הוקצו אימונים ל-{userToShow?.Name}</p>
+            <p className="text-muted">פנה למאמן להקצאת אימונים</p>
           </div>
         ) : filteredWorkouts.length === 0 ? (
           <div className="text-center py-12">
-            <div className="text-6xl mb-4">🔍</div>
-            <p className="text-xl text-gray-600">לא נמצאו אימונים מתאימים</p>
+            <div className="text-6xl mb-4"><LuSearch aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></div>
+            <p className="text-xl text-fg-3">לא נמצאו אימונים מתאימים</p>
           </div>
         ) : (
           <div className="space-y-6">
             {/* אימוני מפתח */}
             {keyWorkouts.length > 0 && (
               <div>
-                <h2 className="text-xl font-bold text-yellow-600 mb-4 flex items-center gap-2">
-                  ⭐ אימוני מפתח
-                  <span className="text-sm font-normal text-gray-500">
+                <h2 className="text-xl font-bold text-warning mb-4 flex items-center gap-2">
+                  <LuStar aria-hidden className="w-5 h-5 fill-current" />אימוני מפתח
+                  <span className="text-sm font-normal text-muted">
                     ({keyWorkouts.length})
                   </span>
                 </h2>
@@ -203,42 +200,42 @@ export default function WorkoutsPage() {
                       href={`/workout/${workout.WorkoutID}`}
                       className="block"
                     >
-                      <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 border-2 border-yellow-400 rounded-xl p-5 hover:shadow-xl transition-all hover:scale-105">
+                      <div className="border-2 border-warning rounded-xl p-5 transition-all hover:scale-105 bg-surface">
                         <div className="flex items-start justify-between mb-3">
                           <div className="flex items-center gap-2">
                             <span className="text-3xl">{getCategoryEmoji(workout.Category)}</span>
-                            <span className="text-2xl">⭐</span>
+                            <LuStar aria-hidden className="w-6 h-6 text-warning fill-current" />
                           </div>
                           {workout.Category && (
-                            <span className="px-2 py-1 bg-yellow-200 text-yellow-800 text-xs rounded font-medium">
+                            <span className="px-2 py-1 bg-warning/15 text-warning text-xs rounded font-medium">
                               {workout.Category}
                             </span>
                           )}
                         </div>
 
-                        <h3 className="text-lg font-bold text-gray-900 mb-2">
+                        <h3 className="text-lg font-bold text-fg mb-2">
                           {workout.Name}
                         </h3>
 
                         {workout.Description && (
-                          <p className="text-sm text-gray-600 line-clamp-2 mb-3">
+                          <p className="text-sm text-fg-3 line-clamp-2 mb-3">
                             {workout.Description}
                           </p>
                         )}
 
                         {workout.Notes && (
-                          <div className="mt-3 p-3 bg-white/80 rounded-lg border border-yellow-300">
-                            <p className="text-xs font-semibold text-yellow-700 mb-1">
-                              💬 הערת המאמן:
+                          <div className="mt-3 p-3 bg-warning/10 rounded-lg border border-warning/40">
+                            <p className="text-xs font-semibold text-warning mb-1">
+                              <LuMessageSquare aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />הערת המאמן:
                             </p>
-                            <p className="text-sm text-gray-700">
+                            <p className="text-sm text-fg-2">
                               {workout.Notes}
                             </p>
                           </div>
                         )}
 
                         <div className="mt-4 flex items-center justify-between text-sm">
-                          <span className="text-yellow-700 font-semibold">
+                          <span className="text-warning font-semibold">
                             לחץ לפרטים →
                           </span>
                         </div>
@@ -253,9 +250,9 @@ export default function WorkoutsPage() {
             {regularWorkouts.length > 0 && (
               <div>
                 {keyWorkouts.length > 0 && (
-                  <h2 className="text-xl font-bold text-gray-700 mb-4 flex items-center gap-2">
-                    🏋️ אימונים נוספים
-                    <span className="text-sm font-normal text-gray-500">
+                  <h2 className="text-xl font-bold text-fg-2 mb-4 flex items-center gap-2">
+                    <LuDumbbell aria-hidden className="w-5 h-5 text-accent" />אימונים נוספים
+                    <span className="text-sm font-normal text-muted">
                       ({regularWorkouts.length})
                     </span>
                   </h2>
@@ -267,39 +264,39 @@ export default function WorkoutsPage() {
                       href={`/workout/${workout.WorkoutID}`}
                       className="block"
                     >
-                      <div className="bg-white border border-gray-200 rounded-xl p-5 hover:shadow-lg transition-all hover:border-blue-300">
+                      <div className="bg-surface border border-line rounded-xl p-5 transition-all hover:border-accent">
                         <div className="flex items-start justify-between mb-3">
                           <span className="text-3xl">{getCategoryEmoji(workout.Category)}</span>
                           {workout.Category && (
-                            <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded font-medium">
+                            <span className="px-2 py-1 bg-accent/15 text-accent text-xs rounded font-medium">
                               {workout.Category}
                             </span>
                           )}
                         </div>
 
-                        <h3 className="text-lg font-bold text-gray-900 mb-2">
+                        <h3 className="text-lg font-bold text-fg mb-2">
                           {workout.Name}
                         </h3>
 
                         {workout.Description && (
-                          <p className="text-sm text-gray-600 line-clamp-2 mb-3">
+                          <p className="text-sm text-fg-3 line-clamp-2 mb-3">
                             {workout.Description}
                           </p>
                         )}
 
                         {workout.Notes && (
-                          <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                            <p className="text-xs font-semibold text-blue-700 mb-1">
-                              💬 הערת המאמן:
+                          <div className="mt-3 p-3 bg-accent/15 rounded-lg border border-accent">
+                            <p className="text-xs font-semibold text-accent mb-1">
+                              <LuMessageSquare aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />הערת המאמן:
                             </p>
-                            <p className="text-sm text-gray-700">
+                            <p className="text-sm text-fg-2">
                               {workout.Notes}
                             </p>
                           </div>
                         )}
 
                         <div className="mt-4 flex items-center justify-between text-sm">
-                          <span className="text-blue-600 font-semibold">
+                          <span className="text-accent font-semibold">
                             לחץ לפרטים →
                           </span>
                         </div>

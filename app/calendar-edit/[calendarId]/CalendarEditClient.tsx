@@ -15,6 +15,7 @@ import ExerciseAccordion from "@/components/exercises/ExerciseAccordion"
 import dayjs from 'dayjs'
 import moment from 'moment-timezone'
 import { useFormDraft } from '@/lib/useFormDraft'
+import { LuAlarmClock, LuBicepsFlexed, LuCircleCheck, LuLightbulb, LuLoaderCircle, LuMapPin, LuMountain, LuNotebookPen, LuPackage, LuPlus, LuSave, LuVideo } from 'react-icons/lu'
 
 export default function CalendarEditClient() {
   const { activeUser, loading: authLoading } = useAuth()
@@ -766,7 +767,7 @@ export default function CalendarEditClient() {
   if (!workout) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-lg text-red-600">אימון לא נמצא</div>
+        <div className="text-lg text-danger">אימון לא נמצא</div>
       </div>
     )
   }
@@ -776,14 +777,14 @@ export default function CalendarEditClient() {
   return (
     <>
       <div className="mx-auto max-w-6xl px-4 py-6" dir="rtl">
-        <div className="bg-white rounded-lg shadow-lg p-8">
+        <div className="bg-surface rounded-lg p-8">
           {/* Header */}
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            <h1 className="text-3xl font-bold text-fg mb-2">
               {workout.Name}
             </h1>
             {calendarRow?.StartTime && (
-              <p className="text-gray-600">
+              <p className="text-fg-3">
                 📅 {dayjs(calendarRow.StartTime).format('DD/MM/YYYY HH:mm')}
               </p>
             )}
@@ -792,15 +793,15 @@ export default function CalendarEditClient() {
           {/* Workout Info Section */}
           <section className="mb-8 space-y-4">
             {workout.VideoURL && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <h3 className="font-semibold text-blue-900 mb-2 flex items-center gap-2">
-                  🎥 וידאו הדרכה
+              <div className="bg-accent/15 border border-accent rounded-lg p-4">
+                <h3 className="font-semibold text-accent mb-2 flex items-center gap-2">
+                  <LuVideo aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />וידאו הדרכה
                 </h3>
                 <a 
                   href={workout.VideoURL} 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="text-blue-600 hover:text-blue-800 underline"
+                  className="text-accent hover:text-accent/90 underline"
                 >
                   צפה בווידאו
                 </a>
@@ -808,29 +809,29 @@ export default function CalendarEditClient() {
             )}
 
             {workout.Description && (
-              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                <h3 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
-                  📝 תיאור האימון
+              <div className="bg-surface border border-line rounded-lg p-4">
+                <h3 className="font-semibold text-fg mb-2 flex items-center gap-2">
+                  <LuNotebookPen aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />תיאור האימון
                 </h3>
-                <p className="text-gray-700 whitespace-pre-wrap">{workout.Description}</p>
+                <p className="text-fg-2 whitespace-pre-wrap">{workout.Description}</p>
               </div>
             )}
 
             {workout.WorkoutNotes && (
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                <h3 className="font-semibold text-yellow-900 mb-2 flex items-center gap-2">
+              <div className="bg-warning/15 border border-warning rounded-lg p-4">
+                <h3 className="font-semibold text-warning mb-2 flex items-center gap-2">
                   👨‍🏫 הערות מאמן
                 </h3>
-                <p className="text-yellow-900 whitespace-pre-wrap">{workout.WorkoutNotes}</p>
+                <p className="text-warning whitespace-pre-wrap">{workout.WorkoutNotes}</p>
               </div>
             )}
 
             {workout.WhenToPractice && (
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                <h3 className="font-semibold text-green-900 mb-2 flex items-center gap-2">
-                  ⏰ מתי להתאמן
+              <div className="bg-success/15 border border-success rounded-lg p-4">
+                <h3 className="font-semibold text-success mb-2 flex items-center gap-2">
+                  <LuAlarmClock aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />מתי להתאמן
                 </h3>
-                <p className="text-green-900">{workout.WhenToPractice}</p>
+                <p className="text-success">{workout.WhenToPractice}</p>
               </div>
             )}
           </section>
@@ -838,7 +839,7 @@ export default function CalendarEditClient() {
           {/* Exercises by Blocks */}
           {containExercise && exerciseForms.length > 0 && (
             <section className="mb-10">
-              <h2 className="font-semibold text-xl mb-6">💪 תרגילים</h2>
+              <h2 className="font-semibold text-xl mb-6"><LuBicepsFlexed aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />תרגילים</h2>
               
               {blockNumbers.map(blockNum => {
                 const blockOpen = isBlockAllOpen(blockNum)
@@ -847,10 +848,10 @@ export default function CalendarEditClient() {
                 return (
                   <div key={blockNum} className="mb-8">
                     <div 
-                      className="bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-t-lg px-4 py-3 font-bold text-lg cursor-pointer hover:from-blue-600 hover:to-blue-700 transition-all flex justify-between items-center select-none"
+                      className="text-fg rounded-t-lg px-4 py-3 font-bold text-lg cursor-pointer hover: hover: transition-all flex justify-between items-center select-none bg-surface border border-line"
                       onClick={() => toggleBlock(blockNum)}
                     >
-                      <span>📦 בלוק {blockNum}</span>
+                      <span><LuPackage aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />בלוק {blockNum}</span>
                       <div className="flex items-center gap-3 text-sm">
                         <span className="opacity-90 font-normal">
                           {exerciseCount} {exerciseCount === 1 ? 'תרגיל' : 'תרגילים'}
@@ -861,7 +862,7 @@ export default function CalendarEditClient() {
                       </div>
                     </div>
                     
-                    <div className="border border-t-0 border-gray-200 rounded-b-lg p-4 space-y-4 bg-gray-50">
+                    <div className="border border-t-0 border-line rounded-b-lg p-4 space-y-4 bg-surface">
                       {exercisesByBlock[blockNum].map((ex, idx) => {
                         const globalIndex = exerciseForms.findIndex(e => e.ExerciseID === ex.ExerciseID)
                         return (
@@ -888,23 +889,23 @@ export default function CalendarEditClient() {
           {/* Climbing Routes */}
           {containsClimbing && (
             <section className="mb-10">
-              <h2 className="font-semibold text-xl mb-4">🧗 רישומי טיפוס</h2>
+              <h2 className="font-semibold text-xl mb-4"><LuMountain aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />רישומי טיפוס</h2>
 
               <div className="mb-6">
-                <label className="block font-medium mb-2">📍 מיקום:</label>
+                <label className="block font-medium mb-2"><LuMapPin aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />מיקום:</label>
                 <div className="space-y-2">
                   <input
                     type="text"
                     placeholder="🔍 חפש מיקום..."
                     value={locationSearch}
                     onChange={(e) => setLocationSearch(e.target.value)}
-                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-accent text-sm"
                   />
                   
                   <select
                     value={selectedLocation || ''}
                     onChange={(e) => setSelectedLocation(Number(e.target.value) || null)}
-                    className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-accent"
                   >
                     <option value="">בחר מיקום</option>
                     {filteredLocations.map(loc => (
@@ -915,7 +916,7 @@ export default function CalendarEditClient() {
                   </select>
                   
                   {locationSearch && (
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-fg-3">
                       נמצאו {filteredLocations.length} מתוך {locations.length} מיקומים
                     </p>
                   )}
@@ -923,9 +924,9 @@ export default function CalendarEditClient() {
                   <button
                     type="button"
                     onClick={() => setShowAddLocationModal(true)}
-                    className="w-full py-2 px-4 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50 transition-all font-medium"
+                    className="w-full py-2 px-4 border-2 border-dashed border-line rounded-lg text-fg-3 hover:border-accent hover:text-accent hover:bg-accent/15 transition-all font-medium"
                   >
-                    ➕ הוסף מיקום חדש
+                    <LuPlus aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />הוסף מיקום חדש
                   </button>
                 </div>
               </div>
@@ -989,7 +990,7 @@ export default function CalendarEditClient() {
           <section className="mb-8">
             <h2 className="font-semibold text-lg mb-2">הערות מטפס</h2>
             <textarea
-              className="border border-gray-300 rounded w-full p-3 focus:border-blue-500 focus:outline-none"
+              className="border border-line rounded w-full p-3 focus:border-accent focus:outline-none"
               rows={3}
               placeholder="הערות כלליות על האימון..."
               value={climberNotes}
@@ -1001,7 +1002,7 @@ export default function CalendarEditClient() {
           {/* Action Buttons */}
           <div className="flex justify-end gap-3">
             <button
-              className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-6 py-2 rounded font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              className="bg-raised hover:bg-raised/90 text-fg px-6 py-2 rounded font-medium disabled:opacity-50 disabled:cursor-not-allowed"
               onClick={() => { clearDraft(); router.push('/calendar') }}
               disabled={isSaving}
             >
@@ -1009,22 +1010,22 @@ export default function CalendarEditClient() {
             </button>
             <button
               id="save-workout-btn"
-              className={`bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
-                isSaving ? 'animate-pulse' : ''
-              }`}
+              className={`bg-accent hover:bg-accent-hover text-on-accent px-6 py-2 rounded font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
+ isSaving ? 'animate-pulse' : ''
+ }`}
               onClick={handleSave}
               disabled={isSaving}
             >
-              {isSaving ? '⏳ שומר...' : '💾 שמירה'}
+              {isSaving ? <><LuLoaderCircle aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] animate-spin me-1.5" />שומר...</> : <><LuSave aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />שמירה</>}
               {routes.length > 0 && !isSaving && ` (${routes.length} מסלולים)`}
             </button>
           </div>
 
           {/* ✅ Saving indicator */}
           {isSaving && (
-            <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg text-center">
-              <div className="flex items-center justify-center gap-2 text-blue-700">
-                <div className="animate-spin h-5 w-5 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+            <div className="mt-4 p-4 bg-accent/15 border border-accent rounded-lg text-center">
+              <div className="flex items-center justify-center gap-2 text-accent">
+                <div className="animate-spin h-5 w-5 border-2 border-accent border-t-transparent rounded-full"></div>
                 <span className="font-medium">שומר נתונים... אנא המתן</span>
               </div>
             </div>
@@ -1033,9 +1034,9 @@ export default function CalendarEditClient() {
 
         {/* Toast Notification */}
         {toast && (
-          <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 px-6 py-4 rounded-lg shadow-xl text-white font-medium z-50 animate-in ${
-            toast.type === 'success' ? 'bg-green-600' : 'bg-red-600'
-          }`}>
+          <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 px-6 py-4 rounded-lg shadow-xl text-on-accent font-medium z-50 animate-in ${
+ toast.type === 'success' ? 'bg-success' : 'bg-danger'
+ }`}>
             {toast.message}
           </div>
         )}
@@ -1044,28 +1045,28 @@ export default function CalendarEditClient() {
       {/* Add New Location Modal */}
       {showAddLocationModal && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[60] p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6" dir="rtl">
+          <div className="bg-raised border border-line-strong rounded-xl max-w-md w-full p-6" dir="rtl">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-bold text-gray-900">
-                📍 הוספת מיקום חדש
+              <h3 className="text-xl font-bold text-fg">
+                <LuMapPin aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />הוספת מיקום חדש
               </h3>
               <button
                 onClick={() => setShowAddLocationModal(false)}
                 disabled={savingLocation}
-                className="text-gray-400 hover:text-gray-600 text-2xl"
+                className="text-faint hover:text-fg-3 text-2xl"
               >
                 ×
               </button>
             </div>
 
-            <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-              <p className="text-sm text-blue-900">
-                💡 הוסף מיקום חדש לרשימה. המיקום יהיה זמין לכולם.
+            <div className="mb-4 p-3 bg-accent/15 border border-accent rounded-lg">
+              <p className="text-sm text-accent">
+                <LuLightbulb aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />הוסף מיקום חדש לרשימה. המיקום יהיה זמין לכולם.
               </p>
             </div>
 
             <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-fg-2 mb-2">
                 שם המיקום *
               </label>
               <input
@@ -1073,7 +1074,7 @@ export default function CalendarEditClient() {
                 value={newLocationName}
                 onChange={(e) => setNewLocationName(e.target.value)}
                 placeholder="למשל: קיר ספיידרמן"
-                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-accent"
                 disabled={savingLocation}
                 autoFocus
                 onKeyPress={(e) => {
@@ -1089,14 +1090,14 @@ export default function CalendarEditClient() {
               <button
                 onClick={handleAddLocation}
                 disabled={savingLocation || !newLocationName.trim()}
-                className="flex-1 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition"
+                className="flex-1 py-3 bg-accent text-on-accent rounded-lg hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed font-medium transition"
               >
-                {savingLocation ? '⏳ שומר...' : '✅ הוסף מיקום'}
+                {savingLocation ? <><LuLoaderCircle aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] animate-spin me-1.5" />שומר...</> : <><LuCircleCheck aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />הוסף מיקום</>}
               </button>
               <button
                 onClick={() => setShowAddLocationModal(false)}
                 disabled={savingLocation}
-                className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition disabled:opacity-50"
+                className="px-6 py-3 bg-raised text-fg-2 rounded-lg hover:bg-raised/90 transition disabled:opacity-50"
               >
                 ביטול
               </button>

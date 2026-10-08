@@ -6,6 +6,7 @@ import { useAuth, useActiveUserEmail } from '@/context/AuthContext'
 import { useRouter } from 'next/navigation'
 import { DndProvider, useDrag, useDrop } from 'react-dnd'
 import { HTML5Backend } from 'react-dnd-html5-backend'
+import { LuCircleCheck, LuLoaderCircle, LuMap, LuPencil, LuPlus, LuSave, LuTrash2 } from 'react-icons/lu'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -49,18 +50,18 @@ function EmojiPicker({ value, onChange }: { value: string; onChange: (v: string)
       <button
         type="button"
         onClick={() => setOpen(o => !o)}
-        className="w-12 h-12 text-2xl border border-gray-300 rounded-lg flex items-center justify-center hover:bg-gray-50"
+        className="w-12 h-12 text-2xl border border-line rounded-lg flex items-center justify-center hover:bg-surface"
       >
         {value || '?'}
       </button>
       {open && (
-        <div className="absolute top-14 right-0 z-50 bg-white border border-gray-200 rounded-xl shadow-xl p-3 grid grid-cols-5 gap-1 w-52">
+        <div className="absolute top-14 right-0 z-50 bg-surface border border-line rounded-xl shadow-xl p-3 grid grid-cols-5 gap-1 w-52">
           {COMMON_EMOJIS.map(e => (
             <button
               key={e}
               type="button"
               onClick={() => { onChange(e); setOpen(false) }}
-              className="text-2xl hover:bg-gray-100 rounded p-1"
+              className="text-2xl hover:bg-surface rounded p-1"
             >
               {e}
             </button>
@@ -96,14 +97,14 @@ const COLOR_OPTIONS = [
 ]
 
 const COLOR_CLASSES: Record<string, string> = {
-  blue: 'bg-blue-100 border-blue-300 text-blue-800',
-  green: 'bg-green-100 border-green-300 text-green-800',
-  purple: 'bg-purple-100 border-purple-300 text-purple-800',
-  red: 'bg-red-100 border-red-300 text-red-800',
-  orange: 'bg-orange-100 border-orange-300 text-orange-800',
-  yellow: 'bg-yellow-100 border-yellow-300 text-yellow-800',
-  pink: 'bg-pink-100 border-pink-300 text-pink-800',
-  gray: 'bg-gray-100 border-gray-300 text-gray-800',
+  blue: 'bg-accent/10 border-accent/30 text-accent',
+  green: 'bg-success/10 border-success/30 text-success',
+  purple: 'bg-info/10 border-info/30 text-info',
+  red: 'bg-danger/10 border-danger/30 text-danger',
+  orange: 'bg-warning/10 border-warning/30 text-warning',
+  yellow: 'bg-warning/10 border-warning/30 text-warning',
+  pink: 'bg-info/10 border-info/30 text-info',
+  gray: 'bg-surface border-line text-fg',
 }
 
 // ─── Level Edit Modal ─────────────────────────────────────────────────────────
@@ -146,45 +147,45 @@ function LevelModal({ level, categories, onClose, onSave, saving }: LevelModalPr
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full p-6 max-h-[90vh] overflow-y-auto">
+      <div className="bg-raised border border-line-strong rounded-xl max-w-lg w-full p-6 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-gray-800">
-            {form.id ? '✏️ עריכת רמה' : '➕ רמה חדשה'}
+          <h2 className="text-xl font-bold text-fg">
+            {form.id ? <><LuPencil aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />עריכת רמה</> : <><LuPlus aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />רמה חדשה</>}
           </h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">×</button>
+          <button onClick={onClose} className="text-faint hover:text-fg-3 text-2xl leading-none">×</button>
         </div>
 
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">שם הרמה *</label>
+            <label className="block text-sm font-medium text-fg-2 mb-1">שם הרמה *</label>
             <input
               type="text"
               value={form.Name ?? ''}
               onChange={e => setForm(f => ({ ...f, Name: e.target.value }))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-line rounded-lg focus:ring-2 focus:ring-accent"
               placeholder="שם הרמה"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">תיאור</label>
+            <label className="block text-sm font-medium text-fg-2 mb-1">תיאור</label>
             <textarea
               value={form.Description ?? ''}
               onChange={e => setForm(f => ({ ...f, Description: e.target.value }))}
               rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 resize-none"
+              className="w-full px-3 py-2 border border-line rounded-lg focus:ring-2 focus:ring-accent resize-none"
               placeholder="תיאור הרמה..."
             />
           </div>
 
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="text-sm font-medium text-gray-700">תנאים מקדימים</label>
+              <label className="text-sm font-medium text-fg-2">תנאים מקדימים</label>
               {!addingPrereq && (
                 <button
                   type="button"
                   onClick={() => setAddingPrereq(true)}
-                  className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                  className="text-sm text-accent hover:text-accent/90 font-medium"
                 >
                   + הוסף תנאי
                 </button>
@@ -192,19 +193,19 @@ function LevelModal({ level, categories, onClose, onSave, saving }: LevelModalPr
             </div>
 
             {prereqs.length === 0 && !addingPrereq && (
-              <p className="text-sm text-gray-400 italic">אין תנאים מקדימים</p>
+              <p className="text-sm text-faint italic">אין תנאים מקדימים</p>
             )}
 
             <div className="space-y-2">
               {prereqs.map(p => (
-                <div key={p.categoryId} className="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
-                  <span className="text-sm text-gray-700">
+                <div key={p.categoryId} className="flex items-center justify-between bg-surface border border-line rounded-lg px-3 py-2">
+                  <span className="text-sm text-fg-2">
                     {categories.find(c => c.CategoryID === p.categoryId)?.Icon} {p.categoryName} — רמה מינימלית {p.minLevel}
                   </span>
                   <button
                     type="button"
                     onClick={() => removePrereq(p.categoryId)}
-                    className="text-red-400 hover:text-red-600 text-lg leading-none"
+                    className="text-danger hover:text-danger/90 text-lg leading-none"
                   >
                     ×
                   </button>
@@ -213,11 +214,11 @@ function LevelModal({ level, categories, onClose, onSave, saving }: LevelModalPr
             </div>
 
             {addingPrereq && (
-              <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg space-y-2">
+              <div className="mt-2 p-3 bg-accent/15 border border-accent rounded-lg space-y-2">
                 <select
                   value={prereqCatId}
                   onChange={e => setPrereqCatId(Number(e.target.value))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-line rounded-lg text-sm focus:ring-2 focus:ring-accent"
                 >
                   <option value="">בחר קטגוריה</option>
                   {categories.map(c => (
@@ -225,25 +226,25 @@ function LevelModal({ level, categories, onClose, onSave, saving }: LevelModalPr
                   ))}
                 </select>
                 <div className="flex gap-2 items-center">
-                  <label className="text-sm text-gray-600 whitespace-nowrap">רמה מינימלית:</label>
+                  <label className="text-sm text-fg-3 whitespace-nowrap">רמה מינימלית:</label>
                   <input
                     type="number"
                     min={1}
                     value={prereqMinLevel}
                     onChange={e => setPrereqMinLevel(Number(e.target.value))}
-                    className="w-20 px-2 py-1 border border-gray-300 rounded text-sm"
+                    className="w-20 px-2 py-1 border border-line rounded text-sm"
                   />
                   <button
                     type="button"
                     onClick={addPrereq}
-                    className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700"
+                    className="px-3 py-1 bg-accent text-on-accent rounded text-sm hover:bg-accent-hover"
                   >
                     הוסף
                   </button>
                   <button
                     type="button"
                     onClick={() => setAddingPrereq(false)}
-                    className="px-3 py-1 bg-gray-200 text-gray-700 rounded text-sm hover:bg-gray-300"
+                    className="px-3 py-1 bg-raised text-fg-2 rounded text-sm hover:bg-raised/90"
                   >
                     ביטול
                   </button>
@@ -256,13 +257,13 @@ function LevelModal({ level, categories, onClose, onSave, saving }: LevelModalPr
             <button
               onClick={() => onSave(form)}
               disabled={saving || !form.Name}
-              className="flex-1 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 font-medium"
+              className="flex-1 py-2.5 bg-accent text-on-accent rounded-lg hover:bg-accent-hover disabled:opacity-50 font-medium"
             >
-              {saving ? '⏳ שומר...' : '💾 שמור'}
+              {saving ? <><LuLoaderCircle aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] animate-spin me-1.5" />שומר...</> : <><LuSave aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />שמור</>}
             </button>
             <button
               onClick={onClose}
-              className="px-5 py-2.5 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+              className="px-5 py-2.5 bg-raised text-fg-2 rounded-lg hover:bg-raised/90"
             >
               ביטול
             </button>
@@ -291,32 +292,32 @@ function CategoryModal({ onClose, onSave, saving }: CategoryModalProps) {
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
+      <div className="bg-raised border border-line-strong rounded-xl max-w-md w-full p-6">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-gray-800">➕ קטגוריה חדשה</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">×</button>
+          <h2 className="text-xl font-bold text-fg"><LuPlus aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />קטגוריה חדשה</h2>
+          <button onClick={onClose} className="text-faint hover:text-fg-3 text-2xl leading-none">×</button>
         </div>
 
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">שם הקטגוריה *</label>
+            <label className="block text-sm font-medium text-fg-2 mb-1">שם הקטגוריה *</label>
             <input
               type="text"
               value={name}
               onChange={e => setName(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-line rounded-lg focus:ring-2 focus:ring-accent"
               placeholder="שם הקטגוריה"
               autoFocus
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">אייקון</label>
+            <label className="block text-sm font-medium text-fg-2 mb-2">אייקון</label>
             <EmojiPicker value={icon} onChange={setIcon} />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">צבע</label>
+            <label className="block text-sm font-medium text-fg-2 mb-2">צבע</label>
             <div className="flex gap-2 flex-wrap">
               {COLOR_OPTIONS.map(opt => (
                 <button
@@ -324,8 +325,8 @@ function CategoryModal({ onClose, onSave, saving }: CategoryModalProps) {
                   type="button"
                   onClick={() => setColor(opt.value)}
                   className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-all ${
-                    COLOR_CLASSES[opt.value]
-                  } ${color === opt.value ? 'ring-2 ring-offset-1 ring-blue-500' : 'opacity-60 hover:opacity-100'}`}
+ COLOR_CLASSES[opt.value]
+ } ${color === opt.value ? 'ring-2 ring-offset-1 ring-accent' : 'opacity-60 hover:opacity-100'}`}
                 >
                   {opt.label}
                 </button>
@@ -334,11 +335,11 @@ function CategoryModal({ onClose, onSave, saving }: CategoryModalProps) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">קבוצה</label>
+            <label className="block text-sm font-medium text-fg-2 mb-2">קבוצה</label>
             <select
               value={group}
               onChange={e => setGroup(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+              className="w-full px-3 py-2 border border-line rounded-lg focus:ring-2 focus:ring-accent text-sm"
             >
               {GROUP_OPTIONS.map(g => <option key={g} value={g}>{g}</option>)}
             </select>
@@ -348,13 +349,13 @@ function CategoryModal({ onClose, onSave, saving }: CategoryModalProps) {
             <button
               onClick={() => onSave({ Name: name, Icon: icon, Color: color, Group: group })}
               disabled={saving || !name.trim()}
-              className="flex-1 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 font-medium"
+              className="flex-1 py-2.5 bg-success text-on-accent rounded-lg hover:bg-success/90 disabled:opacity-50 font-medium"
             >
-              {saving ? '⏳ שומר...' : '✅ צור קטגוריה'}
+              {saving ? <><LuLoaderCircle aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] animate-spin me-1.5" />שומר...</> : <><LuCircleCheck aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />צור קטגוריה</>}
             </button>
             <button
               onClick={onClose}
-              className="px-5 py-2.5 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+              className="px-5 py-2.5 bg-raised text-fg-2 rounded-lg hover:bg-raised/90"
             >
               ביטול
             </button>
@@ -379,31 +380,31 @@ function EditCategoryModal({ cat, onClose, onSave, saving }: EditCategoryModalPr
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
+      <div className="bg-raised border border-line-strong rounded-xl max-w-md w-full p-6">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-gray-800">✏️ עריכת קטגוריה</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">×</button>
+          <h2 className="text-xl font-bold text-fg"><LuPencil aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />עריכת קטגוריה</h2>
+          <button onClick={onClose} className="text-faint hover:text-fg-3 text-2xl leading-none">×</button>
         </div>
 
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">שם הקטגוריה *</label>
+            <label className="block text-sm font-medium text-fg-2 mb-1">שם הקטגוריה *</label>
             <input
               type="text"
               value={form.Name}
               onChange={e => setForm(f => ({ ...f, Name: e.target.value }))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-line rounded-lg focus:ring-2 focus:ring-accent"
               autoFocus
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">אייקון</label>
+            <label className="block text-sm font-medium text-fg-2 mb-2">אייקון</label>
             <EmojiPicker value={form.Icon} onChange={v => setForm(f => ({ ...f, Icon: v }))} />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">צבע</label>
+            <label className="block text-sm font-medium text-fg-2 mb-2">צבע</label>
             <div className="flex gap-2 flex-wrap">
               {COLOR_OPTIONS.map(opt => (
                 <button
@@ -411,8 +412,8 @@ function EditCategoryModal({ cat, onClose, onSave, saving }: EditCategoryModalPr
                   type="button"
                   onClick={() => setForm(f => ({ ...f, Color: opt.value }))}
                   className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-all ${
-                    COLOR_CLASSES[opt.value]
-                  } ${form.Color === opt.value ? 'ring-2 ring-offset-1 ring-blue-500' : 'opacity-60 hover:opacity-100'}`}
+ COLOR_CLASSES[opt.value]
+ } ${form.Color === opt.value ? 'ring-2 ring-offset-1 ring-accent' : 'opacity-60 hover:opacity-100'}`}
                 >
                   {opt.label}
                 </button>
@@ -421,11 +422,11 @@ function EditCategoryModal({ cat, onClose, onSave, saving }: EditCategoryModalPr
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">קבוצה</label>
+            <label className="block text-sm font-medium text-fg-2 mb-2">קבוצה</label>
             <select
               value={form.Group || 'כללי'}
               onChange={e => setForm(f => ({ ...f, Group: e.target.value }))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+              className="w-full px-3 py-2 border border-line rounded-lg focus:ring-2 focus:ring-accent text-sm"
             >
               {GROUP_OPTIONS.map(g => <option key={g} value={g}>{g}</option>)}
             </select>
@@ -435,13 +436,13 @@ function EditCategoryModal({ cat, onClose, onSave, saving }: EditCategoryModalPr
             <button
               onClick={() => onSave(form)}
               disabled={saving || !form.Name.trim()}
-              className="flex-1 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 font-medium"
+              className="flex-1 py-2.5 bg-accent text-on-accent rounded-lg hover:bg-accent-hover disabled:opacity-50 font-medium"
             >
-              {saving ? '⏳ שומר...' : '💾 שמור'}
+              {saving ? <><LuLoaderCircle aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] animate-spin me-1.5" />שומר...</> : <><LuSave aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />שמור</>}
             </button>
             <button
               onClick={onClose}
-              className="px-5 py-2.5 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+              className="px-5 py-2.5 bg-raised text-fg-2 rounded-lg hover:bg-raised/90"
             >
               ביטול
             </button>
@@ -494,28 +495,28 @@ function DraggableLevelRow({ level, index, categories, onEdit, onDelete, onMove 
     <div
       ref={ref}
       className={`px-5 py-4 flex items-start gap-4 transition-colors ${
-        isDragging ? 'opacity-30' : isOver ? 'bg-blue-50' : 'hover:bg-gray-50'
-      }`}
+ isDragging ? 'opacity-30' : isOver ? 'bg-accent/15' : 'hover:bg-surface'
+ }`}
     >
       <div
         ref={drag as unknown as React.RefCallback<HTMLDivElement>}
-        className="self-center cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-500 shrink-0 select-none text-xl leading-none"
+        className="self-center cursor-grab active:cursor-grabbing text-faint hover:text-muted shrink-0 select-none text-xl leading-none"
         title="גרור לשינוי סדר"
       >
         ⠿
       </div>
-      <div className="w-9 h-9 rounded-full bg-blue-100 text-blue-700 font-bold text-sm flex items-center justify-center shrink-0">
+      <div className="w-9 h-9 rounded-full bg-accent/15 text-accent font-bold text-sm flex items-center justify-center shrink-0">
         {level.LevelNumber}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="font-medium text-gray-800">{level.Name}</p>
+        <p className="font-medium text-fg">{level.Name}</p>
         {level.Description && (
-          <p className="text-sm text-gray-500 mt-0.5 line-clamp-2">{level.Description}</p>
+          <p className="text-sm text-muted mt-0.5 line-clamp-2">{level.Description}</p>
         )}
         {level.Prerequisites?.length > 0 && (
           <div className="flex flex-wrap gap-1 mt-1.5">
             {level.Prerequisites.map(p => (
-              <span key={p.categoryId} className="text-xs bg-yellow-50 border border-yellow-200 text-yellow-700 rounded px-2 py-0.5">
+              <span key={p.categoryId} className="text-xs bg-warning/15 border border-warning text-warning rounded px-2 py-0.5">
                 {categories.find(c => getCatId(c) === p.categoryId)?.Icon} {p.categoryName} ≥{p.minLevel}
               </span>
             ))}
@@ -525,17 +526,17 @@ function DraggableLevelRow({ level, index, categories, onEdit, onDelete, onMove 
       <div className="flex gap-2 shrink-0">
         <button
           onClick={() => onEdit(level)}
-          className="px-2.5 py-1.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600 text-sm"
+          className="px-2.5 py-1.5 bg-accent text-on-accent rounded-lg hover:bg-accent/90 text-sm"
           title="ערוך"
         >
-          ✏️
+          <LuPencil aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" />
         </button>
         <button
           onClick={() => onDelete(level)}
-          className="px-2.5 py-1.5 bg-red-500 text-white rounded-lg hover:bg-red-600 text-sm"
+          className="px-2.5 py-1.5 bg-danger text-on-accent rounded-lg hover:bg-danger/90 text-sm"
           title="מחק"
         >
-          🗑
+          <LuTrash2 aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" />
         </button>
       </div>
     </div>
@@ -777,8 +778,8 @@ export default function RoadmapBuilderPage() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4" />
-          <p className="text-gray-600">טוען...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent mx-auto mb-4" />
+          <p className="text-fg-3">טוען...</p>
         </div>
       </div>
     )
@@ -786,12 +787,12 @@ export default function RoadmapBuilderPage() {
 
   return (
     <DndProvider backend={HTML5Backend}>
-    <div dir="rtl" className="min-h-screen bg-gray-50 pb-20">
+    <div dir="rtl" className="min-h-screen bg-surface pb-20">
       {/* Header */}
-      <div className="bg-white shadow-sm border-b sticky top-0 z-30">
+      <div className="bg-surface border-b sticky top-0 z-30">
         <div className="max-w-7xl mx-auto px-4 py-4">
-          <h1 className="text-2xl font-bold text-gray-800">🗺️ בניית Roadmap</h1>
-          <p className="text-sm text-gray-500 mt-0.5">ניהול קטגוריות ורמות מסלול ההתקדמות</p>
+          <h1 className="text-2xl font-bold text-fg"><LuMap aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />בניית Roadmap</h1>
+          <p className="text-sm text-muted mt-0.5">ניהול קטגוריות ורמות מסלול ההתקדמות</p>
         </div>
       </div>
 
@@ -799,13 +800,13 @@ export default function RoadmapBuilderPage() {
 
         {/* Left panel — Categories */}
         <div className="w-72 shrink-0 flex flex-col gap-3">
-          <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
-            <div className="px-4 py-3 border-b bg-gray-50">
-              <h2 className="font-semibold text-gray-700">קטגוריות</h2>
+          <div className="bg-surface rounded-xl border overflow-hidden">
+            <div className="px-4 py-3 border-b bg-surface">
+              <h2 className="font-semibold text-fg-2">קטגוריות</h2>
             </div>
 
             {categories.length === 0 ? (
-              <p className="text-center text-gray-400 text-sm py-8">אין קטגוריות עדיין</p>
+              <p className="text-center text-faint text-sm py-8">אין קטגוריות עדיין</p>
             ) : (() => {
               const GROUP_ORDER = ['כח ספציפי', 'כח כללי', 'מוביליות', 'כללי']
               const grouped: Record<string, RoadmapCategory[]> = {}
@@ -822,7 +823,7 @@ export default function RoadmapBuilderPage() {
                 <div className="divide-y">
                   {groupKeys.map(groupName => (
                     <div key={groupName}>
-                      <p className="px-4 py-1.5 text-xs font-semibold text-gray-400 bg-gray-50 border-b">
+                      <p className="px-4 py-1.5 text-xs font-semibold text-faint bg-surface border-b">
                         {groupName}
                       </p>
                       {grouped[groupName].map((cat, idx) => {
@@ -833,35 +834,35 @@ export default function RoadmapBuilderPage() {
                         return (
                           <div key={catId ?? idx} className="group border-b last:border-b-0">
                             <div
-                              className={`w-full text-right px-4 py-3 flex items-center gap-3 cursor-pointer hover:bg-gray-50 transition-colors ${
-                                isSelected ? 'bg-blue-50 border-r-4 border-blue-500' : ''
-                              }`}
+                              className={`w-full text-right px-4 py-3 flex items-center gap-3 cursor-pointer hover:bg-surface transition-colors ${
+ isSelected ? 'bg-accent/15 border-r-4 border-accent' : ''
+ }`}
                               onClick={() => setSelectedCatId(catId ?? null)}
                             >
                               <span className={`text-xl rounded-lg p-1.5 border ${colorClass}`}>{cat.Icon}</span>
                               <div className="flex-1 min-w-0">
-                                <p className={`font-medium text-sm truncate ${isSelected ? 'text-blue-700' : 'text-gray-800'}`}>
+                                <p className={`font-medium text-sm truncate ${isSelected ? 'text-accent' : 'text-fg'}`}>
                                   {cat.Name}
                                 </p>
                                 {isSelected && (
-                                  <p className="text-xs text-gray-500">{levelCount} רמות</p>
+                                  <p className="text-xs text-muted">{levelCount} רמות</p>
                                 )}
                               </div>
                               <button
                                 type="button"
                                 onClick={e => { e.stopPropagation(); setEditingCat(cat) }}
-                                className="text-gray-300 hover:text-blue-500 transition-colors text-lg leading-none opacity-0 group-hover:opacity-100"
+                                className="text-faint hover:text-accent transition-colors text-lg leading-none opacity-0 group-hover:opacity-100"
                                 title="ערוך קטגוריה"
                               >
-                                ✏️
+                                <LuPencil aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" />
                               </button>
                               <button
                                 type="button"
                                 onClick={e => { e.stopPropagation(); handleDeleteCategory(cat) }}
-                                className="text-gray-300 hover:text-red-500 transition-colors text-lg leading-none opacity-0 group-hover:opacity-100"
+                                className="text-faint hover:text-danger transition-colors text-lg leading-none opacity-0 group-hover:opacity-100"
                                 title="מחק קטגוריה"
                               >
-                                🗑
+                                <LuTrash2 aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" />
                               </button>
                             </div>
                           </div>
@@ -876,7 +877,7 @@ export default function RoadmapBuilderPage() {
 
           <button
             onClick={() => setShowNewCatModal(true)}
-            className="w-full py-2.5 border-2 border-dashed border-gray-300 rounded-xl text-gray-500 hover:border-blue-400 hover:text-blue-500 transition-colors text-sm font-medium"
+            className="w-full py-2.5 border-2 border-dashed border-line rounded-xl text-muted hover:border-accent hover:text-accent transition-colors text-sm font-medium"
           >
             + קטגוריה חדשה
           </button>
@@ -885,20 +886,20 @@ export default function RoadmapBuilderPage() {
         {/* Right panel — Levels */}
         <div className="flex-1">
           {!selectedCatId ? (
-            <div className="bg-white rounded-xl shadow-sm border flex items-center justify-center h-64">
-              <div className="text-center text-gray-400">
+            <div className="bg-surface rounded-xl border flex items-center justify-center h-64">
+              <div className="text-center text-faint">
                 <p className="text-4xl mb-2">👈</p>
                 <p className="text-sm">בחר קטגוריה כדי לראות את הרמות שלה</p>
               </div>
             </div>
           ) : (
-            <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
-              <div className="px-5 py-4 border-b bg-gray-50 flex items-center justify-between">
+            <div className="bg-surface rounded-xl border overflow-hidden">
+              <div className="px-5 py-4 border-b bg-surface flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="text-2xl">{selectedCat?.Icon}</span>
                   <div>
-                    <h2 className="font-semibold text-gray-800">{selectedCat?.Name}</h2>
-                    <p className="text-xs text-gray-500">{levels.length} רמות</p>
+                    <h2 className="font-semibold text-fg">{selectedCat?.Name}</h2>
+                    <p className="text-xs text-muted">{levels.length} רמות</p>
                   </div>
                 </div>
                 <div className="flex gap-2">
@@ -906,28 +907,28 @@ export default function RoadmapBuilderPage() {
                     <button
                       onClick={handleSaveOrder}
                       disabled={saving}
-                      className="px-3 py-1.5 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 font-medium"
+                      className="px-3 py-1.5 text-sm bg-success text-on-accent rounded-lg hover:bg-success/90 disabled:opacity-50 font-medium"
                     >
-                      {saving ? '⏳ שומר...' : '💾 שמור סדר'}
+                      {saving ? <><LuLoaderCircle aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] animate-spin me-1.5" />שומר...</> : <><LuSave aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />שמור סדר</>}
                     </button>
                   )}
                   <button
                     onClick={() => handleDeleteCategory(selectedCat!)}
-                    className="px-3 py-1.5 text-sm text-red-600 border border-red-200 rounded-lg hover:bg-red-50"
+                    className="px-3 py-1.5 text-sm text-danger border border-danger rounded-lg hover:bg-danger/15"
                   >
-                    🗑 מחק קטגוריה
+                    <LuTrash2 aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />מחק קטגוריה
                   </button>
                 </div>
               </div>
 
               {loadingLevels ? (
                 <div className="flex justify-center py-12">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent" />
                 </div>
               ) : (
                 <div className="divide-y">
                   {levels.length === 0 && !showNewLevelRow && (
-                    <p className="text-center text-gray-400 text-sm py-10">אין רמות עדיין — הוסף רמה ראשונה</p>
+                    <p className="text-center text-faint text-sm py-10">אין רמות עדיין — הוסף רמה ראשונה</p>
                   )}
 
                   {levels.map((level, idx) => (
@@ -944,8 +945,8 @@ export default function RoadmapBuilderPage() {
 
                   {/* Quick add row */}
                   {showNewLevelRow ? (
-                    <div className="px-5 py-4 flex items-center gap-3 bg-blue-50">
-                      <div className="w-9 h-9 rounded-full bg-blue-200 text-blue-700 font-bold text-sm flex items-center justify-center shrink-0">
+                    <div className="px-5 py-4 flex items-center gap-3 bg-accent/15">
+                      <div className="w-9 h-9 rounded-full bg-accent/15 text-accent font-bold text-sm flex items-center justify-center shrink-0">
                         {levels.length + 1}
                       </div>
                       <input
@@ -955,25 +956,25 @@ export default function RoadmapBuilderPage() {
                         onChange={e => setNewLevelName(e.target.value)}
                         onKeyDown={e => { if (e.key === 'Enter') handleQuickAddLevel(); if (e.key === 'Escape') setShowNewLevelRow(false) }}
                         placeholder="שם הרמה..."
-                        className="flex-1 px-3 py-1.5 border border-blue-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+                        className="flex-1 px-3 py-1.5 border border-accent rounded-lg text-sm focus:ring-2 focus:ring-accent"
                       />
                       <button
                         onClick={handleQuickAddLevel}
                         disabled={saving || !newLevelName.trim()}
-                        className="px-3 py-1.5 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700 disabled:opacity-50"
+                        className="px-3 py-1.5 bg-success text-on-accent rounded-lg text-sm hover:bg-success/90 disabled:opacity-50"
                       >
                         הוסף
                       </button>
                       <button
                         onClick={() => { setEditingLevel({ CategoryID: selectedCatId! }); setShowNewLevelRow(false) }}
-                        className="px-3 py-1.5 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700"
+                        className="px-3 py-1.5 bg-accent text-on-accent rounded-lg text-sm hover:bg-accent-hover"
                         title="פתח עורך מלא"
                       >
-                        ✏️ עורך מלא
+                        <LuPencil aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />עורך מלא
                       </button>
                       <button
                         onClick={() => setShowNewLevelRow(false)}
-                        className="text-gray-400 hover:text-gray-600 text-xl leading-none"
+                        className="text-faint hover:text-fg-3 text-xl leading-none"
                       >
                         ×
                       </button>
@@ -982,7 +983,7 @@ export default function RoadmapBuilderPage() {
                     <div className="px-5 py-3">
                       <button
                         onClick={() => setShowNewLevelRow(true)}
-                        className="w-full py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-400 hover:border-blue-400 hover:text-blue-500 transition-colors text-sm"
+                        className="w-full py-2 border-2 border-dashed border-line rounded-lg text-faint hover:border-accent hover:text-accent transition-colors text-sm"
                       >
                         + הוסף רמה
                       </button>

@@ -9,6 +9,7 @@ import {
   ClimbingAnalysis, ThirdByMoves, ThirdByTime, RestPeriod,
 } from '@/lib/climbing-analysis-api'
 import MediaComments from '@/components/media/MediaComments'
+import { LuChartColumn, LuTimer, LuVideo } from 'react-icons/lu'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -63,8 +64,8 @@ const SCORE_LABELS: [ScoreKey, string][] = [
 const STALL_THRESHOLD = 7
 const LONG_STALL = 15
 const INEFFICIENT_CLIP = 10
-const THIRDS_COLORS = ['bg-green-400', 'bg-yellow-400', 'bg-red-500']
-const THIRDS_TEXT = ['text-green-700', 'text-yellow-700', 'text-red-700']
+const THIRDS_COLORS = ['bg-success', 'bg-warning', 'bg-danger']
+const THIRDS_TEXT = ['text-success', 'text-warning', 'text-danger']
 const THIRDS_LABELS = ['שליש א׳', 'שליש ב׳', 'שליש ג׳']
 
 // ── Pure helpers ───────────────────────────────────────────────────────────────
@@ -258,11 +259,11 @@ function TimeBreakdownBar({
   const pct = (v: number) => `${Math.max(0, (v / ClimbDuration) * 100).toFixed(1)}%`
 
   const segments = [
-    { label: 'הקלפה', value: ClippingTime, color: 'bg-yellow-400', text: 'text-yellow-700' },
-    { label: 'תנועה', value: displayMovementTime, color: 'bg-emerald-400', text: 'text-emerald-700' },
-    { label: 'עצירה', value: stallTime, color: 'bg-orange-400', text: 'text-orange-700' },
-    { label: 'מנוחה', value: physicalRestTime, color: 'bg-red-400', text: 'text-red-700' },
-    { label: 'היסוס', value: hesitationTime, color: 'bg-purple-400', text: 'text-purple-700' },
+    { label: 'הקלפה', value: ClippingTime, color: 'bg-warning', text: 'text-warning' },
+    { label: 'תנועה', value: displayMovementTime, color: 'bg-success', text: 'text-success' },
+    { label: 'עצירה', value: stallTime, color: 'bg-warning', text: 'text-warning' },
+    { label: 'מנוחה', value: physicalRestTime, color: 'bg-danger', text: 'text-danger' },
+    { label: 'היסוס', value: hesitationTime, color: 'bg-info', text: 'text-info' },
   ].filter(s => s.value > 0.01)
 
   return (
@@ -296,10 +297,10 @@ function RestPeriodsList({
   if (classifiedRests.length === 0) return null
 
   return (
-    <div className="border-t border-gray-100 pt-3">
+    <div className="border-t border-line pt-3">
       <button
         onClick={() => setExpanded(v => !v)}
-        className="w-full flex items-center justify-between text-xs text-gray-500 hover:text-gray-700 transition-colors"
+        className="w-full flex items-center justify-between text-xs text-muted hover:text-fg-2 transition-colors"
       >
         <span className="text-[10px]">{expanded ? '▲' : '▼'}</span>
         <span>פירוט מנוחות ({classifiedRests.length})</span>
@@ -310,33 +311,33 @@ function RestPeriodsList({
             <div key={r.index} className="flex items-center gap-2 text-xs">
               <button
                 onClick={() => onSeek?.(r.startTime)}
-                className="text-blue-500 hover:text-blue-700 underline shrink-0 font-mono"
+                className="text-accent hover:text-accent/90 underline shrink-0 font-mono"
                 title="קפוץ לנקודה זו בסרטון"
               >
                 {fmtSec(r.startTime)}
               </button>
-              <span className="text-gray-400 shrink-0">↔ {r.afterMoveIndex + 1}</span>
+              <span className="text-faint shrink-0">↔ {r.afterMoveIndex + 1}</span>
               <span className={`shrink-0 font-semibold ${
-                r.type === 'tactical' ? 'text-orange-500' :
-                r.type === 'hesitation' ? 'text-purple-600' :
-                r.type === 'footwork' ? 'text-emerald-600' : 'text-red-500'
-              }`}>{fmtSec(r.duration)}</span>
+ r.type === 'tactical' ? 'text-warning' :
+ r.type === 'hesitation' ? 'text-info' :
+ r.type === 'footwork' ? 'text-success' : 'text-danger'
+ }`}>{fmtSec(r.duration)}</span>
               <div className="flex gap-1 mr-auto flex-wrap">
                 {(
                   [
-                    { key: 'rest',      label: 'מנוחה',        active: 'bg-red-100 border-red-300 text-red-700',         idle: 'hover:border-red-300 hover:text-red-500' },
-                    { key: 'hesitation',label: 'היסוס',        active: 'bg-purple-100 border-purple-300 text-purple-700', idle: 'hover:border-purple-300 hover:text-purple-500' },
-                    { key: 'footwork',  label: 'רגליים',       active: 'bg-emerald-100 border-emerald-300 text-emerald-700', idle: 'hover:border-emerald-300 hover:text-emerald-500' },
-                    { key: 'tactical',  label: 'עצירה טקטית', active: 'bg-orange-100 border-orange-300 text-orange-700', idle: 'hover:border-orange-300 hover:text-orange-500' },
+                    { key: 'rest',      label: 'מנוחה',        active: 'bg-danger/10 border-danger/30 text-danger',         idle: 'hover:border-danger/30 hover:text-danger' },
+                    { key: 'hesitation',label: 'היסוס',        active: 'bg-info/10 border-info/30 text-info', idle: 'hover:border-info/30 hover:text-info' },
+                    { key: 'footwork',  label: 'רגליים',       active: 'bg-success/10 border-success/30 text-success', idle: 'hover:border-success/30 hover:text-success' },
+                    { key: 'tactical',  label: 'עצירה טקטית', active: 'bg-warning/10 border-warning/30 text-warning', idle: 'hover:border-warning/30 hover:text-warning' },
                   ] as const
                 ).map(btn => (
                   <button
                     key={btn.key}
                     onClick={() => onToggle(r.index, btn.key)}
                     className={`px-1.5 py-0.5 rounded text-[10px] border transition-colors ${
-                      r.type === btn.key
-                        ? `${btn.active} font-semibold`
-                        : `bg-white border-gray-200 text-gray-400 ${btn.idle}`
+ r.type === btn.key
+ ? `${btn.active} font-semibold`
+                        : `bg-surface border-line text-faint ${btn.idle}`
                     }`}
                   >
                     {btn.label}
@@ -363,74 +364,74 @@ function OverallSummary({
   const leftPct = metrics.TotalMoves > 0 ? (metrics.LeftMoves / metrics.TotalMoves) * 100 : 50
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-4">
+    <div className="bg-surface rounded-xl border border-line p-4 space-y-4">
       {/* Total moves + L/R bar */}
       <div>
         <div className="flex items-baseline justify-between mb-1.5">
-          <span className="text-xs text-gray-500">סה״כ מהלכים</span>
-          <span className="text-2xl font-black text-gray-900">{metrics.TotalMoves}</span>
+          <span className="text-xs text-muted">סה״כ מהלכים</span>
+          <span className="text-2xl font-black text-fg">{metrics.TotalMoves}</span>
         </div>
         <div className="flex h-5 rounded-full overflow-hidden">
           <div
-            className="bg-blue-400 flex items-center justify-center text-[11px] text-white font-bold"
+            className="bg-accent-hover flex items-center justify-center text-[11px] text-on-accent font-bold"
             style={{ width: `${leftPct}%` }}
           >
             {metrics.LeftMoves > 2 && metrics.LeftMoves}
           </div>
           <div
-            className="bg-red-400 flex items-center justify-center text-[11px] text-white font-bold"
+            className="bg-danger flex items-center justify-center text-[11px] text-on-accent font-bold"
             style={{ width: `${100 - leftPct}%` }}
           >
             {metrics.RightMoves > 2 && metrics.RightMoves}
           </div>
         </div>
-        <div className="flex justify-between text-[11px] mt-0.5 text-gray-500">
-          <span className="text-blue-600">שמאל: {metrics.LeftMoves}</span>
-          <span className="text-red-500">ימין: {metrics.RightMoves}</span>
+        <div className="flex justify-between text-[11px] mt-0.5 text-muted">
+          <span className="text-accent">שמאל: {metrics.LeftMoves}</span>
+          <span className="text-danger">ימין: {metrics.RightMoves}</span>
         </div>
       </div>
 
       {/* Duration + 5-segment breakdown bar */}
       <div>
         <div className="flex items-baseline justify-between mb-1.5">
-          <span className="text-xs text-gray-500">משך טיפוס</span>
-          <span className="text-lg font-bold text-gray-800">{fmtSec(metrics.ClimbDuration)}</span>
+          <span className="text-xs text-muted">משך טיפוס</span>
+          <span className="text-lg font-bold text-fg">{fmtSec(metrics.ClimbDuration)}</span>
         </div>
         <TimeBreakdownBar metrics={metrics} classifiedRests={classifiedRests} />
       </div>
 
       {/* Pace */}
       <div className="grid grid-cols-3 gap-2">
-        <div className="bg-gray-50 rounded-lg p-2 text-center">
-          <div className="text-sm font-bold text-gray-800">{fmtSec(metrics.AvgPaceOverall)}</div>
-          <div className="text-[10px] text-gray-500 mt-0.5">קצב כולל</div>
+        <div className="bg-surface rounded-lg p-2 text-center">
+          <div className="text-sm font-bold text-fg">{fmtSec(metrics.AvgPaceOverall)}</div>
+          <div className="text-[10px] text-muted mt-0.5">קצב כולל</div>
         </div>
-        <div className="bg-blue-50 rounded-lg p-2 text-center">
-          <div className="text-sm font-bold text-blue-700">
+        <div className="bg-accent/15 rounded-lg p-2 text-center">
+          <div className="text-sm font-bold text-accent">
             {metrics.AvgPaceLeft > 0 ? fmtSec(metrics.AvgPaceLeft) : '—'}
           </div>
-          <div className="text-[10px] text-blue-500 mt-0.5">קצב שמאל</div>
+          <div className="text-[10px] text-accent mt-0.5">קצב שמאל</div>
         </div>
-        <div className="bg-red-50 rounded-lg p-2 text-center">
-          <div className="text-sm font-bold text-red-600">
+        <div className="bg-danger/15 rounded-lg p-2 text-center">
+          <div className="text-sm font-bold text-danger">
             {metrics.AvgPaceRight > 0 ? fmtSec(metrics.AvgPaceRight) : '—'}
           </div>
-          <div className="text-[10px] text-red-400 mt-0.5">קצב ימין</div>
+          <div className="text-[10px] text-danger mt-0.5">קצב ימין</div>
         </div>
       </div>
 
       {/* Stalls + IsTop */}
       <div className="flex items-center justify-between">
-        <div className="flex gap-3 text-xs text-gray-600">
+        <div className="flex gap-3 text-xs text-fg-3">
           <span>עצירות קצרות: <strong>{metrics.StallsShort}</strong></span>
           <span>
-            ארוכות: <strong className={metrics.StallsLong > 0 ? 'text-red-600' : ''}>{metrics.StallsLong}</strong>
+            ארוכות: <strong className={metrics.StallsLong > 0 ? 'text-danger' : ''}>{metrics.StallsLong}</strong>
           </span>
         </div>
         {isTop !== undefined && (
           <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-            isTop ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
-          }`}>
+ isTop ? 'bg-success/15 text-success' : 'bg-surface text-muted'
+ }`}>
             {isTop ? '✓ הגיע לראש' : '✗ לא הגיע לראש'}
           </span>
         )}
@@ -438,38 +439,38 @@ function OverallSummary({
 
       {/* Clips */}
       {metrics.TotalClips > 0 && (
-        <div className="border-t border-gray-100 pt-3">
+        <div className="border-t border-line pt-3">
           <div className="flex items-center justify-between mb-1.5">
-            <span className="text-xs text-gray-500 font-medium">הקלפות</span>
-            <span className="text-sm font-bold text-yellow-700">{metrics.TotalClips}</span>
+            <span className="text-xs text-muted font-medium">הקלפות</span>
+            <span className="text-sm font-bold text-warning">{metrics.TotalClips}</span>
           </div>
           <div className="grid grid-cols-3 gap-2">
-            <div className="bg-yellow-50 rounded-lg p-2 text-center">
-              <div className="text-sm font-bold text-yellow-700">{fmtSec(metrics.AvgClipDuration)}</div>
-              <div className="text-[10px] text-yellow-600 mt-0.5">ממוצע</div>
+            <div className="bg-warning/15 rounded-lg p-2 text-center">
+              <div className="text-sm font-bold text-warning">{fmtSec(metrics.AvgClipDuration)}</div>
+              <div className="text-[10px] text-warning mt-0.5">ממוצע</div>
             </div>
             <div
-              className={`rounded-lg p-2 text-center ${metrics.LongestClipStartTime !== null ? 'cursor-pointer hover:ring-1 hover:ring-blue-200' : ''} ${metrics.LongestClip > INEFFICIENT_CLIP ? 'bg-red-50' : 'bg-yellow-50'}`}
+              className={`rounded-lg p-2 text-center ${metrics.LongestClipStartTime !== null ? 'cursor-pointer hover:ring-1 hover:ring-accent/40' : ''} ${metrics.LongestClip > INEFFICIENT_CLIP ? 'bg-danger/15' : 'bg-warning/15'}`}
               onClick={() => metrics.LongestClipStartTime !== null && onSeek?.(metrics.LongestClipStartTime)}
               title={metrics.LongestClipStartTime !== null ? 'לחץ לדילוג לנקודה זו' : undefined}
             >
-              <div className={`text-sm font-bold ${metrics.LongestClip > INEFFICIENT_CLIP ? 'text-red-600' : 'text-yellow-700'}`}>
+              <div className={`text-sm font-bold ${metrics.LongestClip > INEFFICIENT_CLIP ? 'text-danger' : 'text-warning'}`}>
                 {fmtSec(metrics.LongestClip)}
                 {metrics.LongestClip > INEFFICIENT_CLIP && ' ⚠'}
               </div>
               {metrics.LongestClipStartTime !== null && (
-                <div className="text-[10px] text-blue-500">@ {fmtSec(metrics.LongestClipStartTime)}</div>
+                <div className="text-[10px] text-accent">@ {fmtSec(metrics.LongestClipStartTime)}</div>
               )}
-              <div className="text-[10px] text-gray-500 mt-0.5">ארוכה ביותר</div>
+              <div className="text-[10px] text-muted mt-0.5">ארוכה ביותר</div>
             </div>
-            <div className="bg-yellow-50 rounded-lg p-2 text-center">
-              <div className="text-sm font-bold text-yellow-700">{fmtSec(metrics.ClippingTime)}</div>
-              <div className="text-[10px] text-yellow-600 mt-0.5">סה״כ זמן</div>
+            <div className="bg-warning/15 rounded-lg p-2 text-center">
+              <div className="text-sm font-bold text-warning">{fmtSec(metrics.ClippingTime)}</div>
+              <div className="text-[10px] text-warning mt-0.5">סה״כ זמן</div>
             </div>
           </div>
           {metrics.MovementTime > 0 && (
-            <p className="text-[11px] text-gray-400 mt-1.5 text-center">
-              זמן תנועה טהור: <strong className="text-gray-600">{fmtSec(metrics.MovementTime)}</strong>
+            <p className="text-[11px] text-faint mt-1.5 text-center">
+              זמן תנועה טהור: <strong className="text-fg-3">{fmtSec(metrics.MovementTime)}</strong>
             </p>
           )}
         </div>
@@ -491,12 +492,12 @@ function ScoreSlider({ label, value, onChange, disabled }: {
   return (
     <div>
       <div className="flex justify-between items-center mb-1">
-        <label className="text-sm text-gray-700">{label}</label>
+        <label className="text-sm text-fg-2">{label}</label>
         <span className={`text-sm font-bold px-2 py-0.5 rounded-md min-w-[2rem] text-center ${
-          value >= 4 ? 'bg-green-100 text-green-700' :
-          value <= 2 ? 'bg-red-100 text-red-700' :
-          'bg-yellow-100 text-yellow-700'
-        }`}>{value}</span>
+ value >= 4 ? 'bg-success/15 text-success' :
+ value <= 2 ? 'bg-danger/15 text-danger' :
+ 'bg-warning/15 text-warning'
+ }`}>{value}</span>
       </div>
       <input
         type="range" min={1} max={5} step={1}
@@ -517,17 +518,17 @@ function ThirdsViz({ metrics }: { metrics: Metrics }) {
 
   return (
     <div className="mt-4 space-y-5">
-      <h4 className="text-sm font-semibold text-gray-700">ניתוח שלבי טיפוס</h4>
+      <h4 className="text-sm font-semibold text-fg-2">ניתוח שלבי טיפוס</h4>
 
       {/* By moves */}
       {byMoves.length > 0 && (
         <div>
-          <p className="text-xs text-gray-500 mb-2">לפי מהלכים</p>
+          <p className="text-xs text-muted mb-2">לפי מהלכים</p>
           <div className="flex h-8 rounded-lg overflow-hidden gap-px">
             {byMoves.map((t, i) => (
               <div
                 key={i}
-                className={`${THIRDS_COLORS[i]} flex items-center justify-center text-xs text-white font-bold`}
+                className={`${THIRDS_COLORS[i]} flex items-center justify-center text-xs text-on-accent font-bold`}
                 style={{ width: `${(t.duration / totalDur) * 100}%` }}
               >
                 {t.move_count}
@@ -542,11 +543,11 @@ function ThirdsViz({ metrics }: { metrics: Metrics }) {
                 style={{ width: `${(t.duration / totalDur) * 100}%` }}
               >
                 <div className={`font-medium text-[11px] ${THIRDS_TEXT[i]}`}>{THIRDS_LABELS[i]}</div>
-                <div className="text-gray-600">{t.move_count} מהלכים</div>
-                <div className="text-gray-500">{fmtSec(t.avg_pace)}/מהלך</div>
+                <div className="text-fg-3">{t.move_count} מהלכים</div>
+                <div className="text-muted">{fmtSec(t.avg_pace)}/מהלך</div>
                 {t.climb_to_rest_ratio !== null
-                  ? <div className="text-gray-400">פעילות: {t.climb_to_rest_ratio}x</div>
-                  : <div className="text-gray-400">ללא עצירות</div>
+                  ? <div className="text-faint">פעילות: {t.climb_to_rest_ratio}x</div>
+                  : <div className="text-faint">ללא עצירות</div>
                 }
               </div>
             ))}
@@ -557,12 +558,12 @@ function ThirdsViz({ metrics }: { metrics: Metrics }) {
       {/* By time */}
       {byTime.length > 0 && (
         <div>
-          <p className="text-xs text-gray-500 mb-2">לפי זמן (שליש שווים)</p>
+          <p className="text-xs text-muted mb-2">לפי זמן (שליש שווים)</p>
           <div className="flex h-8 rounded-lg overflow-hidden gap-px">
             {byTime.map((t, i) => (
               <div
                 key={i}
-                className={`${THIRDS_COLORS[i]} flex-1 flex items-center justify-center text-xs text-white font-bold`}
+                className={`${THIRDS_COLORS[i]} flex-1 flex items-center justify-center text-xs text-on-accent font-bold`}
               >
                 {t.move_count}
               </div>
@@ -572,9 +573,9 @@ function ThirdsViz({ metrics }: { metrics: Metrics }) {
             {byTime.map((t, i) => (
               <div key={i} className="flex-1 text-center text-xs">
                 <div className={`font-medium text-[11px] ${THIRDS_TEXT[i]}`}>{THIRDS_LABELS[i]}</div>
-                <div className="text-gray-600">{t.move_count} מהלכים</div>
-                {t.avg_pace !== null && <div className="text-gray-500">{fmtSec(t.avg_pace)}/מהלך</div>}
-                <div className="text-gray-400">יעילות: {(t.efficiency_score * 100).toFixed(0)}%</div>
+                <div className="text-fg-3">{t.move_count} מהלכים</div>
+                {t.avg_pace !== null && <div className="text-muted">{fmtSec(t.avg_pace)}/מהלך</div>}
+                <div className="text-faint">יעילות: {(t.efficiency_score * 100).toFixed(0)}%</div>
               </div>
             ))}
           </div>
@@ -940,7 +941,7 @@ export default function AnalysisPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]" dir="rtl">
-        <p className="text-gray-400">טוען...</p>
+        <p className="text-faint">טוען...</p>
       </div>
     )
   }
@@ -955,23 +956,23 @@ export default function AnalysisPage() {
     <div className="max-w-7xl mx-auto px-4 py-4 pb-24" dir="rtl">
       {/* Page header */}
       <div className="mb-4">
-        <button onClick={() => router.back()} className="text-sm text-gray-500 hover:text-blue-600 mb-2 flex items-center gap-1">
+        <button onClick={() => router.back()} className="text-sm text-muted hover:text-accent mb-2 flex items-center gap-1">
           ← חזור
         </button>
         <div className="flex items-start justify-between gap-2">
-          <h1 className="text-xl font-bold text-gray-900 truncate">{fileRecord.FileName}</h1>
+          <h1 className="text-xl font-bold text-fg truncate">{fileRecord.FileName}</h1>
           {analysis && isCoachOrAdmin && (
             <button
               onClick={handleDelete}
               disabled={deleting}
-              className="shrink-0 text-xs text-red-400 hover:text-red-600 disabled:opacity-40 border border-red-200 hover:border-red-400 rounded-lg px-2 py-1 transition-colors"
+              className="shrink-0 text-xs text-danger hover:text-danger/90 disabled:opacity-40 border border-danger hover:border-danger/90 rounded-lg px-2 py-1 transition-colors"
             >
               {deleting ? 'מוחק...' : 'מחק ניתוח'}
             </button>
           )}
         </div>
         {analysis && (
-          <p className="text-xs text-gray-400 mt-0.5">
+          <p className="text-xs text-faint mt-0.5">
             ניתוח קיים · {new Date(analysis.CreatedAt).toLocaleDateString('he-IL')}
           </p>
         )}
@@ -998,7 +999,7 @@ export default function AnalysisPage() {
                 className={`w-full object-contain ${isFullscreen ? 'h-screen' : 'max-h-[55vh]'}`}
               />
             ) : (
-              <div className="flex items-center justify-center h-48 text-gray-400">
+              <div className="flex items-center justify-center h-48 text-faint">
                 <p className="text-sm">טוען סרטון...</p>
               </div>
             )}
@@ -1044,7 +1045,7 @@ export default function AnalysisPage() {
                 <button
                   onPointerDown={e => { e.preventDefault(); recordMove('L') }}
                   disabled={sessionState === 'idle'}
-                  className="flex-1 py-4 bg-blue-500 hover:bg-blue-600 active:bg-blue-700 disabled:opacity-25 disabled:pointer-events-none text-white rounded-xl font-bold text-sm shadow select-none touch-none"
+                  className="flex-1 py-4 bg-accent hover:bg-accent/90 active:bg-accent-hover disabled:opacity-25 disabled:pointer-events-none text-on-accent rounded-xl font-bold text-sm select-none touch-none"
                 >
                   יד שמאל
                   <span className="block text-xs opacity-60 font-normal">←</span>
@@ -1052,22 +1053,22 @@ export default function AnalysisPage() {
                 <button
                   onPointerDown={e => { e.preventDefault(); handleClip() }}
                   disabled={sessionState === 'idle'}
-                  className={`px-3 py-4 text-white rounded-xl font-bold shadow select-none touch-none transition-colors disabled:opacity-25 disabled:pointer-events-none ${
-                    clipInProgress
-                      ? 'bg-yellow-500 hover:bg-yellow-600 active:bg-yellow-700 ring-2 ring-yellow-300'
-                      : 'bg-yellow-400 hover:bg-yellow-500 active:bg-yellow-600'
-                  }`}
+                  className={`px-3 py-4 text-on-accent rounded-xl font-bold select-none touch-none transition-colors disabled:opacity-25 disabled:pointer-events-none ${
+ clipInProgress
+ ? 'bg-warning hover:bg-warning/90 active:bg-warning ring-2 ring-warning/40'
+ : 'bg-warning hover:bg-warning/90 active:bg-warning'
+ }`}
                 >
                   קליפ
                   <span className="block text-xs opacity-70 font-normal">[C]</span>
                 </button>
                 <button
                   onPointerDown={e => { e.preventDefault(); handleSpace() }}
-                  className={`px-3 py-4 text-white rounded-xl font-bold shadow select-none touch-none transition-colors ${
-                    sessionState === 'idle'
-                      ? 'bg-green-500 hover:bg-green-600 active:bg-green-700'
-                      : 'bg-gray-400 hover:bg-gray-500 active:bg-gray-600'
-                  }`}
+                  className={`px-3 py-4 rounded-xl font-bold select-none touch-none transition-colors ${
+ sessionState === 'idle'
+ ? 'bg-success text-on-accent hover:bg-success/90 active:bg-success'
+ : 'bg-line-strong text-fg hover:bg-line-strong/90 active:bg-line-strong'
+ }`}
                 >
                   {sessionState === 'idle' ? 'התחל' : 'סיום'}
                   <span className="block text-xs opacity-60 font-normal">{sessionState === 'idle' ? '↑' : '↓'}</span>
@@ -1075,7 +1076,7 @@ export default function AnalysisPage() {
                 <button
                   onPointerDown={e => { e.preventDefault(); recordMove('R') }}
                   disabled={sessionState === 'idle'}
-                  className="flex-1 py-4 bg-red-500 hover:bg-red-600 active:bg-red-700 disabled:opacity-25 disabled:pointer-events-none text-white rounded-xl font-bold text-sm shadow select-none touch-none"
+                  className="flex-1 py-4 bg-danger hover:bg-danger/90 active:bg-danger disabled:opacity-25 disabled:pointer-events-none text-on-accent rounded-xl font-bold text-sm select-none touch-none"
                 >
                   יד ימין
                   <span className="block text-xs opacity-60 font-normal">→</span>
@@ -1090,7 +1091,7 @@ export default function AnalysisPage() {
             <div className="flex items-center justify-end mt-1.5">
               <button
                 onClick={handleFullscreen}
-                className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-800 border border-gray-200 hover:border-gray-400 bg-white rounded-lg px-2.5 py-1 transition-colors"
+                className="flex items-center gap-1 text-xs text-muted hover:text-fg border border-line hover:border-line-strong bg-surface rounded-lg px-2.5 py-1 transition-colors"
                 title={isFullscreen ? 'צא ממסך מלא' : 'מסך מלא'}
               >
                 {isFullscreen ? '⛶ צא' : '⤢ מסך מלא'}
@@ -1103,7 +1104,7 @@ export default function AnalysisPage() {
               <button
                 onPointerDown={e => { e.preventDefault(); recordMove('L') }}
                 disabled={sessionState === 'idle'}
-                className="flex-1 py-4 bg-blue-500 hover:bg-blue-600 active:bg-blue-700 disabled:opacity-25 disabled:pointer-events-none text-white rounded-xl font-bold text-sm shadow select-none touch-none"
+                className="flex-1 py-4 bg-accent hover:bg-accent/90 active:bg-accent-hover disabled:opacity-25 disabled:pointer-events-none text-on-accent rounded-xl font-bold text-sm select-none touch-none"
               >
                 יד שמאל
                 <span className="block text-xs opacity-60 font-normal">←</span>
@@ -1111,22 +1112,22 @@ export default function AnalysisPage() {
               <button
                 onPointerDown={e => { e.preventDefault(); handleClip() }}
                 disabled={sessionState === 'idle'}
-                className={`px-3 py-4 text-white rounded-xl font-bold shadow select-none touch-none transition-colors disabled:opacity-25 disabled:pointer-events-none ${
-                  clipInProgress
-                    ? 'bg-yellow-500 hover:bg-yellow-600 active:bg-yellow-700 ring-2 ring-yellow-300'
-                    : 'bg-yellow-400 hover:bg-yellow-500 active:bg-yellow-600'
-                }`}
+                className={`px-3 py-4 text-on-accent rounded-xl font-bold select-none touch-none transition-colors disabled:opacity-25 disabled:pointer-events-none ${
+ clipInProgress
+ ? 'bg-warning hover:bg-warning/90 active:bg-warning ring-2 ring-warning/40'
+ : 'bg-warning hover:bg-warning/90 active:bg-warning'
+ }`}
               >
                 קליפ
                 <span className="block text-xs opacity-70 font-normal">[C]</span>
               </button>
               <button
                 onPointerDown={e => { e.preventDefault(); handleSpace() }}
-                className={`px-3 py-4 text-white rounded-xl font-bold shadow select-none touch-none transition-colors ${
-                  sessionState === 'idle'
-                    ? 'bg-green-500 hover:bg-green-600 active:bg-green-700'
-                    : 'bg-gray-400 hover:bg-gray-500 active:bg-gray-600'
-                }`}
+                className={`px-3 py-4 rounded-xl font-bold select-none touch-none transition-colors ${
+ sessionState === 'idle'
+ ? 'bg-success text-on-accent hover:bg-success/90 active:bg-success'
+ : 'bg-line-strong text-fg hover:bg-line-strong/90 active:bg-line-strong'
+ }`}
               >
                 {sessionState === 'idle' ? 'התחל' : 'סיום'}
                 <span className="block text-xs opacity-60 font-normal">{sessionState === 'idle' ? '↑' : '↓'}</span>
@@ -1134,7 +1135,7 @@ export default function AnalysisPage() {
               <button
                 onPointerDown={e => { e.preventDefault(); recordMove('R') }}
                 disabled={sessionState === 'idle'}
-                className="flex-1 py-4 bg-red-500 hover:bg-red-600 active:bg-red-700 disabled:opacity-25 disabled:pointer-events-none text-white rounded-xl font-bold text-sm shadow select-none touch-none"
+                className="flex-1 py-4 bg-danger hover:bg-danger/90 active:bg-danger disabled:opacity-25 disabled:pointer-events-none text-on-accent rounded-xl font-bold text-sm select-none touch-none"
               >
                 יד ימין
                 <span className="block text-xs opacity-60 font-normal">→</span>
@@ -1144,12 +1145,12 @@ export default function AnalysisPage() {
 
           {/* Live counter during active session */}
           {sessionState === 'active' && moves.length > 0 && (
-            <div className="flex justify-center gap-4 mt-2 text-sm text-gray-600 flex-wrap">
+            <div className="flex justify-center gap-4 mt-2 text-sm text-fg-3 flex-wrap">
               <span>שמאל: <strong>{leftCount}</strong></span>
-              <span className="font-bold text-blue-600 text-base">{moves.length}</span>
+              <span className="font-bold text-accent text-base">{moves.length}</span>
               <span>ימין: <strong>{rightCount}</strong></span>
               {clips.length > 0 && (
-                <span className="text-yellow-600">קליפים: <strong>{clips.length}</strong></span>
+                <span className="text-warning">קליפים: <strong>{clips.length}</strong></span>
               )}
             </div>
           )}
@@ -1158,7 +1159,7 @@ export default function AnalysisPage() {
           {canCapture && sessionState !== 'idle' && (
             <button
               onClick={handleReset}
-              className="w-full mt-2 py-2 text-xs text-gray-400 hover:text-red-500 border border-gray-200 hover:border-red-200 rounded-lg transition-colors"
+              className="w-full mt-2 py-2 text-xs text-faint hover:text-danger border border-line hover:border-danger rounded-lg transition-colors"
             >
               ↺ איפוס סשן
             </button>
@@ -1166,7 +1167,7 @@ export default function AnalysisPage() {
 
           {/* Keyboard hint */}
           {canCapture && sessionState === 'idle' && (
-            <p className="text-[11px] text-gray-400 text-center mt-2 hidden lg:block">
+            <p className="text-[11px] text-faint text-center mt-2 hidden lg:block">
               ↑ התחל · ← יד שמאל · → יד ימין · C הקלפה · ↓ סיום
             </p>
           )}
@@ -1175,14 +1176,14 @@ export default function AnalysisPage() {
         {/* ── RIGHT: Analysis panel ── */}
         <div className="lg:w-1/2">
           {/* Tabs */}
-          <div className="flex border-b border-gray-200 mb-4">
+          <div className="flex border-b border-line mb-4">
             <button
               onClick={() => setTab('quantitative')}
               className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-                tab === 'quantitative'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}
+ tab === 'quantitative'
+ ? 'border-accent text-accent'
+ : 'border-transparent text-muted hover:text-fg-2'
+ }`}
             >
               כמותי
             </button>
@@ -1190,10 +1191,10 @@ export default function AnalysisPage() {
               onClick={() => canShowQualitative && setTab('qualitative')}
               disabled={!canShowQualitative}
               className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
-                tab === 'qualitative'
-                  ? 'border-blue-500 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}
+ tab === 'qualitative'
+ ? 'border-accent text-accent'
+ : 'border-transparent text-muted hover:text-fg-2'
+ }`}
             >
               איכותי
             </button>
@@ -1203,16 +1204,16 @@ export default function AnalysisPage() {
           {tab === 'quantitative' && (
             <div>
               {sessionState === 'idle' && !activeMetrics && (
-                <div className="text-center py-14 text-gray-400">
+                <div className="text-center py-14 text-faint">
                   {canCapture ? (
                     <>
-                      <p className="text-4xl mb-3">🎬</p>
-                      <p className="text-sm font-medium text-gray-600">לחץ חץ למעלה להתחלה</p>
+                      <p className="text-4xl mb-3"><LuVideo aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></p>
+                      <p className="text-sm font-medium text-fg-3">לחץ חץ למעלה להתחלה</p>
                       <p className="text-xs mt-1">הפעל את הסרטון, לחץ ↑ בתחילת הטיפוס</p>
                     </>
                   ) : (
                     <>
-                      <p className="text-4xl mb-3">📊</p>
+                      <p className="text-4xl mb-3"><LuChartColumn aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></p>
                       <p className="text-sm">ניתוח כמותי עדיין לא בוצע לסרטון זה</p>
                     </>
                   )}
@@ -1223,27 +1224,27 @@ export default function AnalysisPage() {
                 <div className="text-center py-10">
                   {moves.length === 0 ? (
                     <>
-                      <div className="text-3xl mb-2">⏱</div>
-                      <p className="text-sm font-medium text-green-600">מקליט...</p>
-                      <p className="text-xs text-gray-400 mt-1">לחץ ← / → לתיעוד מהלכים</p>
+                      <div className="text-3xl mb-2"><LuTimer aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></div>
+                      <p className="text-sm font-medium text-success">מקליט...</p>
+                      <p className="text-xs text-faint mt-1">לחץ ← / → לתיעוד מהלכים</p>
                     </>
                   ) : (
                     <>
-                      <div className="text-6xl font-black text-blue-600">{moves.length}</div>
-                      <div className="text-gray-500 text-sm mt-1">מהלכים מתועדים</div>
-                      <div className="flex justify-center gap-8 mt-4 text-sm text-gray-600">
+                      <div className="text-6xl font-black text-accent">{moves.length}</div>
+                      <div className="text-muted text-sm mt-1">מהלכים מתועדים</div>
+                      <div className="flex justify-center gap-8 mt-4 text-sm text-fg-3">
                         <div className="text-center">
-                          <div className="text-2xl font-bold text-blue-500">{leftCount}</div>
+                          <div className="text-2xl font-bold text-accent">{leftCount}</div>
                           <div className="text-xs">יד שמאל</div>
                         </div>
                         <div className="text-center">
-                          <div className="text-2xl font-bold text-red-500">{rightCount}</div>
+                          <div className="text-2xl font-bold text-danger">{rightCount}</div>
                           <div className="text-xs">יד ימין</div>
                         </div>
                       </div>
                     </>
                   )}
-                  <p className="text-xs text-gray-400 mt-4">לחץ ↓ / כפתור "סיום" לסיום הטיפוס</p>
+                  <p className="text-xs text-faint mt-4">לחץ ↓ / כפתור "סיום" לסיום הטיפוס</p>
                 </div>
               )}
 
@@ -1263,8 +1264,8 @@ export default function AnalysisPage() {
           {tab === 'qualitative' && (
             <div className="space-y-4">
               {/* Scores */}
-              <div className="bg-white rounded-xl border border-gray-200 p-4 space-y-4">
-                <h3 className="text-sm font-semibold text-gray-700">ציוני טיפוס (1–5)</h3>
+              <div className="bg-surface rounded-xl border border-line p-4 space-y-4">
+                <h3 className="text-sm font-semibold text-fg-2">ציוני טיפוס (1–5)</h3>
                 {SCORE_LABELS.map(([key, label]) => (
                   <ScoreSlider
                     key={key}
@@ -1277,46 +1278,46 @@ export default function AnalysisPage() {
               </div>
 
               {/* IsTop toggle */}
-              <div className="bg-white rounded-xl border border-gray-200 p-4 flex items-center justify-between">
-                <span className="text-sm font-medium text-gray-700">הגיע לראש?</span>
+              <div className="bg-surface rounded-xl border border-line p-4 flex items-center justify-between">
+                <span className="text-sm font-medium text-fg-2">הגיע לראש?</span>
                 <button
                   onClick={() => isCoachOrAdmin && setIsTop(v => !v)}
                   disabled={!isCoachOrAdmin}
-                  className={`relative w-12 h-6 rounded-full transition-colors disabled:opacity-50 ${isTop ? 'bg-green-500' : 'bg-gray-300'}`}
+                  className={`relative w-12 h-6 rounded-full transition-colors disabled:opacity-50 ${isTop ? 'bg-success' : 'bg-raised'}`}
                 >
-                  <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${isTop ? 'translate-x-6' : 'translate-x-0.5'}`} />
+                  <span className={`absolute top-0.5 w-5 h-5 bg-surface rounded-full transition-transform ${isTop ? 'translate-x-6' : 'translate-x-0.5'}`} />
                 </button>
               </div>
 
               {/* Coach comment */}
               {isCoachOrAdmin && (
-                <div className="bg-white rounded-xl border border-gray-200 p-4">
-                  <label className="text-sm font-semibold text-gray-700 block mb-2">הערת מאמן</label>
+                <div className="bg-surface rounded-xl border border-line p-4">
+                  <label className="text-sm font-semibold text-fg-2 block mb-2">הערת מאמן</label>
                   <textarea
                     value={coachComment}
                     onChange={e => setCoachComment(e.target.value)}
                     rows={3}
                     placeholder="הערות, תצפיות, המלצות..."
-                    className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                    className="w-full text-sm border border-line rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent resize-none"
                   />
                 </div>
               )}
 
               {/* Climber comment */}
-              <div className="bg-white rounded-xl border border-gray-200 p-4">
-                <label className="text-sm font-semibold text-gray-700 block mb-2">הערת מטפס</label>
+              <div className="bg-surface rounded-xl border border-line p-4">
+                <label className="text-sm font-semibold text-fg-2 block mb-2">הערת מטפס</label>
                 <textarea
                   value={climberComment}
                   onChange={e => setClimberComment(e.target.value)}
                   rows={3}
                   placeholder="איך הרגשת? מה היה קשה?"
-                  className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                  className="w-full text-sm border border-line rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-accent resize-none"
                 />
                 {!isCoachOrAdmin && analysis && (
                   <button
                     onClick={handleSaveComment}
                     disabled={saving}
-                    className="mt-2 text-sm bg-blue-500 hover:bg-blue-600 disabled:opacity-40 text-white px-4 py-1.5 rounded-lg transition-colors"
+                    className="mt-2 text-sm bg-accent hover:bg-accent/90 disabled:opacity-40 text-on-accent px-4 py-1.5 rounded-lg transition-colors"
                   >
                     {saving ? 'שומר...' : 'שמור הערה'}
                   </button>
@@ -1328,7 +1329,7 @@ export default function AnalysisPage() {
                 <button
                   onClick={handleSave}
                   disabled={saving}
-                  className="w-full py-3 bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-white font-semibold rounded-xl transition-colors shadow"
+                  className="w-full py-3 bg-accent hover:bg-accent-hover disabled:opacity-40 text-on-accent font-semibold rounded-xl transition-colors "
                 >
                   {saving ? 'שומר...' : saved ? '✓ נשמר!' : analysis ? 'עדכן ניתוח' : 'שמור ניתוח'}
                 </button>
@@ -1340,9 +1341,9 @@ export default function AnalysisPage() {
 
       {/* ── Comments ── */}
       {currentUser && (
-        <div className="mt-6 bg-white rounded-xl shadow-sm border border-gray-200">
+        <div className="mt-6 bg-surface rounded-xl border border-line">
           <div className="px-4 pt-4 pb-1">
-            <h3 className="text-sm font-semibold text-gray-700">תגובות על הסרטון</h3>
+            <h3 className="text-sm font-semibold text-fg-2">תגובות על הסרטון</h3>
           </div>
           <MediaComments fileId={fileId} currentUser={currentUser} />
         </div>

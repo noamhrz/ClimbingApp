@@ -5,6 +5,7 @@
 
 import { useEffect } from 'react'
 import moment from 'moment'
+import { LuCalendarDays, LuTriangleAlert, LuEye, LuPlay, LuTrash2, LuClipboardCheck } from 'react-icons/lu'
 
 interface EventContextMenuProps {
   isOpen: boolean
@@ -76,22 +77,22 @@ export default function EventContextMenu({
         className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[101] w-11/12 max-w-sm animate-in zoom-in-95 duration-200"
         role="menu"
       >
-        <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
+        <div className="bg-raised border border-line-strong rounded-2xl overflow-hidden shadow-2xl">
           {/* Header with Title + Date */}
-          <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-5 py-4">
+          <div className="px-5 py-4 bg-surface border border-line">
             {/* Workout title - FIRST */}
-            <h3 className="font-bold text-white text-xl text-center mb-2">
+            <h3 className="font-bold text-fg text-xl text-center mb-2">
               {eventTitle}
             </h3>
             
             {/* ✅ Date below title */}
             {formattedDate ? (
-              <p className="text-blue-100 text-base text-center font-medium">
-                📅 {formattedDate}
+              <p className="text-fg-2 text-base font-medium flex items-center justify-center gap-1.5">
+                <LuCalendarDays aria-hidden className="w-4 h-4 shrink-0" />{formattedDate}
               </p>
             ) : (
-              <p className="text-red-300 text-sm text-center">
-                ⚠️ אין מידע על תאריך
+              <p className="text-danger text-sm flex items-center justify-center gap-1.5">
+                <LuTriangleAlert aria-hidden className="w-4 h-4 shrink-0" />אין מידע על תאריך
               </p>
             )}
           </div>
@@ -104,13 +105,13 @@ export default function EventContextMenu({
                 onClose()
                 onStartNow()
               }}
-              className={`w-full py-3 px-4 rounded-xl font-semibold text-white transition-all active:scale-95 ${
-                isCompleted
-                  ? 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700'
-                  : 'bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700'
-              }`}
+              className={`w-full min-h-12 inline-flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-semibold text-on-accent transition-all active:scale-95 ${
+ isCompleted
+ ? 'bg-success'
+ : 'bg-accent hover:bg-accent-hover'
+ }`}
             >
-              {isCompleted ? '✅ צפה באימון' : '▶️ התחל אימון'}
+              {isCompleted ? <><LuEye aria-hidden className="w-4 h-4 shrink-0" />צפה באימון</> : <><LuPlay aria-hidden className="w-4 h-4 shrink-0" />התחל אימון</>}
             </button>
 
             {/* Edit Date Button */}
@@ -119,9 +120,9 @@ export default function EventContextMenu({
                 onClose()
                 onEdit()
               }}
-              className="w-full py-3 px-4 bg-gray-100 hover:bg-gray-200 rounded-xl font-medium text-gray-700 transition-all active:scale-95"
+              className="w-full min-h-12 inline-flex items-center justify-center gap-2 py-3 px-4 bg-surface hover:bg-line border border-line-strong rounded-xl font-medium text-fg-2 transition-all active:scale-95"
             >
-              📅 הזז תאריך
+              <LuCalendarDays aria-hidden className="w-4 h-4 shrink-0" />הזז תאריך
             </button>
 
             {/* Delete Button */}
@@ -130,9 +131,9 @@ export default function EventContextMenu({
                 onClose()
                 onDelete()
               }}
-              className="w-full py-3 px-4 bg-red-100 hover:bg-red-200 rounded-xl font-medium text-red-700 transition-all active:scale-95"
+              className="w-full min-h-12 inline-flex items-center justify-center gap-2 py-3 px-4 bg-danger/15 hover:bg-danger/25 rounded-xl font-medium text-danger transition-all active:scale-95"
             >
-              🗑️ מחק אימון
+              <LuTrash2 aria-hidden className="w-4 h-4 shrink-0" />מחק אימון
             </button>
 
             {/* Mark Completed from Previous Workout Button */}
@@ -142,16 +143,16 @@ export default function EventContextMenu({
                   onClose()
                   onMarkCompleted()
                 }}
-                className="w-full py-3 px-4 bg-purple-100 hover:bg-purple-200 rounded-xl font-medium text-purple-700 transition-all active:scale-95"
+                className="w-full min-h-12 inline-flex items-center justify-center gap-2 py-3 px-4 bg-info/10 hover:bg-info/20 rounded-xl font-medium text-info transition-all active:scale-95"
               >
-                📋 סמן כבוצע (נתונים מאימון קודם)
+                <LuClipboardCheck aria-hidden className="w-4 h-4 shrink-0" />סמן כבוצע (נתונים מאימון קודם)
               </button>
             )}
 
             {/* Cancel Button */}
             <button
               onClick={onClose}
-              className="w-full py-2 px-4 bg-white hover:bg-gray-50 rounded-xl font-medium text-gray-500 transition-all active:scale-95 border border-gray-200"
+              className="w-full py-2 px-4 bg-surface hover:bg-surface/90 rounded-xl font-medium text-muted transition-all active:scale-95 border border-line"
             >
               ביטול
             </button>

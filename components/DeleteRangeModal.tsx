@@ -4,6 +4,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { format, parseISO, differenceInDays } from 'date-fns'
+import { LuCalendarDays, LuChartColumn, LuCircleCheck, LuCircleX, LuLoaderCircle, LuSearch, LuTrash2, LuTriangleAlert, LuWrench } from 'react-icons/lu'
 
 interface DeleteRangeModalProps {
   isOpen: boolean
@@ -216,17 +217,17 @@ export default function DeleteRangeModal({ isOpen, onClose, onSuccess, email }: 
   return (
     <>
       <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" dir="rtl">
+        <div className="bg-raised border border-line-strong rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" dir="rtl">
           {/* Header */}
-          <div className="sticky top-0 bg-white border-b px-6 py-4 rounded-t-xl">
+          <div className="sticky top-0 bg-surface border-b px-6 py-4 rounded-t-xl">
             <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-bold text-gray-900">
-                🗑️ נקה אימונים בטווח תאריכים
+              <h2 className="text-2xl font-bold text-fg">
+                <LuTrash2 aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />נקה אימונים בטווח תאריכים
               </h2>
               <button
                 onClick={onClose}
                 disabled={deleting}
-                className="text-gray-500 hover:text-gray-700 text-2xl"
+                className="text-muted hover:text-fg-2 text-2xl"
               >
                 ✕
               </button>
@@ -236,27 +237,27 @@ export default function DeleteRangeModal({ isOpen, onClose, onSuccess, email }: 
           <div className="p-6 space-y-6">
             {/* Date Range Selection */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                📅 בחר טווח תאריכים
+              <label className="block text-sm font-medium text-fg-2 mb-2">
+                <LuCalendarDays aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />בחר טווח תאריכים
               </label>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs text-gray-600 mb-1">מתאריך:</label>
+                  <label className="block text-xs text-fg-3 mb-1">מתאריך:</label>
                   <input
                     type="date"
                     value={startDate}
                     onChange={(e) => setStartDate(e.target.value)}
-                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-accent"
                     disabled={loading || deleting}
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-600 mb-1">עד תאריך:</label>
+                  <label className="block text-xs text-fg-3 mb-1">עד תאריך:</label>
                   <input
                     type="date"
                     value={endDate}
                     onChange={(e) => setEndDate(e.target.value)}
-                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-accent"
                     disabled={loading || deleting}
                   />
                 </div>
@@ -267,24 +268,24 @@ export default function DeleteRangeModal({ isOpen, onClose, onSuccess, email }: 
             <button
               onClick={handleSearch}
               disabled={loading || deleting}
-              className="w-full py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition"
+              className="w-full py-3 bg-accent text-on-accent rounded-lg hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed font-medium transition"
             >
-              {loading ? '⏳ מחפש...' : '🔍 חפש אימונים בטווח'}
+              {loading ? <><LuLoaderCircle aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] animate-spin me-1.5" />מחפש...</> : <><LuSearch aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />חפש אימונים בטווח</>}
             </button>
 
             {/* V2: Filters */}
             {allEvents.length > 0 && (
               <div className="space-y-3">
-                <h3 className="font-semibold text-gray-900">🔧 סינון:</h3>
+                <h3 className="font-semibold text-fg"><LuWrench aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />סינון:</h3>
                 
                 <div className="grid grid-cols-2 gap-4">
                   {/* Status Filter */}
                   <div>
-                    <label className="block text-xs text-gray-600 mb-1">לפי סטטוס:</label>
+                    <label className="block text-xs text-fg-3 mb-1">לפי סטטוס:</label>
                     <select
                       value={statusFilter}
                       onChange={(e) => setStatusFilter(e.target.value as any)}
-                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-accent text-sm"
                     >
                       <option value="all">הכל</option>
                       <option value="completed">רק הושלמו ✅</option>
@@ -294,11 +295,11 @@ export default function DeleteRangeModal({ isOpen, onClose, onSuccess, email }: 
 
                   {/* Workout Filter */}
                   <div>
-                    <label className="block text-xs text-gray-600 mb-1">לפי סוג אימון:</label>
+                    <label className="block text-xs text-fg-3 mb-1">לפי סוג אימון:</label>
                     <select
                       value={workoutFilter}
                       onChange={(e) => setWorkoutFilter(e.target.value === 'all' ? 'all' : Number(e.target.value))}
-                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-accent text-sm"
                     >
                       <option value="all">כל האימונים</option>
                       {availableWorkouts.map(w => (
@@ -314,17 +315,17 @@ export default function DeleteRangeModal({ isOpen, onClose, onSuccess, email }: 
             {allEvents.length > 0 && (
               <div>
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="font-semibold text-gray-900">
-                    📊 נמצאו {filteredEvents.length} אימונים:
+                  <h3 className="font-semibold text-fg">
+                    <LuChartColumn aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />נמצאו {filteredEvents.length} אימונים:
                   </h3>
                   {filteredEvents.length !== allEvents.length && (
-                    <span className="text-xs text-gray-500">
+                    <span className="text-xs text-muted">
                       (מתוך {allEvents.length} סה"כ)
                     </span>
                   )}
                 </div>
 
-                <div className="border rounded-lg p-4 bg-gray-50 max-h-60 overflow-y-auto space-y-2">
+                <div className="border rounded-lg p-4 bg-surface max-h-60 overflow-y-auto space-y-2">
                   {filteredEvents.map(event => {
                     const eventDate = parseISO(event.StartTime)
                     const missed = isMissed(event)
@@ -333,15 +334,15 @@ export default function DeleteRangeModal({ isOpen, onClose, onSuccess, email }: 
                       <div
                         key={event.CalendarID}
                         className={`flex items-center gap-2 text-sm ${
-                          event.Completed
-                            ? 'text-green-700'
-                            : missed
-                            ? 'text-red-700'
-                            : 'text-blue-700'
-                        }`}
+ event.Completed
+ ? 'text-success'
+ : missed
+ ? 'text-danger'
+ : 'text-accent'
+ }`}
                       >
                         <span className="text-base">
-                          {event.Completed ? '✅' : missed ? '❌' : '⏳'}
+                          {event.Completed ? <LuCircleCheck aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /> : missed ? <LuCircleX aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /> : <LuLoaderCircle aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] animate-spin" />}
                         </span>
                         <span className="font-medium">
                           {format(eventDate, 'dd/MM')}
@@ -356,9 +357,9 @@ export default function DeleteRangeModal({ isOpen, onClose, onSuccess, email }: 
                 </div>
 
                 {/* Warning */}
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                  <p className="text-sm text-yellow-900 flex items-start gap-2">
-                    <span className="text-lg">⚠️</span>
+                <div className="bg-warning/15 border border-warning rounded-lg p-4">
+                  <p className="text-sm text-warning flex items-start gap-2">
+                    <span className="text-lg"><LuTriangleAlert aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></span>
                     <span>
                       פעולה זו תמחק את כל {filteredEvents.length} האימונים בטווח זה לצמיתות!
                       אין אפשרות לשחזור.
@@ -374,14 +375,14 @@ export default function DeleteRangeModal({ isOpen, onClose, onSuccess, email }: 
                 <button
                   onClick={onClose}
                   disabled={deleting}
-                  className="flex-1 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition disabled:opacity-50 font-medium"
+                  className="flex-1 py-3 bg-raised text-fg-2 rounded-lg hover:bg-raised/90 transition disabled:opacity-50 font-medium"
                 >
                   ביטול
                 </button>
                 <button
                   onClick={handleDelete}
                   disabled={deleting || filteredEvents.length === 0}
-                  className="flex-1 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition"
+                  className="flex-1 py-3 bg-danger text-on-accent rounded-lg hover:bg-danger/90 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition"
                 >
                   {deleting ? '⏳ מוחק...' : `🗑️ מחק ${filteredEvents.length} אימונים`}
                 </button>
@@ -394,19 +395,19 @@ export default function DeleteRangeModal({ isOpen, onClose, onSuccess, email }: 
       {/* Confirmation Modal */}
       {showConfirmation && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[60] p-4">
-          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6" dir="rtl">
-            <h3 className="text-xl font-bold text-gray-900 mb-4">
-              ⚠️ האם אתה בטוח?
+          <div className="bg-raised border border-line-strong rounded-xl max-w-md w-full p-6" dir="rtl">
+            <h3 className="text-xl font-bold text-fg mb-4">
+              <LuTriangleAlert aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />האם אתה בטוח?
             </h3>
             
             <div className="mb-6 space-y-3">
-              <p className="text-gray-700">
-                אתה עומד למחוק <strong className="text-red-600">{filteredEvents.length} אימונים</strong> לצמיתות בטווח:
+              <p className="text-fg-2">
+                אתה עומד למחוק <strong className="text-danger">{filteredEvents.length} אימונים</strong> לצמיתות בטווח:
               </p>
-              <p className="font-medium text-gray-900">
+              <p className="font-medium text-fg">
                 {format(parseISO(`${startDate}T00:00:00`), 'dd/MM/yyyy')} - {format(parseISO(`${endDate}T00:00:00`), 'dd/MM/yyyy')}
               </p>
-              <p className="text-red-600 font-bold">
+              <p className="text-danger font-bold">
                 פעולה זו לא ניתנת לביטול!
               </p>
             </div>
@@ -415,16 +416,16 @@ export default function DeleteRangeModal({ isOpen, onClose, onSuccess, email }: 
               <button
                 onClick={() => setShowConfirmation(false)}
                 disabled={deleting}
-                className="flex-1 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition font-medium"
+                className="flex-1 py-3 bg-raised text-fg-2 rounded-lg hover:bg-raised/90 transition font-medium"
               >
                 לא, חזור
               </button>
               <button
                 onClick={handleConfirmedDelete}
                 disabled={deleting}
-                className="flex-1 py-3 bg-red-700 text-white rounded-lg hover:bg-red-800 disabled:opacity-50 font-medium transition"
+                className="flex-1 py-3 bg-danger text-on-accent rounded-lg hover:bg-danger/90 disabled:opacity-50 font-medium transition"
               >
-                {deleting ? '⏳ מוחק...' : 'כן, אני בטוח - מחק'}
+                {deleting ? <><LuLoaderCircle aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] animate-spin me-1.5" />מוחק...</> : 'כן, אני בטוח - מחק'}
               </button>
             </div>
           </div>

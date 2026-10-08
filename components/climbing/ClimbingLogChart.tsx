@@ -6,6 +6,20 @@ import { Chart, registerables } from 'chart.js'
 
 Chart.register(...registerables)
 
+// Reads the live design tokens so the chart always matches the current theme
+function readToken(name: string, fallback: string) {
+  if (typeof window === 'undefined') return fallback
+  const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim()
+  return value || fallback
+}
+
+function applyChartTheme() {
+  const line = readToken('--color-line', '#2B2722')
+  const muted = readToken('--color-muted', '#A39E95')
+  Chart.defaults.color = muted
+  Chart.defaults.borderColor = line
+}
+
 interface ChartData {
   type: 'Lead' | 'BoulderBoard'
   lead?: { gradeLabel: string; count: number }[]
@@ -35,6 +49,11 @@ export default function ClimbingLogChart({ data }: Props) {
     const ctx = canvasRef.current.getContext('2d')
     if (!ctx) return
 
+    applyChartTheme()
+    const accent = readToken('--color-accent', '#E0763A')
+    const info = readToken('--color-info', '#7FB0C9')
+    const warning = readToken('--color-warning', '#E3B341')
+
     if (data.type === 'Lead' && data.lead) {
       // Lead chart (simple bar)
       const labels = data.lead.map((d) => d.gradeLabel)
@@ -48,8 +67,8 @@ export default function ClimbingLogChart({ data }: Props) {
             {
               label: 'הובלה (Lead)',
               data: counts,
-              backgroundColor: 'rgba(59, 130, 246, 0.7)', // Blue
-              borderColor: 'rgba(59, 130, 246, 1)',
+              backgroundColor: `${info}B3`,
+              borderColor: info,
               borderWidth: 1,
             },
           ],
@@ -110,15 +129,15 @@ export default function ClimbingLogChart({ data }: Props) {
             {
               label: '🪨 בולדר',
               data: boulderCounts,
-              backgroundColor: 'rgba(168, 85, 247, 0.7)', // Purple
-              borderColor: 'rgba(168, 85, 247, 1)',
+              backgroundColor: `${accent}B3`,
+              borderColor: accent,
               borderWidth: 1,
             },
             {
               label: '🟡 בורד',
               data: boardCounts,
-              backgroundColor: 'rgba(234, 179, 8, 0.7)', // Yellow
-              borderColor: 'rgba(234, 179, 8, 1)',
+              backgroundColor: `${warning}B3`,
+              borderColor: warning,
               borderWidth: 1,
             },
           ],
@@ -182,7 +201,7 @@ export default function ClimbingLogChart({ data }: Props) {
   }, [data])
 
   return (
-    <div className="bg-white rounded-lg shadow p-6 mb-6">
+    <div className="bg-surface rounded-lg p-6 mb-6">
       <div style={{ height: '400px' }}>
         <canvas ref={canvasRef}></canvas>
       </div>

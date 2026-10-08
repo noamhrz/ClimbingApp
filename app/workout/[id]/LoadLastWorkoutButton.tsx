@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
+import { LuRefreshCw } from 'react-icons/lu'
 
 interface LoadLastWorkoutButtonProps {
   email: string | null
@@ -98,14 +99,14 @@ export default function LoadLastWorkoutButton({
   return (
     <div className="text-center mt-6">
       <button
-        className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2.5 rounded-lg font-semibold shadow-md transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center gap-2 mx-auto"
+        className="bg-info hover:bg-info text-on-accent px-6 py-2.5 rounded-lg font-semibold transition-colors disabled:bg-raised disabled:text-faint disabled:cursor-not-allowed flex items-center gap-2 mx-auto"
         onClick={handleLoadFromLastWorkout}
         disabled={loading}
       >
         {loading ? (
           <>
             <svg
-              className="animate-spin h-5 w-5 text-white"
+              className="animate-spin h-5 w-5 text-on-accent"
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
               viewBox="0 0 24 24"
@@ -127,10 +128,10 @@ export default function LoadLastWorkoutButton({
             <span>טוען...</span>
           </>
         ) : (
-          <>🔄 טען נתונים מאימון אחרון</>
+          <><LuRefreshCw aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />טען נתונים מאימון אחרון</>
         )}
       </button>
-      <p className="text-gray-500 text-sm mt-2">
+      <p className="text-muted text-sm mt-2">
         ימלא את הטופס בנתונים מהאימון הקודם שלך
       </p>
     </div>

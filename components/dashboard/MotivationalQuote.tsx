@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabaseClient'
+import { LuBicepsFlexed, LuRefreshCw } from 'react-icons/lu'
 
 interface Quote {
   QuoteID: number
@@ -43,17 +44,17 @@ export default function MotivationalQuote() {
 
   if (loading || !quote) {
     return (
-      <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl p-8 shadow-lg text-center">
-        <div className="text-5xl mb-4">💪</div>
+      <div className="text-fg rounded-xl p-8 text-center bg-surface border border-line">
+        <div className="text-5xl mb-4"><LuBicepsFlexed aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></div>
         <div className="text-xl">טוען ציטוט...</div>
       </div>
     )
   }
 
   return (
-    <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl p-8 shadow-lg text-center">
+    <div className="text-fg rounded-xl p-8 text-center bg-surface border border-line">
       {/* אייקון */}
-      <div className="text-5xl mb-4">💪</div>
+      <div className="text-5xl mb-4"><LuBicepsFlexed aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></div>
       
       {/* הציטוט בעברית */}
       <blockquote className="text-2xl font-bold mb-2">
@@ -61,18 +62,18 @@ export default function MotivationalQuote() {
       </blockquote>
       
       {/* המחבר */}
-      <p className="text-blue-100 text-lg mb-1">
+      <p className="text-fg-2 text-lg mb-1">
         - {quote.Author}
       </p>
       
       {/* הציטוט באנגלית (קטן יותר) */}
-      <p className="text-blue-200 text-sm italic mb-4">
+      <p className="text-fg-2 text-sm italic mb-4">
         "{quote.Quote_EN}"
       </p>
       
       {/* קטגוריה */}
       {quote.Category && (
-        <span className="inline-block bg-blue-500/30 px-3 py-1 rounded-full text-xs mb-4">
+        <span className="inline-block bg-accent/30 px-3 py-1 rounded-full text-xs mb-4">
           {quote.Category}
         </span>
       )}
@@ -80,10 +81,10 @@ export default function MotivationalQuote() {
       {/* כפתור לציטוט חדש */}
       <button 
         onClick={loadRandomQuote}
-        className="mt-4 px-6 py-2 bg-white/20 hover:bg-white/30 rounded-lg 
+        className="mt-4 px-6 py-2 bg-raised border border-line-strong hover:bg-line-strong rounded-lg 
                    text-white font-medium transition-all hover:scale-105"
       >
-        🔄 ציטוט אחר
+        <LuRefreshCw aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />ציטוט אחר
       </button>
     </div>
   )

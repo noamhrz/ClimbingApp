@@ -23,8 +23,8 @@
 
 /* Show "+X more" link if too many events */
 .rbc-show-more {
-  background-color: #e5e7eb !important;
-  color: #374151 !important;
+  background-color: var(--color-raised) !important;
+  color: var(--color-fg-2) !important;
   font-size: 11px !important;
   padding: 2px 6px !important;
   border-radius: 4px !important;
@@ -34,8 +34,8 @@
 }
 
 .rbc-show-more:hover {
-  background-color: #d1d5db !important;
-  color: #111827 !important;
+  background-color: var(--color-line-strong) !important;
+  color: var(--color-fg) !important;
 }
 
 /* ========================================
@@ -94,19 +94,19 @@
 
 /* Better event colors visibility */
 .rbc-event {
-  border: 1px solid rgba(0, 0, 0, 0.1) !important;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+  border: 1px solid rgba(0, 0, 0, 0.25) !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2) !important;
 }
 
 /* Better today highlight */
 .rbc-today {
-  background-color: #fef3c7 !important; /* צהוב בהיר */
+  background-color: color-mix(in srgb, var(--color-accent) 12%, transparent) !important;
 }
 
 /* Better time labels */
 .rbc-time-slot .rbc-label {
   font-size: 11px !important;
-  color: #6b7280 !important;
+  color: var(--color-muted) !important;
 }
 
 /* Popup (when clicking "+X more") */
@@ -114,12 +114,12 @@
   max-height: 400px !important;
   overflow-y: auto !important;
   border-radius: 8px !important;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2) !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4) !important;
 }
 
 .rbc-overlay-header {
-  background-color: #3b82f6 !important;
-  color: white !important;
+  background-color: var(--color-accent) !important;
+  color: var(--color-on-accent) !important;
   padding: 12px !important;
   font-weight: 600 !important;
   border-radius: 8px 8px 0 0 !important;
@@ -131,16 +131,16 @@
 }
 
 .rbc-time-content::-webkit-scrollbar-track {
-  background: #f3f4f6 !important;
+  background: var(--color-surface) !important;
 }
 
 .rbc-time-content::-webkit-scrollbar-thumb {
-  background: #d1d5db !important;
+  background: var(--color-line-strong) !important;
   border-radius: 4px !important;
 }
 
 .rbc-time-content::-webkit-scrollbar-thumb:hover {
-  background: #9ca3af !important;
+  background: var(--color-faint) !important;
 }
 
 /* ========================================

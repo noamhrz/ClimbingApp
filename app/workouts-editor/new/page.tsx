@@ -8,6 +8,7 @@ import { useAuth, useActiveUserEmail } from '@/context/AuthContext'
 import { WorkoutFormData } from '@/types/workouts'
 import { createWorkout } from '@/lib/workout-api'
 import WorkoutForm from '@/components/workouts/WorkoutForm'
+import { LuCircleX, LuLightbulb, LuSave, LuSparkles } from 'react-icons/lu'
 
 export default function NewWorkoutPage() {
   const router = useRouter()
@@ -101,8 +102,8 @@ export default function NewWorkoutPage() {
     <div className="max-w-4xl mx-auto p-6">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-3xl font-bold mb-2">✨ אימון חדש</h1>
-        <p className="text-gray-600">צור אימון חדש עבור המתאמנים</p>
+        <h1 className="text-3xl font-bold mb-2"><LuSparkles aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />אימון חדש</h1>
+        <p className="text-fg-3">צור אימון חדש עבור המתאמנים</p>
       </div>
 
       {/* Form */}
@@ -112,28 +113,28 @@ export default function NewWorkoutPage() {
 
       {/* Info Box */}
       {formData.containExercise && (
-        <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <p className="text-sm text-blue-800">
-            💡 <strong>טיפ:</strong> אחרי יצירת האימון תוכל להוסיף תרגילים ולארגן אותם בבלוקים
+        <div className="mb-6 bg-accent/15 border border-accent rounded-lg p-4">
+          <p className="text-sm text-accent">
+            <LuLightbulb aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" /><strong>טיפ:</strong> אחרי יצירת האימון תוכל להוסיף תרגילים ולארגן אותם בבלוקים
           </p>
         </div>
       )}
 
       {/* Action Buttons */}
-      <div className="flex gap-3 justify-end sticky bottom-6 bg-white p-4 border-t border-gray-200 shadow-lg rounded-lg">
+      <div className="flex gap-3 justify-end sticky bottom-6 bg-surface p-4 border-t border-line rounded-lg">
         <button
           onClick={handleCancel}
-          className="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 font-medium"
+          className="px-6 py-3 border border-line rounded-lg hover:bg-surface font-medium"
           disabled={saving}
         >
-          ❌ ביטול
+          <LuCircleX aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />ביטול
         </button>
         <button
           onClick={handleSave}
-          className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium disabled:opacity-50"
+          className="px-6 py-3 bg-accent text-on-accent rounded-lg hover:bg-accent-hover font-medium disabled:opacity-50"
           disabled={saving}
         >
-          {saving ? '💾 יוצר...' : '💾 צור אימון'}
+          {saving ? <><LuSave aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />יוצר...</> : <><LuSave aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />צור אימון</>}
         </button>
       </div>
     </div>

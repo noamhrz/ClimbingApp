@@ -21,6 +21,8 @@ import ExerciseFilters from '@/components/analytics/ExerciseFilters'
 import StatsCards from '@/components/analytics/StatsCards'
 import ProgressChart from '@/components/analytics/ProgressChart'
 import SessionsTable from '@/components/analytics/SessionsTable'
+import { LuBicepsFlexed, LuChartColumn, LuHourglass, LuSearch, LuUser, LuUsers } from 'react-icons/lu'
+import { PageSkeleton } from '@/components/ui/Skeleton'
 
 export default function ExerciseAnalyticsPage() {
   const router = useRouter()
@@ -497,46 +499,41 @@ export default function ExerciseAnalyticsPage() {
   // Loading state
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4 mx-auto"></div>
-          <p className="text-gray-600">טוען נתונים...</p>
-        </div>
-      </div>
+      <PageSkeleton variant="detail" label="טוען נתונים..." />
     )
   }
 
   // Not logged in
   if (!activeUser) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-surface flex items-center justify-center">
         <div className="text-center">
-          <p className="text-gray-600">אנא התחבר למערכת</p>
+          <p className="text-fg-3">אנא התחבר למערכת</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div dir="rtl" className="min-h-screen bg-gray-50 pb-20">
+    <div dir="rtl" className="min-h-screen bg-surface pb-20">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg">
+      <div className="text-fg bg-surface border border-line">
         <div className="max-w-7xl mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold">📊 ניתוח תרגילים</h1>
-              <p className="text-blue-100 mt-1">
+              <h1 className="text-3xl font-bold"><LuChartColumn aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />ניתוח תרגילים</h1>
+              <p className="text-fg-2 mt-1">
                 מעקב אחר התקדמות ושיפור ביצועים
                 {targetEmail && targetEmail !== activeUser?.Email && (
-                  <span className="mr-2 bg-blue-800/50 px-2 py-1 rounded text-sm">
-                    👤 {targetEmail}
+                  <span className="mr-2 bg-accent/50 px-2 py-1 rounded text-sm">
+                    <LuUser aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />{targetEmail}
                   </span>
                 )}
               </p>
             </div>
             <button
               onClick={() => router.back()}
-              className="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-colors"
+              className="px-4 py-2 bg-raised border border-line-strong hover:bg-line-strong rounded-lg transition-colors"
             >
               ← חזרה
             </button>
@@ -549,12 +546,12 @@ export default function ExerciseAnalyticsPage() {
         
         {/* User Selector - Only for admin/coach */}
         {canViewOthers && (
-          <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl shadow-md p-5 mb-6 border-2 border-purple-200">
+          <div className="rounded-xl p-5 mb-6 border-2 border-info/30 bg-surface border border-line">
             <div className="flex items-center gap-3 mb-3">
-              <div className="text-2xl">👥</div>
+              <div className="text-2xl"><LuUsers aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></div>
               <div>
-                <h3 className="text-lg font-bold text-gray-900">בחירת מתאמן לניתוח</h3>
-                <p className="text-sm text-gray-600">
+                <h3 className="text-lg font-bold text-fg">בחירת מתאמן לניתוח</h3>
+                <p className="text-sm text-fg-3">
                   {activeUser?.Role === 'admin' ? 'כאדמין, ניתן לצפות בכל המשתמשים' : 'מציג את המתאמנים שלך'}
                 </p>
               </div>
@@ -564,7 +561,7 @@ export default function ExerciseAnalyticsPage() {
               <select
                 value={targetEmail}
                 onChange={(e) => handleUserChange(e.target.value)}
-                className="w-full px-4 py-3 border-2 border-purple-300 rounded-lg text-base font-medium focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-white"
+                className="w-full px-4 py-3 border-2 border-info/30 rounded-lg text-base font-medium focus:ring-2 focus:ring-info focus:border-info bg-surface"
               >
                 {users.map((user) => (
                   <option
@@ -577,8 +574,8 @@ export default function ExerciseAnalyticsPage() {
                 ))}
               </select>
             ) : (
-              <div className="text-center py-3 text-gray-500 animate-pulse">
-                ⏳ טוען משתמשים...
+              <div className="text-center py-3 text-muted animate-pulse">
+                <LuHourglass aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />טוען משתמשים...
               </div>
             )}
           </div>
@@ -594,12 +591,12 @@ export default function ExerciseAnalyticsPage() {
 
         {/* Show message if no exercise selected */}
         {!filters.exerciseId && !filters.category && (
-          <div className="bg-blue-50 border border-blue-200 rounded-xl p-8 text-center">
-            <div className="text-4xl mb-3">🔍</div>
-            <h3 className="text-lg font-bold text-blue-900 mb-2">
+          <div className="bg-accent/15 border border-accent rounded-xl p-8 text-center">
+            <div className="text-4xl mb-3"><LuSearch aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></div>
+            <h3 className="text-lg font-bold text-accent mb-2">
               בחר תרגיל או קטגוריה
             </h3>
-            <p className="text-blue-700">
+            <p className="text-accent">
               השתמש בפילטרים למעלה כדי לראות ניתוח מפורט
             </p>
           </div>
@@ -611,13 +608,13 @@ export default function ExerciseAnalyticsPage() {
             {/* Exercise Title */}
             {selectedExercise && (
               <div className="mb-6">
-                <h2 className="text-2xl font-bold text-gray-900">
-                  💪 {selectedExercise.Name}
+                <h2 className="text-2xl font-bold text-fg">
+                  <LuBicepsFlexed aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />{selectedExercise.Name}
                   {selectedExercise.IsSingleHand && (
-                    <span className="text-sm text-blue-600 mr-2">(יד בודדת)</span>
+                    <span className="text-sm text-accent mr-2">(יד בודדת)</span>
                   )}
                 </h2>
-                <p className="text-gray-600 mt-1">
+                <p className="text-fg-3 mt-1">
                   📅 {filters.dateRange === 'week' ? 'שבוע אחרון' :
                      filters.dateRange === 'month' ? 'חודש אחרון' :
                      filters.dateRange === '3months' ? '3 חודשים' :

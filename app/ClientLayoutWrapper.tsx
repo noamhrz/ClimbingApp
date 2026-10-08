@@ -10,7 +10,7 @@ export default function ClientLayoutWrapper({ children }: { children: React.Reac
   const showHeader = pathname !== '/'
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50 text-gray-900">
+    <div className="min-h-screen flex flex-col bg-bg text-fg">
       {showHeader && <UserHeader />}
       <main className="flex-grow">{children}</main>
     </div>

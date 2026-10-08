@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { useAuth } from '@/context/AuthContext'
 import { supabase } from '@/lib/supabaseClient'
 import MediaComments from '@/components/media/MediaComments'
+import { LuChartColumn, LuFileText, LuFolder, LuFolderOpen, LuRefreshCw, LuTrash2, LuTriangleAlert, LuVideo } from 'react-icons/lu'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -69,9 +70,9 @@ function FileCard({
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col">
+    <div className="bg-surface rounded-xl border border-line flex flex-col">
       {/* Preview */}
-      <div className="bg-gray-100 relative rounded-t-xl overflow-hidden" style={{ minHeight: '160px' }}>
+      <div className="bg-surface relative rounded-t-xl overflow-hidden" style={{ minHeight: '160px' }}>
         {isVideo(file.MimeType) ? (
           <video
             src={streamUrl}
@@ -87,27 +88,27 @@ function FileCard({
             className="w-full h-40 object-cover"
           />
         ) : (
-          <div className="flex items-center justify-center h-40 text-4xl text-gray-400">
-            📄
+          <div className="flex items-center justify-center h-40 text-4xl text-faint">
+            <LuFileText aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" />
           </div>
         )}
       </div>
 
       {/* Info */}
       <div className="p-3 flex flex-col gap-1 flex-1">
-        <p className="text-sm font-medium text-gray-900 truncate" title={file.FileName}>
+        <p className="text-sm font-medium text-fg truncate" title={file.FileName}>
           {file.FileName}
         </p>
-        <p className="text-xs text-gray-400">
+        <p className="text-xs text-faint">
           הועלה על ידי {uploaderName}
         </p>
         <div className="flex items-center justify-between mt-1 gap-2">
           <div className="flex items-center gap-1.5 min-w-0">
-            <span className="text-xs text-gray-400 truncate">
+            <span className="text-xs text-faint truncate">
               {formatDate(file.CreatedAt)}{file.FileSize ? ` · ${formatBytes(file.FileSize)}` : ''}
             </span>
             {isVideo(file.MimeType) && hasAnalysis && (
-              <span className="shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-green-100 text-green-700 border border-green-200">
+              <span className="shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-success/15 text-success border border-success">
                 נותח ✓
               </span>
             )}
@@ -117,23 +118,23 @@ function FileCard({
               <Link
                 href={`/analysis/${file.FileID}`}
                 className={`text-xs px-2 py-1 rounded-lg transition-colors font-medium ${
-                  hasAnalysis
-                    ? 'bg-green-50 text-green-700 hover:bg-green-100 border border-green-200'
-                    : 'text-blue-500 hover:text-blue-700'
-                }`}
+ hasAnalysis
+ ? 'bg-success/15 text-success hover:bg-success/15 border border-success'
+ : 'text-accent hover:text-accent/90'
+ }`}
                 title={hasAnalysis ? 'צפה בניתוח' : 'נתח סרטון'}
               >
-                {hasAnalysis ? 'צפה בניתוח' : '📊 נתח'}
+                {hasAnalysis ? 'צפה בניתוח' : <><LuChartColumn aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />נתח</>}
               </Link>
             )}
             {canDelete && (
               <button
                 onClick={handleDelete}
                 disabled={deleting}
-                className="text-xs text-red-400 hover:text-red-600 disabled:opacity-40 transition-colors p-1"
+                className="text-xs text-danger hover:text-danger/90 disabled:opacity-40 transition-colors p-1"
                 title="מחק"
               >
-                🗑️
+                <LuTrash2 aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" />
               </button>
             )}
           </div>
@@ -157,12 +158,12 @@ function DropZone({ onFiles }: { onFiles: (files: FileList) => void }) {
       onDrop={e => { e.preventDefault(); setDragOver(false); if (e.dataTransfer.files.length) onFiles(e.dataTransfer.files) }}
       onClick={() => inputRef.current?.click()}
       className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors ${
-        dragOver ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-blue-400 hover:bg-gray-50'
-      }`}
+ dragOver ? 'border-accent bg-accent/15' : 'border-line hover:border-accent/90 hover:bg-surface'
+ }`}
     >
-      <p className="text-3xl mb-2">📁</p>
-      <p className="text-sm font-medium text-gray-700">גרור קובץ לכאן או לחץ לבחירה</p>
-      <p className="text-xs text-gray-400 mt-1">וידאו, תמונות, מסמכים</p>
+      <p className="text-3xl mb-2"><LuFolder aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></p>
+      <p className="text-sm font-medium text-fg-2">גרור קובץ לכאן או לחץ לבחירה</p>
+      <p className="text-xs text-faint mt-1">וידאו, תמונות, מסמכים</p>
       <input ref={inputRef} type="file" multiple className="hidden" onChange={e => e.target.files && onFiles(e.target.files)} />
     </div>
   )
@@ -549,25 +550,25 @@ function MediaContent() {
   if (!usersLoaded) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <p className="text-gray-400">טוען...</p>
+        <p className="text-faint">טוען...</p>
       </div>
     )
   }
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-6 pb-24" dir="rtl">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">מדיה</h1>
+      <h1 className="text-2xl font-bold text-fg mb-6">מדיה</h1>
 
       {/* ── Filters (only admin/coach see the dropdown) ── */}
       {isCoachOrAdmin ? (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">
+        <div className="bg-surface rounded-xl border border-line p-4 mb-6">
           <div className="flex flex-wrap gap-3 items-end">
             <div className="flex flex-col gap-1 flex-1 min-w-[160px]">
-              <label className="text-xs font-medium text-gray-500">ספורטאי</label>
+              <label className="text-xs font-medium text-muted">ספורטאי</label>
               <select
                 value={selectedEmail}
                 onChange={e => setSelectedEmail(e.target.value)}
-                className="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="border border-line rounded-lg px-3 py-2 text-sm bg-surface focus:outline-none focus:ring-2 focus:ring-accent"
               >
                 {users.map(u => (
                   <option key={u.Email} value={u.Email}>{u.Name}</option>
@@ -577,18 +578,18 @@ function MediaContent() {
           </div>
         </div>
       ) : (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 px-4 py-3 mb-6">
-          <p className="text-sm text-gray-600">
+        <div className="bg-surface rounded-xl border border-line px-4 py-3 mb-6">
+          <p className="text-sm text-fg-3">
             <span className="font-medium">{users[0]?.Name ?? currentUser?.Name}</span>
-            <span className="text-gray-400 mr-1"> — הקבצים שלי</span>
+            <span className="text-faint mr-1"> — הקבצים שלי</span>
           </p>
         </div>
       )}
 
       {/* ── Upload tips card ── */}
-      <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 mb-4 text-sm text-blue-900" dir="rtl">
-        <p className="font-semibold mb-1.5">🎥 דגשים להעלאת סרטון לניתוח:</p>
-        <ul className="space-y-1 text-xs text-blue-800 list-disc list-inside">
+      <div className="bg-accent/15 border border-accent rounded-xl px-4 py-3 mb-4 text-sm text-accent" dir="rtl">
+        <p className="font-semibold mb-1.5"><LuVideo aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />דגשים להעלאת סרטון לניתוח:</p>
+        <ul className="space-y-1 text-xs text-accent list-disc list-inside">
           <li><span className="font-medium">חיתוך הסרטון (Trim):</span> מומלץ לחתוך בגלריה את תחילת וסוף הסרטון כך שיכיל רק את הטיפוס עצמו. זה יחסוך זמן העלאה ויאפשר ניתוח מדויק יותר.</li>
           <li><span className="font-medium">מגבלת זמן:</span> המערכת מותאמת לניתוח של עד 6 דקות טיפוס נטו.</li>
           <li><span className="font-medium">הגדרות מומלצות:</span> צלמו ב-1080p (30fps). הימנעו מ-4K כדי למנוע העלאות איטיות מאוד.</li>
@@ -599,47 +600,47 @@ function MediaContent() {
       {/* ── Upload zone ── */}
       <div className="mb-6">
         {uploadProgress >= 0 ? (
-          <div className="border-2 border-blue-300 rounded-xl p-5 bg-blue-50">
+          <div className="border-2 border-accent rounded-xl p-5 bg-accent/15">
             <div className="flex items-center justify-between mb-2">
-              <p className="text-sm font-medium text-blue-800 truncate ml-3" title={uploadFileName}>
+              <p className="text-sm font-medium text-accent truncate ml-3" title={uploadFileName}>
                 {uploadFileName}
               </p>
               <div className="flex items-center gap-2 shrink-0">
                 {uploadFileTotal > 1 && (
-                  <span className="text-xs text-blue-500">{uploadFileIndex} / {uploadFileTotal}</span>
+                  <span className="text-xs text-accent">{uploadFileIndex} / {uploadFileTotal}</span>
                 )}
                 <button
                   onClick={handleCancel}
-                  className="text-xs text-red-500 hover:text-red-700 font-medium px-2 py-0.5 rounded border border-red-300 hover:border-red-500 transition-colors"
+                  className="text-xs text-danger hover:text-danger/90 font-medium px-2 py-0.5 rounded border border-danger hover:border-danger/90 transition-colors"
                 >
                   ביטול
                 </button>
               </div>
             </div>
-            <div className="w-full bg-blue-200 rounded-full h-2.5 overflow-hidden">
+            <div className="w-full bg-accent/15 rounded-full h-2.5 overflow-hidden">
               <div
-                className="bg-blue-600 h-2.5 rounded-full transition-all duration-100"
+                className="bg-accent h-2.5 rounded-full transition-all duration-100"
                 style={{ width: `${uploadProgress}%` }}
               />
             </div>
-            <p className="text-xs text-blue-500 mt-1.5 text-center">
+            <p className="text-xs text-accent mt-1.5 text-center">
               {uploadProgress < 100 ? `מעלה לשרת... ${uploadProgress}%` : 'מעבד את הוידאו...'}
             </p>
-            <p className="text-xs text-blue-400 mt-1 text-center">השאר את המסך דלוק עד סיום ההעלאה</p>
+            <p className="text-xs text-accent mt-1 text-center">השאר את המסך דלוק עד סיום ההעלאה</p>
           </div>
         ) : (
           <DropZone onFiles={handleFiles} />
         )}
         {uploadError && (
-          <p className="text-red-500 text-sm mt-2 text-center">{uploadError}</p>
+          <p className="text-danger text-sm mt-2 text-center">{uploadError}</p>
         )}
       </div>
 
       {/* ── Drive sync error banner ── */}
       {syncError && (
-        <div className="flex items-start justify-between gap-2 bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 mb-3 text-sm">
-          <span>⚠️ שגיאת Drive: {syncError}</span>
-          <button onClick={() => setSyncError('')} className="shrink-0 text-red-400 hover:text-red-600 font-bold leading-none">✕</button>
+        <div className="flex items-start justify-between gap-2 bg-danger/15 border border-danger text-danger rounded-xl px-4 py-3 mb-3 text-sm">
+          <span><LuTriangleAlert aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />שגיאת Drive: {syncError}</span>
+          <button onClick={() => setSyncError('')} className="shrink-0 text-danger hover:text-danger/90 font-bold leading-none">✕</button>
         </div>
       )}
 
@@ -648,9 +649,9 @@ function MediaContent() {
         <button
           onClick={handleSync}
           disabled={syncing || !selectedEmail}
-          className="text-xs text-gray-500 hover:text-blue-600 disabled:opacity-40 flex items-center gap-1.5 transition-colors"
+          className="text-xs text-muted hover:text-accent disabled:opacity-40 flex items-center gap-1.5 transition-colors"
         >
-          <span className={syncing ? 'animate-spin' : ''}>🔄</span>
+          <span className={syncing ? 'animate-spin' : ''}><LuRefreshCw aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></span>
           {syncing ? 'מסנכרן...' : 'סנכרן עם Drive'}
         </button>
       </div>
@@ -658,13 +659,13 @@ function MediaContent() {
       {/* ── File gallery ── */}
       {filesLoading ? (
         <div className="flex items-center justify-center py-16">
-          <p className="text-gray-400">טוען קבצים...</p>
+          <p className="text-faint">טוען קבצים...</p>
         </div>
       ) : files.length === 0 ? (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-10 text-center">
-          <p className="text-4xl mb-3">📂</p>
-          <p className="text-gray-500">אין קבצים עדיין</p>
-          <p className="text-gray-400 text-sm mt-1">גרור קבצים לאזור ההעלאה למעלה</p>
+        <div className="bg-surface rounded-xl border border-line p-10 text-center">
+          <p className="text-4xl mb-3"><LuFolderOpen aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></p>
+          <p className="text-muted">אין קבצים עדיין</p>
+          <p className="text-faint text-sm mt-1">גרור קבצים לאזור ההעלאה למעלה</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -685,7 +686,7 @@ function MediaContent() {
 
       {/* ── Toast ── */}
       {toast && (
-        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 bg-gray-900 text-white text-sm px-4 py-2.5 rounded-xl shadow-lg animate-toast whitespace-nowrap">
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 bg-bg text-fg text-sm px-4 py-2.5 rounded-xl shadow-lg animate-toast whitespace-nowrap">
           {toast}
         </div>
       )}
@@ -699,7 +700,7 @@ export default function MediaPage() {
   return (
     <Suspense fallback={
       <div className="flex items-center justify-center min-h-[60vh]" dir="rtl">
-        <p className="text-gray-400">טוען...</p>
+        <p className="text-faint">טוען...</p>
       </div>
     }>
       <MediaContent />

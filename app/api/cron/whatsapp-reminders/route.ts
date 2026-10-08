@@ -100,7 +100,7 @@ export async function GET(request: NextRequest) {
   // Step 4: Fetch coach notes from WorkoutsForUser
   const { data: workoutsForUser } = await supabase
     .from('WorkoutsForUser')
-    .select('Email, WorkoutID, CoachNote')
+    .select('Email, WorkoutID, Notes, CoachNote')
     .in('Email', emailsWithWorkouts)
     .in('WorkoutID', workoutIds)
 
@@ -187,9 +187,9 @@ export async function GET(request: NextRequest) {
       const entry = userWorkouts[i]
       const workout = workoutById[entry.WorkoutID]
 
-      const coachNote =
-        workoutsForUser?.find((w) => w.Email === email && w.WorkoutID === entry.WorkoutID)
-          ?.CoachNote || 'אין הערות מאמן'
+      const wfuRow = workoutsForUser?.find((w) => w.Email === email && w.WorkoutID === entry.WorkoutID)
+      // The assignment screen saves the coach note in `Notes`; `CoachNote` is legacy.
+      const coachNote = (wfuRow?.Notes || wfuRow?.CoachNote || '').trim() || 'אין הערות מאמן'
 
       const entryExercises = (workoutExercises || []).filter(
         (e) => e.WorkoutID === entry.WorkoutID

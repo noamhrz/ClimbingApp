@@ -21,6 +21,8 @@ import GeneralGoalsForm from '@/components/goals/GeneralGoalsForm'
 import GradeGoalsForm from '@/components/goals/GradeGoalsForm'
 import GoalsPyramidEnhanced from '@/components/goals/GoalsPyramidEnhanced'
 import GoalsProgressPyramid from '@/components/goals/GoalsProgressPyramid'
+import { LuCalendarDays, LuChartColumn, LuLink, LuMountain, LuNotebookPen, LuTarget } from 'react-icons/lu'
+import { PageSkeleton } from '@/components/ui/Skeleton'
 
 export default function GoalsEditPage() {
   const params = useParams()
@@ -129,12 +131,7 @@ export default function GoalsEditPage() {
 
   if (authLoading || loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="text-2xl mb-2">⏳</div>
-          <div className="text-xl">טוען יעדים...</div>
-        </div>
-      </div>
+      <PageSkeleton variant="detail" label="טוען יעדים..." />
     )
   }
 
@@ -144,26 +141,26 @@ export default function GoalsEditPage() {
       <div className="mb-8">
         <button
           onClick={() => router.push('/goals')}
-          className="mb-4 text-blue-600 hover:text-blue-800 flex items-center gap-2"
+          className="mb-4 text-accent hover:text-accent/90 flex items-center gap-2"
         >
           ← חזרה לרשימת משתמשים
         </button>
         
-        <h1 className="text-4xl font-bold mb-2">🎯 הגדרת יעדים</h1>
-        <p className="text-gray-600 text-lg">{userName || targetEmail}</p>
+        <h1 className="text-4xl font-bold mb-2"><LuTarget aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />הגדרת יעדים</h1>
+        <p className="text-fg-3 text-lg">{userName || targetEmail}</p>
       </div>
 
       {/* Year & Quarter Selector */}
-      <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
+      <div className="bg-surface rounded-xl p-6 mb-6">
         <div className="flex items-center gap-6">
           <div className="flex-1">
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              📅 שנה
+            <label className="block text-sm font-semibold text-fg-2 mb-2">
+              <LuCalendarDays aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />שנה
             </label>
             <select
               value={year}
               onChange={(e) => setYear(parseInt(e.target.value))}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-3 border border-line rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent"
             >
               <option value={currentYear - 1}>{currentYear - 1}</option>
               <option value={currentYear}>{currentYear}</option>
@@ -172,13 +169,13 @@ export default function GoalsEditPage() {
           </div>
           
           <div className="flex-1">
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              📊 רבעון
+            <label className="block text-sm font-semibold text-fg-2 mb-2">
+              <LuChartColumn aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />רבעון
             </label>
             <select
               value={quarter}
               onChange={(e) => setQuarter(parseInt(e.target.value))}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-3 border border-line rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent"
             >
               <option value={1}>Q1 (ינואר-מרץ)</option>
               <option value={2}>Q2 (אפריל-יוני)</option>
@@ -192,14 +189,14 @@ export default function GoalsEditPage() {
       {/* Accordion Sections */}
       <div className="space-y-4">
         {/* General Goals */}
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+        <div className="bg-surface rounded-xl overflow-hidden">
           <button
             onClick={() => toggleSection('general')}
-            className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition"
+            className="w-full px-6 py-4 flex items-center justify-between hover:bg-surface transition"
           >
             <div className="flex items-center gap-3">
               <span className="text-2xl">{openSection === 'general' ? '▼' : '▶'}</span>
-              <span className="text-xl font-bold">📝 מטרות כלליות</span>
+              <span className="text-xl font-bold"><LuNotebookPen aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />מטרות כלליות</span>
             </div>
           </button>
           
@@ -216,10 +213,10 @@ export default function GoalsEditPage() {
         </div>
 
         {/* Boulder Goals */}
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+        <div className="bg-surface rounded-xl overflow-hidden">
           <button
             onClick={() => toggleSection('boulder')}
-            className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition"
+            className="w-full px-6 py-4 flex items-center justify-between hover:bg-surface transition"
           >
             <div className="flex items-center gap-3">
               <span className="text-2xl">{openSection === 'boulder' ? '▼' : '▶'}</span>
@@ -241,14 +238,14 @@ export default function GoalsEditPage() {
         </div>
 
         {/* Board Goals */}
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+        <div className="bg-surface rounded-xl overflow-hidden">
           <button
             onClick={() => toggleSection('board')}
-            className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition"
+            className="w-full px-6 py-4 flex items-center justify-between hover:bg-surface transition"
           >
             <div className="flex items-center gap-3">
               <span className="text-2xl">{openSection === 'board' ? '▼' : '▶'}</span>
-              <span className="text-xl font-bold">🧗 יעדי בורד</span>
+              <span className="text-xl font-bold"><LuMountain aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />יעדי בורד</span>
             </div>
           </button>
           
@@ -266,14 +263,14 @@ export default function GoalsEditPage() {
         </div>
 
         {/* Lead Goals */}
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+        <div className="bg-surface rounded-xl overflow-hidden">
           <button
             onClick={() => toggleSection('lead')}
-            className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition"
+            className="w-full px-6 py-4 flex items-center justify-between hover:bg-surface transition"
           >
             <div className="flex items-center gap-3">
               <span className="text-2xl">{openSection === 'lead' ? '▼' : '▶'}</span>
-              <span className="text-xl font-bold">🔗 יעדי ליד</span>
+              <span className="text-xl font-bold"><LuLink aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />יעדי ליד</span>
             </div>
           </button>
           
@@ -293,8 +290,8 @@ export default function GoalsEditPage() {
 
       {/* Progress Section - 3 Separate Pyramids */}
       <div className="mt-12">
-        <h2 className="text-3xl font-bold mb-2 text-center text-gray-800">📊 התקדמות ביעדים</h2>
-        <p className="text-center text-gray-500 mb-8">
+        <h2 className="text-3xl font-bold mb-2 text-center text-fg"><LuChartColumn aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />התקדמות ביעדים</h2>
+        <p className="text-center text-muted mb-8">
           מעקב אחר ההתקדמות שלך מול היעדים שהגדרת
         </p>
         

@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '@/context/AuthContext'
 import { supabase } from '@/lib/supabaseClient'
 import { useRouter } from 'next/navigation'
+import { LuCircle, LuCircleCheck, LuLightbulb, LuLoaderCircle, LuLock, LuLogOut, LuMail, LuMessageSquare, LuPencil, LuRefreshCw, LuSave, LuScale, LuSmartphone, LuUser } from 'react-icons/lu'
+import { PageSkeleton } from '@/components/ui/Skeleton'
 
 interface ProfileData {
   Email: string
@@ -239,13 +241,13 @@ export default function UserProfilePage() {
 
   if (!currentUser) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-surface">
         <div className="text-center">
-          <div className="text-6xl mb-4">🔒</div>
-          <p className="text-xl text-gray-600">אנא התחבר</p>
+          <div className="text-6xl mb-4"><LuLock aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></div>
+          <p className="text-xl text-fg-3">אנא התחבר</p>
           <button
             onClick={() => router.push('/')}
-            className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            className="mt-4 px-6 py-2 bg-accent text-on-accent rounded-lg hover:bg-accent-hover"
           >
             התחבר
           </button>
@@ -255,11 +257,11 @@ export default function UserProfilePage() {
   }
 
   return (
-    <div dir="rtl" className="min-h-screen bg-gray-50 pb-20">
+    <div dir="rtl" className="min-h-screen bg-surface pb-20">
       {/* Header */}
-      <div className="bg-white shadow-sm border-b">
+      <div className="bg-surface border-b">
         <div className="max-w-2xl mx-auto px-4 py-6">
-          <h1 className="text-3xl font-bold text-blue-600">👤 הפרופיל שלי</h1>
+          <h1 className="text-3xl font-bold text-accent"><LuUser aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />הפרופיל שלי</h1>
         </div>
       </div>
 
@@ -269,23 +271,23 @@ export default function UserProfilePage() {
         {/* Message */}
         {message && (
           <div className={`mb-4 p-4 rounded-lg ${
-            message.type === 'success'
-              ? 'bg-green-50 text-green-800 border border-green-200'
-              : 'bg-red-50 text-red-800 border border-red-200'
-          }`}>
+ message.type === 'success'
+ ? 'bg-success/15 text-success border border-success'
+ : 'bg-danger/15 text-danger border border-danger'
+ }`}>
             {message.text}
           </div>
         )}
 
         {/* Profile Card */}
-        <div className="bg-white rounded-xl shadow-sm border p-6 mb-6">
+        <div className="bg-surface rounded-xl border p-6 mb-6">
           <div className="flex items-center gap-4 mb-6">
-            <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-3xl font-bold">
+            <div className="w-20 h-20 rounded-full flex items-center justify-center text-fg text-3xl font-bold bg-surface border border-line">
               {activeUser?.Name?.charAt(0).toUpperCase() || '?'}
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-gray-800">{activeUser?.Name}</h2>
-              <p className="text-gray-500">{activeUser?.Email}</p>
+              <h2 className="text-2xl font-bold text-fg">{activeUser?.Name}</h2>
+              <p className="text-muted">{activeUser?.Email}</p>
             </div>
           </div>
 
@@ -293,20 +295,20 @@ export default function UserProfilePage() {
           <div className="space-y-4">
             <div className="flex items-center justify-between py-3 border-b">
               <div className="flex items-center gap-3">
-                <span className="text-2xl">📧</span>
+                <span className="text-2xl"><LuMail aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></span>
                 <div>
-                  <p className="text-sm text-gray-500">אימייל</p>
-                  <p className="font-medium text-gray-800">{activeUser?.Email}</p>
+                  <p className="text-sm text-muted">אימייל</p>
+                  <p className="font-medium text-fg">{activeUser?.Email}</p>
                 </div>
               </div>
             </div>
 
             <div className="flex items-center justify-between py-3 border-b">
               <div className="flex items-center gap-3">
-                <span className="text-2xl">👤</span>
+                <span className="text-2xl"><LuUser aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></span>
                 <div>
-                  <p className="text-sm text-gray-500">שם מלא</p>
-                  <p className="font-medium text-gray-800">{activeUser?.Name}</p>
+                  <p className="text-sm text-muted">שם מלא</p>
+                  <p className="font-medium text-fg">{activeUser?.Name}</p>
                 </div>
               </div>
             </div>
@@ -315,8 +317,8 @@ export default function UserProfilePage() {
               <div className="flex items-center gap-3">
                 <span className="text-2xl">🎭</span>
                 <div>
-                  <p className="text-sm text-gray-500">תפקיד</p>
-                  <p className="font-medium text-gray-800">
+                  <p className="text-sm text-muted">תפקיד</p>
+                  <p className="font-medium text-fg">
                     {activeUser?.Role === 'admin' ? '👑 מנהל' :
                      activeUser?.Role === 'coach' ? '🏋️ מאמן' :
                      '🧗 מטפס'}
@@ -328,36 +330,33 @@ export default function UserProfilePage() {
         </div>
 
         {/* Body Weight & Phone Card */}
-        <div className="bg-white rounded-xl shadow-sm border p-6 mb-6">
+        <div className="bg-surface rounded-xl border p-6 mb-6">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              <span className="text-2xl">⚖️</span>
-              <h3 className="text-xl font-bold text-gray-800">נתוני מתאמן</h3>
+              <span className="text-2xl"><LuScale aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></span>
+              <h3 className="text-xl font-bold text-fg">נתוני מתאמן</h3>
             </div>
             {!isEditingProfile && canEdit && (
               <button
                 onClick={() => setIsEditingProfile(true)}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                className="px-4 py-2 bg-accent text-on-accent rounded-lg hover:bg-accent-hover transition-colors text-sm"
               >
-                ✏️ ערוך
+                <LuPencil aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />ערוך
               </button>
             )}
           </div>
 
           {loadingProfile ? (
-            <div className="text-center py-8">
-              <div className="text-4xl mb-2">⏳</div>
-              <p className="text-gray-600">טוען נתונים...</p>
-            </div>
+            <PageSkeleton variant="block" label="טוען נתונים..." />
           ) : !isEditingProfile ? (
             <div className="space-y-4">
               {/* Body Weight */}
               <div className="flex items-center justify-between py-3 border-b">
                 <div className="flex items-center gap-3">
-                  <span className="text-2xl">⚖️</span>
+                  <span className="text-2xl"><LuScale aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></span>
                   <div>
-                    <p className="text-sm text-gray-500">משקל גוף</p>
-                    <p className="font-bold text-2xl text-indigo-600">{bodyWeight} ק"ג</p>
+                    <p className="text-sm text-muted">משקל גוף</p>
+                    <p className="font-bold text-2xl text-accent">{bodyWeight} ק"ג</p>
                   </div>
                 </div>
               </div>
@@ -365,11 +364,11 @@ export default function UserProfilePage() {
               {/* Phone */}
               <div className="flex items-center justify-between py-3 border-b">
                 <div className="flex items-center gap-3">
-                  <span className="text-2xl">📱</span>
+                  <span className="text-2xl"><LuSmartphone aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></span>
                   <div>
-                    <p className="text-sm text-gray-500">טלפון</p>
-                    <p className="font-medium text-gray-800">
-                      {phone || <span className="text-gray-400">לא הוזן</span>}
+                    <p className="text-sm text-muted">טלפון</p>
+                    <p className="font-medium text-fg">
+                      {phone || <span className="text-faint">לא הוזן</span>}
                     </p>
                   </div>
                 </div>
@@ -378,10 +377,10 @@ export default function UserProfilePage() {
               {/* WhatsApp Toggle */}
               <div className="flex items-center justify-between py-3 border-b">
                 <div className="flex items-center gap-3">
-                  <span className="text-2xl">💬</span>
+                  <span className="text-2xl"><LuMessageSquare aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></span>
                   <div>
-                    <p className="text-sm text-gray-500">תזכורות WhatsApp</p>
-                    <p className={`font-medium text-sm ${whatsappActive ? 'text-green-600' : 'text-gray-400'}`}>
+                    <p className="text-sm text-muted">תזכורות WhatsApp</p>
+                    <p className={`font-medium text-sm ${whatsappActive ? 'text-success' : 'text-faint'}`}>
                       {whatsappActive ? 'פעיל' : 'כבוי'}
                     </p>
                   </div>
@@ -390,22 +389,22 @@ export default function UserProfilePage() {
                   onClick={handleToggleWhatsApp}
                   disabled={savingWhatsapp}
                   className={`relative inline-flex h-7 w-14 items-center rounded-full transition-colors focus:outline-none disabled:opacity-50 ${
-                    whatsappActive ? 'bg-green-500' : 'bg-gray-300'
-                  }`}
+ whatsappActive ? 'bg-success' : 'bg-raised'
+ }`}
                   aria-label="Toggle WhatsApp reminders"
                 >
                   <span
-                    className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
-                      whatsappActive ? 'translate-x-8' : 'translate-x-1'
-                    }`}
+                    className={`inline-block h-5 w-5 transform rounded-full bg-surface transition-transform ${
+ whatsappActive ? 'translate-x-8' : 'translate-x-1'
+ }`}
                   />
                 </button>
               </div>
 
               {/* Info Box */}
-              <div className="bg-blue-50 rounded-lg p-4 border border-blue-200 mt-4">
-                <p className="text-sm text-blue-800">
-                  <strong>💡 למה צריך משקל גוף?</strong><br/>
+              <div className="bg-accent/15 rounded-lg p-4 border border-accent mt-4">
+                <p className="text-sm text-accent">
+                  <strong><LuLightbulb aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />למה צריך משקל גוף?</strong><br/>
                   משקל הגוף משמש לחישוב מדויק של סטטיסטיקות תרגילים שכוללים משקל גוף
                   (כמו מתחים, שכיבות סמיכה וכו').
                 </p>
@@ -415,7 +414,7 @@ export default function UserProfilePage() {
             <div className="space-y-4">
               {/* Body Weight Input */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-fg-2 mb-2">
                   ⚖️ משקל גוף (ק"ג) *
                 </label>
                 <input
@@ -425,23 +424,23 @@ export default function UserProfilePage() {
                   min="30"
                   max="200"
                   step="0.5"
-                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 text-lg"
+                  className="w-full px-4 py-3 border-2 border-line rounded-lg focus:outline-none focus:border-accent text-lg"
                   placeholder="70"
                   disabled={loading}
                 />
-                <p className="text-xs text-gray-500 mt-1">בין 30 ל-200 ק"ג</p>
+                <p className="text-xs text-muted mt-1">בין 30 ל-200 ק"ג</p>
               </div>
 
               {/* Phone Input */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-fg-2 mb-2">
                   📱 טלפון (אופציונלי)
                 </label>
                 <input
                   type="tel"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 text-lg"
+                  className="w-full px-4 py-3 border-2 border-line rounded-lg focus:outline-none focus:border-accent text-lg"
                   placeholder="050-1234567"
                   dir="ltr"
                   disabled={loading}
@@ -451,10 +450,10 @@ export default function UserProfilePage() {
               {/* WhatsApp Toggle in edit mode */}
               <div className="flex items-center justify-between py-3 border rounded-lg px-4">
                 <div className="flex items-center gap-3">
-                  <span className="text-2xl">💬</span>
+                  <span className="text-2xl"><LuMessageSquare aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></span>
                   <div>
-                    <p className="font-medium text-gray-700">תזכורות WhatsApp</p>
-                    <p className={`text-sm ${whatsappActive ? 'text-green-600' : 'text-gray-400'}`}>
+                    <p className="font-medium text-fg-2">תזכורות WhatsApp</p>
+                    <p className={`text-sm ${whatsappActive ? 'text-success' : 'text-faint'}`}>
                       {whatsappActive ? 'פעיל' : 'כבוי'}
                     </p>
                   </div>
@@ -463,13 +462,13 @@ export default function UserProfilePage() {
                   onClick={() => setWhatsappActive(v => !v)}
                   type="button"
                   className={`relative inline-flex h-7 w-14 items-center rounded-full transition-colors focus:outline-none ${
-                    whatsappActive ? 'bg-green-500' : 'bg-gray-300'
-                  }`}
+ whatsappActive ? 'bg-success' : 'bg-raised'
+ }`}
                 >
                   <span
-                    className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
-                      whatsappActive ? 'translate-x-8' : 'translate-x-1'
-                    }`}
+                    className={`inline-block h-5 w-5 transform rounded-full bg-surface transition-transform ${
+ whatsappActive ? 'translate-x-8' : 'translate-x-1'
+ }`}
                   />
                 </button>
               </div>
@@ -479,9 +478,9 @@ export default function UserProfilePage() {
                 <button
                   onClick={handleSaveProfile}
                   disabled={loading}
-                  className="flex-1 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+                  className="flex-1 px-4 py-3 bg-success text-on-accent rounded-lg hover:bg-success/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
                 >
-                  {loading ? '💾 שומר...' : '💾 שמור נתונים'}
+                  {loading ? <><LuSave aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />שומר...</> : <><LuSave aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />שמור נתונים</>}
                 </button>
                 <button
                   onClick={() => {
@@ -490,7 +489,7 @@ export default function UserProfilePage() {
                     setMessage(null)
                   }}
                   disabled={loading}
-                  className="px-6 py-3 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 transition-colors font-medium"
+                  className="px-6 py-3 bg-raised text-fg rounded-lg hover:bg-raised/90 transition-colors font-medium"
                 >
                   ביטול
                 </button>
@@ -500,37 +499,37 @@ export default function UserProfilePage() {
         </div>
 
         {/* Security Card - only shown when viewing own profile */}
-        {!isImpersonating && <div className="bg-white rounded-xl shadow-sm border p-6 mb-6">
+        {!isImpersonating && <div className="bg-surface rounded-xl border p-6 mb-6">
           <div className="flex items-center gap-2 mb-4">
-            <span className="text-2xl">🔐</span>
-            <h3 className="text-xl font-bold text-gray-800">שינוי סיסמה</h3>
+            <span className="text-2xl"><LuLock aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></span>
+            <h3 className="text-xl font-bold text-fg">שינוי סיסמה</h3>
           </div>
 
           {!showPasswordForm ? (
             <div className="space-y-4">
               <div className="flex items-center justify-between py-3 border-b">
                 <div>
-                  <p className="font-medium text-gray-800">סיסמה</p>
-                  <p className="text-sm text-gray-500">••••••••</p>
+                  <p className="font-medium text-fg">סיסמה</p>
+                  <p className="text-sm text-muted">••••••••</p>
                 </div>
                 <button
                   onClick={() => setShowPasswordForm(true)}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  className="px-4 py-2 bg-accent text-on-accent rounded-lg hover:bg-accent-hover transition-colors"
                 >
-                  🔄 שנה סיסמה
+                  <LuRefreshCw aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />שנה סיסמה
                 </button>
               </div>
 
-              <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-                <p className="text-sm text-blue-800">
-                  <strong>💡 טיפ:</strong> לחיצה על "שנה סיסמה" תאפשר לך להזין סיסמה חדשה ישירות
+              <div className="bg-accent/15 rounded-lg p-4 border border-accent">
+                <p className="text-sm text-accent">
+                  <strong><LuLightbulb aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />טיפ:</strong> לחיצה על "שנה סיסמה" תאפשר לך להזין סיסמה חדשה ישירות
                 </p>
               </div>
             </div>
           ) : (
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-fg-2 mb-2">
                   סיסמה חדשה
                 </label>
                 <input
@@ -538,13 +537,13 @@ export default function UserProfilePage() {
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="לפחות 6 תווים"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-4 py-2 border border-line rounded-lg focus:ring-2 focus:ring-accent focus:border-accent"
                   disabled={loading}
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-fg-2 mb-2">
                   אישור סיסמה
                 </label>
                 <input
@@ -552,22 +551,22 @@ export default function UserProfilePage() {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="הזן שוב את הסיסמה"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-4 py-2 border border-line rounded-lg focus:ring-2 focus:ring-accent focus:border-accent"
                   disabled={loading}
                 />
               </div>
 
               {newPassword && (
-                <div className="bg-gray-50 rounded-lg p-3">
-                  <p className="text-xs font-medium text-gray-700 mb-2">חוזק סיסמה:</p>
+                <div className="bg-surface rounded-lg p-3">
+                  <p className="text-xs font-medium text-fg-2 mb-2">חוזק סיסמה:</p>
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                      <span>{newPassword.length >= 6 ? '✅' : '⭕'}</span>
-                      <span className="text-xs text-gray-600">לפחות 6 תווים</span>
+                      <span>{newPassword.length >= 6 ? <LuCircleCheck aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /> : <LuCircle aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" />}</span>
+                      <span className="text-xs text-fg-3">לפחות 6 תווים</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span>{newPassword === confirmPassword && confirmPassword ? '✅' : '⭕'}</span>
-                      <span className="text-xs text-gray-600">הסיסמאות תואמות</span>
+                      <span>{newPassword === confirmPassword && confirmPassword ? <LuCircleCheck aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /> : <LuCircle aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" />}</span>
+                      <span className="text-xs text-fg-3">הסיסמאות תואמות</span>
                     </div>
                   </div>
                 </div>
@@ -577,9 +576,9 @@ export default function UserProfilePage() {
                 <button
                   onClick={handleDirectPasswordReset}
                   disabled={loading || !newPassword || !confirmPassword}
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="flex-1 px-4 py-2 bg-accent text-on-accent rounded-lg hover:bg-accent-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
-                  {loading ? '⏳ שומר...' : '💾 שמור סיסמה'}
+                  {loading ? <><LuLoaderCircle aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] animate-spin me-1.5" />שומר...</> : <><LuSave aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />שמור סיסמה</>}
                 </button>
                 <button
                   onClick={() => {
@@ -589,7 +588,7 @@ export default function UserProfilePage() {
                     setMessage(null)
                   }}
                   disabled={loading}
-                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                  className="px-4 py-2 bg-raised text-fg-2 rounded-lg hover:bg-raised/90 transition-colors"
                 >
                   ביטול
                 </button>
@@ -605,9 +604,9 @@ export default function UserProfilePage() {
               supabase.auth.signOut()
               router.push('/')
             }}
-            className="w-full px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
+            className="w-full px-6 py-3 bg-danger text-on-accent rounded-lg hover:bg-danger/90 transition-colors font-medium"
           >
-            🚪 התנתק
+            <LuLogOut aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />התנתק
           </button>
         </div>
       </div>
