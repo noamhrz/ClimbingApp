@@ -184,7 +184,8 @@ export default function CalendarPage() {
       const w = workoutDetailsMap[workoutId]
       if (!w) return null
       if (w.containClimbing || w.containExercise) {
-        return (w.CalculatedExercisesTime || 0) + (w.EstimatedClimbingTime || 0)
+        const sum = (w.CalculatedExercisesTime || 0) + (w.EstimatedClimbingTime || 0)
+        if (sum > 0) return sum
       }
       return w.EstimatedTotalTime ?? null
     }

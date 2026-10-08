@@ -17,7 +17,7 @@ import {
   arrayMove,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { LuBatteryLow, LuCalendar, LuCircleCheck, LuCircleX, LuClock, LuHourglass, LuHouse, LuLightbulb, LuList, LuMessageSquare, LuSunMedium, LuTimer } from 'react-icons/lu'
+import { LuBatteryLow, LuCalendar, LuCircleCheck, LuCircleX, LuHourglass, LuHouse, LuLightbulb, LuList, LuMessageSquare, LuSunMedium, LuTimer } from 'react-icons/lu'
 
 interface CalendarEvent {
   id: number
@@ -55,6 +55,22 @@ function isPastEvent(e: { end: Date; start: Date }): boolean {
   return new Date(e.end) < new Date() && !isTodayDate(e.start)
 }
 
+// Estimated workout duration (minutes) from the workout definition.
+// Calendar start/end times are placeholders (they only encode the order in the
+// day), so they are never shown; an estimate outside 1–600 min is ignored.
+function estMinutes(e: { EstimatedTotalTime?: number | null }): number | null {
+  const v = e.EstimatedTotalTime
+  if (v == null || !Number.isFinite(v)) return null
+  const m = Math.round(v)
+  return m > 0 && m <= 600 ? m : null
+}
+function fmtMinutes(m: number): string {
+  const h = Math.floor(m / 60)
+  const r = m % 60
+  if (h === 0) return `${m} דק'`
+  return r > 0 ? `${h} ש' ${r} דק'` : `${h} ש'`
+}
+
 function getEventColor(event: CalendarEvent): string {
   if (event.completed) return '#5FB37A'
   if (event.Deloading) return '#7FB0C9'
@@ -74,14 +90,12 @@ function EventCardBody({ event, index }: { event: CalendarEvent; index: number }
       </div>
       <div className="space-y-3 pr-4">
         <h3 className="text-xl font-bold text-fg">{event.title}</h3>
-        <div className="flex items-center gap-2 bg-surface rounded-lg px-3 py-2 border w-fit">
-          <LuTimer aria-hidden className="w-5 h-5 shrink-0" />
-          <span className="text-base font-semibold text-fg-2">
-            {event.EstimatedTotalTime != null
-              ? event.EstimatedTotalTime
-              : Math.abs(moment(event.end).diff(moment(event.start), 'minutes'))} דק'
-          </span>
-        </div>
+        {estMinutes(event) != null && (
+          <div className="inline-flex items-center gap-2 text-fg-2 text-sm font-semibold" title="הערכת זמן">
+            <LuTimer aria-hidden className="w-4 h-4 shrink-0 text-muted" />
+            <span>כ-{fmtMinutes(estMinutes(event) as number)}</span>
+          </div>
+        )}
         <div className="flex gap-2 flex-wrap">
           {event.completed && (
             <span className="inline-flex items-center gap-2 px-4 py-2 bg-success/15 text-success rounded-lg text-sm font-bold">
@@ -337,16 +351,9 @@ export default function DayListView({
               <LuList aria-hidden className="w-4 h-4 shrink-0" />
               <span>{sortedEvents.length} אימונים</span>
             </span>
-            {sortedEvents.length > 0 && (() => {
-              const totalMinutes = sortedEvents.reduce((sum, e) =>
-                sum + (e.EstimatedTotalTime != null
-                  ? e.EstimatedTotalTime
-                  : Math.abs(moment(e.end).diff(moment(e.start), 'minutes'))), 0)
-              const hours = Math.floor(totalMinutes / 60)
-              const mins = totalMinutes % 60
-              const label = hours > 0
-                ? (mins > 0 ? `${hours}ש' ${mins}ד'` : `${hours}ש'`)
-                : `${mins} דק'`
+            {sortedEvents.some(e => estMinutes(e) != null) && (() => {
+              const totalMinutes = sortedEvents.reduce((sum, e) => sum + (estMinutes(e) ?? 0), 0)
+              const label = `כ-${fmtMinutes(totalMinutes)}`
               return (
                 <span className="inline-flex items-center gap-2 px-4 py-2 bg-info/10 text-info rounded-full text-sm font-medium">
                   <LuTimer aria-hidden className="w-4 h-4 shrink-0" />
@@ -427,17 +434,12 @@ export default function DayListView({
                   </div>
                   <div className="space-y-3 pr-4">
                     <h3 className="text-xl font-bold text-fg">{event.title}</h3>
-                    <div className="flex items-center gap-3 bg-surface rounded-lg p-3 border">
-                      <LuClock aria-hidden className="w-6 h-6 shrink-0 text-muted" />
-                      <div className="flex items-center gap-2 text-lg font-semibold text-fg-2">
-                        <span>{moment(event.start).format('HH:mm')}</span>
-                        <span className="text-faint">→</span>
-                        <span>{moment(event.end).format('HH:mm')}</span>
+                    {estMinutes(event) != null && (
+                      <div className="inline-flex items-center gap-2 text-fg-2 text-sm font-semibold" title="הערכת זמן">
+                        <LuTimer aria-hidden className="w-4 h-4 shrink-0 text-muted" />
+                        <span>כ-{fmtMinutes(estMinutes(event) as number)}</span>
                       </div>
-                      <span className="text-sm text-muted mr-auto">
-                        ({Math.abs(moment(event.end).diff(moment(event.start), 'minutes'))} דק')
-                      </span>
-                    </div>
+                    )}
                     <div className="flex gap-2 flex-wrap">
                       {event.completed && (
                         <span className="inline-flex items-center gap-2 px-4 py-2 bg-success/15 text-success rounded-lg text-sm font-bold">
