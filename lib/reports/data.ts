@@ -13,12 +13,12 @@ export interface Trainee {
   name: string
 }
 
-/** All active users with role 'user' (inactive excluded). */
+/** All active trainees: role 'user', plus admins (the head coach trains too). Inactive excluded. */
 export async function loadTrainees(db: SupabaseClient): Promise<Trainee[]> {
   const { data, error } = await db
     .from('Users')
     .select('Email, Name, Role, Status, IsActive')
-    .eq('Role', 'user')
+    .in('Role', ['user', 'admin'])
   if (error) throw error
   return (data ?? [])
     .filter(u => u.IsActive !== false && String(u.Status ?? '').toLowerCase() !== 'inactive')
