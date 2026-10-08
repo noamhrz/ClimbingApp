@@ -86,7 +86,7 @@ function lastReports(t: TraineeData, asOf: string, n: number): WellnessRow[] {
 
 // ── individual conditions (as of a given day) ───────────────────────────────
 
-function wellnessFlags(t: TraineeData, asOf: string): WellnessMetric[] {
+export function wellnessFlags(t: TraineeData, asOf: string): WellnessMetric[] {
   const reports = lastReports(t, asOf, THRESHOLDS.wellnessWindow)
   if (reports.length < THRESHOLDS.wellnessBadCount) return []
   const out: WellnessMetric[] = []
@@ -110,7 +110,7 @@ function daysMap(t: TraineeData): Map<string, CalendarRow[]> {
 }
 
 /** Days in the last 7 (excluding today) with a scheduled workout that was not done. */
-function missedDays(t: TraineeData, asOf: string): { count: number; strip: DayCell[] } {
+export function missedDays(t: TraineeData, asOf: string): { count: number; strip: DayCell[] } {
   const byDay = daysMap(t)
   const strip: DayCell[] = []
   let count = 0
@@ -129,14 +129,14 @@ function missedDays(t: TraineeData, asOf: string): { count: number; strip: DayCe
 }
 
 /** Last scheduled date if the schedule runs out within the horizon, else null. */
-function planEnding(t: TraineeData, asOf: string): string | null {
+export function planEnding(t: TraineeData, asOf: string): string | null {
   const future = t.calendar.filter(c => c.date >= asOf).map(c => c.date).sort()
   if (!future.length) return null
   const last = future[future.length - 1]
   return daysBetween(asOf, last) < THRESHOLDS.planHorizonDays ? last : null
 }
 
-function lastActivity(t: TraineeData, asOf: string): string | null {
+export function lastActivity(t: TraineeData, asOf: string): string | null {
   const dates = [
     ...t.wellness.filter(r => r.date <= asOf).map(r => r.date),
     ...t.calendar.filter(c => c.completed && c.date <= asOf).map(c => c.date),
@@ -148,7 +148,7 @@ function avg(xs: number[]): number {
   return xs.reduce((s, x) => s + x, 0) / xs.length
 }
 
-function overload(t: TraineeData, asOf: string) {
+export function overload(t: TraineeData, asOf: string) {
   const inWin = (from: number, to: number) =>
     t.wellness.filter(r => r.date > addDays(asOf, -from) && r.date <= addDays(asOf, -to))
   const recent = inWin(7, 0)

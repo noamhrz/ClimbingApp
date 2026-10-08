@@ -31,10 +31,10 @@ export async function loadTrainees(db: SupabaseClient): Promise<Trainee[]> {
  * Window: 21 days back (rules look back ≤ 14 days + yesterday) and ~3 weeks ahead.
  * Older calendar history is only checked for existence (for the "new trainee" rule).
  */
-export async function loadDailyData(db: SupabaseClient, trainees: Trainee[], today: string): Promise<TraineeData[]> {
+export async function loadDailyData(db: SupabaseClient, trainees: Trainee[], today: string, backDays = 21): Promise<TraineeData[]> {
   const emails = trainees.map(t => t.email)
   if (!emails.length) return []
-  const from = addDays(today, -21)
+  const from = addDays(today, -backDays)
   const to = addDays(today, 22)
 
   const historyBefore = addDays(today, -8)

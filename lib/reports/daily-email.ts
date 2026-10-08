@@ -113,7 +113,7 @@ export function renderDailyEmail(today: string, list: TraineeAlerts[]) {
 
   const html = layout({
     title: subject, kicker: 'התראה יומית', dateLine: longHeDate(today), body,
-    footerLink: { href: `${APP_URL}/coach/urgency`, label: 'מסך הדחיפות' },
+    footerLink: { href: `${APP_URL}/reports/monthly`, label: 'הדו״ח החודשי באפליקציה' },
   })
 
   const text = count
