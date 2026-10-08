@@ -332,11 +332,11 @@ export default function UrgencyDashboard() {
           </div>
           <div>
             <div className="font-medium mb-1"><LuZap aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />חיוניות</div>
-            <div className="text-fg-3">{'<'} 5 = 🔴 | 5-7 = 🟡 | 7+ = 🟢</div>
+            <div className="text-fg-3">≤ 1 = 🔴 | 1–2 = 🟡 | 2+ = 🟢 <span className="text-faint">(סקאלה 0–3)</span></div>
           </div>
           <div>
             <div className="font-medium mb-1">🤕 כאב</div>
-            <div className="text-fg-3">{'>'} 4 = 🔴🔴 | {'>'} 3 = 🔴 | {'>'} 2 = 🟡</div>
+            <div className="text-fg-3">≥ 2.5 = 🔴🔴 | ≥ 2 = 🔴 | ≥ 1.5 = 🟡 <span className="text-faint">(סקאלה 0–3)</span></div>
           </div>
           <div>
             <div className="font-medium mb-1">🏃 פעילות</div>
