@@ -7,15 +7,16 @@ import { useEffect, useState, useMemo, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { useAuth, useActiveUserEmail } from '@/context/AuthContext'
-import { ClimbingSummary } from '@/components/climbing/ClimbingSummary'
-import { RouteTypeBlock } from '@/components/climbing/RouteTypeBlock'
+import WorkoutFlow, { FlowStep } from '@/components/workout-flow/WorkoutFlow'
+import ExerciseStep, { exerciseSummary } from '@/components/workout-flow/ExerciseStep'
+import ClimbStep from '@/components/workout-flow/ClimbStep'
+import { SummaryStep } from '@/components/workout-flow/IntroSummary'
+import { climbSummary } from '@/components/workout-flow/climbSummary'
 import { ClimbingRoute, BoulderGrade, LeadGrade, ClimbingLocation, ClimbingLogEntry, BoardType } from '@/types/climbing'
 import { generateTempId, getGradeDisplay } from '@/lib/climbing-helpers'
-import ExerciseAccordion from "@/components/exercises/ExerciseAccordion"
-import dayjs from 'dayjs'
 import moment from 'moment-timezone'
 import { useFormDraft } from '@/lib/useFormDraft'
-import { LuAlarmClock, LuBicepsFlexed, LuCircleCheck, LuLightbulb, LuLoaderCircle, LuMapPin, LuMountain, LuNotebookPen, LuPackage, LuPlus, LuSave, LuVideo } from 'react-icons/lu'
+import { LuCircleCheck, LuLightbulb, LuLoaderCircle, LuMapPin } from 'react-icons/lu'
 
 export default function CalendarEditClient() {
   const { activeUser, loading: authLoading } = useAuth()
@@ -36,7 +37,6 @@ export default function CalendarEditClient() {
   const [leadGrades, setLeadGrades] = useState<LeadGrade[]>([])
   const [boulderGrades, setBoulderGrades] = useState<BoulderGrade[]>([])
   const [locations, setLocations] = useState<ClimbingLocation[]>([])
-  const [locationSearch, setLocationSearch] = useState('')
   const [boardTypes, setBoardTypes] = useState<BoardType[]>([])
   const [climberNotes, setClimberNotes] = useState('')
   const [loading, setLoading] = useState(true)
@@ -50,10 +50,13 @@ export default function CalendarEditClient() {
   const [savingLocation, setSavingLocation] = useState(false)
 
   // Track open exercises
-  const [openExercises, setOpenExercises] = useState<Set<number>>(new Set())
 
   // ✅ NEW: Saving state
   const [isSaving, setIsSaving] = useState(false)
+
+  // workout flow: opens on the summary (viewing a saved workout); items open for editing and come back
+  const [step, setStep] = useState(Number.MAX_SAFE_INTEGER)
+  const [backToSummary, setBackToSummary] = useState(false)
 
   // Toast notification state
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
@@ -160,16 +163,6 @@ export default function CalendarEditClient() {
     !loading,
     onDraftRestore
   )
-
-  // Filter locations based on search
-  const filteredLocations = useMemo(() => {
-    if (!locationSearch.trim()) return locations
-    
-    const searchLower = locationSearch.toLowerCase()
-    return locations.filter(loc => 
-      loc.LocationName.toLowerCase().includes(searchLower)
-    )
-  }, [locations, locationSearch])
 
   // ✅ Block navigation during save
   useEffect(() => {
@@ -398,24 +391,6 @@ export default function CalendarEditClient() {
     load()
   }, [calendarId])
 
-  // Group exercises by Block
-  const exercisesByBlock = useMemo(() => {
-    const blocks: { [key: number]: any[] } = {}
-    exerciseForms.forEach(ex => {
-      const blockNum = ex.Block || 1
-      if (!blocks[blockNum]) {
-        blocks[blockNum] = []
-      }
-      blocks[blockNum].push(ex)
-    })
-    return blocks
-  }, [exerciseForms])
-
-  const blockNumbers = useMemo(() => 
-    Object.keys(exercisesByBlock).map(Number).sort((a, b) => a - b),
-    [exercisesByBlock]
-  )
-
   const handleExerciseChange = (i: number, data: any) => {
     setExerciseForms((prev) => {
       const next = [...prev]
@@ -423,73 +398,6 @@ export default function CalendarEditClient() {
       return next
     })
   }
-
-  const handleNextExercise = (currentExerciseId: number) => {
-    const currentIdx = exerciseForms.findIndex(e => e.ExerciseID === currentExerciseId)
-    const nextEx = exerciseForms[currentIdx + 1]
-
-    setOpenExercises(prev => {
-      const next = new Set(prev)
-      next.delete(currentExerciseId)
-      if (nextEx) next.add(nextEx.ExerciseID)
-      return next
-    })
-
-    setTimeout(() => {
-      if (nextEx) {
-        const el = document.querySelector(`[data-exercise-id="${nextEx.ExerciseID}"]`)
-        if (el) {
-          const headerHeight = document.querySelector('header')?.offsetHeight ?? 0
-          const y = el.getBoundingClientRect().top + window.scrollY - headerHeight - 12
-          window.scrollTo({ top: y, behavior: 'smooth' })
-        }
-      } else {
-        document.getElementById('save-workout-btn')
-          ?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-      }
-    }, 100)
-  }
-
-  const toggleExercise = (exerciseId: number) => {
-    setOpenExercises(prev => {
-      const next = new Set(prev)
-      if (next.has(exerciseId)) {
-        next.delete(exerciseId)
-      } else {
-        next.add(exerciseId)
-      }
-      return next
-    })
-  }
-
-  const toggleBlock = (blockNum: number) => {
-    const exerciseIds = exercisesByBlock[blockNum].map(ex => ex.ExerciseID)
-    const allOpen = exerciseIds.every(id => openExercises.has(id))
-    
-    setOpenExercises(prev => {
-      const next = new Set(prev)
-      
-      if (allOpen) {
-        exerciseIds.forEach(id => next.delete(id))
-      } else {
-        exerciseIds.forEach(id => next.add(id))
-      }
-      
-      return next
-    })
-  }
-
-  const isBlockAllOpen = (blockNum: number) => {
-    const exerciseIds = exercisesByBlock[blockNum].map(ex => ex.ExerciseID)
-    return exerciseIds.length > 0 && exerciseIds.every(id => openExercises.has(id))
-  }
-
-  // Group routes by type
-  const routesByType = useMemo(() => ({
-    Boulder: routes.filter(r => r.climbType === 'Boulder'),
-    Board: routes.filter(r => r.climbType === 'Board'),
-    Lead: routes.filter(r => r.climbType === 'Lead')
-  }), [routes])
 
   const containsClimbing = workout?.containClimbing === true || workout?.containClimbing === 'true'
 
@@ -774,268 +682,102 @@ export default function CalendarEditClient() {
   }
 
   const containExercise = workout?.containExercise === true || workout?.containExercise === 'true'
+  const flowExercises = containExercise ? exerciseForms : []
+  const climbIndex = flowExercises.length
+  const missingLocation = !!(containsClimbing && routes.length > 0 && !selectedLocation)
+  const steps: FlowStep[] = flowExercises.map((ex, k) => ({
+    key: `ex-${ex.ExerciseID}-${k}`, label: ex.Name, state: exerciseSummary(ex) ? 'done' : 'todo',
+    content: (
+      <ExerciseStep
+        exercise={ex}
+        position={{ n: k + 1, of: flowExercises.length }}
+        onChange={data => handleExerciseChange(k, data)}
+      />
+    ),
+  }))
+  if (containsClimbing) {
+    steps.push({
+      key: 'climb', label: 'טיפוס', state: routes.length ? 'done' : 'todo',
+      content: (
+        <ClimbStep
+          routes={routes}
+          onRoutesChange={setRoutes}
+          boulderGrades={boulderGrades}
+          leadGrades={leadGrades}
+          boardTypes={boardTypes}
+          selectedBoardType={selectedBoardType}
+          onBoardTypeChange={setSelectedBoardType}
+          locations={locations}
+          selectedLocation={selectedLocation}
+          onLocationChange={setSelectedLocation}
+          onAddLocation={() => setShowAddLocationModal(true)}
+          defaultGrades={{}}
+          defaultType={routes[0]?.climbType}
+        />
+      ),
+    })
+  }
+  const lastStep = steps.length // summary
+  steps.push({
+    key: 'summary', label: 'סיכום', state: 'neutral',
+    content: (
+      <SummaryStep
+        rows={flowExercises.map((ex, k) => ({
+          key: `${ex.ExerciseID}-${k}`, title: ex.Name, text: exerciseSummary(ex),
+          onOpen: () => { setBackToSummary(true); setStep(k) },
+        }))}
+        climbing={containsClimbing ? {
+          ...climbSummary(routes, boulderGrades, leadGrades),
+          onOpen: () => { setBackToSummary(true); setStep(climbIndex) },
+        } : null}
+        climberNotes={climberNotes}
+        onClimberNotes={setClimberNotes}
+        warning={null}
+        location={missingLocation ? { locations, onChange: setSelectedLocation, onAdd: () => setShowAddLocationModal(true) } : null}
+      />
+    ),
+  })
+  const stepIndex = Math.min(step, lastStep)
+  const cur = steps[stepIndex]
+  const onSummary = stepIndex === lastStep
+  const returning = backToSummary && !onSummary
+  const when = calendarRow?.StartTime ? moment.utc(calendarRow.StartTime).local().format('DD/MM/YYYY') : ''
+  const stepLabel = onSummary ? `אימון שבוצע${when ? ` · ${when}` : ''}`
+    : cur.key === 'climb' ? 'עריכת טיפוס'
+    : `עריכת תרגיל ${stepIndex + 1} מתוך ${flowExercises.length}`
 
   return (
     <>
-      <div className="mx-auto max-w-6xl px-4 py-6" dir="rtl">
-        <div className="bg-surface rounded-lg p-8">
-          {/* Header */}
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-fg mb-2">
-              {workout.Name}
-            </h1>
-            {calendarRow?.StartTime && (
-              <p className="text-fg-3">
-                📅 {dayjs(calendarRow.StartTime).format('DD/MM/YYYY HH:mm')}
-              </p>
-            )}
-          </div>
-
-          {/* Workout Info Section */}
-          <section className="mb-8 space-y-4">
-            {workout.VideoURL && (
-              <div className="bg-accent/15 border border-accent rounded-lg p-4">
-                <h3 className="font-semibold text-accent mb-2 flex items-center gap-2">
-                  <LuVideo aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />וידאו הדרכה
-                </h3>
-                <a 
-                  href={workout.VideoURL} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-accent hover:text-accent/90 underline"
-                >
-                  צפה בווידאו
-                </a>
-              </div>
-            )}
-
-            {workout.Description && (
-              <div className="bg-surface border border-line rounded-lg p-4">
-                <h3 className="font-semibold text-fg mb-2 flex items-center gap-2">
-                  <LuNotebookPen aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />תיאור האימון
-                </h3>
-                <p className="text-fg-2 whitespace-pre-wrap">{workout.Description}</p>
-              </div>
-            )}
-
-            {workout.WorkoutNotes && (
-              <div className="bg-warning/15 border border-warning rounded-lg p-4">
-                <h3 className="font-semibold text-warning mb-2 flex items-center gap-2">
-                  👨‍🏫 הערות מאמן
-                </h3>
-                <p className="text-warning whitespace-pre-wrap">{workout.WorkoutNotes}</p>
-              </div>
-            )}
-
-            {workout.WhenToPractice && (
-              <div className="bg-success/15 border border-success rounded-lg p-4">
-                <h3 className="font-semibold text-success mb-2 flex items-center gap-2">
-                  <LuAlarmClock aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />מתי להתאמן
-                </h3>
-                <p className="text-success">{workout.WhenToPractice}</p>
-              </div>
-            )}
-          </section>
-
-          {/* Exercises by Blocks */}
-          {containExercise && exerciseForms.length > 0 && (
-            <section className="mb-10">
-              <h2 className="font-semibold text-xl mb-6"><LuBicepsFlexed aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />תרגילים</h2>
-              
-              {blockNumbers.map(blockNum => {
-                const blockOpen = isBlockAllOpen(blockNum)
-                const exerciseCount = exercisesByBlock[blockNum].length
-                
-                return (
-                  <div key={blockNum} className="mb-8">
-                    <div 
-                      className="text-fg rounded-t-lg px-4 py-3 font-bold text-lg cursor-pointer hover: hover: transition-all flex justify-between items-center select-none bg-surface border border-line"
-                      onClick={() => toggleBlock(blockNum)}
-                    >
-                      <span><LuPackage aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />בלוק {blockNum}</span>
-                      <div className="flex items-center gap-3 text-sm">
-                        <span className="opacity-90 font-normal">
-                          {exerciseCount} {exerciseCount === 1 ? 'תרגיל' : 'תרגילים'}
-                        </span>
-                        <span className="font-bold">
-                          {blockOpen ? '▼ סגור הכל' : '▶ פתח הכל'}
-                        </span>
-                      </div>
-                    </div>
-                    
-                    <div className="border border-t-0 border-line rounded-b-lg p-4 space-y-4 bg-surface">
-                      {exercisesByBlock[blockNum].map((ex, idx) => {
-                        const globalIndex = exerciseForms.findIndex(e => e.ExerciseID === ex.ExerciseID)
-                        return (
-                          <ExerciseAccordion
-                            key={ex.ExerciseID}
-                            exercise={ex}
-                            onChange={(data) => handleExerciseChange(globalIndex, data)}
-                            index={globalIndex}
-                            isOpen={openExercises.has(ex.ExerciseID)}
-                            onToggle={() => toggleExercise(ex.ExerciseID)}
-                            onNext={() => handleNextExercise(ex.ExerciseID)}
-                            isLast={globalIndex === exerciseForms.length - 1}
-                            onSave={handleSave}
-                          />
-                        )
-                      })}
-                    </div>
-                  </div>
-                )
-              })}
-            </section>
-          )}
-
-          {/* Climbing Routes */}
-          {containsClimbing && (
-            <section className="mb-10">
-              <h2 className="font-semibold text-xl mb-4"><LuMountain aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />רישומי טיפוס</h2>
-
-              <div className="mb-6">
-                <label className="block font-medium mb-2"><LuMapPin aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />מיקום:</label>
-                <div className="space-y-2">
-                  <input
-                    type="text"
-                    placeholder="🔍 חפש מיקום..."
-                    value={locationSearch}
-                    onChange={(e) => setLocationSearch(e.target.value)}
-                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-accent text-sm"
-                  />
-                  
-                  <select
-                    value={selectedLocation || ''}
-                    onChange={(e) => setSelectedLocation(Number(e.target.value) || null)}
-                    className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-accent"
-                  >
-                    <option value="">בחר מיקום</option>
-                    {filteredLocations.map(loc => (
-                      <option key={loc.LocationID} value={loc.LocationID}>
-                        {loc.LocationName}
-                      </option>
-                    ))}
-                  </select>
-                  
-                  {locationSearch && (
-                    <p className="text-sm text-fg-3">
-                      נמצאו {filteredLocations.length} מתוך {locations.length} מיקומים
-                    </p>
-                  )}
-                  
-                  <button
-                    type="button"
-                    onClick={() => setShowAddLocationModal(true)}
-                    className="w-full py-2 px-4 border-2 border-dashed border-line rounded-lg text-fg-3 hover:border-accent hover:text-accent hover:bg-accent/15 transition-all font-medium"
-                  >
-                    <LuPlus aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />הוסף מיקום חדש
-                  </button>
-                </div>
-              </div>
-
-              <ClimbingSummary routes={routes} />
-
-              <RouteTypeBlock
-                type="Boulder"
-                icon="🪨"
-                routes={routesByType.Boulder}
-                onRoutesChange={(newRoutes) => {
-                  setRoutes([
-                    ...routes.filter(r => r.climbType !== 'Boulder'),
-                    ...newRoutes
-                  ])
-                }}
-                boulderGrades={boulderGrades}
-                leadGrades={leadGrades}
-                boardTypes={boardTypes}
-                selectedBoardType={selectedBoardType}
-                onBoardTypeChange={setSelectedBoardType}
-              />
-
-              <RouteTypeBlock
-                type="Board"
-                icon="🏋️"
-                routes={routesByType.Board}
-                onRoutesChange={(newRoutes) => {
-                  setRoutes([
-                    ...routes.filter(r => r.climbType !== 'Board'),
-                    ...newRoutes
-                  ])
-                }}
-                boulderGrades={boulderGrades}
-                leadGrades={leadGrades}
-                boardTypes={boardTypes}
-                selectedBoardType={selectedBoardType}
-                onBoardTypeChange={setSelectedBoardType}
-              />
-
-              <RouteTypeBlock
-                type="Lead"
-                icon="🧗"
-                routes={routesByType.Lead}
-                onRoutesChange={(newRoutes) => {
-                  setRoutes([
-                    ...routes.filter(r => r.climbType !== 'Lead'),
-                    ...newRoutes
-                  ])
-                }}
-                boulderGrades={boulderGrades}
-                leadGrades={leadGrades}
-                boardTypes={boardTypes}
-                selectedBoardType={selectedBoardType}
-                onBoardTypeChange={setSelectedBoardType}
-              />
-            </section>
-          )}
-
-          {/* Climber Notes */}
-          <section className="mb-8">
-            <h2 className="font-semibold text-lg mb-2">הערות מטפס</h2>
-            <textarea
-              className="border border-line rounded w-full p-3 focus:border-accent focus:outline-none"
-              rows={3}
-              placeholder="הערות כלליות על האימון..."
-              value={climberNotes}
-              onChange={(e) => setClimberNotes(e.target.value)}
-              disabled={isSaving}
-            />
-          </section>
-
-          {/* Action Buttons */}
-          <div className="flex justify-end gap-3">
-            <button
-              className="bg-raised hover:bg-raised/90 text-fg px-6 py-2 rounded font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-              onClick={() => { clearDraft(); router.push('/calendar') }}
-              disabled={isSaving}
-            >
-              ביטול
-            </button>
-            <button
-              id="save-workout-btn"
-              className={`bg-accent hover:bg-accent-hover text-on-accent px-6 py-2 rounded font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed ${
- isSaving ? 'animate-pulse' : ''
- }`}
-              onClick={handleSave}
-              disabled={isSaving}
-            >
-              {isSaving ? <><LuLoaderCircle aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] animate-spin me-1.5" />שומר...</> : <><LuSave aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />שמירה</>}
-              {routes.length > 0 && !isSaving && ` (${routes.length} מסלולים)`}
-            </button>
-          </div>
-
-          {/* ✅ Saving indicator */}
-          {isSaving && (
-            <div className="mt-4 p-4 bg-accent/15 border border-accent rounded-lg text-center">
-              <div className="flex items-center justify-center gap-2 text-accent">
-                <div className="animate-spin h-5 w-5 border-2 border-accent border-t-transparent rounded-full"></div>
-                <span className="font-medium">שומר נתונים... אנא המתן</span>
-              </div>
-            </div>
-          )}
-        </div>
-
+      <WorkoutFlow
+        title={workout.Name}
+        steps={steps}
+        index={stepIndex}
+        onIndexChange={i => { if (i === lastStep) setBackToSummary(false); setStep(i) }}
+        stepLabel={stepLabel}
+        primaryLabel={onSummary ? (isSaving ? 'שומר…' : 'שמירת שינויים') : returning ? 'חזרה לסיכום ←' : stepIndex === lastStep - 1 ? 'לסיכום ←' : 'הבא ←'}
+        primaryTone={onSummary ? 'success' : 'accent'}
+        primaryDisabled={onSummary && isSaving}
+        onPrimary={() => {
+          if (onSummary && missingLocation) {
+            const el = document.getElementById('summary-location') as HTMLSelectElement | null
+            el?.focus()
+            return
+          }
+          if (onSummary) return handleSave()
+          if (returning) { setBackToSummary(false); return setStep(lastStep) }
+          setStep(stepIndex + 1)
+        }}
+        onClose={() => { clearDraft(); router.push('/calendar') }}
+        sections={flowExercises.length > 0 && containsClimbing ? [
+          { key: 'ex', label: 'תרגילים', active: stepIndex < climbIndex, onSelect: () => setStep(0) },
+          { key: 'climb', label: routes.length ? `טיפוס · ${routes.length}` : 'טיפוס', active: cur.key === 'climb', onSelect: () => setStep(climbIndex) },
+          { key: 'sum', label: 'סיכום', active: onSummary, onSelect: () => { setBackToSummary(false); setStep(lastStep) } },
+        ] : undefined}
+      />
+      <div>
         {/* Toast Notification */}
         {toast && (
-          <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 px-6 py-4 rounded-lg shadow-xl text-on-accent font-medium z-50 animate-in ${
+          <div className={`fixed bottom-[calc(96px+env(safe-area-inset-bottom))] left-1/2 -translate-x-1/2 px-6 py-4 rounded-lg shadow-xl text-on-accent font-medium z-[9999] animate-in ${
  toast.type === 'success' ? 'bg-success' : 'bg-danger'
  }`}>
             {toast.message}
@@ -1045,7 +787,7 @@ export default function CalendarEditClient() {
 
       {/* Add New Location Modal */}
       {showAddLocationModal && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[60] p-4">
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[95] p-4">
           <div className="bg-raised border border-line-strong rounded-xl max-w-md w-full p-6" dir="rtl">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-xl font-bold text-fg">
