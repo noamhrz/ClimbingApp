@@ -7,11 +7,13 @@ import { supabase } from '@/lib/supabaseClient'
 import { useAuth } from '@/context/AuthContext'
 import { WorkoutFormData, WorkoutWithExercises } from '@/types/workouts'
 import { fetchWorkoutWithExercises, updateWorkout } from '@/lib/workout-api'
+import AssignToSheet from '@/components/coach/AssignToSheet'
 import WorkoutForm from '@/components/workouts/WorkoutForm'
 import WorkoutExercises, { WorkoutExercisesHandle } from '@/components/workouts/WorkoutExercises'
-import { LuCircleX, LuPencil, LuSave } from 'react-icons/lu'
+import { LuCircleX, LuPencil, LuSave, LuUserPlus } from 'react-icons/lu'
 
 export default function EditWorkoutPage() {
+  const [showAssign, setShowAssign] = useState(false)
   const params = useParams()
   const router = useRouter()
   const { loading: authLoading, currentUser } = useAuth()
@@ -225,6 +227,12 @@ export default function EditWorkoutPage() {
       {/* Action Buttons */}
       <div className="flex gap-3 justify-end sticky bottom-6 bg-surface p-4 border-t border-line rounded-lg">
         <button
+          onClick={() => setShowAssign(true)}
+          className="me-auto px-5 py-3 border border-accent text-accent rounded-lg hover:bg-accent/10 font-bold inline-flex items-center gap-1.5"
+        >
+          <LuUserPlus aria-hidden className="w-[1.1em] h-[1.1em]" />הקצה למתאמנים
+        </button>
+        <button
           onClick={handleCancel}
           className="px-6 py-3 border border-line rounded-lg hover:bg-surface font-medium"
           disabled={saving}
@@ -239,6 +247,7 @@ export default function EditWorkoutPage() {
           {saving ? <><LuSave aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />שומר...</> : <><LuSave aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />שמור וסגור</>}
         </button>
       </div>
+      <AssignToSheet isOpen={showAssign} onClose={() => setShowAssign(false)} workoutId={workoutId} workoutName={formData.Name || workout.Name} />
     </div>
   )
 }
