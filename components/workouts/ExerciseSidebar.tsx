@@ -187,9 +187,11 @@ function NewExerciseForm({ initialName, categories, onCreated, onCancel }: {
 
 interface Props {
   onAddExercise: (exercise: Exercise) => void
+  /** Full-width, fills its parent (used inside the mobile bottom sheet) */
+  sheet?: boolean
 }
 
-export default function ExerciseSidebar({ onAddExercise }: Props) {
+export default function ExerciseSidebar({ onAddExercise, sheet = false }: Props) {
   const [exercises, setExercises] = useState<Exercise[]>([])
   const [filteredExercises, setFilteredExercises] = useState<Exercise[]>([])
   const [categories, setCategories] = useState<string[]>([])
@@ -250,18 +252,18 @@ export default function ExerciseSidebar({ onAddExercise }: Props) {
 
   return (
     <div
-      className="w-80 bg-surface border border-line rounded-lg flex flex-col"
-      style={{ maxHeight: 'calc(100vh - var(--app-header-height, 0px) - 8rem)' }}
+      className={sheet ? 'w-full flex-1 min-h-0 flex flex-col' : 'w-80 bg-surface border border-line rounded-lg flex flex-col'}
+      style={sheet ? undefined : { maxHeight: 'calc(100vh - var(--app-header-height, 0px) - 8rem)' }}
     >
       {/* Fixed header — title, search, filter */}
-      <div className="p-4 border-b border-line shrink-0">
-        <h3 className="text-lg font-bold mb-3">תרגילים זמינים</h3>
+      <div className={`border-b border-line shrink-0 ${sheet ? 'px-4 pb-3' : 'p-4'}`}>
+        {!sheet && <h3 className="text-lg font-bold mb-3">תרגילים זמינים</h3>}
         <input
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="🔍 חפש תרגיל..."
-          className="w-full border rounded-lg px-3 py-2 text-sm mb-2"
+          className={`w-full border rounded-lg px-3 py-2 mb-2 ${sheet ? 'text-base h-11' : 'text-sm'}`}
         />
         <select
           value={selectedCategory}
