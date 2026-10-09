@@ -225,23 +225,23 @@ export default function EditWorkoutPage() {
       )}
 
       {/* Action Buttons */}
-      <div className="flex gap-3 justify-end sticky bottom-6 bg-surface p-4 border-t border-line rounded-lg">
+      <div className="flex gap-2 sm:gap-3 justify-end sticky bottom-6 bg-surface p-2.5 sm:p-4 border-t border-line rounded-lg">
         <button
           onClick={() => setShowAssign(true)}
-          className="me-auto px-5 py-3 border border-accent text-accent rounded-lg hover:bg-accent/10 font-bold inline-flex items-center gap-1.5"
+          className="me-auto px-3 sm:px-5 py-3 border border-accent text-accent rounded-lg hover:bg-accent/10 font-bold inline-flex items-center gap-1.5 whitespace-nowrap text-sm sm:text-base"
         >
-          <LuUserPlus aria-hidden className="w-[1.1em] h-[1.1em]" />הקצה למתאמנים
+          <LuUserPlus aria-hidden className="w-[1.1em] h-[1.1em]" />הקצה<span className="hidden sm:inline"> למתאמנים</span>
         </button>
         <button
           onClick={handleCancel}
-          className="px-6 py-3 border border-line rounded-lg hover:bg-surface font-medium"
+          className="px-3 sm:px-6 py-3 border border-line rounded-lg hover:bg-surface font-medium whitespace-nowrap text-sm sm:text-base"
           disabled={saving}
         >
           <LuCircleX aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />סגור
         </button>
         <button
           onClick={handleSave}
-          className="px-6 py-3 bg-accent text-on-accent rounded-lg hover:bg-accent-hover font-medium disabled:opacity-50"
+          className="px-3 sm:px-6 py-3 bg-accent text-on-accent rounded-lg hover:bg-accent-hover font-bold disabled:opacity-50 whitespace-nowrap text-sm sm:text-base"
           disabled={saving}
         >
           {saving ? <><LuSave aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />שומר...</> : <><LuSave aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />שמור וסגור</>}

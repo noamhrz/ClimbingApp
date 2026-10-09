@@ -83,7 +83,9 @@ export default function BlockContainer({
  : 'border-line text-muted hover:border-accent/90 hover:text-accent/90'
  }`}
           >
-            {isSelectedForAdd ? '👉 בחר תרגיל מהסיידבר' : `+ הוסף תרגיל לבלוק ${blockNumber}`}
+            {isSelectedForAdd
+              ? <><span className="md:hidden">+ הוסף תרגיל לבלוק {blockNumber}</span><span className="hidden md:inline">👉 בחר תרגיל מהסיידבר</span></>
+              : `+ הוסף תרגיל לבלוק ${blockNumber}`}
           </button>
         </div>
       </SortableContext>
