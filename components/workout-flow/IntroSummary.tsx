@@ -87,11 +87,81 @@ function InfoBox({ icon, title, tone, children }: { icon: ReactNode; title: stri
   )
 }
 
+export interface ClimbGroup { key: string; type: 'Boulder' | 'Board' | 'Lead'; grade: string; count: number; attempts: number }
+export interface ClimbDetail {
+  total: number; sent: number; attempts: number
+  sentGroups: ClimbGroup[]; failedGroups: ClimbGroup[]
+  onOpen: () => void
+}
+
+const TYPE_STYLE: Record<ClimbGroup['type'], { label: string; pill: string }> = {
+  Boulder: { label: 'בולדר', pill: 'bg-accent/15 text-accent border-accent/40' },
+  Board: { label: 'בורד', pill: 'bg-warning/15 text-warning border-warning/40' },
+  Lead: { label: 'הובלה', pill: 'bg-info/15 text-info border-info/40' },
+}
+
+function ClimbCard({ c }: { c: ClimbDetail }) {
+  const manyTypes = new Set([...c.sentGroups, ...c.failedGroups].map(g => g.type)).size > 1
+  const row = (g: ClimbGroup) => (
+    <li key={g.key} className="flex items-center gap-2.5 py-1.5">
+      <span className={`shrink-0 min-w-[52px] h-8 px-2 rounded-lg border text-[15px] font-extrabold grid place-items-center tabular-nums ${TYPE_STYLE[g.type].pill}`}>
+        {g.grade}
+      </span>
+      <span className="flex-1 text-[15px] text-fg">
+        <b className="font-extrabold tabular-nums">{g.count}</b> {g.count === 1 ? 'מסלול' : 'מסלולים'}
+        {manyTypes && <span className="text-muted text-[13px]"> · {TYPE_STYLE[g.type].label}</span>}
+      </span>
+      <span className="text-sm text-muted tabular-nums">{g.attempts} {g.attempts === 1 ? 'ניסיון' : 'ניסיונות'}</span>
+    </li>
+  )
+  return (
+    <section className="rounded-2xl border border-line bg-surface p-4 flex flex-col gap-3">
+      <div className="flex items-center gap-2">
+        <LuMountain aria-hidden className="w-5 h-5 text-info shrink-0" />
+        <h3 className="flex-1 text-base font-extrabold">טיפוס</h3>
+        <button type="button" onClick={c.onOpen} className="h-9 px-3 -my-1 rounded-lg text-[13px] text-accent font-bold">עריכה</button>
+      </div>
+
+      {c.total === 0 ? (
+        <p className="text-sm text-muted">עוד לא נרשמו מסלולים.</p>
+      ) : (
+        <>
+          <div className="grid grid-cols-3 gap-2 text-center">
+            {[
+              { n: c.total, l: 'מסלולים' },
+              { n: c.sent, l: 'נסגרו', cls: 'text-success' },
+              { n: c.attempts, l: 'ניסיונות' },
+            ].map(x => (
+              <div key={x.l} className="rounded-xl bg-raised py-2">
+                <div className={`text-2xl font-extrabold tabular-nums ${x.cls ?? ''}`}>{x.n}</div>
+                <div className="text-xs text-muted">{x.l}</div>
+              </div>
+            ))}
+          </div>
+
+          {c.sentGroups.length > 0 && (
+            <div>
+              <h4 className="text-[13px] font-bold text-success flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-success" />נסגרו</h4>
+              <ul className="divide-y divide-line">{c.sentGroups.map(row)}</ul>
+            </div>
+          )}
+          {c.failedGroups.length > 0 && (
+            <div>
+              <h4 className="text-[13px] font-bold text-danger flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-danger" />לא נסגרו</h4>
+              <ul className="divide-y divide-line">{c.failedGroups.map(row)}</ul>
+            </div>
+          )}
+        </>
+      )}
+    </section>
+  )
+}
+
 export interface SummaryRow { key: string; title: string; text: string | null; onOpen: () => void }
 
 export function SummaryStep({ rows, climbing, climberNotes, onClimberNotes, warning }: {
   rows: SummaryRow[]
-  climbing: { text: string; onOpen: () => void } | null
+  climbing: ClimbDetail | null
   climberNotes: string
   onClimberNotes: (v: string) => void
   warning: string | null
@@ -114,17 +184,8 @@ export function SummaryStep({ rows, climbing, climberNotes, onClimberNotes, warn
             <span className="text-[13px] text-accent font-bold">עריכה</span>
           </button>
         ))}
-        {climbing && (
-          <button type="button" onClick={climbing.onOpen} className="flex items-center gap-3 text-right min-h-[60px] px-3.5 py-2.5 rounded-2xl border border-line bg-surface">
-            <LuMountain aria-hidden className="w-5 h-5 text-info shrink-0" />
-            <span className="flex-1 min-w-0 flex flex-col gap-0.5">
-              <span className="text-base font-bold">טיפוס</span>
-              <span className="text-sm text-muted">{climbing.text}</span>
-            </span>
-            <span className="text-[13px] text-accent font-bold">עריכה</span>
-          </button>
-        )}
       </div>
+      {climbing && <ClimbCard c={climbing} />}
       <label htmlFor="climberNotes" className="text-[15px] font-bold text-fg-2 pt-1">איך היה האימון?</label>
       <textarea
         id="climberNotes"

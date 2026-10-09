@@ -837,8 +837,27 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
     setStepRaw(Number.MAX_SAFE_INTEGER) // clamped to the summary below
     showToast(filled || lastCount ? 'מולא כמו בפעם הקודמת. לחץ על תרגיל כדי לשנות אותו' : 'אין נתונים מהפעם הקודמת', 'blue')
   }
-  const sentCount = routes.filter(r => r.successful).length
-  const climbText = routes.length ? `${routes.length} מסלולים · ${sentCount} נסגרו` : 'עוד לא נרשמו מסלולים'
+  // climbing summary: per grade, sent vs not, hardest first
+  const gradeInfo = (r: ClimbingRoute) => {
+    if (r.climbType === 'Lead') {
+      const k = leadGrades.findIndex(g => g.LeadGradeID === r.gradeID)
+      return { label: leadGrades[k]?.FrenchGrade ?? r.gradeDisplay, order: k }
+    }
+    const k = boulderGrades.findIndex(g => g.BoulderGradeID === r.gradeID)
+    return { label: boulderGrades[k]?.VGrade ?? r.gradeDisplay, order: k }
+  }
+  const climbGroups = (sent: boolean) => {
+    const m = new Map<string, { key: string; type: ClimbingRoute['climbType']; grade: string; count: number; attempts: number; order: number }>()
+    for (const r of routes.filter(x => !!x.successful === sent)) {
+      const key = `${r.climbType}|${r.gradeID}|${sent}`
+      const g = m.get(key) ?? { key, type: r.climbType, grade: gradeInfo(r).label, count: 0, attempts: 0, order: gradeInfo(r).order }
+      g.count++
+      g.attempts += r.attempts || 1
+      m.set(key, g)
+    }
+    const typeOrder = { Boulder: 0, Board: 1, Lead: 2 }
+    return [...m.values()].sort((a, b) => typeOrder[a.type] - typeOrder[b.type] || b.order - a.order)
+  }
   const steps: FlowStep[] = []
   if (hasIntro) {
     steps.push({
@@ -904,7 +923,14 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
           key: `${ex.ExerciseID}-${k}`, title: ex.Name, text: exerciseSummary(ex),
           onOpen: () => { setBackToSummary(true); setStep((hasIntro ? 1 : 0) + k) },
         }))}
-        climbing={containsClimbing ? { text: climbText, onOpen: () => { setBackToSummary(true); setStep(climbIndex) } } : null}
+        climbing={containsClimbing ? {
+          total: routes.length,
+          sent: routes.filter(r => r.successful).length,
+          attempts: routes.reduce((n, r) => n + (r.attempts || 1), 0),
+          sentGroups: climbGroups(true),
+          failedGroups: climbGroups(false),
+          onOpen: () => { setBackToSummary(true); setStep(climbIndex) },
+        } : null}
         climberNotes={climberNotes}
         onClimberNotes={setClimberNotes}
         warning={missingLocation ? 'צריך לבחור מיקום בשלב הטיפוס לפני השמירה' : null}
