@@ -32,11 +32,18 @@ interface WorkoutForUser {
 export default function AssignWorkoutsClient() {
   const router = useRouter()
   const { currentUser, trainees, loading: authLoading } = useAuth()
+  const signedInEmail = currentUser?.Email
   const activeEmail = useActiveUserEmail()
 
   // State
   const [userRole, setUserRole] = useState<'admin' | 'coach' | null>(null)
   const [selectedUserEmail, setSelectedUserEmail] = useState<string>('')
+  // opened while viewing a trainee: start on that trainee
+  const [preselected, setPreselected] = useState(false)
+  if (!preselected && activeEmail && signedInEmail && trainees.length > 0) {
+    setPreselected(true)
+    if (activeEmail !== signedInEmail && trainees.some(t => t.Email === activeEmail)) setSelectedUserEmail(activeEmail)
+  }
   const [allWorkouts, setAllWorkouts] = useState<Workout[]>([])
   const [userWorkouts, setUserWorkouts] = useState<Workout[]>([])
   const [availableWorkouts, setAvailableWorkouts] = useState<Workout[]>([])
@@ -46,17 +53,18 @@ export default function AssignWorkoutsClient() {
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
+    // permissions follow the signed-in coach, not the trainee being viewed
     const checkAuth = async () => {
-      if (!authLoading && !activeEmail) {
+      if (!authLoading && !signedInEmail) {
         router.push('/dashboard')
         return
       }
-      if (!activeEmail) return
+      if (!signedInEmail) return
 
       const { data: user } = await supabase
         .from('Users')
         .select('Role')
-        .eq('Email', activeEmail)
+        .eq('Email', signedInEmail)
         .single()
 
       if (!user || (user.Role !== 'admin' && user.Role !== 'coach')) {
@@ -67,7 +75,7 @@ export default function AssignWorkoutsClient() {
       setUserRole(user.Role)
     }
     checkAuth()
-  }, [authLoading, activeEmail, router])
+  }, [authLoading, currentUser, signedInEmail, router])
 
   // Fetch all workouts once auth is confirmed
   useEffect(() => {

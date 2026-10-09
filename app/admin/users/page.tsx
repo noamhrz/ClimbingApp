@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabaseClient'
-import { useAuth, useActiveUserEmail } from '@/context/AuthContext'
+import { useAuth } from '@/context/AuthContext'
 import { useRouter } from 'next/navigation'
 import AdminPasswordReset from '@/components/admin/AdminPasswordReset'
 import { LuCircleCheck, LuLoaderCircle, LuLock, LuPencil, LuPlus, LuSave, LuTrash2, LuUsers } from 'react-icons/lu'
@@ -30,7 +30,7 @@ const getAuthHeaders = async () => {
 
 export default function UserManagementPage() {
   const { currentUser, loading: authLoading } = useAuth()
-  const activeEmail = useActiveUserEmail()
+  const signedInEmail = currentUser?.Email
   const router = useRouter()
   const [userRole, setUserRole] = useState<'admin' | 'coach' | null>(null)
   const [users, setUsers] = useState<User[]>([])
@@ -51,17 +51,18 @@ export default function UserManagementPage() {
   })
 
   useEffect(() => {
+    // permissions follow the signed-in coach, not the trainee being viewed
     const checkAuth = async () => {
-      if (!authLoading && !activeEmail) {
+      if (!authLoading && !signedInEmail) {
         router.push('/dashboard')
         return
       }
-      if (!activeEmail) return
+      if (!signedInEmail) return
 
       const { data: user } = await supabase
         .from('Users')
         .select('Role')
-        .eq('Email', activeEmail)
+        .eq('Email', signedInEmail)
         .single()
 
       if (!user || (user.Role !== 'admin' && user.Role !== 'coach')) {
@@ -72,7 +73,7 @@ export default function UserManagementPage() {
       setUserRole(user.Role)
     }
     checkAuth()
-  }, [authLoading, activeEmail, router])
+  }, [authLoading, currentUser, signedInEmail, router])
 
   useEffect(() => {
     if (userRole) fetchUsers()
