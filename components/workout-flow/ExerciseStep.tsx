@@ -69,6 +69,9 @@ export function exerciseSummary(o: any): string | null {
 export default function ExerciseStep({ exercise: ex, position, last, bests, onChange, onRest }: Props) {
   const [side, setSide] = useState<'R' | 'L'>('R')
   const [noteOpen, setNoteOpen] = useState(false)
+  const [descOpen, setDescOpen] = useState(false)
+  const desc = String(ex.Description ?? '')
+  const longDesc = desc.length > 110 || desc.split('\n').length > 2
   const single = !!ex.IsSingleHand
   const s = single && side === 'L' ? 'Left' : ''
   const primKey = (ex.isDuration ? 'DurationSec' : 'RepsDone') + s
@@ -124,7 +127,17 @@ export default function ExerciseStep({ exercise: ex, position, last, bests, onCh
             ))}
           </div>
         )}
-        {ex.Description && <p className="text-[15px] text-fg-3 leading-relaxed whitespace-pre-wrap">{ex.Description}</p>}
+        {ex.Description && (
+          <div className="text-[15px] text-fg-3 leading-relaxed">
+            {/* long descriptions start folded so the inputs stay on screen */}
+            <p className={`whitespace-pre-wrap ${descOpen ? '' : 'line-clamp-2'}`}>{ex.Description}</p>
+            {longDesc && (
+              <button type="button" onClick={() => setDescOpen(o => !o)} aria-expanded={descOpen} className="mt-0.5 -my-1 py-1 text-accent text-sm font-bold">
+                {descOpen ? 'הצג פחות' : 'הצג את כל התיאור'}
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       {lastText && (
