@@ -508,13 +508,14 @@ export default function CalendarEditClient() {
     setIsSaving(true)
 
     try {
-      const now = moment().format('YYYY-MM-DD HH:mm:ss')
+      // DB timestamps (StartTime, CreatedAt, UpdatedAt) are stored in UTC
+      const now = moment.utc().format('YYYY-MM-DD HH:mm:ss')
       const email = calendarRow?.Email || activeEmail
 
       // ✅ Use calendar's StartTime for LogDateTime
       const logDateTime = calendarRow?.StartTime 
         ? moment(calendarRow.StartTime).format('YYYY-MM-DD HH:mm:ss')
-        : now
+        : moment().format('YYYY-MM-DD HH:mm:ss')
 
       let exerciseCount = 0
       let climbingCount = 0

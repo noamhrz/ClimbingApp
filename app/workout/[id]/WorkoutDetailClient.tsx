@@ -526,14 +526,15 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
       return
     }
 
-    const now = moment().format('YYYY-MM-DD HH:mm:ss')
+    // DB timestamps (StartTime, CreatedAt, UpdatedAt) are stored in UTC
+    const now = moment.utc().format('YYYY-MM-DD HH:mm:ss')
 
     try {
       const { error } = await supabase
         .from('Calendar')
         .update({ 
           StartTime: now,
-          EndTime: moment().add(1, 'hour').format('YYYY-MM-DD HH:mm:ss')
+          EndTime: moment.utc().add(1, 'hour').format('YYYY-MM-DD HH:mm:ss')
         })
         .eq('CalendarID', calendarIdNum)
 
@@ -570,11 +571,12 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
 
     setIsSaving(true) // 🐛 FIX: Set saving state
 
-    const now = moment().format('YYYY-MM-DD HH:mm:ss')
+    // DB timestamps (StartTime, CreatedAt, UpdatedAt) are stored in UTC
+    const now = moment.utc().format('YYYY-MM-DD HH:mm:ss')
 
     const logDateTime = calendarRow?.StartTime 
       ? moment(calendarRow.StartTime).format('YYYY-MM-DD HH:mm:ss')
-      : now
+      : moment().format('YYYY-MM-DD HH:mm:ss')
 
     try {
       let activeCalendarId = calendarIdNum
