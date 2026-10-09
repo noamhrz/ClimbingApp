@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '@/lib/supabaseClient'
-import { useAuth, useActiveUserEmail } from '@/context/AuthContext'
+import { useAuth } from '@/context/AuthContext'
 import { useRouter } from 'next/navigation'
 import { DndProvider, useDrag, useDrop } from 'react-dnd'
 import { HTML5Backend } from 'react-dnd-html5-backend'
@@ -546,8 +546,8 @@ function DraggableLevelRow({ level, index, categories, onEdit, onDelete, onMove 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function RoadmapBuilderPage() {
-  const { loading: authLoading } = useAuth()
-  const activeEmail = useActiveUserEmail()
+  const { loading: authLoading, currentUser } = useAuth()
+  const signedInEmail = currentUser?.Email
   const router = useRouter()
 
   const [authorized, setAuthorized] = useState(false)
@@ -566,17 +566,18 @@ export default function RoadmapBuilderPage() {
 
   // ── Auth check ──────────────────────────────────────────────────────────────
   useEffect(() => {
+    // permissions follow the signed-in coach, not the trainee being viewed
     if (authLoading) return
-    if (!activeEmail) { router.push('/dashboard'); return }
+    if (!signedInEmail) { router.push('/dashboard'); return }
 
-    supabase.from('Users').select('Role').eq('Email', activeEmail).single().then(({ data }) => {
+    supabase.from('Users').select('Role').eq('Email', signedInEmail).single().then(({ data }) => {
       if (!data || !['admin', 'coach'].includes(data.Role)) {
         router.push('/dashboard')
       } else {
         setAuthorized(true)
       }
     })
-  }, [authLoading, activeEmail, router])
+  }, [authLoading, currentUser, signedInEmail, router])
 
   // ── Fetch categories ────────────────────────────────────────────────────────
   const fetchCategories = useCallback(async () => {

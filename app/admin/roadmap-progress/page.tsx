@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabaseClient'
-import { useAuth, useActiveUserEmail } from '@/context/AuthContext'
+import { useAuth } from '@/context/AuthContext'
 import { useRouter } from 'next/navigation'
 import { LuChartColumn, LuCircleCheck, LuLoaderCircle, LuSave } from 'react-icons/lu'
 
@@ -58,8 +58,8 @@ const getAuthHeaders = async () => {
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function RoadmapProgressPage() {
-  const { loading: authLoading } = useAuth()
-  const activeEmail = useActiveUserEmail()
+  const { loading: authLoading, currentUser } = useAuth()
+  const signedInEmail = currentUser?.Email
   const router = useRouter()
 
   const [authorized, setAuthorized] = useState(false)
@@ -76,17 +76,18 @@ export default function RoadmapProgressPage() {
 
   // ── Auth check ───────────────────────────────────────────────────────────────
   useEffect(() => {
+    // permissions follow the signed-in coach, not the trainee being viewed
     if (authLoading) return
-    if (!activeEmail) { router.push('/dashboard'); return }
+    if (!signedInEmail) { router.push('/dashboard'); return }
 
-    supabase.from('Users').select('Role').eq('Email', activeEmail).single().then(({ data }) => {
+    supabase.from('Users').select('Role').eq('Email', signedInEmail).single().then(({ data }) => {
       if (!data || !['admin', 'coach'].includes(data.Role)) {
         router.push('/dashboard')
       } else {
         setAuthorized(true)
       }
     })
-  }, [authLoading, activeEmail, router])
+  }, [authLoading, currentUser, signedInEmail, router])
 
   // ── Fetch trainees ───────────────────────────────────────────────────────────
   useEffect(() => {

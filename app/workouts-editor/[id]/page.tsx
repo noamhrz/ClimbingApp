@@ -4,7 +4,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
-import { useAuth, useActiveUserEmail } from '@/context/AuthContext'
+import { useAuth } from '@/context/AuthContext'
 import { WorkoutFormData, WorkoutWithExercises } from '@/types/workouts'
 import { fetchWorkoutWithExercises, updateWorkout } from '@/lib/workout-api'
 import WorkoutForm from '@/components/workouts/WorkoutForm'
@@ -14,8 +14,8 @@ import { LuCircleX, LuPencil, LuSave } from 'react-icons/lu'
 export default function EditWorkoutPage() {
   const params = useParams()
   const router = useRouter()
-  const { activeUser, loading: authLoading } = useAuth()
-  const email = useActiveUserEmail()
+  const { loading: authLoading, currentUser } = useAuth()
+  const signedInEmail = currentUser?.Email
   const workoutId = Number(params?.id)
 
   const [workout, setWorkout] = useState<WorkoutWithExercises | null>(null)
@@ -28,17 +28,18 @@ export default function EditWorkoutPage() {
   const exercisesRef = useRef<WorkoutExercisesHandle>(null)
 
   useEffect(() => {
+    // permissions follow the signed-in coach, not the trainee being viewed
     const checkAuth = async () => {
-      if (!authLoading && !activeUser) {
+      if (!authLoading && !currentUser) {
         router.push('/dashboard')
         return
       }
-      if (!email) return
+      if (!signedInEmail) return
 
       const { data: user } = await supabase
         .from('Users')
         .select('Role')
-        .eq('Email', email)
+        .eq('Email', signedInEmail)
         .single()
 
       if (!user || (user.Role !== 'admin' && user.Role !== 'coach')) {
@@ -49,7 +50,7 @@ export default function EditWorkoutPage() {
       setUserRole(user.Role)
     }
     checkAuth()
-  }, [authLoading, activeUser, email, router])
+  }, [authLoading, currentUser, signedInEmail, router])
 
   useEffect(() => {
     if (workoutId && userRole) {

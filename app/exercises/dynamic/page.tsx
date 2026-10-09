@@ -3,28 +3,29 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
-import { useAuth, useActiveUserEmail } from '@/context/AuthContext'
+import { useAuth } from '@/context/AuthContext'
 import { Exercise } from '@/types/exercises'
 import { LuPuzzle } from 'react-icons/lu'
 
 export default function DynamicExercisesPage() {
   const router = useRouter()
-  const { activeUser, loading: authLoading } = useAuth()
-  const activeEmail = useActiveUserEmail()
+  const { loading: authLoading, currentUser } = useAuth()
+  const signedInEmail = currentUser?.Email
   const [userRole, setUserRole] = useState<'admin' | 'coach' | null>(null)
   const [exercises, setExercises] = useState<Exercise[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    // permissions follow the signed-in coach, not the trainee being viewed
     const checkAuth = async () => {
-      if (!authLoading && !activeUser) { router.push('/dashboard'); return }
-      if (!activeEmail) return
-      const { data: user } = await supabase.from('Users').select('Role').eq('Email', activeEmail).single()
+      if (!authLoading && !currentUser) { router.push('/dashboard'); return }
+      if (!signedInEmail) return
+      const { data: user } = await supabase.from('Users').select('Role').eq('Email', signedInEmail).single()
       if (!user || (user.Role !== 'admin' && user.Role !== 'coach')) { router.push('/dashboard'); return }
       setUserRole(user.Role)
     }
     checkAuth()
-  }, [authLoading, activeUser, activeEmail, router])
+  }, [authLoading, currentUser, signedInEmail, router])
 
   useEffect(() => {
     if (!userRole) return

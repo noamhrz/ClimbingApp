@@ -14,7 +14,8 @@ import { LuChartColumn, LuDumbbell, LuFolderOpen, LuPlus, LuSearch } from 'react
 
 export default function ExercisesClient() {
   const router = useRouter()
-  const { activeUser, loading: authLoading } = useAuth()
+  const { loading: authLoading, currentUser } = useAuth()
+  const signedInEmail = currentUser?.Email
   const activeEmail = useActiveUserEmail()
   
   const [userRole, setUserRole] = useState<'admin' | 'coach' | null>(null)
@@ -45,18 +46,19 @@ export default function ExercisesClient() {
 
   // Check auth and role
   useEffect(() => {
+    // permissions follow the signed-in coach, not the trainee being viewed
     const checkAuth = async () => {
-      if (!authLoading && !activeUser) {
+      if (!authLoading && !currentUser) {
         router.push('/dashboard')
         return
       }
 
-      if (!activeEmail) return
+      if (!signedInEmail) return
 
       const { data: user } = await supabase
         .from('Users')
         .select('Role')
-        .eq('Email', activeEmail)
+        .eq('Email', signedInEmail)
         .single()
 
       if (!user || (user.Role !== 'admin' && user.Role !== 'coach')) {
@@ -68,7 +70,7 @@ export default function ExercisesClient() {
     }
 
     checkAuth()
-  }, [authLoading, activeUser, activeEmail, router])
+  }, [authLoading, currentUser, signedInEmail, router])
 
   // ✨ Load only once when component mounts
   useEffect(() => {
