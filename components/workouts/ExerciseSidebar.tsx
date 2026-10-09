@@ -120,7 +120,7 @@ function ExerciseCard({ exercise, onAddExercise }: CardProps) {
 }
 
 // Quick "new exercise" form: creates the exercise and adds it to the workout in one step
-function NewExerciseForm({ initialName, categories, onCreated, onCancel }: {
+export function NewExerciseForm({ initialName, categories, onCreated, onCancel }: {
   initialName: string
   categories: string[]
   onCreated: (exercise: Exercise) => void

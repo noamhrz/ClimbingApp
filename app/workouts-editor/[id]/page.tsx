@@ -14,6 +14,7 @@ import { LuCircleX, LuPencil, LuSave, LuUserPlus } from 'react-icons/lu'
 
 export default function EditWorkoutPage() {
   const [showAssign, setShowAssign] = useState(false)
+  const [tab, setTab] = useState<'ex' | 'info' | null>(null)   // phone only; null = default for this workout
   const params = useParams()
   const router = useRouter()
   const { loading: authLoading, currentUser } = useAuth()
@@ -191,13 +192,17 @@ export default function EditWorkoutPage() {
     return null
   }
 
+  const phoneTab = tab ?? (formData.containExercise ? 'ex' : 'info')
+
   return (
-    <div className="max-w-7xl mx-auto p-6">
+    <div className="max-w-7xl mx-auto px-3 py-4 md:p-6">
       {/* Header */}
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold mb-2"><LuPencil aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />עריכת אימון</h1>
-          <p className="text-fg-3">עורך את: {workout.Name}</p>
+      <div className="mb-4 md:mb-6 flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="hidden md:block text-3xl font-bold mb-2"><LuPencil aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />עריכת אימון</h1>
+          <p className="hidden md:block text-fg-3">עורך את: {workout.Name}</p>
+          <p className="md:hidden text-xs text-muted">עריכת אימון</p>
+          <h1 className="md:hidden text-xl font-extrabold truncate">{formData.Name || workout.Name}</h1>
         </div>
         {autoSaving && (
           <div className="flex items-center gap-2 text-sm text-muted">
@@ -207,14 +212,30 @@ export default function EditWorkoutPage() {
         )}
       </div>
 
+      {/* Phone: tabs between the exercises and the workout details */}
+      <div role="tablist" aria-label="חלקי העורך" className="md:hidden grid grid-cols-2 gap-1 rounded-xl border border-line bg-surface p-1 mb-4">
+        {([['ex', 'תרגילים'], ['info', 'פרטי האימון']] as const).map(([k, label]) => (
+          <button key={k} type="button" role="tab" aria-selected={phoneTab === k} onClick={() => setTab(k)}
+            className={`h-10 rounded-[9px] text-[15px] font-extrabold ${phoneTab === k ? 'bg-accent text-on-accent' : 'text-fg-2'}`}>
+            {label}
+          </button>
+        ))}
+      </div>
+
       {/* Basic Info Form */}
-      <div className="mb-6">
+      <div className={`mb-6 ${phoneTab === 'info' ? '' : 'hidden md:block'}`}>
         <WorkoutForm initialData={formData} onChange={setFormData} />
       </div>
 
+      {phoneTab === 'ex' && !formData.containExercise && (
+        <div className="md:hidden mb-6 rounded-2xl border-2 border-dashed border-line p-6 text-center text-fg-3">
+          האימון לא כולל תרגילים. אפשר להפעיל את זה בלשונית ״פרטי האימון״.
+        </div>
+      )}
+
       {/* Exercises Section */}
       {formData.containExercise && (
-        <div className="mb-6">
+        <div className={`mb-6 ${phoneTab === 'ex' ? '' : 'hidden md:block'}`}>
           <WorkoutExercises
             ref={exercisesRef}
             workoutId={workoutId}
@@ -225,7 +246,7 @@ export default function EditWorkoutPage() {
       )}
 
       {/* Action Buttons */}
-      <div className="flex gap-2 sm:gap-3 justify-end sticky bottom-6 bg-surface p-2.5 sm:p-4 border-t border-line rounded-lg">
+      <div className="flex gap-2 sm:gap-3 justify-end sticky bottom-[calc(4rem+env(safe-area-inset-bottom))] md:bottom-6 z-10 bg-surface p-2.5 sm:p-4 border-t border-line rounded-lg">
         <button
           onClick={() => setShowAssign(true)}
           className="me-auto px-3 sm:px-5 py-3 border border-accent text-accent rounded-lg hover:bg-accent/10 font-bold inline-flex items-center gap-1.5 whitespace-nowrap text-sm sm:text-base"
