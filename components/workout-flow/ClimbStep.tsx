@@ -6,10 +6,11 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { LuMapPin, LuZap } from 'react-icons/lu'
+import { LuZap } from 'react-icons/lu'
 import { BoardType, BoulderGrade, ClimbingLocation, ClimbingRoute, LeadGrade } from '@/types/climbing'
 import { generateTempId, getGradeDisplay } from '@/lib/climbing-helpers'
 import Hint from './Hint'
+import LocationPicker from './LocationPicker'
 
 type CType = ClimbingRoute['climbType']
 
@@ -31,7 +32,7 @@ interface Props {
   locations: ClimbingLocation[]
   selectedLocation: number | null
   onLocationChange: (id: number | null) => void
-  onAddLocation: () => void
+  onAddLocation: (name?: string) => void
   defaultGrades: Partial<Record<CType, number>>
   defaultType?: CType
 }
@@ -142,22 +143,13 @@ export default function ClimbStep(props: Props) {
     <div className="px-4 pt-4 pb-6 flex flex-col gap-4">
       <div className="flex items-center justify-between gap-2.5">
         <h2 className="text-2xl font-extrabold">רישום טיפוס</h2>
-        <label className={`flex items-center gap-1.5 h-11 px-3 rounded-xl border bg-surface max-w-[60%] ${missingLocation ? 'border-danger text-danger' : 'border-line-strong text-fg'}`}>
-          <LuMapPin aria-hidden className="w-[18px] h-[18px] shrink-0" />
-          <select
-            aria-label="מיקום"
-            value={selectedLocation ?? ''}
-            onChange={e => {
-              if (e.target.value === '__new') { onAddLocation(); return }
-              onLocationChange(Number(e.target.value) || null)
-            }}
-            className="appearance-none bg-transparent border-0 text-[15px] font-bold min-w-0 truncate focus:outline-none"
-          >
-            <option value="">בחר מיקום</option>
-            {locations.map(l => <option key={l.LocationID} value={l.LocationID}>{l.LocationName}</option>)}
-            <option value="__new">+ מיקום חדש…</option>
-          </select>
-        </label>
+        <LocationPicker
+          locations={locations}
+          value={selectedLocation}
+          onChange={onLocationChange}
+          onAddNew={onAddLocation}
+          tone={missingLocation ? 'missing' : 'normal'}
+        />
       </div>
 
       <div className="grid grid-cols-3 gap-1 bg-surface border border-line rounded-2xl p-1" role="group" aria-label="סוג טיפוס">
@@ -195,7 +187,7 @@ export default function ClimbStep(props: Props) {
       )}
 
       <div className="-mx-4">
-        <div ref={strip} className="flex gap-2 overflow-x-auto px-4 pt-2 pb-2 [scrollbar-width:none]" role="group" aria-label="דירוג">
+        <div ref={strip} data-no-swipe className="flex gap-2 overflow-x-auto px-4 pt-2 pb-2 [scrollbar-width:none]" role="group" aria-label="דירוג">
           {grades.map(g => {
             const on = g.id === grade, c = countAt(g.id)
             return (
