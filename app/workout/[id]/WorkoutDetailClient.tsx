@@ -939,7 +939,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
           locations={locations}
           selectedLocation={selectedLocation}
           onLocationChange={setSelectedLocation}
-          onAddLocation={() => setShowAddLocationModal(true)}
+          onAddLocation={name => { setNewLocationName(name ?? ''); setShowAddLocationModal(true) }}
           defaultGrades={defaultGrades}
           defaultType={defaultClimbType}
         />
@@ -963,7 +963,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
         onClimberNotes={setClimberNotes}
         warning={null}
         location={missingLocation ? {
-          locations, onChange: setSelectedLocation, onAdd: () => setShowAddLocationModal(true),
+          locations, onChange: setSelectedLocation, onAdd: (name?: string) => { setNewLocationName(name ?? ''); setShowAddLocationModal(true) },
         } : null}
       />
     ),

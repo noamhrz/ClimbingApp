@@ -104,10 +104,12 @@ export default function WorkoutFlow({
       dx = 0
     }
 
-    const ts = (e: TouchEvent) => { if (e.touches.length === 1) start(e.touches[0].clientX, e.touches[0].clientY) }
+    // rows that scroll sideways (grade strip) keep their own gesture
+    const noSwipe = (t: EventTarget | null) => !!(t as HTMLElement | null)?.closest?.('[data-no-swipe]')
+    const ts = (e: TouchEvent) => { if (e.touches.length === 1 && !noSwipe(e.target)) start(e.touches[0].clientX, e.touches[0].clientY) }
     const tm = (e: TouchEvent) => move(e.touches[0].clientX, e.touches[0].clientY, e)
     const md = (e: MouseEvent) => {
-      if (e.button !== 0 || (e.target as HTMLElement).closest('input,textarea,select')) return
+      if (e.button !== 0 || (e.target as HTMLElement).closest('input,textarea,select,[data-no-swipe]')) return
       start(e.clientX, e.clientY)
     }
     const mm = (e: MouseEvent) => move(e.clientX, e.clientY)
