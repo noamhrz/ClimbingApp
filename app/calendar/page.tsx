@@ -12,6 +12,7 @@ import moment from 'moment-timezone'
 import { useRouter } from 'next/navigation'
 import EventComponent from '@/components/EventComponent'
 import AddWorkoutModal from '@/components/AddWorkoutModal'
+import ScheduleSheet from '@/components/coach/ScheduleSheet'
 import DeloadingModal from '@/components/DeloadingModal'
 import EventContextMenu from '@/components/EventContextMenu'
 import EditEventModal from '@/components/EditEventModal'
@@ -20,7 +21,7 @@ import DeleteRangeModal from '@/components/DeleteRangeModal'
 import DayListView from '@/components/calendar/DayListView'
 import CalendarToolbar from '@/components/calendar/CalendarToolbar'
 import { copyPreviousWorkout } from '@/utils/copyPreviousWorkout'
-import { LuPlus, LuCalendarDays, LuList, LuCalendar, LuCopy, LuBatteryLow, LuX, LuTrash2, LuSave } from 'react-icons/lu'
+import { LuPlus, LuCalendarDays, LuList, LuCalendar, LuCopy, LuBatteryLow, LuX, LuTrash2, LuSave, LuCalendarPlus } from 'react-icons/lu'
 import { PageSkeleton } from '@/components/ui/Skeleton'
 
 moment.locale('he')
@@ -65,6 +66,7 @@ export default function CalendarPage() {
   const [date, setDate] = useState(new Date())
   const [isMobile, setIsMobile] = useState(false)
   const [showAddModal, setShowAddModal] = useState(false)
+  const [showSchedule, setShowSchedule] = useState(false)
   const [modalInitialDate, setModalInitialDate] = useState<Date | undefined>()
   const [showContextMenu, setShowContextMenu] = useState(false)
   const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 })
@@ -662,6 +664,15 @@ export default function CalendarPage() {
             mode={deloadingMode}
           />
           
+          <ScheduleSheet
+            isOpen={showSchedule}
+            onClose={() => setShowSchedule(false)}
+            onSuccess={() => handleModalSuccess()}
+            email={activeEmail}
+            name={activeUser?.Name}
+            workouts={workouts}
+          />
+
           <WeekDuplicateModal
             isOpen={showDuplicateModal}
             onClose={() => setShowDuplicateModal(false)}
@@ -705,6 +716,13 @@ export default function CalendarPage() {
 
       {isAdmin && (
         <div className="fixed bottom-28 max-md:bottom-40 right-4 md:right-6 flex flex-col gap-2 z-40">
+          <button
+            onClick={() => setShowSchedule(true)}
+            className="inline-flex items-center gap-1.5 bg-accent hover:bg-accent-hover text-on-accent px-4 py-2 rounded-lg text-sm font-bold transition-all"
+            title="שיבוץ שבועי"
+          >
+            <LuCalendarPlus aria-hidden className="w-4 h-4 shrink-0" />שיבוץ שבועי
+          </button>
           <button
             onClick={() => setShowDuplicateModal(true)}
             className="inline-flex items-center gap-1.5 bg-info hover:bg-info text-on-accent px-4 py-2 rounded-lg text-sm font-medium transition-all"

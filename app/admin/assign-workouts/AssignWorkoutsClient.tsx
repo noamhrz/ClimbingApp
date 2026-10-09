@@ -1,10 +1,11 @@
 'use client'
 
+import ScheduleSheet from '@/components/coach/ScheduleSheet'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { useAuth, useActiveUserEmail } from '@/context/AuthContext'
-import { LuBookOpen, LuCircleCheck, LuCircleX, LuInbox, LuMessageSquare, LuStar, LuUsers } from 'react-icons/lu'
+import { LuBookOpen, LuCircleCheck, LuCircleX, LuInbox, LuMessageSquare, LuStar, LuUsers, LuCalendarPlus } from 'react-icons/lu'
 
 // Types
 interface User {
@@ -51,6 +52,7 @@ export default function AssignWorkoutsClient() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
   const [searchQuery, setSearchQuery] = useState<string>('')
   const [loading, setLoading] = useState(false)
+  const [showSchedule, setShowSchedule] = useState(false)
 
   useEffect(() => {
     // permissions follow the signed-in coach, not the trainee being viewed
@@ -431,6 +433,15 @@ export default function AssignWorkoutsClient() {
                 <h2 className="text-lg font-bold text-success">
                   <LuCircleCheck aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />אימונים של {selectedUser?.Name}
                 </h2>
+                {userWorkouts.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setShowSchedule(true)}
+                    className="mt-3 w-full h-11 rounded-lg bg-accent text-on-accent font-bold inline-flex items-center justify-center gap-1.5"
+                  >
+                    <LuCalendarPlus aria-hidden className="w-4 h-4" />שיבוץ שבועי לקלנדר
+                  </button>
+                )}
                 <p className="text-sm text-success mt-1">
                   {userWorkouts.length} אימונים מוקצים
                   {userWorkouts.filter(w => w.IsKeyWorkout).length > 0 && (
@@ -522,6 +533,16 @@ export default function AssignWorkoutsClient() {
           </div>
         )}
       </div>
+      {selectedUserEmail && (
+        <ScheduleSheet
+          isOpen={showSchedule}
+          onClose={() => setShowSchedule(false)}
+          email={selectedUserEmail}
+          name={selectedUser?.Name}
+          workouts={userWorkouts.map(w => ({ id: w.id, name: w.name }))}
+          onSuccess={n => { if (n) alert(`שובצו ${n} אימונים לקלנדר של ${selectedUser?.Name ?? ''}`) }}
+        />
+      )}
     </div>
   )
 }
