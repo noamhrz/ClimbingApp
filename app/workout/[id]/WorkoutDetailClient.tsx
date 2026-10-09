@@ -155,6 +155,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
   // ── workout flow ──────────────────────────────────────────
   const [step, setStepRaw] = useState(0)
   const [lastExStep, setLastExStep] = useState<number | null>(null)
+  const [backToSummary, setBackToSummary] = useState(false) // editing one exercise from the summary
   const [lastByExercise, setLastByExercise] = useState<Record<number, LastValues>>({})
   const [defaultGrades, setDefaultGrades] = useState<Partial<Record<'Boulder' | 'Board' | 'Lead', number>>>({})
   const [defaultClimbType, setDefaultClimbType] = useState<'Boulder' | 'Board' | 'Lead' | undefined>(undefined)
@@ -808,13 +809,33 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
   }
 
   // ── steps of the flow ───────────────────────────────────────
-  const hasIntro = !!(personalNote || workout.Description || workout.WorkoutNotes || workout.WhenToPractice || workout.VideoURL || isFutureWorkout || isPastWorkout)
+  const lastCount = containsExercises ? exerciseForms.filter(ex => lastByExercise[ex.ExerciseID]).length : 0
+  const hasIntro = !!(personalNote || workout.Description || workout.WorkoutNotes || workout.WhenToPractice || workout.VideoURL || isFutureWorkout || isPastWorkout || lastCount > 0)
   const flowExercises = containsExercises ? exerciseForms : []
   const firstEx = hasIntro ? 1 : 0
   const climbIndex = firstEx + flowExercises.length
   const setStep = (i: number) => {
     setStepRaw(i)
     if (i >= firstEx && i < firstEx + flowExercises.length) setLastExStep(i) // remember where I was in the exercises
+  }
+  // fill every exercise that has history with last time's values (empty fields only), then go to the summary
+  const fillFromLast = () => {
+    const keys = ['RepsDone', 'DurationSec', 'WeightKG', 'RPE', 'RepsDoneLeft', 'DurationSecLeft', 'WeightKGLeft', 'RPELeft'] as const
+    let filled = 0
+    setExerciseForms(prev => prev.map(ex => {
+      const last = lastByExercise[ex.ExerciseID]
+      if (!last) return ex
+      const next = { ...ex }
+      let changed = false
+      for (const k of keys) {
+        if ((next[k] == null || next[k] === '') && last[k] != null) { next[k] = last[k]; changed = true }
+      }
+      if (changed) filled++
+      return next
+    }))
+    setBackToSummary(false)
+    setStepRaw(Number.MAX_SAFE_INTEGER) // clamped to the summary below
+    showToast(filled || lastCount ? 'מולא כמו בפעם הקודמת. לחץ על תרגיל כדי לשנות אותו' : 'אין נתונים מהפעם הקודמת', 'blue')
   }
   const sentCount = routes.filter(r => r.successful).length
   const climbText = routes.length ? `${routes.length} מסלולים · ${sentCount} נסגרו` : 'עוד לא נרשמו מסלולים'
@@ -830,6 +851,11 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
           dateBadge={isPastWorkout ? { text: 'אימון עבר', tone: 'past' } : isFutureWorkout ? { text: 'אימון עתידי', tone: 'future' } : isTodayWorkout ? { text: 'אימון היום', tone: 'today' } : null}
           onMoveToToday={isFutureWorkout || isPastWorkout ? handleConvertToToday : undefined}
           counts={{ exercises: flowExercises.length, climbing: !!containsClimbing }}
+          fillFromLast={lastCount > 0 ? {
+            count: lastCount, total: flowExercises.length,
+            date: Object.values(lastByExercise).map(l => l.date).find(Boolean) ?? null,
+            onFill: fillFromLast,
+          } : undefined}
         />
       ),
     })
@@ -876,9 +902,9 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
       <SummaryStep
         rows={flowExercises.map((ex, k) => ({
           key: `${ex.ExerciseID}-${k}`, title: ex.Name, text: exerciseSummary(ex),
-          onOpen: () => setStep((hasIntro ? 1 : 0) + k),
+          onOpen: () => { setBackToSummary(true); setStep((hasIntro ? 1 : 0) + k) },
         }))}
-        climbing={containsClimbing ? { text: climbText, onOpen: () => setStep(climbIndex) } : null}
+        climbing={containsClimbing ? { text: climbText, onOpen: () => { setBackToSummary(true); setStep(climbIndex) } } : null}
         climberNotes={climberNotes}
         onClimberNotes={setClimberNotes}
         warning={missingLocation ? 'צריך לבחור מיקום בשלב הטיפוס לפני השמירה' : null}
@@ -893,7 +919,8 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
     : cur.key === 'summary' ? 'סיכום'
     : `תרגיל ${stepIndex - (hasIntro ? 1 : 0) + 1} מתוך ${flowExercises.length}`
   const onSummary = stepIndex === lastStep
-  const primaryLabel = onSummary
+  const returning = backToSummary && !onSummary
+  const primaryLabel = returning ? 'חזרה לסיכום ←' : onSummary
     ? (isSaving ? 'שומר…' : 'סיום ושמירה')
     : cur.key === 'intro' ? 'התחל ←'
     : stepIndex === lastStep - 1 ? 'לסיכום ←' : 'הבא ←'
@@ -904,10 +931,14 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
         title={workout.Name}
         steps={steps}
         index={stepIndex}
-        onIndexChange={setStep}
+        onIndexChange={i => { if (i === lastStep) setBackToSummary(false); setStep(i) }}
         stepLabel={stepLabel}
         primaryLabel={primaryLabel}
-        onPrimary={() => (onSummary ? onComplete() : setStep(stepIndex + 1))}
+        onPrimary={() => {
+          if (onSummary) return onComplete()
+          if (returning) { setBackToSummary(false); return setStep(lastStep) }
+          setStep(stepIndex + 1)
+        }}
         primaryDisabled={onSummary && (isSaving || missingLocation)}
         primaryTone={onSummary ? 'success' : 'accent'}
         onClose={() => (window.history.length > 1 ? router.back() : router.push('/calendar'))}

@@ -3,12 +3,13 @@
 // First step (coach note + workout info) and last step (summary + notes) of the workout flow.
 
 import { ReactNode } from 'react'
-import { LuAlarmClock, LuCalendarDays, LuInfo, LuMessageSquare, LuMountain, LuNotebookPen, LuRefreshCw, LuTriangleAlert, LuVideo } from 'react-icons/lu'
+import { LuCopy, LuAlarmClock, LuCalendarDays, LuInfo, LuMessageSquare, LuMountain, LuNotebookPen, LuRefreshCw, LuTriangleAlert, LuVideo } from 'react-icons/lu'
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-export function IntroStep({ workout, personalNote, dateLine, dateBadge, onMoveToToday, counts }: {
+export function IntroStep({ workout, personalNote, dateLine, dateBadge, onMoveToToday, counts, fillFromLast }: {
   workout: any
+  fillFromLast?: { count: number; total: number; date: string | null; onFill: () => void }
   personalNote: string
   dateLine: string | null
   dateBadge: { text: string; tone: 'past' | 'future' | 'today' } | null
@@ -35,6 +36,21 @@ export function IntroStep({ workout, personalNote, dateLine, dateBadge, onMoveTo
           </button>
         )}
       </div>
+
+      {fillFromLast && fillFromLast.count > 0 && (
+        <div className="rounded-2xl border border-line-strong bg-raised p-4 flex flex-col gap-3">
+          <div>
+            <h3 className="text-base font-extrabold">כמו בפעם הקודמת?</h3>
+            <p className="text-sm text-fg-3 mt-0.5">
+              ממלא את {fillFromLast.count === fillFromLast.total ? 'כל התרגילים' : `${fillFromLast.count} מתוך ${fillFromLast.total} התרגילים`} בערכים
+              {fillFromLast.date ? ` מ-${fillFromLast.date}` : ' מהפעם הקודמת'}, ומעביר לסיכום. משם נכנסים רק למה שהשתנה.
+            </p>
+          </div>
+          <button type="button" onClick={fillFromLast.onFill} className="h-12 rounded-xl bg-accent text-on-accent font-extrabold flex items-center justify-center gap-2">
+            <LuCopy aria-hidden className="w-5 h-5" />מלא הכל כמו בפעם הקודמת
+          </button>
+        </div>
+      )}
 
       {personalNote && (
         <div className="rounded-2xl border-2 border-accent bg-accent/10 p-4">
