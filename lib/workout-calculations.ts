@@ -24,7 +24,7 @@ export function calculateExerciseTime(
   }
   
   const totalWorkTime = timePerSet * Sets
-  const totalRestTime = Rest * (Sets - 1) // No rest after last set
+  const totalRestTime = Rest * Math.max(0, Sets - 1) // No rest after last set
   
   return totalWorkTime + totalRestTime
 }

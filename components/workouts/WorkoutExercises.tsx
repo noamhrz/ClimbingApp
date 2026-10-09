@@ -16,8 +16,8 @@ import { WorkoutExerciseWithDetails, Exercise, DEFAULT_WORKOUT_EXERCISE } from '
 import { supabase } from '@/lib/supabaseClient'
 import BlockContainer from './BlockContainer'
 import ExerciseSidebar from './ExerciseSidebar'
-import { createPortal } from 'react-dom'
-import { LuSave, LuPlus, LuCheck } from 'react-icons/lu'
+import { LuSave } from 'react-icons/lu'
+import PhoneExerciseEditor from './PhoneExerciseEditor'
 
 export interface WorkoutExercisesHandle {
   saveExercises: () => Promise<boolean>
@@ -39,9 +39,6 @@ const WorkoutExercises = forwardRef<WorkoutExercisesHandle, Props>(function Work
   const [saving, setSaving] = useState(false)
   const [activeId, setActiveId] = useState<number | null>(null)
   const [selectedBlock, setSelectedBlock] = useState<number | null>(null)
-  // Phone: the exercise list opens as a bottom sheet (the side panel is desktop-only)
-  const [picker, setPicker] = useState<{ added: string[] } | null>(null)
-  const isPhone = () => typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches
 
   // Always-current ref — avoids stale closure inside saveExercises
   const localExercisesRef = useRef<WorkoutExerciseWithDetails[]>(localExercises)
@@ -162,7 +159,7 @@ const WorkoutExercises = forwardRef<WorkoutExercisesHandle, Props>(function Work
           .filter(e => e.Block === targetBlock)
           .sort((a, b) => a.Order - b.Order)
 
-        let result = prev.map(e =>
+        const result = prev.map(e =>
           e.WorkoutExerciseID === activeId
             ? { ...e, Block: targetBlock, Order: targetBlockExes.length + 1 }
             : e
@@ -294,22 +291,25 @@ const WorkoutExercises = forwardRef<WorkoutExercisesHandle, Props>(function Work
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      <div className="flex gap-6 items-start relative">
+      {/* Phone: compact rows + sheets */}
+      <div className="md:hidden">
+        <PhoneExerciseEditor
+          exercises={localExercises}
+          blocks={allBlockNumbers}
+          onChange={(exs, empty) => { setLocalExercises(exs); setAdditionalBlocks(empty) }}
+        />
+      </div>
+
+      {/* Desktop: drag-and-drop blocks + side panel */}
+      <div className="hidden md:flex gap-6 items-start relative">
         {/* Main Content */}
         <div className="flex-1">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-bold">תרגילים באימון</h2>
             <div className="flex items-center gap-3">
               <button
-                type="button"
-                onClick={() => setPicker({ added: [] })}
-                className="md:hidden h-9 px-3 rounded-lg border border-accent text-accent text-sm font-bold inline-flex items-center gap-1"
-              >
-                <LuPlus aria-hidden className="w-4 h-4" />הוסף תרגיל
-              </button>
-              <button
                 onClick={() => setShowSidebar(!showSidebar)}
-                className="hidden md:inline text-sm text-accent hover:underline"
+                className="text-sm text-accent hover:underline"
               >
                 {showSidebar ? 'הסתר' : 'הצג'} תרגילים זמינים
               </button>
@@ -327,8 +327,7 @@ const WorkoutExercises = forwardRef<WorkoutExercisesHandle, Props>(function Work
             {allBlockNumbers.length === 0 && (
               <div className="bg-surface rounded-lg p-12 text-center border-2 border-dashed border-line">
                 <p className="text-fg-3 mb-2 text-lg font-medium">עדיין אין תרגילים באימון</p>
-                <p className="text-sm text-muted hidden md:block">👉 הוסף בלוק או לחץ על תרגיל מהצד כדי להתחיל</p>
-                <button type="button" onClick={() => setPicker({ added: [] })} className="md:hidden mt-2 h-11 px-5 rounded-xl bg-accent text-on-accent font-bold">+ הוסף תרגיל</button>
+                <p className="text-sm text-muted">👉 הוסף בלוק או לחץ על תרגיל מהצד כדי להתחיל</p>
               </div>
             )}
 
@@ -340,7 +339,7 @@ const WorkoutExercises = forwardRef<WorkoutExercisesHandle, Props>(function Work
                 onUpdateExercise={handleUpdateExercise}
                 onRemoveExercise={handleRemoveExercise}
                 onDeleteBlock={() => handleDeleteBlock(blockNum)}
-                onAddExercise={() => { setSelectedBlock(blockNum); if (isPhone()) setPicker({ added: [] }) }}
+                onAddExercise={() => setSelectedBlock(blockNum)}
                 onSelectBlock={() => setSelectedBlock(blockNum)}
                 isSelectedForAdd={selectedBlock === blockNum}
               />
@@ -358,7 +357,7 @@ const WorkoutExercises = forwardRef<WorkoutExercisesHandle, Props>(function Work
         {/* Sidebar — sticky below the app header, capped so it never runs under the header or the bottom save bar */}
         {showSidebar && (
           <div
-            className={`hidden md:block sticky self-start ${selectedBlock !== null ? 'ring-4 ring-accent rounded-lg' : ''}`}
+            className={`sticky self-start ${selectedBlock !== null ? 'ring-4 ring-accent rounded-lg' : ''}`}
             style={{ top: 'calc(var(--app-header-height, 0px) + 1rem)' }}
           >
             <ExerciseSidebar
@@ -369,36 +368,6 @@ const WorkoutExercises = forwardRef<WorkoutExercisesHandle, Props>(function Work
           </div>
         )}
       </div>
-
-      {picker && isPhone() && createPortal(
-        <div className="fixed inset-0 z-[100] bg-black/60 flex items-end" onClick={e => { if (e.target === e.currentTarget) setPicker(null) }}>
-          <div role="dialog" data-flow aria-modal="true" aria-labelledby="picker-title" dir="rtl" className="w-full h-[88vh] bg-raised border-t border-line-strong rounded-t-[20px] flex flex-col text-fg">
-            <div className="px-4 pt-2.5 pb-3 flex flex-col gap-2 shrink-0">
-              <div className="w-10 h-1 rounded-full bg-line-strong mx-auto" />
-              <div className="flex items-center justify-between gap-2">
-                <div className="min-w-0">
-                  <h2 id="picker-title" className="text-xl font-extrabold">הוספת תרגיל</h2>
-                  <p className="text-sm text-muted">לבלוק {selectedBlock ?? nextBlock}{selectedBlock == null ? ' (חדש)' : ''}</p>
-                </div>
-                <button type="button" onClick={() => setPicker(null)} className="h-10 px-4 rounded-xl bg-accent text-on-accent font-bold shrink-0">סיום</button>
-              </div>
-              {picker.added.length > 0 && (
-                <p className="text-sm text-success font-bold flex items-center gap-1 truncate" aria-live="polite">
-                  <LuCheck aria-hidden className="w-4 h-4 shrink-0" />נוסף: {picker.added.join(', ')}
-                </p>
-              )}
-            </div>
-            <ExerciseSidebar
-              sheet
-              onAddExercise={exercise => {
-                handleAddExercise(exercise, selectedBlock ?? undefined)
-                setPicker(p => p && { added: [...p.added, exercise.Name] })
-              }}
-            />
-          </div>
-        </div>,
-        document.body,
-      )}
 
       <DragOverlay>
         {activeExercise && (
