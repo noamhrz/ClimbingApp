@@ -3,6 +3,7 @@
 // First step (coach note + workout info) and last step (summary + notes) of the workout flow.
 
 import { ReactNode } from 'react'
+import LocationPicker from './LocationPicker'
 import { LuCopy, LuMapPin, LuTrophy, LuAlarmClock, LuCalendarDays, LuInfo, LuMessageSquare, LuMountain, LuNotebookPen, LuRefreshCw, LuTriangleAlert, LuVideo } from 'react-icons/lu'
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -162,7 +163,7 @@ export interface SummaryRow { key: string; title: string; text: string | null; p
 export function SummaryStep({ rows, climbing, climberNotes, onClimberNotes, warning, location }: {
   rows: SummaryRow[]
   // shown when climbing routes were logged without a location
-  location?: { locations: { LocationID: number; LocationName: string }[]; onChange: (id: number | null) => void; onAdd: () => void } | null
+  location?: { locations: { LocationID: number; LocationName: string }[]; onChange: (id: number | null) => void; onAdd: (name?: string) => void } | null
   climbing: ClimbDetail | null
   climberNotes: string
   onClimberNotes: (v: string) => void
@@ -198,23 +199,18 @@ export function SummaryStep({ rows, climbing, climberNotes, onClimberNotes, warn
       </div>
       {location && (
         <section className="rounded-2xl border-2 border-danger/70 bg-danger/10 p-4 flex flex-col gap-2.5">
-          <label htmlFor="summary-location" className="font-extrabold text-fg flex items-center gap-2">
+          <p className="font-extrabold text-fg flex items-center gap-2">
             <LuMapPin aria-hidden className="w-5 h-5 text-danger" />איפה טיפסת?
-          </label>
+          </p>
           <p className="text-sm text-fg-3 -mt-1">צריך לבחור מיקום כדי לשמור את המסלולים.</p>
-          <select
+          <LocationPicker
             id="summary-location"
-            defaultValue=""
-            onChange={e => {
-              if (e.target.value === '__new') { e.target.value = ''; location.onAdd(); return }
-              location.onChange(Number(e.target.value) || null)
-            }}
-            className="h-12 rounded-xl border-2 border-line-strong bg-surface text-fg text-base font-bold px-3 focus:outline-none focus:border-accent"
-          >
-            <option value="" disabled>בחר מיקום</option>
-            {location.locations.map(l => <option key={l.LocationID} value={l.LocationID}>{l.LocationName}</option>)}
-            <option value="__new">+ מיקום חדש…</option>
-          </select>
+            locations={location.locations}
+            value={null}
+            onChange={location.onChange}
+            onAddNew={location.onAdd}
+            tone="large"
+          />
         </section>
       )}
       {climbing && <ClimbCard c={climbing} />}

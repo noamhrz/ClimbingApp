@@ -710,7 +710,7 @@ export default function CalendarEditClient() {
           locations={locations}
           selectedLocation={selectedLocation}
           onLocationChange={setSelectedLocation}
-          onAddLocation={() => setShowAddLocationModal(true)}
+          onAddLocation={name => { setNewLocationName(name ?? ''); setShowAddLocationModal(true) }}
           defaultGrades={{}}
           defaultType={routes[0]?.climbType}
         />
@@ -733,7 +733,7 @@ export default function CalendarEditClient() {
         climberNotes={climberNotes}
         onClimberNotes={setClimberNotes}
         warning={null}
-        location={missingLocation ? { locations, onChange: setSelectedLocation, onAdd: () => setShowAddLocationModal(true) } : null}
+        location={missingLocation ? { locations, onChange: setSelectedLocation, onAdd: (name?: string) => { setNewLocationName(name ?? ''); setShowAddLocationModal(true) } } : null}
       />
     ),
   })
