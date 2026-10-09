@@ -56,7 +56,7 @@ export function IntroStep({ workout, personalNote, dateLine, dateBadge, onMoveTo
           <LuVideo aria-hidden className="w-5 h-5" />וידאו הדרכה
         </a>
       )}
-      <p className="text-center text-[13px] text-faint">החלק ימינה כדי להתחיל</p>
+      <p className="text-center text-[13px] text-faint">״התחל״ למטה, או החלקה ימינה</p>
     </div>
   )
 }

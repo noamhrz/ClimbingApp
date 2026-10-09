@@ -6,6 +6,7 @@
 
 import { ReactNode, useCallback, useEffect, useLayoutEffect, useRef } from 'react'
 import { LuArrowRight, LuX } from 'react-icons/lu'
+import { hintCount, setHintCount } from './Hint'
 
 export interface FlowStep {
   key: string
@@ -55,6 +56,16 @@ export default function WorkoutFlow({
     ;(document.activeElement as HTMLElement | null)?.blur?.()
     onIndexChange(j)
   }, [index, last, onIndexChange, place])
+
+  // gentle swipe cue: the first two times the flow opens, the step peeks right and back
+  useEffect(() => {
+    if (steps.length < 2 || hintCount('nudge') >= 2) return
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return
+    setHintCount('nudge', hintCount('nudge') + 1)
+    const a = setTimeout(() => place(36, true), 900)
+    const b = setTimeout(() => place(0, true), 1350)
+    return () => { clearTimeout(a); clearTimeout(b) }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // swipe (touch + mouse), locked to the horizontal axis
   useEffect(() => {

@@ -7,6 +7,7 @@
 import { useState } from 'react'
 import { LuCopy, LuImage, LuPlay } from 'react-icons/lu'
 import NumberStepper from './NumberStepper'
+import Hint from './Hint'
 
 export interface LastValues {
   date: string | null
@@ -109,6 +110,10 @@ export default function ExerciseStep({ exercise: ex, position, last, onChange }:
         </div>
       )}
 
+      {lastText && position.n === 2 && (
+        <Hint id="same-again">״אותו דבר״ ממלא בלחיצה אחת את כל הערכים מהפעם הקודמת.</Hint>
+      )}
+
       {single && (
         <div className="flex gap-2 items-center">
           <div className="flex-1 grid grid-cols-2 gap-1 bg-surface border border-line rounded-2xl p-1" role="group" aria-label="יד">
@@ -131,6 +136,7 @@ export default function ExerciseStep({ exercise: ex, position, last, onChange }:
           )}
         </div>
       )}
+      {single && <Hint id="sides">ממלאים כל יד בנפרד. אחרי ימין, ״כמו ימין״ מעתיק את הערכים לשמאל.</Hint>}
 
       <NumberStepper
         key={primKey}
@@ -152,6 +158,9 @@ export default function ExerciseStep({ exercise: ex, position, last, onChange }:
         step={2.5}
         onChange={v => onChange({ ['WeightKG' + s]: v })}
       />
+      {position.n === 1 && (
+        <Hint id="tap-number">לחיצה על המספר מסמנת אותו, ואז פשוט מקלידים את המספר החדש. ה־+ וה־− מתחילים מהערך של הפעם הקודמת.</Hint>
+      )}
 
       <div className="flex flex-col gap-1.5">
         <p className="text-[15px] font-bold text-fg-2">מאמץ <span className="font-normal text-muted">RPE 1–10</span></p>
@@ -201,7 +210,9 @@ export default function ExerciseStep({ exercise: ex, position, last, onChange }:
         />
       )}
 
-      <p className="text-center text-[13px] text-faint">החלק ימינה לתרגיל הבא</p>
+      {position.n === 1 && position.of > 1 && (
+        <Hint id="swipe">מחליקים ימינה לתרגיל הבא ושמאלה לקודם. אפשר גם ללחוץ על הפסים למעלה כדי לקפוץ לתרגיל.</Hint>
+      )}
     </div>
   )
 }

@@ -9,6 +9,7 @@ import { createPortal } from 'react-dom'
 import { LuMapPin, LuZap } from 'react-icons/lu'
 import { BoardType, BoulderGrade, ClimbingLocation, ClimbingRoute, LeadGrade } from '@/types/climbing'
 import { generateTempId, getGradeDisplay } from '@/lib/climbing-helpers'
+import Hint from './Hint'
 
 type CType = ClimbingRoute['climbType']
 
@@ -237,6 +238,8 @@ export default function ClimbStep(props: Props) {
         </div>
       </section>
 
+      <Hint id="climb-tap">בוחרים דירוג, וכל לחיצה מוסיפה מסלול אחד. לחצת בטעות? ״ביטול״ בהודעה שקופצת למטה.</Hint>
+
       <button type="button" onClick={openNew} className="h-[46px] rounded-xl border border-dashed border-line-strong text-fg-3 text-[15px] font-bold">
         + מסלול עם שם (פרויקט, מסלול הובלה)
       </button>
@@ -249,6 +252,7 @@ export default function ClimbStep(props: Props) {
           </p>
         ) : (
           <div className="flex flex-col gap-2">
+            <Hint id="climb-edit">לחיצה על מסלול ברשימה פותחת עריכה: שם, מספר ניסיונות, נסגר או לא, ומחיקה.</Hint>
             {groups.map(rs => {
               const r0 = rs[0], tt = typeOf(r0.climbType), sent = rs.filter(r => r.successful).length
               return (
