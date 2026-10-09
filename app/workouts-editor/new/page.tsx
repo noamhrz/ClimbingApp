@@ -12,7 +12,8 @@ import { LuCircleX, LuLightbulb, LuSave, LuSparkles } from 'react-icons/lu'
 
 export default function NewWorkoutPage() {
   const router = useRouter()
-  const { activeUser, loading: authLoading } = useAuth()
+  const { loading: authLoading, currentUser } = useAuth()
+  const signedInEmail = currentUser?.Email
   const email = useActiveUserEmail()
   const [userRole, setUserRole] = useState<'admin' | 'coach' | null>(null)
   const [formData, setFormData] = useState<WorkoutFormData>({
@@ -30,17 +31,18 @@ export default function NewWorkoutPage() {
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
+    // permissions follow the signed-in coach, not the trainee being viewed
     const checkAuth = async () => {
-      if (!authLoading && !activeUser) {
+      if (!authLoading && !currentUser) {
         router.push('/dashboard')
         return
       }
-      if (!email) return
+      if (!signedInEmail) return
 
       const { data: user } = await supabase
         .from('Users')
         .select('Role')
-        .eq('Email', email)
+        .eq('Email', signedInEmail)
         .single()
 
       if (!user || (user.Role !== 'admin' && user.Role !== 'coach')) {
@@ -51,7 +53,7 @@ export default function NewWorkoutPage() {
       setUserRole(user.Role)
     }
     checkAuth()
-  }, [authLoading, activeUser, email, router])
+  }, [authLoading, currentUser, signedInEmail, router])
 
   const handleSave = async () => {
     if (!email) {

@@ -4,27 +4,28 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
-import { useAuth, useActiveUserEmail } from '@/context/AuthContext'
+import { useAuth } from '@/context/AuthContext'
 import WorkoutsList from '@/components/workouts/WorkoutsList'
 
 export default function WorkoutsEditorPage() {
   const router = useRouter()
-  const { activeUser, loading: authLoading } = useAuth()
-  const activeEmail = useActiveUserEmail()
+  const { loading: authLoading, currentUser } = useAuth()
+  const signedInEmail = currentUser?.Email
   const [userRole, setUserRole] = useState<'admin' | 'coach' | null>(null)
 
   useEffect(() => {
+    // permissions follow the signed-in coach, not the trainee being viewed
     const checkAuth = async () => {
-      if (!authLoading && !activeUser) {
+      if (!authLoading && !currentUser) {
         router.push('/dashboard')
         return
       }
-      if (!activeEmail) return
+      if (!signedInEmail) return
 
       const { data: user } = await supabase
         .from('Users')
         .select('Role')
-        .eq('Email', activeEmail)
+        .eq('Email', signedInEmail)
         .single()
 
       if (!user || (user.Role !== 'admin' && user.Role !== 'coach')) {
@@ -35,7 +36,7 @@ export default function WorkoutsEditorPage() {
       setUserRole(user.Role)
     }
     checkAuth()
-  }, [authLoading, activeUser, activeEmail, router])
+  }, [authLoading, currentUser, signedInEmail, router])
 
   if (!userRole) return null
 
