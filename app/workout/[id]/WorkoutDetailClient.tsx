@@ -205,7 +205,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
     let cancelled = false
     supabase
       .from('ClimbingLog')
-      .select('ClimbType, GradeID, LogDateTime')
+      .select('ClimbType, GradeID, LogDateTime, LocationID, BoardTypeID')
       .eq('Email', email)
       .order('LogDateTime', { ascending: false })
       .limit(60)
@@ -218,6 +218,11 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
         }
         setDefaultGrades(g)
         setDefaultClimbType(data[0].ClimbType as 'Boulder' | 'Board' | 'Lead')
+        // start from last session's location and board (still changeable)
+        const lastLoc = data.find(r => r.LocationID)?.LocationID
+        if (lastLoc) setSelectedLocation(prev => prev ?? lastLoc)
+        const lastBoard = data.find(r => r.BoardTypeID)?.BoardTypeID
+        if (lastBoard) setSelectedBoardType(prev => prev ?? lastBoard)
       })
     return () => { cancelled = true }
   }, [email, wantsClimbing])
@@ -933,7 +938,10 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
         } : null}
         climberNotes={climberNotes}
         onClimberNotes={setClimberNotes}
-        warning={missingLocation ? 'צריך לבחור מיקום בשלב הטיפוס לפני השמירה' : null}
+        warning={null}
+        location={missingLocation ? {
+          locations, onChange: setSelectedLocation, onAdd: () => setShowAddLocationModal(true),
+        } : null}
       />
     ),
   })
@@ -961,11 +969,18 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
         stepLabel={stepLabel}
         primaryLabel={primaryLabel}
         onPrimary={() => {
+          if (onSummary && missingLocation) {
+            // no location yet: point at the picker on this screen instead of failing
+            const el = document.getElementById('summary-location') as HTMLSelectElement | null
+            el?.focus()
+            el?.closest('section')?.animate?.([{ transform: 'translateX(0)' }, { transform: 'translateX(-6px)' }, { transform: 'translateX(6px)' }, { transform: 'translateX(0)' }], { duration: 260 })
+            return
+          }
           if (onSummary) return onComplete()
           if (returning) { setBackToSummary(false); return setStep(lastStep) }
           setStep(stepIndex + 1)
         }}
-        primaryDisabled={onSummary && (isSaving || missingLocation)}
+        primaryDisabled={onSummary && isSaving}
         primaryTone={onSummary ? 'success' : 'accent'}
         onClose={() => (window.history.length > 1 ? router.back() : router.push('/calendar'))}
         sections={flowExercises.length > 0 && containsClimbing ? [
