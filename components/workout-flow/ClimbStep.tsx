@@ -287,7 +287,7 @@ export default function ClimbStep(props: Props) {
 
       {/* undo toast (portal: the step track is transformed, so fixed must live outside it) */}
       {toast && createPortal(
-        <div role="status" className="fixed left-1/2 -translate-x-1/2 bottom-[calc(96px+env(safe-area-inset-bottom))] z-[80] bg-fg text-bg rounded-full ps-4 pe-1.5 py-1.5 flex items-center gap-2.5 text-[15px] font-bold whitespace-nowrap shadow-lg">
+        <div role="status" className="fixed left-1/2 -translate-x-1/2 bottom-[calc(170px+env(safe-area-inset-bottom))] z-[80] bg-fg text-bg rounded-full ps-4 pe-1.5 py-1.5 flex items-center gap-2.5 text-[15px] font-bold whitespace-nowrap shadow-lg">
           <span>{toast.text}</span>
           {toast.undo && (
             <button type="button" onClick={() => { toast.undo!(); setToast(null) }} className="h-9 px-3.5 rounded-full bg-bg text-fg font-extrabold">
