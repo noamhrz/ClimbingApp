@@ -28,11 +28,12 @@ interface Props {
   onClose: () => void
   // optional switch between sections (e.g. exercises / climbing)
   sections?: { key: string; label: string; active: boolean; onSelect: () => void }[]
+  aboveActions?: ReactNode   // e.g. the rest timer
 }
 
 export default function WorkoutFlow({
   title, steps, index, onIndexChange, stepLabel,
-  primaryLabel, onPrimary, primaryDisabled, primaryTone = 'accent', onClose, sections,
+  primaryLabel, onPrimary, primaryDisabled, primaryTone = 'accent', onClose, sections, aboveActions,
 }: Props) {
   const viewport = useRef<HTMLDivElement>(null)
   const track = useRef<HTMLDivElement>(null)
@@ -144,6 +145,27 @@ export default function WorkoutFlow({
     return () => window.removeEventListener('keydown', onKey)
   }, [go, index])
 
+  // keep the screen on during the workout (where the browser allows it)
+  useEffect(() => {
+    let lock: WakeLockSentinel | null = null
+    let alive = true
+    const request = async () => {
+      try {
+        if (!('wakeLock' in navigator) || document.visibilityState !== 'visible') return
+        const l = await navigator.wakeLock.request('screen')
+        if (alive) lock = l; else l.release().catch(() => {})
+      } catch { /* not allowed (low battery, browser policy) */ }
+    }
+    request()
+    const onVis = () => { if (document.visibilityState === 'visible') request() }
+    document.addEventListener('visibilitychange', onVis)
+    return () => {
+      alive = false
+      document.removeEventListener('visibilitychange', onVis)
+      lock?.release().catch(() => {})
+    }
+  }, [])
+
   // no page scroll behind the flow
   useEffect(() => {
     const html = document.documentElement, body = document.body
@@ -239,7 +261,9 @@ export default function WorkoutFlow({
         </div>
 
         {/* actions */}
-        <footer className="px-4 pt-3 pb-[calc(14px+env(safe-area-inset-bottom))] border-t border-line flex gap-2.5 bg-bg">
+        <footer className="px-4 pt-3 pb-[calc(14px+env(safe-area-inset-bottom))] border-t border-line flex flex-col gap-2.5 bg-bg">
+          {aboveActions}
+          <div className="flex gap-2.5">
           <button
             type="button"
             onClick={() => go(index - 1)}
@@ -259,6 +283,7 @@ export default function WorkoutFlow({
           >
             {primaryLabel}
           </button>
+          </div>
         </footer>
       </div>
     </div>

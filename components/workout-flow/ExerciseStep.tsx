@@ -5,7 +5,7 @@
 // (RepsDone / DurationSec / WeightKG / RPE / Notes, and the *Left fields for single-hand).
 
 import { useState } from 'react'
-import { LuCopy, LuImage, LuPlay } from 'react-icons/lu'
+import { LuCopy, LuImage, LuPlay, LuTimer, LuTrophy } from 'react-icons/lu'
 import NumberStepper from './NumberStepper'
 import Hint from './Hint'
 
@@ -15,12 +15,37 @@ export interface LastValues {
   RepsDoneLeft?: number | null; DurationSecLeft?: number | null; WeightKGLeft?: number | null; RPELeft?: number | null
 }
 
+/** Best ever for one side: heaviest weight, the most reps/time at that weight, and the most reps/time overall. */
+export interface Best { w: number | null; atW: number | null; prim: number | null }
+export type Bests = { R?: Best; L?: Best }
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 interface Props {
   exercise: any
   position: { n: number; of: number }
   last?: LastValues
+  bests?: Bests
   onChange: (data: Record<string, any>) => void
+  onRest?: (seconds: number) => void
+}
+
+/** Personal record: heavier than ever, or the same top weight with more reps/time; without weight, more reps/time. */
+export function isPR(primary: number | null, weight: number | null, best?: Best): boolean {
+  if (primary == null || primary <= 0 || !best) return false
+  const w = weight ?? 0, bw = best.w ?? 0
+  if (bw !== 0 || w !== 0) {
+    if (w > bw) return true
+    return w === bw && best.atW != null && primary > best.atW
+  }
+  return best.prim != null && primary > best.prim
+}
+
+export function exercisePR(o: any, bests?: Bests): boolean {
+  if (!bests) return false
+  const k = o.isDuration ? 'DurationSec' : 'RepsDone'
+  const r = isPR(n(o[k]), n(o.WeightKG), bests.R)
+  const l = !!o.IsSingleHand && isPR(n(o[k + 'Left']), n(o.WeightKGLeft), bests.L)
+  return r || l
 }
 
 const n = (v: unknown) => (v == null || v === '' ? null : Number(v))
@@ -41,7 +66,7 @@ export function exerciseSummary(o: any): string | null {
   return sideSummary(o, false, o.isDuration)
 }
 
-export default function ExerciseStep({ exercise: ex, position, last, onChange }: Props) {
+export default function ExerciseStep({ exercise: ex, position, last, bests, onChange, onRest }: Props) {
   const [side, setSide] = useState<'R' | 'L'>('R')
   const [noteOpen, setNoteOpen] = useState(false)
   const single = !!ex.IsSingleHand
@@ -72,6 +97,9 @@ export default function ExerciseStep({ exercise: ex, position, last, onChange }:
   })
 
   const rpeKey = 'RPE' + s
+  const pr = isPR(n(ex[primKey]), n(ex['WeightKG' + s]), s ? bests?.L : bests?.R)
+  const rest = n(ex.Rest)
+  const restLabel = rest ? (rest >= 60 ? `${Math.floor(rest / 60)}:${String(rest % 60).padStart(2, '0')}` : `${rest} שנ׳`) : ''
   const rightDone = !!sideSummary(ex, false, ex.isDuration)
   const leftDone = !!sideSummary(ex, true, ex.isDuration)
 
@@ -84,6 +112,11 @@ export default function ExerciseStep({ exercise: ex, position, last, onChange }:
           <span className="text-[13px] text-muted">תרגיל {position.n} מתוך {position.of}</span>
         </div>
         <h2 className="text-[28px] leading-tight font-extrabold text-balance">{ex.Name}</h2>
+        {pr && (
+          <p role="status" className="self-start flex items-center gap-1.5 rounded-full bg-success/15 border border-success/50 text-success text-sm font-extrabold px-3 py-1 animate-[pulse_1.2s_ease-in-out_2]">
+            <LuTrophy aria-hidden className="w-4 h-4" />שיא חדש{single ? (s ? ' ביד שמאל' : ' ביד ימין') : ''}!
+          </p>
+        )}
         {targets.length > 0 && (
           <div className="flex flex-wrap gap-1.5">
             {targets.map(t => (
@@ -183,6 +216,11 @@ export default function ExerciseStep({ exercise: ex, position, last, onChange }:
       </div>
 
       <div className="flex gap-2 flex-wrap">
+        {rest && onRest ? (
+          <button type="button" onClick={() => onRest(rest)} className="h-[46px] px-3.5 rounded-xl border border-line-strong bg-raised text-fg-2 text-[15px] font-bold flex items-center gap-1.5">
+            <LuTimer aria-hidden className="w-4 h-4" />מנוחה {restLabel}
+          </button>
+        ) : null}
         {!showNote && (
           <button type="button" onClick={() => setNoteOpen(true)} className="flex-1 min-w-[10rem] h-[46px] rounded-xl border border-dashed border-line-strong text-fg-3 text-[15px] font-semibold">
             + הערה לתרגיל

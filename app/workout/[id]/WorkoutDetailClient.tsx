@@ -7,7 +7,8 @@ import { useAuth, useActiveUserEmail } from '@/context/AuthContext'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ClimbingRoute, BoulderGrade, LeadGrade, ClimbingLocation, BoardType } from '@/types/climbing'
 import WorkoutFlow, { FlowStep } from '@/components/workout-flow/WorkoutFlow'
-import ExerciseStep, { exerciseSummary, LastValues } from '@/components/workout-flow/ExerciseStep'
+import ExerciseStep, { Bests, exercisePR, exerciseSummary, LastValues } from '@/components/workout-flow/ExerciseStep'
+import RestTimer from '@/components/workout-flow/RestTimer'
 import ClimbStep from '@/components/workout-flow/ClimbStep'
 import { IntroStep, SummaryStep } from '@/components/workout-flow/IntroSummary'
 import moment from 'moment-timezone'
@@ -160,43 +161,85 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
   const [defaultGrades, setDefaultGrades] = useState<Partial<Record<'Boulder' | 'Board' | 'Lead', number>>>({})
   const [defaultClimbType, setDefaultClimbType] = useState<'Boulder' | 'Board' | 'Lead' | undefined>(undefined)
 
-  // last logged values per exercise (any workout), for "last time" + greyed placeholders
-  const exerciseIdsKey = exercises.map(e => e.ExerciseID).join(',')
+  // Exercise history (all of it, a few columns): last session per exercise for "last time",
+  // and the best ever per exercise and side for "new record". Computed here, nothing stored.
+  const [bestsByExercise, setBestsByExercise] = useState<Record<number, Bests>>({})
+  const exerciseIdsKey = exercises.map(e => `${e.ExerciseID}:${e.isDuration ? 1 : 0}`).join(',')
   useEffect(() => {
     if (!email || !exerciseIdsKey) return
     let cancelled = false
-    const ids = exerciseIdsKey.split(',').map(Number)
-    supabase
-      .from('ExerciseLogs')
-      .select('ExerciseID, HandSide, RepsDone, DurationSec, WeightKG, RPE, CalendarID, CreatedAt')
-      .eq('Email', email)
-      .eq('Completed', true)
-      .in('ExerciseID', ids)
-      .order('CreatedAt', { ascending: false })
-      .limit(400)
-      .then(({ data }) => {
-        if (cancelled || !data) return
-        const out: Record<number, LastValues> = {}
-        const sessionOf: Record<number, number | null> = {}
-        for (const l of data) {
-          if (calendarIdNum && l.CalendarID === calendarIdNum) continue // not this same workout
-          if (!(l.ExerciseID in sessionOf)) {
-            sessionOf[l.ExerciseID] = l.CalendarID
-            out[l.ExerciseID] = { date: l.CreatedAt ? formatDate(l.CreatedAt) : null }
-          }
-          if (sessionOf[l.ExerciseID] !== l.CalendarID) continue // only the latest session
-          const o = out[l.ExerciseID]
-          const left = l.HandSide === 'Left'
+    const pairs = exerciseIdsKey.split(',').map(p => p.split(':').map(Number))
+    const ids = pairs.map(p => p[0])
+    const isDur = Object.fromEntries(pairs.map(([id, d]) => [id, d === 1]))
+    ;(async () => {
+      type Row = { ExerciseID: number; HandSide: string | null; RepsDone: number | null; DurationSec: number | null; WeightKG: number | null; RPE: number | null; CalendarID: number | null; CreatedAt: string | null }
+      const rows: Row[] = []
+      for (let from = 0; from < 20000; from += 1000) {
+        const { data, error } = await supabase
+          .from('ExerciseLogs')
+          .select('ExerciseID, HandSide, RepsDone, DurationSec, WeightKG, RPE, CalendarID, CreatedAt')
+          .eq('Email', email)
+          .eq('Completed', true)
+          .in('ExerciseID', ids)
+          .order('CreatedAt', { ascending: false })
+          .range(from, from + 999)
+        if (error || !data) break
+        rows.push(...(data as Row[]))
+        if (data.length < 1000) break
+      }
+      if (cancelled) return
+
+      const last: Record<number, LastValues> = {}
+      const sessionOf: Record<number, number | null> = {}
+      const bests: Record<number, Bests> = {}
+      for (const l of rows) {
+        if (calendarIdNum && l.CalendarID === calendarIdNum) continue // not this same workout
+        const left = l.HandSide === 'Left'
+
+        // last session
+        if (!(l.ExerciseID in sessionOf)) {
+          sessionOf[l.ExerciseID] = l.CalendarID
+          last[l.ExerciseID] = { date: l.CreatedAt ? formatDate(l.CreatedAt) : null }
+        }
+        if (sessionOf[l.ExerciseID] === l.CalendarID) {
+          const o = last[l.ExerciseID]
           if (left && o.RepsDoneLeft == null && o.DurationSecLeft == null) {
             Object.assign(o, { RepsDoneLeft: l.RepsDone, DurationSecLeft: l.DurationSec, WeightKGLeft: l.WeightKG, RPELeft: l.RPE })
           } else if (!left && o.RepsDone == null && o.DurationSec == null) {
             Object.assign(o, { RepsDone: l.RepsDone, DurationSec: l.DurationSec, WeightKG: l.WeightKG, RPE: l.RPE })
           }
         }
-        setLastByExercise(out)
-      })
+
+        // best ever
+        const prim = isDur[l.ExerciseID] ? l.DurationSec : l.RepsDone
+        if (prim == null || prim <= 0) continue
+        const side = left ? 'L' : 'R'
+        const b = ((bests[l.ExerciseID] ??= {})[side] ??= { w: null, atW: null, prim: null })
+        const w = l.WeightKG ?? 0
+        b.prim = Math.max(b.prim ?? 0, prim)
+        if (b.w == null || w > b.w) { b.w = w; b.atW = prim }
+        else if (w === b.w) b.atW = Math.max(b.atW ?? 0, prim)
+      }
+      setLastByExercise(last)
+      setBestsByExercise(bests)
+    })()
     return () => { cancelled = true }
   }, [email, exerciseIdsKey, calendarIdNum])
+
+  // reopen at the step where the trainee stopped (stored per workout, with the draft)
+  const stepKey = `${calendarIdNum ? `workout-draft-${calendarIdNum}` : `workout-draft-new-${id}`}-step`
+  const [stepRestored, setStepRestored] = useState(false)
+  if (!loading && !stepRestored) {
+    setStepRestored(true)
+    try {
+      const saved = Number(localStorage.getItem(stepKey))
+      if (saved > 0) setStepRaw(saved)
+    } catch { /* storage unavailable */ }
+  }
+
+  // rest timer
+  const [rest, setRest] = useState<{ endsAt: number; total: number } | null>(null)
+  const startRest = (sec: number) => setRest({ endsAt: Date.now() + sec * 1000, total: sec })
 
   // climbing: start from the type and grades this climber logged most recently
   const wantsClimbing = !!workout?.containClimbing
@@ -789,6 +832,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
 
       showToast('✅ האימון נשמר בהצלחה!', 'blue')
       clearDraft()
+      try { localStorage.removeItem(stepKey) } catch { /* storage unavailable */ }
       setTimeout(() => {
         router.push('/calendar')
       }, 800)
@@ -821,6 +865,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
   const climbIndex = firstEx + flowExercises.length
   const setStep = (i: number) => {
     setStepRaw(i)
+    try { localStorage.setItem(stepKey, String(i)) } catch { /* storage unavailable */ }
     if (i >= firstEx && i < firstEx + flowExercises.length) setLastExStep(i) // remember where I was in the exercises
   }
   // fill every exercise that has history with last time's values (empty fields only), then go to the summary
@@ -892,6 +937,8 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
           exercise={ex}
           position={{ n: k + 1, of: flowExercises.length }}
           last={lastByExercise[ex.ExerciseID]}
+          bests={bestsByExercise[ex.ExerciseID]}
+          onRest={startRest}
           onChange={data => handleExerciseChange(k, data)}
         />
       ),
@@ -925,7 +972,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
     content: (
       <SummaryStep
         rows={flowExercises.map((ex, k) => ({
-          key: `${ex.ExerciseID}-${k}`, title: ex.Name, text: exerciseSummary(ex),
+          key: `${ex.ExerciseID}-${k}`, title: ex.Name, text: exerciseSummary(ex), pr: exercisePR(ex, bestsByExercise[ex.ExerciseID]),
           onOpen: () => { setBackToSummary(true); setStep((hasIntro ? 1 : 0) + k) },
         }))}
         climbing={containsClimbing ? {
@@ -978,11 +1025,22 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
           }
           if (onSummary) return onComplete()
           if (returning) { setBackToSummary(false); return setStep(lastStep) }
+          const curEx = stepIndex >= firstEx && stepIndex < climbIndex ? flowExercises[stepIndex - firstEx] : null
+          if (curEx?.Rest && Number(curEx.Rest) > 0 && exerciseSummary(curEx)) startRest(Number(curEx.Rest))
           setStep(stepIndex + 1)
         }}
         primaryDisabled={onSummary && isSaving}
         primaryTone={onSummary ? 'success' : 'accent'}
         onClose={() => (window.history.length > 1 ? router.back() : router.push('/calendar'))}
+        aboveActions={rest ? (
+          <RestTimer
+            key={rest.total + ':' + rest.endsAt}
+            endsAt={rest.endsAt}
+            total={rest.total}
+            onAdd={sec => setRest(r => r && { endsAt: r.endsAt + sec * 1000, total: r.total + sec })}
+            onClose={() => setRest(null)}
+          />
+        ) : null}
         sections={flowExercises.length > 0 && containsClimbing ? [
           {
             key: 'ex', label: `תרגילים ${flowExercises.filter(e => exerciseSummary(e)).length}/${flowExercises.length}`,
