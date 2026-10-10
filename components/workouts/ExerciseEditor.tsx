@@ -1,18 +1,19 @@
 'use client'
 
-// Phone layout of the workout editor's exercise list (the desktop keeps the drag-and-drop blocks).
+// The workout editor's exercise list, phone and desktop.
 // Blocks of compact exercise rows with explicit actions: move up/down (also across blocks),
-// delete with undo, tap a row to edit it in a bottom sheet (big steppers), duplicate.
-// Adding opens a full-screen picker: search, "frequent" + category chips, tap = add, "+ new exercise".
+// delete with undo, tap a row to edit it in a sheet (big steppers), duplicate.
+// Phone: adding opens a full-screen picker. Desktop: the picker is a side panel that is always
+// open (adds to the highlighted block), rows have inline number fields and can be dragged.
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { createPortal } from 'react-dom'
-import { LuCheck, LuChevronDown, LuChevronUp, LuCopy, LuPlus, LuSearch, LuTrash2, LuX } from 'react-icons/lu'
+import { LuCheck, LuChevronDown, LuChevronUp, LuCopy, LuGripVertical, LuPlus, LuSearch, LuTrash2, LuX } from 'react-icons/lu'
 import { Exercise, WorkoutExerciseWithDetails, DEFAULT_WORKOUT_EXERCISE } from '@/types/workouts'
 import { supabase } from '@/lib/supabaseClient'
 import { calculateWorkoutExercisesTime, formatRestTime } from '@/lib/workout-calculations'
 import NumberStepper from '@/components/workout-flow/NumberStepper'
-import { NewExerciseForm } from './ExerciseSidebar'
+import NewExerciseForm from './NewExerciseForm'
 
 type Ex = WorkoutExerciseWithDetails
 type Model = Ex[][]   // blocks in order, each with its exercises in order
@@ -21,6 +22,41 @@ interface Props {
   exercises: Ex[]
   blocks: number[]                       // all block numbers in order (incl. empty ones)
   onChange: (exercises: Ex[], emptyBlocks: number[]) => void
+}
+
+// md breakpoint, read without an effect (server render = phone)
+const mq = () => window.matchMedia('(min-width: 768px)')
+function useIsDesktop() {
+  return useSyncExternalStore(
+    cb => { const m = mq(); m.addEventListener('change', cb); return () => m.removeEventListener('change', cb) },
+    () => mq().matches,
+    () => false,
+  )
+}
+
+// Small number field for the desktop rows: keeps its own text so it can be emptied while typing
+function InlineNum({ label, value, min = 0, onChange }: { label: string; value: number; min?: number; onChange: (v: number) => void }) {
+  const [text, setText] = useState(String(value))
+  const [seen, setSeen] = useState(value)
+  if (value !== seen) { setSeen(value); if (Number(text) !== value) setText(String(value)) }
+  return (
+    <label className="flex flex-col items-center gap-0.5 text-[11px] font-bold text-muted">
+      {label}
+      <input
+        type="text"
+        inputMode="numeric"
+        value={text}
+        onFocus={e => e.currentTarget.select()}
+        onChange={e => {
+          const raw = e.target.value.replace(/[^0-9]/g, '')
+          setText(raw)
+          if (raw !== '') onChange(Math.max(min, Number(raw)))
+        }}
+        onBlur={() => { if (text === '' || Number(text) < min) { setText(String(Math.max(min, value))); onChange(Math.max(min, value)) } }}
+        className="w-16 h-9 rounded-lg border-2 border-line-strong bg-raised text-fg text-center text-base font-extrabold tabular-nums focus:outline-none focus:border-accent"
+      />
+    </label>
+  )
 }
 
 let tmpId = -1_000_000_000
@@ -56,10 +92,15 @@ const blankRow = (exercise: Exercise): Ex => ({
   Exercise: exercise,
 })
 
-export default function PhoneExerciseEditor({ exercises, blocks, onChange }: Props) {
+export default function ExerciseEditor({ exercises, blocks, onChange }: Props) {
   const model = toModel(exercises, blocks)
   const [editId, setEditId] = useState<number | null>(null)
-  const [pickFor, setPickFor] = useState<number | null>(null)   // block index the picker adds to
+  const [pickFor, setPickFor] = useState<number | null>(null)   // phone: block index the full-screen picker adds to
+  const [target, setTarget] = useState<number | null>(null)     // desktop: block the side panel adds to (null = last)
+  const [focusSig, setFocusSig] = useState(0)                   // bump to focus the panel's search
+  const [dragId, setDragId] = useState<number | null>(null)
+  const [dropAt, setDropAt] = useState<string | null>(null)     // `${bi}:${index}` of the drop marker
+  const isDesktop = useIsDesktop()
   const [flash, setFlash] = useState<number | null>(null)
   const [toast, setToast] = useState<{ text: string; undo?: () => void } | null>(null)
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -137,10 +178,27 @@ export default function PhoneExerciseEditor({ exercises, blocks, onChange }: Pro
     commit(model.filter((_, x) => x !== bi))
   }
 
+  const openAdd = (bi: number) => {
+    if (isDesktop) { setTarget(bi); setFocusSig(n => n + 1) } else setPickFor(bi)
+  }
+
   const addBlock = () => {
     commit([...model, []])
-    setPickFor(model.length)
+    openAdd(model.length)
   }
+
+  // desktop drag: drop the dragged row into block bi before position index
+  const dropInto = (bi: number, index: number) => {
+    if (dragId == null) return
+    const [fb, fi] = locate(dragId)
+    if (fb === -1) return
+    const m = model.map(b => [...b])
+    const [e] = m[fb].splice(fi, 1)
+    m[bi].splice(fb === bi && fi < index ? index - 1 : index, 0, e)
+    setFlash(dragId)
+    commit(m)
+  }
+  const endDrag = () => { setDragId(null); setDropAt(null) }
 
   const addToBlock = (bi: number, ex: Exercise) => {
     const m = model.length ? model.map(b => [...b]) : [[]]
@@ -157,15 +215,18 @@ export default function PhoneExerciseEditor({ exercises, blocks, onChange }: Pro
   }, [flash])
 
   const total = Math.ceil(calculateWorkoutExercisesTime(exercises) / 60)
+  const tgt = model.length ? Math.min(target ?? model.length - 1, model.length - 1) : 0
   const editing = editId != null ? exercises.find(e => e.WorkoutExerciseID === editId) : undefined
   const editBlock = editing ? locate(editing.WorkoutExerciseID)[0] : -1
 
   const mini = 'h-9 min-w-9 px-2 rounded-[10px] border border-line-strong bg-raised text-fg-2 grid place-items-center disabled:opacity-30'
 
   return (
+    <div className="md:grid md:grid-cols-[minmax(0,1fr)_360px] md:gap-6 md:items-start">
     <div className="flex flex-col gap-3.5">
       <p className="text-sm text-muted">
         {exercises.length} תרגילים · זמן משוער <b className="text-fg text-base">{total}</b> דק׳
+        <span className="hidden md:inline"> · אפשר לגרור שורות כדי לסדר</span>
       </p>
 
       {model.length === 0 && (
@@ -176,7 +237,13 @@ export default function PhoneExerciseEditor({ exercises, blocks, onChange }: Pro
       )}
 
       {model.map((items, bi) => (
-        <section key={bi} aria-label={`בלוק ${bi + 1}`} className="rounded-2xl border border-line bg-surface overflow-hidden">
+        <section
+          key={bi}
+          aria-label={`בלוק ${bi + 1}`}
+          onDragOver={ev => { if (dragId != null) { ev.preventDefault(); if (!dropAt?.startsWith(`${bi}:`)) setDropAt(`${bi}:${items.length}`) } }}
+          onDrop={ev => { ev.preventDefault(); const [b, i] = (dropAt ?? `${bi}:${items.length}`).split(':').map(Number); dropInto(b, i); endDrag() }}
+          className={`rounded-2xl border bg-surface overflow-hidden ${isDesktop && bi === tgt ? 'border-accent/70 ring-2 ring-accent/30' : 'border-line'}`}
+        >
           <div className="flex items-center gap-2 px-3 py-2.5 border-b border-line">
             <span className="text-[13px] font-extrabold text-accent bg-accent/15 rounded-full px-2.5 py-0.5">בלוק {bi + 1}</span>
             <span className="flex-1 text-[15px] text-muted">{items.length} תרגילים</span>
@@ -184,13 +251,26 @@ export default function PhoneExerciseEditor({ exercises, blocks, onChange }: Pro
             <button type="button" onClick={() => delBlock(bi)} aria-label={`מחק בלוק ${bi + 1}`} className={`${mini} text-danger`}><LuTrash2 aria-hidden className="w-[18px] h-[18px]" /></button>
           </div>
 
-          {items.length === 0 && <p className="px-3 py-3.5 text-sm text-faint">אין תרגילים בבלוק</p>}
+          {items.length === 0 && <p className={`px-3 py-3.5 text-sm text-faint ${dropAt === `${bi}:0` ? 'bg-accent/10' : ''}`}>{isDesktop ? 'אין תרגילים בבלוק. אפשר לגרור לכאן או להוסיף מהרשימה' : 'אין תרגילים בבלוק'}</p>}
 
           {items.map((e, i) => (
             <div
               key={e.WorkoutExerciseID}
-              className={`flex items-center gap-2 px-3 py-2.5 border-b border-line transition-colors duration-700 ${flash === e.WorkoutExerciseID ? 'bg-accent/20' : ''}`}
+              draggable={isDesktop}
+              onDragStart={ev => { ev.dataTransfer.effectAllowed = 'move'; ev.dataTransfer.setData('text/plain', String(e.WorkoutExerciseID)); setDragId(e.WorkoutExerciseID) }}
+              onDragEnd={endDrag}
+              onDragOver={ev => {
+                if (dragId == null) return
+                ev.preventDefault(); ev.stopPropagation()
+                const r = ev.currentTarget.getBoundingClientRect()
+                const key = `${bi}:${ev.clientY < r.top + r.height / 2 ? i : i + 1}`
+                if (key !== dropAt) setDropAt(key)
+              }}
+              className={`relative flex items-center gap-2 px-3 py-2.5 border-b border-line transition-colors duration-700 ${flash === e.WorkoutExerciseID ? 'bg-accent/20' : ''} ${dragId === e.WorkoutExerciseID ? 'opacity-40' : ''}`}
             >
+              {dropAt === `${bi}:${i}` && dragId != null && <span aria-hidden className="absolute inset-x-2 -top-px h-[3px] rounded-full bg-accent" />}
+              {dropAt === `${bi}:${i + 1}` && i === items.length - 1 && dragId != null && <span aria-hidden className="absolute inset-x-2 -bottom-px h-[3px] rounded-full bg-accent" />}
+              <LuGripVertical aria-hidden className="hidden md:block w-5 h-5 text-faint cursor-grab shrink-0" />
               <div className="flex flex-col gap-0.5">
                 <button type="button" onClick={() => move(e.WorkoutExerciseID, -1)} disabled={i === 0 && bi === 0} aria-label={`הזז למעלה: ${e.Exercise.Name}`} className={`${mini} h-[26px]`}>
                   <LuChevronUp aria-hidden className="w-4 h-4" />
@@ -200,19 +280,29 @@ export default function PhoneExerciseEditor({ exercises, blocks, onChange }: Pro
                 </button>
               </div>
               <button type="button" onClick={() => setEditId(e.WorkoutExerciseID)} className="flex-1 min-w-0 text-right py-1">
-                <span className="block text-base font-bold leading-snug line-clamp-2">{e.Exercise.Name}</span>
-                <span className="flex flex-wrap gap-x-1.5 text-sm text-muted mt-0.5">
+                <span className="block text-base font-bold leading-snug line-clamp-2 md:hover:text-accent">{e.Exercise.Name}</span>
+                <span className="flex flex-wrap gap-x-1.5 text-sm text-muted mt-0.5 md:hidden">
                   {spec(e).map((s, k) => <span key={k}>{k > 0 && '· '}{s}</span>)}
                 </span>
+                <span className="hidden md:block text-[13px] text-muted mt-0.5">{e.Exercise.Category}{e.Exercise.IsSingleHand ? ' · יד אחת' : ''}</span>
               </button>
+              {isDesktop && (
+                <div className="flex items-end gap-2 shrink-0">
+                  <InlineNum label="סטים" value={e.Sets} min={1} onChange={v => update(e.WorkoutExerciseID, { Sets: v })} />
+                  {e.Exercise.isDuration
+                    ? <InlineNum label="שניות" value={e.Duration ?? DEFAULT_WORKOUT_EXERCISE.Duration} min={1} onChange={v => update(e.WorkoutExerciseID, { Duration: v, Reps: 1 })} />
+                    : <InlineNum label="חזרות" value={e.Reps} min={1} onChange={v => update(e.WorkoutExerciseID, { Reps: v })} />}
+                  <InlineNum label={`מנוחה${e.Rest >= 60 ? ` ${formatRestTime(e.Rest)}` : ''}`} value={e.Rest} onChange={v => update(e.WorkoutExerciseID, { Rest: v })} />
+                </div>
+              )}
               <button type="button" onClick={() => remove(e.WorkoutExerciseID)} aria-label={`מחק ${e.Exercise.Name}`} className={`${mini} text-danger`}>
                 <LuTrash2 aria-hidden className="w-[18px] h-[18px]" />
               </button>
             </div>
           ))}
 
-          <button type="button" onClick={() => setPickFor(bi)} className="w-full h-12 border-t border-dashed border-line-strong -mt-px text-accent text-[15px] font-extrabold">
-            + הוספת תרגילים לבלוק {bi + 1}
+          <button type="button" onClick={() => openAdd(bi)} className={`w-full h-12 border-t border-dashed border-line-strong -mt-px text-accent text-[15px] font-extrabold ${isDesktop && bi === tgt ? 'bg-accent/10' : ''}`}>
+            {isDesktop && bi === tgt ? `מוסיף לבלוק ${bi + 1} מהרשימה ←` : `+ הוספת תרגילים לבלוק ${bi + 1}`}
           </button>
         </section>
       ))}
@@ -224,9 +314,9 @@ export default function PhoneExerciseEditor({ exercises, blocks, onChange }: Pro
       )}
 
       {editing && createPortal(
-        <div className="fixed inset-0 z-[100] bg-black/55 flex items-end justify-center" onClick={ev => { if (ev.target === ev.currentTarget) setEditId(null) }}>
-          <div role="dialog" data-flow aria-modal="true" aria-labelledby="ex-edit-title" className="w-full max-w-[520px] max-h-[92vh] overflow-y-auto overscroll-contain bg-raised border-t border-line-strong rounded-t-[20px] px-4 pt-2.5 pb-[calc(16px+env(safe-area-inset-bottom))] flex flex-col gap-4 text-fg">
-            <div className="w-10 h-1 rounded-full bg-line-strong mx-auto" />
+        <div className="fixed inset-0 z-[100] bg-black/55 flex items-end md:items-center justify-center" onClick={ev => { if (ev.target === ev.currentTarget) setEditId(null) }} onKeyDown={ev => { if (ev.key === 'Escape') setEditId(null) }}>
+          <div role="dialog" data-flow aria-modal="true" aria-labelledby="ex-edit-title" className="w-full max-w-[520px] max-h-[92vh] overflow-y-auto overscroll-contain bg-raised border-t md:border border-line-strong rounded-t-[20px] md:rounded-[20px] px-4 pt-2.5 pb-[calc(16px+env(safe-area-inset-bottom))] flex flex-col gap-4 text-fg">
+            <div className="w-10 h-1 rounded-full bg-line-strong mx-auto md:hidden" />
             <div>
               <h2 id="ex-edit-title" className="text-xl font-extrabold">{editing.Exercise.Name}</h2>
               <p className="text-sm text-muted">{editing.Exercise.Category}{editing.Exercise.IsSingleHand ? ' · יד אחת' : ''}</p>
@@ -261,12 +351,29 @@ export default function PhoneExerciseEditor({ exercises, blocks, onChange }: Pro
         document.body,
       )}
 
-      {pickFor != null && (
+      {pickFor != null && !isDesktop && (
         <ExercisePicker
           blockLabel={`בלוק ${Math.min(pickFor, Math.max(model.length - 1, 0)) + 1}`}
           onAdd={ex => addToBlock(pickFor, ex)}
           onClose={n => { setPickFor(null); if (n) showToast(`נוספו ${n} תרגילים`) }}
         />
+      )}
+
+    </div>
+
+      {isDesktop && (
+        <aside className="sticky self-start" style={{ top: 'calc(var(--app-header-height, 0px) + 1rem)' }}>
+          <ExercisePicker
+            panel
+            focusSig={focusSig}
+            blockLabel={`בלוק ${tgt + 1}`}
+            blocks={Math.max(model.length, 1)}
+            target={tgt}
+            onTarget={setTarget}
+            onAdd={ex => addToBlock(tgt, ex)}
+            onClose={() => {}}
+          />
+        </aside>
       )}
 
       {toast && createPortal(
@@ -283,12 +390,17 @@ export default function PhoneExerciseEditor({ exercises, blocks, onChange }: Pro
   )
 }
 
-// ── Full-screen picker ───────────────────────────────────────────────────────
+// ── Picker: full screen on the phone, a side panel on the desktop ────────────
 
-function ExercisePicker({ blockLabel, onAdd, onClose }: {
+function ExercisePicker({ blockLabel, onAdd, onClose, panel = false, focusSig = 0, blocks = 1, target = 0, onTarget }: {
   blockLabel: string
   onAdd: (ex: Exercise) => void
   onClose: (added: number) => void
+  panel?: boolean
+  focusSig?: number
+  blocks?: number
+  target?: number
+  onTarget?: (bi: number) => void
 }) {
   const [lib, setLib] = useState<Exercise[] | null>(null)
   const [usage, setUsage] = useState<Map<number, number>>(new Map())
@@ -316,10 +428,13 @@ function ExercisePicker({ blockLabel, onAdd, onClose }: {
 
   const n = [...added.values()].reduce((a, b) => a + b, 0)
   useEffect(() => {
+    if (panel) return
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(n) }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   })
+  useEffect(() => { if (panel && focusSig) input.current?.focus() }, [panel, focusSig])
+
   const cats = [...new Set((lib ?? []).map(e => e.Category).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'he'))
   const term = q.trim().toLowerCase()
 
@@ -338,19 +453,35 @@ function ExercisePicker({ blockLabel, onAdd, onClose }: {
   }
   const chip = (on: boolean) => `h-10 px-3.5 rounded-full border text-sm font-bold whitespace-nowrap shrink-0 ${on ? 'bg-accent border-accent text-on-accent' : 'border-line-strong bg-surface text-fg-2'}`
 
-  return createPortal(
-    <div role="dialog" data-flow aria-modal="true" aria-labelledby="pick-title" className="fixed inset-0 z-[100] bg-bg text-fg flex flex-col">
+  const body = (
+    <>
       <div className="px-4 pt-3 pb-2 flex flex-col gap-2.5 border-b border-line">
-        <div className="flex items-center gap-2.5">
-          <h2 id="pick-title" className="flex-1 text-[19px] font-extrabold">הוספה ל{blockLabel}</h2>
-          <button type="button" onClick={() => onClose(n)} aria-label="סגירה" className="w-11 h-11 rounded-xl border border-line bg-surface grid place-items-center text-fg-2"><LuX aria-hidden className="w-5 h-5" /></button>
-        </div>
+        {panel ? (
+          <div className="flex items-center gap-2 flex-wrap">
+            <h2 id="pick-title" className="text-lg font-extrabold">הוספת תרגילים</h2>
+            {blocks > 1 ? (
+              <div className="flex gap-1 flex-wrap ms-auto" role="group" aria-label="לאיזה בלוק להוסיף">
+                {Array.from({ length: blocks }, (_, bi) => (
+                  <button key={bi} type="button" aria-pressed={bi === target} onClick={() => onTarget?.(bi)}
+                    className={`h-8 px-3 rounded-full border text-[13px] font-bold ${bi === target ? 'bg-accent border-accent text-on-accent' : 'border-line-strong text-fg-2 hover:border-accent'}`}>
+                    בלוק {bi + 1}
+                  </button>
+                ))}
+              </div>
+            ) : <span className="ms-auto text-sm text-muted">ל{blockLabel}</span>}
+          </div>
+        ) : (
+          <div className="flex items-center gap-2.5">
+            <h2 id="pick-title" className="flex-1 text-[19px] font-extrabold">הוספה ל{blockLabel}</h2>
+            <button type="button" onClick={() => onClose(n)} aria-label="סגירה" className="w-11 h-11 rounded-xl border border-line bg-surface grid place-items-center text-fg-2"><LuX aria-hidden className="w-5 h-5" /></button>
+          </div>
+        )}
         <label className="flex items-center gap-2 h-12 rounded-xl border-2 border-line-strong bg-surface px-3 focus-within:border-accent">
           <LuSearch aria-hidden className="w-5 h-5 text-muted shrink-0" />
           <input ref={input} value={q} onChange={e => setQ(e.target.value)} placeholder="חיפוש תרגיל" aria-label="חיפוש תרגיל" autoComplete="off" enterKeyHint="search" className="flex-1 min-w-0 bg-transparent text-fg text-[17px] focus:outline-none" />
           {q && <button type="button" onClick={() => setQ('')} aria-label="נקה חיפוש" className="text-faint"><LuX aria-hidden className="w-4 h-4" /></button>}
         </label>
-        <div className="flex gap-1.5 overflow-x-auto -mx-4 px-4 pb-1.5 [scrollbar-width:none]" role="group" aria-label="קטגוריות">
+        <div className={`flex gap-1.5 pb-1.5 ${panel ? 'flex-wrap' : 'overflow-x-auto -mx-4 px-4 [scrollbar-width:none]'}`} role="group" aria-label="קטגוריות">
           {usage.size > 0 && <button type="button" aria-pressed={cat === 'frequent' && !term} onClick={() => { setCat('frequent'); setQ('') }} className={chip(cat === 'frequent' && !term)}>נפוצים</button>}
           <button type="button" aria-pressed={cat === 'all' && !term} onClick={() => { setCat('all'); setQ('') }} className={chip(cat === 'all' && !term)}>הכל</button>
           {cats.map(c => (
@@ -388,7 +519,7 @@ function ExercisePicker({ blockLabel, onAdd, onClose }: {
             {items.map(ex => {
               const count = added.get(ex.ExerciseID) ?? 0
               return (
-                <button key={ex.ExerciseID} type="button" onClick={() => add(ex)} className="w-full flex items-center gap-2.5 min-h-14 px-2 py-1.5 rounded-xl text-right active:bg-surface">
+                <button key={ex.ExerciseID} type="button" onClick={() => add(ex)} className={`w-full flex items-center gap-2.5 px-2 py-1.5 rounded-xl text-right active:bg-surface ${panel ? 'min-h-12 hover:bg-raised' : 'min-h-14'}`}>
                   <span className="flex-1 min-w-0">
                     <b className="block text-base truncate">{ex.Name}</b>
                     <small className="text-[13px] text-muted">{ex.Category} · {ex.isDuration ? 'זמן' : 'חזרות'}{ex.IsSingleHand ? ' · יד אחת' : ''}</small>
@@ -403,10 +534,27 @@ function ExercisePicker({ blockLabel, onAdd, onClose }: {
         ))}
       </div>
 
-      <div className="px-4 pt-2.5 pb-[calc(14px+env(safe-area-inset-bottom))] border-t border-line flex items-center gap-2.5">
-        <span className="flex-1 text-sm text-muted" aria-live="polite">{n ? `נוספו ${n} תרגילים` : 'לחיצה על תרגיל מוסיפה אותו'}</span>
-        <button type="button" onClick={() => onClose(n)} className="h-[50px] px-7 rounded-[14px] bg-accent text-on-accent font-extrabold">סיום</button>
-      </div>
+      {panel ? (
+        <p className="px-4 py-2.5 border-t border-line text-sm text-muted" aria-live="polite">{n ? `נוספו ${n} תרגילים` : `לחיצה על תרגיל מוסיפה אותו ל${blockLabel}`}</p>
+      ) : (
+        <div className="px-4 pt-2.5 pb-[calc(14px+env(safe-area-inset-bottom))] border-t border-line flex items-center gap-2.5">
+          <span className="flex-1 text-sm text-muted" aria-live="polite">{n ? `נוספו ${n} תרגילים` : 'לחיצה על תרגיל מוסיפה אותו'}</span>
+          <button type="button" onClick={() => onClose(n)} className="h-[50px] px-7 rounded-[14px] bg-accent text-on-accent font-extrabold">סיום</button>
+        </div>
+      )}
+    </>
+  )
+
+  if (panel) {
+    return (
+      <section aria-labelledby="pick-title" className="rounded-2xl border border-line bg-surface text-fg flex flex-col overflow-hidden" style={{ height: 'calc(100vh - var(--app-header-height, 0px) - 10rem)' }}>
+        {body}
+      </section>
+    )
+  }
+  return createPortal(
+    <div role="dialog" data-flow aria-modal="true" aria-labelledby="pick-title" className="fixed inset-0 z-[100] bg-bg text-fg flex flex-col">
+      {body}
     </div>,
     document.body,
   )
