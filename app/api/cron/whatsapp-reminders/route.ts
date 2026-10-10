@@ -1,3 +1,4 @@
+import { isActiveUser } from '@/lib/active-users'
 import { NextRequest, NextResponse } from 'next/server'
 import twilio from 'twilio'
 import { createClient } from '@supabase/supabase-js'
@@ -57,13 +58,16 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ message: 'No active WhatsApp users' })
   }
 
-  const activeEmails = profiles.map((p) => p.Email)
-
-  // Step 2: Get names from Users
-  const { data: users } = await supabase
+  // Step 2: Get names from Users — inactive users get no reminders
+  const { data: allUsers } = await supabase
     .from('Users')
-    .select('Email, Name')
-    .in('Email', activeEmails)
+    .select('Email, Name, Status, IsActive')
+    .in('Email', profiles.map((p) => p.Email))
+  const users = (allUsers || []).filter(isActiveUser)
+  const activeEmails = users.map((u) => u.Email)
+  if (activeEmails.length === 0) {
+    return NextResponse.json({ message: 'No active WhatsApp users' })
+  }
 
   // Step 2: Get today's incomplete calendar entries for these users
   const { data: calendarEntries, error: calendarError } = await supabase

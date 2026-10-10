@@ -1,5 +1,6 @@
 'use client'
 
+import { isActiveUser } from '@/lib/active-users'
 import { useState, useEffect, useCallback, useRef, Suspense } from 'react'
 import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
@@ -238,14 +239,19 @@ function MediaContent() {
       let list: { Email: string; Name: string }[] = []
 
       if (currentUser!.Role === 'admin') {
-        const { data } = await supabase.from('Users').select('Email, Name').order('Name')
-        list = data ?? []
+        const { data } = await supabase.from('Users').select('Email, Name, Status, IsActive').order('Name')
+        list = (data ?? []).filter(u => u.Email === currentUser!.Email || isActiveUser(u)).map(({ Email, Name }) => ({ Email, Name }))
       } else if (currentUser!.Role === 'coach') {
         const { data } = await supabase
           .from('CoachTraineesActiveView')
           .select('TraineeEmail, TraineeName')
           .eq('CoachEmail', currentUser!.Email)
-        list = (data ?? []).map(t => ({ Email: t.TraineeEmail, Name: t.TraineeName }))
+        const emails = (data ?? []).map(t => t.TraineeEmail)
+        const { data: statuses } = emails.length
+          ? await supabase.from('Users').select('Email, Status, IsActive').in('Email', emails)
+          : { data: [] }
+        const active = new Set((statuses ?? []).filter(isActiveUser).map(u => u.Email))
+        list = (data ?? []).filter(t => active.has(t.TraineeEmail)).map(t => ({ Email: t.TraineeEmail, Name: t.TraineeName }))
       } else {
         const { data } = await supabase
           .from('Users')

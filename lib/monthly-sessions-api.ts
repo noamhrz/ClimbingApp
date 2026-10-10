@@ -1,6 +1,7 @@
 // lib/monthly-sessions-api.ts
 // Monthly coaching sessions CRUD
 
+import { isActiveUser } from './active-users'
 import { supabase } from '@/lib/supabaseClient'
 
 // ═══════════════════════════════════════════════════════════════
@@ -372,9 +373,9 @@ export async function getUsersForSessions(currentEmail: string, currentRole: 'ad
   if (currentRole === 'admin') {
     const { data } = await supabase
       .from('Users')
-      .select('Email, Name')
+      .select('Email, Name, Status, IsActive')
       .order('Name')
-    return data || []
+    return (data || []).filter(u => u.Email === currentEmail || isActiveUser(u)).map(({ Email, Name }) => ({ Email, Name }))
   }
 
   // coach — only their trainees
@@ -383,5 +384,10 @@ export async function getUsersForSessions(currentEmail: string, currentRole: 'ad
     .select('TraineeEmail, TraineeName')
     .eq('CoachEmail', currentEmail)
 
-  return (trainees || []).map(t => ({ Email: t.TraineeEmail, Name: t.TraineeName }))
+  const emails = (trainees || []).map(t => t.TraineeEmail)
+  const { data: statuses } = emails.length
+    ? await supabase.from('Users').select('Email, Status, IsActive').in('Email', emails)
+    : { data: [] }
+  const active = new Set((statuses || []).filter(isActiveUser).map(u => u.Email))
+  return (trainees || []).filter(t => active.has(t.TraineeEmail)).map(t => ({ Email: t.TraineeEmail, Name: t.TraineeName }))
 }

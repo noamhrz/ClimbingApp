@@ -1,6 +1,7 @@
 // lib/goals-api.ts
 // 🎯 Goals System - CRUD Operations
 
+import { isActiveUser } from './active-users'
 import { supabase } from '@/lib/supabaseClient'
 
 // ═══════════════════════════════════════════════════════════════
@@ -298,13 +299,13 @@ export async function getUsersForGoals(currentEmail: string, currentRole: 'admin
   }
 
   if (currentRole === 'admin') {
-    // Admin - all users
+    // Admin - all active users (inactive ones only show in user management)
     const { data } = await supabase
       .from('Users')
-      .select('Email, Name')
+      .select('Email, Name, Status, IsActive')
       .order('Name')
     
-    return data || []
+    return (data || []).filter(u => u.Email === currentEmail || isActiveUser(u)).map(({ Email, Name }) => ({ Email, Name }))
   }
 
   if (currentRole === 'coach') {
@@ -320,7 +321,13 @@ export async function getUsersForGoals(currentEmail: string, currentRole: 'admin
       .eq('Email', currentEmail)
       .single()
     
-    const traineesList = (trainees || []).map(t => ({
+    const emails = (trainees || []).map(t => t.TraineeEmail)
+    const { data: statuses } = emails.length
+      ? await supabase.from('Users').select('Email, Status, IsActive').in('Email', emails)
+      : { data: [] }
+    const active = new Set((statuses || []).filter(isActiveUser).map(u => u.Email))
+
+    const traineesList = (trainees || []).filter(t => active.has(t.TraineeEmail)).map(t => ({
       Email: t.TraineeEmail,
       Name: t.TraineeName
     }))

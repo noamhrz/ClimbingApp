@@ -3,6 +3,7 @@
 'use client'
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import { isActiveUser } from '@/lib/active-users'
 import { supabase } from '@/lib/supabaseClient'
 import { Session } from '@supabase/supabase-js'
 import { useRouter } from 'next/navigation'
@@ -241,11 +242,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (storedActiveEmail && storedActiveEmail !== email) {
         const { data: activeUserData } = await supabase
           .from('Users')
-          .select('Email, Name, Role')
+          .select('Email, Name, Role, Status, IsActive')
           .eq('Email', storedActiveEmail)
           .single()
         
-        if (activeUserData) {
+        if (activeUserData && isActiveUser(activeUserData)) {
           setActiveUser(activeUserData)
         } else {
           setActiveUser(userData)
@@ -273,16 +274,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Admin sees ALL users
         const { data, error } = await supabase
           .from('Users')
-          .select('Email, Name, Role, Status')
+          .select('Email, Name, Role, Status, IsActive')
           .order('Name')
 
         if (!error && data) {
-          const sorted = [...data].sort((a, b) => {
-            const aActive = a.Status === 'Active' ? 0 : 1
-            const bActive = b.Status === 'Active' ? 0 : 1
-            return aActive - bActive
-          })
-          setAvailableUsers(sorted)
+          // inactive users are hidden everywhere except the user-management screen
+          setAvailableUsers(data.filter(u => u.Email === user.Email || isActiveUser(u)))
         }
       } else if (user.Role === 'coach') {
         // Coach sees their trainees + themselves
@@ -294,11 +291,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!traineesError && traineesData) {
           const emails = traineesData.map(t => t.TraineeEmail)
           const { data: statusData } = emails.length > 0
-            ? await supabase.from('Users').select('Email, Status').in('Email', emails)
+            ? await supabase.from('Users').select('Email, Status, IsActive').in('Email', emails)
             : { data: [] }
           const statusMap = new Map((statusData || []).map(u => [u.Email, u.Status]))
+          const active = new Set((statusData || []).filter(isActiveUser).map(u => u.Email))
 
-          const trainees = traineesData.map(t => ({
+          const trainees = traineesData.filter(t => active.has(t.TraineeEmail)).map(t => ({
             Email: t.TraineeEmail,
             Name: t.TraineeName,
             Role: (t.TraineeRole || 'user') as Role,
@@ -309,7 +307,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             return aActive - bActive
           })
 
-          setTraineeEmails(new Set(trainees.map(t => t.Email)))
+          // permissions still cover every linked trainee; only the lists hide inactive ones
+          setTraineeEmails(new Set(traineesData.map(t => t.TraineeEmail)))
           setAvailableUsers([user, ...trainees])
         } else {
           setAvailableUsers([user])
