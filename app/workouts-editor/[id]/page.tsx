@@ -14,7 +14,7 @@ import { LuCircleX, LuPencil, LuSave, LuUserPlus } from 'react-icons/lu'
 
 export default function EditWorkoutPage() {
   const [showAssign, setShowAssign] = useState(false)
-  const [tab, setTab] = useState<'ex' | 'info' | null>(null)   // phone only; null = default for this workout
+  const [tab, setTab] = useState<'ex' | 'info' | null>(null)   // null = default for this workout
   const params = useParams()
   const router = useRouter()
   const { loading: authLoading, currentUser } = useAuth()
@@ -212,8 +212,8 @@ export default function EditWorkoutPage() {
         )}
       </div>
 
-      {/* Phone: tabs between the exercises and the workout details */}
-      <div role="tablist" aria-label="חלקי העורך" className="md:hidden grid grid-cols-2 gap-1 rounded-xl border border-line bg-surface p-1 mb-4">
+      {/* Tabs between the exercises and the workout details */}
+      <div role="tablist" aria-label="חלקי העורך" className="grid grid-cols-2 gap-1 rounded-xl border border-line bg-surface p-1 mb-4 md:max-w-md">
         {([['ex', 'תרגילים'], ['info', 'פרטי האימון']] as const).map(([k, label]) => (
           <button key={k} type="button" role="tab" aria-selected={phoneTab === k} onClick={() => setTab(k)}
             className={`h-10 rounded-[9px] text-[15px] font-extrabold ${phoneTab === k ? 'bg-accent text-on-accent' : 'text-fg-2'}`}>
@@ -223,19 +223,19 @@ export default function EditWorkoutPage() {
       </div>
 
       {/* Basic Info Form */}
-      <div className={`mb-6 ${phoneTab === 'info' ? '' : 'hidden md:block'}`}>
+      <div className={`mb-6 ${phoneTab === 'info' ? '' : 'hidden'}`}>
         <WorkoutForm initialData={formData} onChange={setFormData} />
       </div>
 
       {phoneTab === 'ex' && !formData.containExercise && (
-        <div className="md:hidden mb-6 rounded-2xl border-2 border-dashed border-line p-6 text-center text-fg-3">
+        <div className="mb-6 rounded-2xl border-2 border-dashed border-line p-6 text-center text-fg-3">
           האימון לא כולל תרגילים. אפשר להפעיל את זה בלשונית ״פרטי האימון״.
         </div>
       )}
 
       {/* Exercises Section */}
       {formData.containExercise && (
-        <div className={`mb-6 ${phoneTab === 'ex' ? '' : 'hidden md:block'}`}>
+        <div className={`mb-6 ${phoneTab === 'ex' ? '' : 'hidden'}`}>
           <WorkoutExercises
             ref={exercisesRef}
             workoutId={workoutId}
