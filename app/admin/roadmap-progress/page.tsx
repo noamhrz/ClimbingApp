@@ -1,5 +1,6 @@
 'use client'
 
+import { isActiveUser } from '@/lib/active-users'
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { useAuth } from '@/context/AuthContext'
@@ -94,9 +95,9 @@ export default function RoadmapProgressPage() {
     if (!authorized) return
     supabase
       .from('Users')
-      .select('Email, Name')
+      .select('Email, Name, Status, IsActive')
       .order('Name', { ascending: true })
-      .then(({ data }) => setTrainees(data ?? []))
+      .then(({ data }) => setTrainees((data ?? []).filter(isActiveUser).map(({ Email, Name }) => ({ Email, Name }))))
   }, [authorized])
 
   // ── Fetch categories + levels ─────────────────────────────────────────────────
