@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { isActiveUser } from '@/lib/active-users'
 import { supabase } from '@/lib/supabaseClient'
 import { useAuth } from '@/context/AuthContext'
 import { useRouter } from 'next/navigation'
@@ -37,7 +38,7 @@ export default function UserManagementPage() {
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [roleFilter, setRoleFilter] = useState<string>('all')
-  const [statusFilter, setStatusFilter] = useState<string>('all')
+  const [statusTab, setStatusTab] = useState<'active' | 'inactive'>('active')
   const [resetPasswordUser, setResetPasswordUser] = useState<User | null>(null)
   const [editingUser, setEditingUser] = useState<User | null>(null)
   const [showAddUser, setShowAddUser] = useState(false)
@@ -222,18 +223,19 @@ export default function UserManagementPage() {
   // TOGGLE ACTIVE/INACTIVE
   // ========================================
   const handleToggleActive = async (user: User) => {
-    const newStatus = user.Status === 'Active' ? 'Inactive' : 'Active'
+    const activate = !isActiveUser(user)
+    const newStatus = activate ? 'Active' : 'Inactive'
 
     try {
       const { error } = await supabase
         .from('Users')
-        .update({ Status: newStatus })
+        .update({ Status: newStatus, IsActive: activate })
         .eq('UserID', user.UserID)
 
       if (error) throw error
 
       setUsers(prev => prev.map(u =>
-        u.UserID === user.UserID ? { ...u, Status: newStatus } : u
+        u.UserID === user.UserID ? { ...u, Status: newStatus, IsActive: activate } : u
       ))
     } catch (error) {
       console.error('Error toggling user status:', error)
@@ -286,6 +288,7 @@ export default function UserManagementPage() {
   // ========================================
   // FILTER USERS
   // ========================================
+  const activeCount = users.filter(u => isActiveUser(u)).length
   const filteredUsers = users.filter(user => {
     const matchesSearch = 
       user.Name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -293,9 +296,7 @@ export default function UserManagementPage() {
     
     const matchesRole = roleFilter === 'all' || user.Role === roleFilter
     
-    const matchesStatus = statusFilter === 'all' ||
-      (statusFilter === 'active' && user.Status === 'Active') ||
-      (statusFilter === 'inactive' && user.Status !== 'Active')
+    const matchesStatus = (statusTab === 'active') === isActiveUser(user)
 
     return matchesSearch && matchesRole && matchesStatus
   })
@@ -376,19 +377,20 @@ export default function UserManagementPage() {
               <option value="user">🧗 מטפס</option>
             </select>
 
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-4 py-2 border border-line rounded-lg focus:ring-2 focus:ring-info"
-            >
-              <option value="all">כל הסטטוסים</option>
-              <option value="active">✅ פעיל</option>
-              <option value="inactive">❌ לא פעיל</option>
-            </select>
+          </div>
+
+          {/* Active / inactive tabs — the only screen where inactive users are listed */}
+          <div role="tablist" aria-label="סטטוס משתמשים" className="mt-3 inline-grid grid-cols-2 gap-1 rounded-xl border border-line bg-surface p-1">
+            {([['active', 'פעילים', activeCount], ['inactive', 'לא פעילים', users.length - activeCount]] as const).map(([k, label, n]) => (
+              <button key={k} type="button" role="tab" aria-selected={statusTab === k} onClick={() => setStatusTab(k)}
+                className={`h-10 px-5 rounded-[9px] text-[15px] font-extrabold ${statusTab === k ? 'bg-accent text-on-accent' : 'text-fg-2 hover:text-fg'}`}>
+                {label} ({n})
+              </button>
+            ))}
           </div>
 
           <div className="mt-3 flex gap-4 text-sm text-fg-3">
-            <span>סה"כ: {users.length} משתמשים</span>
+            <span>סה&quot;כ: {users.length} משתמשים</span>
             <span>מוצג: {filteredUsers.length}</span>
           </div>
         </div>
@@ -411,7 +413,7 @@ export default function UserManagementPage() {
                   <tr
                     key={user.UserID}
                     className={`transition-colors ${
- user.Status === 'Inactive'
+ !isActiveUser(user)
  ? 'bg-surface hover:bg-surface/90'
  : 'bg-surface hover:bg-surface/90'
  }`}
@@ -419,13 +421,13 @@ export default function UserManagementPage() {
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         <span className={`w-2 h-2 rounded-full flex-shrink-0 ${
- user.Status === 'Active' ? 'bg-success' : 'bg-raised'
+ isActiveUser(user) ? 'bg-success' : 'bg-raised'
  }`} />
                         <div>
-                          <p className={`font-medium ${user.Status === 'Inactive' ? 'text-faint' : 'text-fg'}`}>
+                          <p className={`font-medium ${!isActiveUser(user) ? 'text-faint' : 'text-fg'}`}>
                             {user.Name}
                           </p>
-                          <p className={`text-sm ${user.Status === 'Inactive' ? 'text-faint' : 'text-muted'}`}>
+                          <p className={`text-sm ${!isActiveUser(user) ? 'text-faint' : 'text-muted'}`}>
                             {user.Email}
                           </p>
                         </div>
@@ -433,7 +435,7 @@ export default function UserManagementPage() {
                     </td>
                     <td className="px-4 py-3">
                       <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${
- user.Status === 'Inactive' ? 'bg-surface text-faint' : 'bg-accent/15 text-accent'
+ !isActiveUser(user) ? 'bg-surface text-faint' : 'bg-accent/15 text-accent'
  }`}>
                         {getRoleIcon(user.Role)} {getRoleName(user.Role)}
                       </span>
@@ -466,12 +468,12 @@ export default function UserManagementPage() {
                         <button
                           onClick={() => handleToggleActive(user)}
                           className={`px-3 py-1 rounded text-xs font-medium ${
- user.Status === 'Active'
+ isActiveUser(user)
  ? 'bg-danger/15 text-danger hover:bg-danger/15'
  : 'bg-success/15 text-success hover:bg-success/15'
  }`}
                         >
-                          {user.Status === 'Active' ? 'השבת' : 'הפעל'}
+                          {isActiveUser(user) ? 'השבת' : 'הפעל'}
                         </button>
                       </div>
                     </td>

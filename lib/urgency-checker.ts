@@ -1,6 +1,7 @@
 // lib/urgency-checker-OPTIMIZED.ts
 // 🚀 OPTIMIZED: Batch queries instead of N+1
 
+import { isActiveUser } from './active-users'
 import { supabase } from '@/lib/supabaseClient'
 import { UrgencyFlag, AthleteUrgency, WellnessData } from './urgency-types'
 import {
@@ -79,11 +80,12 @@ export async function getAthletesByUrgency(
     if (athleteEmails.length === 0) return []
     
     // Step 2: Get athlete details (BATCH)
-    const { data: athletes } = await supabase
+    const { data: allAthletes } = await supabase
       .from('Users')
-      .select('Email, Name')
+      .select('Email, Name, Status, IsActive')
       .in('Email', athleteEmails)
       .order('Name')
+    const athletes = (allAthletes || []).filter(isActiveUser)
     
     if (!athletes || athletes.length === 0) return []
     

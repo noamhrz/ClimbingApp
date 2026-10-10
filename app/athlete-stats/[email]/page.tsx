@@ -5,6 +5,7 @@
 
 'use client'
 
+import { isActiveUser } from '@/lib/active-users'
 import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
@@ -77,7 +78,7 @@ export default function ProfilePage() {
       if (currentUser?.Role === 'admin') {
         const { data, error } = await supabase
           .from('Users')
-          .select('Email, Name, Status')
+          .select('Email, Name, Status, IsActive')
           .order('Name')
 
         if (error) throw error
@@ -86,7 +87,7 @@ export default function ProfilePage() {
           const bActive = b.Status === 'Active' ? 0 : 1
           return aActive - bActive
         })
-        setUsers(sorted)
+        setUsers(sorted.filter(isActiveUser))
       } else if (currentUser?.Role === 'coach') {
         const { data, error } = await supabase
           .from('CoachTraineesActiveView')
@@ -98,11 +99,12 @@ export default function ProfilePage() {
 
         const emails = (data || []).map(t => t.TraineeEmail)
         const { data: statusData } = emails.length > 0
-          ? await supabase.from('Users').select('Email, Status').in('Email', emails)
+          ? await supabase.from('Users').select('Email, Status, IsActive').in('Email', emails)
           : { data: [] }
         const statusMap = new Map((statusData || []).map(u => [u.Email, u.Status]))
 
-        const trainees = (data || []).map(t => ({
+        const activeSet = new Set((statusData || []).filter(isActiveUser).map(u => u.Email))
+        const trainees = (data || []).filter(t => activeSet.has(t.TraineeEmail)).map(t => ({
           Email: t.TraineeEmail,
           Name: t.TraineeName,
           Status: statusMap.get(t.TraineeEmail) as string | undefined
