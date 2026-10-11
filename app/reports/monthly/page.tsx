@@ -5,7 +5,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useAuth } from '@/context/AuthContext'
 import { supabase } from '@/lib/supabaseClient'
-import { LuCalendarRange, LuChevronLeft, LuChevronRight, LuFileChartColumn, LuFileDown, LuMail } from 'react-icons/lu'
+import { LuCalendarRange, LuChevronLeft, LuChevronRight, LuCircleCheck, LuCircleX, LuFileChartColumn, LuFileDown, LuMail, LuRefreshCw } from 'react-icons/lu'
 
 const HE_MONTHS = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר']
 
@@ -18,6 +18,107 @@ function previousMonth() {
 async function authHeader(): Promise<Record<string, string>> {
   const { data: { session } } = await supabase.auth.getSession()
   return session ? { Authorization: `Bearer ${session.access_token}` } : {}
+}
+
+// ── Email status: which settings exist, whether the Gmail login works, last runs ──
+
+interface MailStatus {
+  vercelEnv: string | null
+  env: Record<'SMTP_USER' | 'SMTP_PASS' | 'CRON_SECRET' | 'SUPABASE_SERVICE_ROLE_KEY', boolean>
+  smtp: { ok: boolean; error?: string } | null
+  to: string | null
+  runs: { RunAt: string; Source: string; Ok: boolean; Results: Record<string, unknown> }[] | null
+}
+
+const KIND_HE: Record<string, string> = { daily: 'יומי', weekly: 'שבועי', monthly: 'חודשי' }
+
+function runSummary(r: Record<string, unknown>): string {
+  if (typeof r.error === 'string') return r.error
+  return Object.entries(r)
+    .filter(([k]) => k in KIND_HE)
+    .map(([k, v]) => {
+      const x = (typeof v === 'string' ? { status: v } : v) as { sent?: boolean; status?: string; reason?: string; error?: string }
+      const ok = x.sent || x.status === 'sent'
+      return `${KIND_HE[k]}: ${ok ? 'נשלח' : x.reason === 'nothing to report' ? 'אין מה לדווח' : (x.error ?? x.status ?? 'לא נשלח')}`
+    })
+    .join(' · ')
+}
+
+function smtpHint(err: string): string {
+  if (/535|Invalid login|Username and Password not accepted|BadCredentials/i.test(err))
+    return 'Gmail דחה את הסיסמה. צריך App Password (16 תווים) מחשבון Google עם אימות דו-שלבי, לעדכן את SMTP_PASS ב-Vercel ולעשות Redeploy.'
+  if (/ETIMEDOUT|ECONNECTION|ENOTFOUND/i.test(err)) return 'אין חיבור לשרת המייל. לרוב זמני, כדאי לנסות שוב.'
+  return 'כדאי לבדוק את SMTP_USER ו-SMTP_PASS ב-Vercel.'
+}
+
+function MailStatusPanel() {
+  const [st, setSt] = useState<MailStatus | null>(null)
+  const [err, setErr] = useState('')
+  const [busy, setBusy] = useState(false)
+
+  const load = useCallback(async () => {
+    setBusy(true); setErr('')
+    try {
+      const res = await fetch('/api/reports/status', { headers: await authHeader() })
+      if (!res.ok) throw new Error(`שגיאה ${res.status}`)
+      setSt(await res.json())
+    } catch (e) { setErr(e instanceof Error ? e.message : String(e)) }
+    setBusy(false)
+  }, [])
+  useEffect(() => { load() }, [load])
+
+  const Row = ({ ok, title, fix }: { ok: boolean; title: string; fix?: string }) => (
+    <li className="flex items-start gap-2">
+      {ok ? <LuCircleCheck aria-hidden className="w-5 h-5 text-success shrink-0 mt-0.5" /> : <LuCircleX aria-hidden className="w-5 h-5 text-danger shrink-0 mt-0.5" />}
+      <span className="flex-1">
+        <span className="font-bold">{title}</span>
+        {!ok && fix && <span className="block text-sm text-fg-3">{fix}</span>}
+      </span>
+    </li>
+  )
+  const envFix = 'Vercel → Settings → Environment Variables → להוסיף עם סימון Production → Deployments → Redeploy.'
+
+  return (
+    <section className="mt-4 rounded-xl border border-line bg-raised p-4" aria-label="מצב שליחת מיילים">
+      <div className="flex items-center justify-between gap-2 mb-3">
+        <h2 className="font-extrabold">מצב שליחת מיילים</h2>
+        <button type="button" onClick={load} disabled={busy} className="inline-flex items-center gap-1.5 text-sm text-accent font-bold disabled:opacity-50">
+          <LuRefreshCw aria-hidden className={`w-4 h-4 ${busy ? 'animate-spin' : ''}`} />בדוק שוב
+        </button>
+      </div>
+      {err && <p className="text-danger text-sm">{err}</p>}
+      {!st && !err && <p className="text-sm text-muted">בודק…</p>}
+      {st && (
+        <>
+          <ul className="flex flex-col gap-2">
+            <Row ok={st.env.SMTP_USER && st.env.SMTP_PASS} title={`כתובת וסיסמת מייל (SMTP_USER, SMTP_PASS)${st.vercelEnv ? ` · ${st.vercelEnv}` : ''}`} fix={`חסר: ${[!st.env.SMTP_USER && 'SMTP_USER', !st.env.SMTP_PASS && 'SMTP_PASS'].filter(Boolean).join(', ')}. ${envFix}`} />
+            {st.smtp && <Row ok={st.smtp.ok} title={st.smtp.ok ? `כניסה ל-Gmail עובדת · נשלח אל ${st.to ?? ''}` : `כניסה ל-Gmail נכשלה: ${st.smtp.error}`} fix={st.smtp.error ? smtpHint(st.smtp.error) : undefined} />}
+            <Row ok={st.env.CRON_SECRET} title="הפעלה אוטומטית כל בוקר (CRON_SECRET)" fix={`בלי המשתנה הזה Vercel לא יכול להפעיל את הדוח האוטומטי. להוסיף CRON_SECRET עם ערך אקראי ארוך כלשהו. ${envFix}`} />
+            <Row ok={st.env.SUPABASE_SERVICE_ROLE_KEY} title="גישת שרת לנתונים (SUPABASE_SERVICE_ROLE_KEY)" fix={`המפתח נמצא ב-Supabase → Project Settings → API → service_role. ${envFix}`} />
+          </ul>
+
+          <h3 className="font-bold mt-4 mb-1.5 text-fg-2">הרצות אחרונות</h3>
+          {st.runs === null && (
+            <p className="text-sm text-fg-3">יומן ההרצות עוד לא הופעל: צריך להריץ ב-Supabase את supabase/migrations/20261011_report_runs.sql.</p>
+          )}
+          {st.runs && st.runs.length === 0 && <p className="text-sm text-fg-3">עוד אין הרצות מאז שהיומן הופעל. הדוח האוטומטי רץ כל בוקר ב-07:30.</p>}
+          {st.runs && st.runs.length > 0 && (
+            <ul className="flex flex-col gap-1.5 text-sm">
+              {st.runs.map((r, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  {r.Ok ? <LuCircleCheck aria-hidden className="w-4 h-4 text-success shrink-0 mt-0.5" /> : <LuCircleX aria-hidden className="w-4 h-4 text-danger shrink-0 mt-0.5" />}
+                  <span className="text-muted shrink-0 tabular-nums">{new Date(r.RunAt).toLocaleString('he-IL', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
+                  <span className="shrink-0 font-bold">{r.Source === 'cron' ? 'אוטומטי' : 'בדיקה'}</span>
+                  <span className="text-fg-3">{runSummary(r.Results ?? {})}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+          <p className="text-xs text-muted mt-3">יומי: כל בוקר ב-07:30, רק כשיש התראות · שבועי: ביום ראשון · חודשי: ב-1 לחודש.</p>
+        </>
+      )}
+    </section>
+  )
 }
 
 export default function MonthlyReportPage() {
@@ -122,6 +223,8 @@ export default function MonthlyReportPage() {
           </button>
           {testMsg && <span className={`text-sm ${testState === 'sent' ? 'text-success' : 'text-danger'}`}>{testMsg}</span>}
         </div>
+
+        <MailStatusPanel />
 
         <div className="mt-5 flex flex-wrap items-center gap-3">
           <select

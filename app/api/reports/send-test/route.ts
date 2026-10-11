@@ -6,6 +6,7 @@ import { getSupabaseAdmin, loadTrainees } from '@/lib/reports/data'
 import { buildDaily, buildMonthly, buildWeekly, previousMonth, ReportKind } from '@/lib/reports/build'
 import { mailerConfigured, mailerMissing, sendReportEmail } from '@/lib/reports/mailer'
 import { ilDate } from '@/lib/reports/dates'
+import { logReportRun } from '@/lib/reports/runlog'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
@@ -38,5 +39,6 @@ export async function POST(request: NextRequest) {
     }
   }
   const ok = Object.values(results).every(v => v === 'sent')
+  await logReportRun(db, 'test', ok, results)
   return NextResponse.json({ ok, results, to: process.env.REPORT_TO || process.env.SMTP_USER }, { status: ok ? 200 : 500 })
 }
