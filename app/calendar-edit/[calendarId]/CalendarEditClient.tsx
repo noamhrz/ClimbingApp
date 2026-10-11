@@ -32,6 +32,8 @@ export default function CalendarEditClient() {
   // Climbing state
   const [routes, setRoutes] = useState<ClimbingRoute[]>([])
   const [selectedLocation, setSelectedLocation] = useState<number | null>(null)
+  const [climbMinutes, setClimbMinutes] = useState<number | null>(null)   // gross climbing time, optional
+  const [exerciseMinutes, setExerciseMinutes] = useState<number | null>(null)   // actual exercise time, optional
   const [selectedBoardType, setSelectedBoardType] = useState<number | null>(null)
   
   const [leadGrades, setLeadGrades] = useState<LeadGrade[]>([])
@@ -119,7 +121,9 @@ export default function CalendarEditClient() {
     selectedLocation,
     selectedBoardType,
     climberNotes,
-  }), [exerciseForms, routes, selectedLocation, selectedBoardType, climberNotes])
+    climbMinutes,
+    exerciseMinutes,
+  }), [exerciseForms, routes, selectedLocation, selectedBoardType, climberNotes, climbMinutes, exerciseMinutes])
 
   const onDraftRestore = useCallback((draft: typeof draftState) => {
     if (draft.exerciseForms?.length > 0) {
@@ -155,6 +159,8 @@ export default function CalendarEditClient() {
     if (draft.selectedLocation !== undefined) setSelectedLocation(draft.selectedLocation)
     if (draft.selectedBoardType !== undefined) setSelectedBoardType(draft.selectedBoardType)
     if (draft.climberNotes !== undefined) setClimberNotes(draft.climberNotes)
+    if (draft.climbMinutes !== undefined) setClimbMinutes(draft.climbMinutes)
+    if (draft.exerciseMinutes !== undefined) setExerciseMinutes(draft.exerciseMinutes)
   }, [])
 
   const { clearDraft } = useFormDraft(
@@ -192,6 +198,8 @@ export default function CalendarEditClient() {
         if (!cal) throw new Error('Calendar not found')
         setCalendarRow(cal)
         setClimberNotes(cal.ClimberNotes || '')
+        setClimbMinutes(cal.ClimbingMinutes ?? null)
+        setExerciseMinutes(cal.ExerciseMinutes ?? null)
 
         // Load Workout
         const { data: w } = await supabase
@@ -641,6 +649,15 @@ export default function CalendarEditClient() {
         })
         .eq('CalendarID', calendarId)
 
+      // Gross climbing time — separate update so a missing column never blocks the save
+      const minutesPatch: Record<string, number | null> = {}
+      if (containsClimbing) minutesPatch.ClimbingMinutes = climbMinutes == null ? null : Math.round(climbMinutes)
+      if (workout?.containExercise) minutesPatch.ExerciseMinutes = exerciseMinutes == null ? null : Math.round(exerciseMinutes)
+      if (Object.keys(minutesPatch).length) {
+        const { error: minErr } = await supabase.from('Calendar').update(minutesPatch).eq('CalendarID', calendarId)
+        if (minErr) console.warn('Actual minutes not saved:', minErr.message)
+      }
+
       // ✅ Build success message
       let message = '✅ נשמר בהצלחה!'
       if (exerciseCount > 0) message += ` ${exerciseCount} תרגילים`
@@ -733,7 +750,21 @@ export default function CalendarEditClient() {
         climberNotes={climberNotes}
         onClimberNotes={setClimberNotes}
         warning={null}
-        location={missingLocation ? { locations, onChange: setSelectedLocation, onAdd: (name?: string) => { setNewLocationName(name ?? ''); setShowAddLocationModal(true) } } : null}
+        session={containsClimbing ? {
+          locations,
+          locationId: selectedLocation,
+          locationRequired: routes.length > 0,
+          onLocation: setSelectedLocation,
+          onAddLocation: (name?: string) => { setNewLocationName(name ?? ''); setShowAddLocationModal(true) },
+          minutes: climbMinutes,
+          plannedMinutes: workout?.EstimatedClimbingTime || null,
+          onMinutes: setClimbMinutes,
+        } : null}
+        exerciseTime={workout?.containExercise ? {
+          minutes: exerciseMinutes,
+          plannedMinutes: workout?.CalculatedExercisesTime || null,
+          onMinutes: setExerciseMinutes,
+        } : null}
       />
     ),
   })
