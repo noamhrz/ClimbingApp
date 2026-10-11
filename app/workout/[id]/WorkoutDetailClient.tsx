@@ -58,6 +58,8 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
   // New climbing state - using ClimbingRoute[]
   const [routes, setRoutes] = useState<ClimbingRoute[]>([])
   const [selectedLocation, setSelectedLocation] = useState<number | null>(null)
+  const [climbMinutes, setClimbMinutes] = useState<number | null>(null)   // gross climbing time, optional
+  const [exerciseMinutes, setExerciseMinutes] = useState<number | null>(null)   // actual exercise time, optional
   const [selectedBoardType, setSelectedBoardType] = useState<number | null>(null)
 
   const [leadGrades, setLeadGrades] = useState<LeadGrade[]>([])
@@ -284,7 +286,9 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
     climberNotes,
     deloading,
     deloadingPercentage,
-  }), [exerciseForms, routes, selectedLocation, selectedBoardType, climberNotes, deloading, deloadingPercentage])
+    climbMinutes,
+    exerciseMinutes,
+  }), [exerciseForms, routes, selectedLocation, selectedBoardType, climberNotes, deloading, deloadingPercentage, climbMinutes, exerciseMinutes])
 
   const onDraftRestore = useCallback((draft: typeof draftState) => {
     if (draft.exerciseForms?.length > 0) {
@@ -322,6 +326,8 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
     if (draft.climberNotes !== undefined) setClimberNotes(draft.climberNotes)
     if (draft.deloading !== undefined) setDeloading(draft.deloading)
     if (draft.deloadingPercentage !== undefined) setDeloadingPercentage(draft.deloadingPercentage)
+    if (draft.climbMinutes !== undefined) setClimbMinutes(draft.climbMinutes)
+    if (draft.exerciseMinutes !== undefined) setExerciseMinutes(draft.exerciseMinutes)
   }, [])
 
   const { clearDraft } = useFormDraft(draftKey, draftState, !loading, onDraftRestore)
@@ -661,6 +667,15 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
         if (updErr) throw updErr
       }
 
+      // Gross climbing time — separate update so a missing column can never block saving the workout
+      const minutesPatch: Record<string, number> = {}
+      if (workout.containClimbing && climbMinutes != null) minutesPatch.ClimbingMinutes = Math.round(climbMinutes)
+      if (workout.containExercise && exerciseMinutes != null) minutesPatch.ExerciseMinutes = Math.round(exerciseMinutes)
+      if (Object.keys(minutesPatch).length) {
+        const { error: minErr } = await supabase.from('Calendar').update(minutesPatch).eq('CalendarID', activeCalendarId)
+        if (minErr) console.warn('Actual minutes not saved:', minErr.message)
+      }
+
       // === תרגילים - with Single Hand & isDuration support ===
       if (workout.containExercise && exerciseForms.length > 0) {
         for (const ex of exerciseForms) {
@@ -962,8 +977,20 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
         climberNotes={climberNotes}
         onClimberNotes={setClimberNotes}
         warning={null}
-        location={missingLocation ? {
-          locations, onChange: setSelectedLocation, onAdd: (name?: string) => { setNewLocationName(name ?? ''); setShowAddLocationModal(true) },
+        session={containsClimbing ? {
+          locations,
+          locationId: selectedLocation,
+          locationRequired: routes.length > 0,
+          onLocation: setSelectedLocation,
+          onAddLocation: (name?: string) => { setNewLocationName(name ?? ''); setShowAddLocationModal(true) },
+          minutes: climbMinutes,
+          plannedMinutes: workout.EstimatedClimbingTime || null,
+          onMinutes: setClimbMinutes,
+        } : null}
+        exerciseTime={workout.containExercise ? {
+          minutes: exerciseMinutes,
+          plannedMinutes: workout.CalculatedExercisesTime || null,
+          onMinutes: setExerciseMinutes,
         } : null}
       />
     ),

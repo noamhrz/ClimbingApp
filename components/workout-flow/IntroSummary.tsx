@@ -4,7 +4,8 @@
 
 import { ReactNode } from 'react'
 import LocationPicker from './LocationPicker'
-import { LuCopy, LuMapPin, LuTrophy, LuAlarmClock, LuCalendarDays, LuInfo, LuMessageSquare, LuMountain, LuNotebookPen, LuRefreshCw, LuTriangleAlert, LuVideo } from 'react-icons/lu'
+import NumberStepper from './NumberStepper'
+import { LuCopy, LuMapPin, LuTimer, LuTrophy, LuAlarmClock, LuCalendarDays, LuInfo, LuMessageSquare, LuMountain, LuNotebookPen, LuRefreshCw, LuTriangleAlert, LuVideo } from 'react-icons/lu'
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -160,10 +161,39 @@ function ClimbCard({ c }: { c: ClimbDetail }) {
 
 export interface SummaryRow { key: string; title: string; text: string | null; pr?: boolean; onOpen: () => void }
 
-export function SummaryStep({ rows, climbing, climberNotes, onClimberNotes, warning, location }: {
+// Climbing session details on the summary: the wall and the gross climbing time
+export interface SummarySession {
+  locations: { LocationID: number; LocationName: string }[]
+  locationId: number | null
+  locationRequired: boolean                 // routes were logged → a wall must be chosen
+  onLocation: (id: number | null) => void
+  onAddLocation: (name?: string) => void
+  minutes: number | null                    // null = not reported (reports use the planned time)
+  plannedMinutes: number | null
+  onMinutes: (v: number | null) => void
+}
+
+// Actual time spent on the exercises (optional), compared later with the workout's calculated time
+export interface SummaryTime { minutes: number | null; plannedMinutes: number | null; onMinutes: (v: number | null) => void }
+
+function TimeField({ id, label, hint, t }: { id: string; label: string; hint: string; t: SummaryTime }) {
+  return (
+    <div className="flex flex-col gap-1">
+      <NumberStepper id={id} label={label} unit="(דקות)" value={t.minutes} placeholder={t.plannedMinutes} step={5} min={0} onChange={t.onMinutes} />
+      <p className="text-[13px] text-muted flex items-center gap-1.5">
+        <LuTimer aria-hidden className="w-4 h-4 shrink-0" />
+        {t.minutes == null && t.plannedMinutes
+          ? `לא חובה. בלי שינוי נחשב לפי הזמן המתוכנן (${t.plannedMinutes} דק׳).`
+          : t.minutes == null ? `לא חובה. ${hint}` : hint}
+      </p>
+    </div>
+  )
+}
+
+export function SummaryStep({ rows, climbing, climberNotes, onClimberNotes, warning, session, exerciseTime }: {
   rows: SummaryRow[]
-  // shown when climbing routes were logged without a location
-  location?: { locations: { LocationID: number; LocationName: string }[]; onChange: (id: number | null) => void; onAdd: (name?: string) => void } | null
+  session?: SummarySession | null
+  exerciseTime?: SummaryTime | null
   climbing: ClimbDetail | null
   climberNotes: string
   onClimberNotes: (v: string) => void
@@ -197,22 +227,33 @@ export function SummaryStep({ rows, climbing, climberNotes, onClimberNotes, warn
           </button>
         ))}
       </div>
-      {location && (
-        <section className="rounded-2xl border-2 border-danger/70 bg-danger/10 p-4 flex flex-col gap-2.5">
-          <p className="font-extrabold text-fg flex items-center gap-2">
-            <LuMapPin aria-hidden className="w-5 h-5 text-danger" />איפה טיפסת?
-          </p>
-          <p className="text-sm text-fg-3 -mt-1">צריך לבחור מיקום כדי לשמור את המסלולים.</p>
-          <LocationPicker
-            id="summary-location"
-            locations={location.locations}
-            value={null}
-            onChange={location.onChange}
-            onAddNew={location.onAdd}
-            tone="large"
-          />
+      {exerciseTime && (
+        <section className="rounded-2xl border-2 border-line bg-surface p-4" aria-label="זמן התרגילים">
+          <TimeField id="summary-exercise-minutes" label="זמן התרגילים" hint="מהתרגיל הראשון עד האחרון, כולל מנוחות." t={exerciseTime} />
         </section>
       )}
+      {session && (() => {
+        const missing = session.locationRequired && !session.locationId
+        return (
+          <section className={`rounded-2xl border-2 p-4 flex flex-col gap-3.5 ${missing ? 'border-danger/70 bg-danger/10' : 'border-line bg-surface'}`} aria-label="סשן הטיפוס">
+            <div className="flex flex-col gap-2">
+              <p className="font-extrabold text-fg flex items-center gap-2">
+                <LuMapPin aria-hidden className={`w-5 h-5 ${missing ? 'text-danger' : 'text-accent'}`} />איפה טיפסת?
+              </p>
+              {missing && <p className="text-sm text-fg-3 -mt-1">צריך לבחור מיקום כדי לשמור את המסלולים.</p>}
+              <LocationPicker
+                id="summary-location"
+                locations={session.locations}
+                value={session.locationId}
+                onChange={session.onLocation}
+                onAddNew={session.onAddLocation}
+                tone="large"
+              />
+            </div>
+            <TimeField id="summary-climb-minutes" label="זמן טיפוס ברוטו" hint="מהכניסה לקיר עד הסיום, כולל מנוחות." t={{ minutes: session.minutes, plannedMinutes: session.plannedMinutes, onMinutes: session.onMinutes }} />
+          </section>
+        )
+      })()}
       {climbing && <ClimbCard c={climbing} />}
       <label htmlFor="climberNotes" className="text-[15px] font-bold text-fg-2 pt-1">איך היה האימון?</label>
       <textarea
