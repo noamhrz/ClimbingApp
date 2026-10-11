@@ -15,6 +15,7 @@ import { getSupabaseAdmin, loadTrainees } from '@/lib/reports/data'
 import { buildDaily, buildMonthly, buildWeekly, previousMonth, ReportKind } from '@/lib/reports/build'
 import { mailerConfigured, mailerMissing, sendReportEmail } from '@/lib/reports/mailer'
 import { ilDate } from '@/lib/reports/dates'
+import { logReportRun } from '@/lib/reports/runlog'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
@@ -61,6 +62,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (!mailerConfigured()) {
+      await logReportRun(db, 'cron', false, { error: mailerMissing() })
       return NextResponse.json({ sent: false, reason: mailerMissing() }, { status: 500 })
     }
 
@@ -80,6 +82,7 @@ export async function GET(request: NextRequest) {
         results[k] = { sent: false, error: err instanceof Error ? err.message : String(err) }
       }
     }
+    await logReportRun(db, 'cron', !failed, { date: today, trainees: trainees.length, ...results })
     return NextResponse.json({ date: today, trainees: trainees.length, results }, { status: failed ? 500 : 200 })
   } catch (err) {
     console.error('coach reports failed:', err)
