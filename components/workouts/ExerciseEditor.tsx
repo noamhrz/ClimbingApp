@@ -8,7 +8,7 @@
 
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { createPortal } from 'react-dom'
-import { LuCheck, LuChevronDown, LuChevronUp, LuCopy, LuGripVertical, LuPlus, LuSearch, LuTrash2, LuX } from 'react-icons/lu'
+import { LuArrowLeftRight, LuCheck, LuChevronDown, LuChevronUp, LuCopy, LuGripVertical, LuPlus, LuSearch, LuTrash2, LuX } from 'react-icons/lu'
 import { Exercise, WorkoutExerciseWithDetails, DEFAULT_WORKOUT_EXERCISE } from '@/types/workouts'
 import { supabase } from '@/lib/supabaseClient'
 import { calculateWorkoutExercisesTime, formatRestTime } from '@/lib/workout-calculations'
@@ -95,6 +95,7 @@ const blankRow = (exercise: Exercise): Ex => ({
 export default function ExerciseEditor({ exercises, blocks, onChange }: Props) {
   const model = toModel(exercises, blocks)
   const [editId, setEditId] = useState<number | null>(null)
+  const [moveId, setMoveId] = useState<number | null>(null)       // row whose "move to block" sheet is open
   const [pickFor, setPickFor] = useState<number | null>(null)   // phone: block index the full-screen picker adds to
   const [target, setTarget] = useState<number | null>(null)     // desktop: block the side panel adds to (null = last)
   const [focusSig, setFocusSig] = useState(0)                   // bump to focus the panel's search
@@ -157,13 +158,16 @@ export default function ExerciseEditor({ exercises, blocks, onChange }: Props) {
   const update = (id: number, patch: Partial<Ex>) =>
     commit(model.map(b => b.map(e => (e.WorkoutExerciseID === id ? { ...e, ...patch } : e))))
 
+  // Move a row to the end of block `target`; target === model.length creates a new block at the end
   const moveToBlock = (id: number, target: number) => {
     const [bi, i] = locate(id)
-    if (bi === target) return
+    if (bi === -1 || bi === target) return
     const e = model[bi][i]
-    commit(model.map((b, x) => (x === bi ? b.filter(r => r.WorkoutExerciseID !== id) : x === target ? [...b, e] : b)))
+    const m = model.map((b, x) => (x === bi ? b.filter(r => r.WorkoutExerciseID !== id) : [...b]))
+    if (target >= m.length) m.push([e]); else m[target].push(e)
+    withUndo(`${e.Exercise.Name} הועבר ${target >= model.length ? 'לבלוק חדש' : `לבלוק ${target + 1}`}`)
+    commit(m)
     setFlash(id)
-    showToast(`הועבר לבלוק ${target + 1}`)
   }
 
   const dupBlock = (bi: number) => {
@@ -218,6 +222,8 @@ export default function ExerciseEditor({ exercises, blocks, onChange }: Props) {
   const tgt = model.length ? Math.min(target ?? model.length - 1, model.length - 1) : 0
   const editing = editId != null ? exercises.find(e => e.WorkoutExerciseID === editId) : undefined
   const editBlock = editing ? locate(editing.WorkoutExerciseID)[0] : -1
+  const moving = moveId != null ? exercises.find(e => e.WorkoutExerciseID === moveId) : undefined
+  const moveBlock = moving ? locate(moving.WorkoutExerciseID)[0] : -1
 
   const mini = 'h-9 min-w-9 px-2 rounded-[10px] border border-line-strong bg-raised text-fg-2 grid place-items-center disabled:opacity-30'
 
@@ -295,6 +301,9 @@ export default function ExerciseEditor({ exercises, blocks, onChange }: Props) {
                   <InlineNum label={`מנוחה${e.Rest >= 60 ? ` ${formatRestTime(e.Rest)}` : ''}`} value={e.Rest} onChange={v => update(e.WorkoutExerciseID, { Rest: v })} />
                 </div>
               )}
+              <button type="button" onClick={() => setMoveId(e.WorkoutExerciseID)} aria-label={`העבר לבלוק אחר: ${e.Exercise.Name}`} title="העבר לבלוק אחר" className={mini}>
+                <LuArrowLeftRight aria-hidden className="w-[18px] h-[18px]" />
+              </button>
               <button type="button" onClick={() => remove(e.WorkoutExerciseID)} aria-label={`מחק ${e.Exercise.Name}`} className={`${mini} text-danger`}>
                 <LuTrash2 aria-hidden className="w-[18px] h-[18px]" />
               </button>
@@ -328,7 +337,7 @@ export default function ExerciseEditor({ exercises, blocks, onChange }: Props) {
               <NumberStepper id="ed-reps" label="חזרות" value={editing.Reps} step={1} min={1} onChange={v => update(editing.WorkoutExerciseID, { Reps: v ?? 0 })} />
             )}
             <NumberStepper id="ed-rest" label="מנוחה בין סטים" unit={`(שניות${editing.Rest >= 60 ? ` · ${formatRestTime(editing.Rest)}` : ''})`} value={editing.Rest} step={15} min={0} onChange={v => update(editing.WorkoutExerciseID, { Rest: v ?? 0 })} />
-            {model.length > 1 && (
+            {(
               <div className="flex flex-col gap-1.5">
                 <span className="text-[15px] font-bold text-fg-2">בלוק</span>
                 <div className="flex flex-wrap gap-1.5" role="group" aria-label="העבר לבלוק">
@@ -338,6 +347,10 @@ export default function ExerciseEditor({ exercises, blocks, onChange }: Props) {
                       בלוק {bi + 1}
                     </button>
                   ))}
+                  <button type="button" onClick={() => moveToBlock(editing.WorkoutExerciseID, model.length)}
+                    className="h-10 px-4 rounded-full border border-dashed border-line-strong text-sm font-bold text-accent">
+                    + בלוק חדש
+                  </button>
                 </div>
               </div>
             )}
@@ -346,6 +359,36 @@ export default function ExerciseEditor({ exercises, blocks, onChange }: Props) {
               <button type="button" onClick={() => duplicate(editing.WorkoutExerciseID)} aria-label="שכפול התרגיל" className="h-[50px] px-4 rounded-[14px] border border-line-strong bg-surface text-fg"><LuCopy aria-hidden className="w-5 h-5" /></button>
               <button type="button" onClick={() => setEditId(null)} className="flex-1 h-[50px] rounded-[14px] bg-accent text-on-accent font-extrabold text-base">סיום</button>
             </div>
+          </div>
+        </div>,
+        document.body,
+      )}
+
+      {moving && createPortal(
+        <div className="fixed inset-0 z-[100] bg-black/55 flex items-end md:items-center justify-center" onClick={ev => { if (ev.target === ev.currentTarget) setMoveId(null) }} onKeyDown={ev => { if (ev.key === 'Escape') setMoveId(null) }}>
+          <div role="dialog" data-flow aria-modal="true" aria-labelledby="ex-move-title" className="w-full max-w-[420px] max-h-[80vh] overflow-y-auto overscroll-contain bg-raised border-t md:border border-line-strong rounded-t-[20px] md:rounded-[20px] px-4 pt-2.5 pb-[calc(16px+env(safe-area-inset-bottom))] flex flex-col gap-3 text-fg">
+            <div className="w-10 h-1 rounded-full bg-line-strong mx-auto md:hidden" />
+            <div>
+              <h2 id="ex-move-title" className="text-lg font-extrabold">העברה לבלוק</h2>
+              <p className="text-sm text-muted truncate">{moving.Exercise.Name} · עכשיו בבלוק {moveBlock + 1}</p>
+            </div>
+            <div className="flex flex-col gap-2">
+              {model.map((items, bi) => (
+                <button key={bi} type="button" disabled={bi === moveBlock}
+                  onClick={() => { moveToBlock(moving.WorkoutExerciseID, bi); setMoveId(null) }}
+                  className="min-h-[52px] px-4 rounded-[14px] border border-line-strong bg-surface text-right flex items-center gap-3 disabled:opacity-40 active:bg-accent/15 hover:border-accent">
+                  <span className="text-[13px] font-extrabold text-accent bg-accent/15 rounded-full px-2.5 py-0.5 shrink-0">בלוק {bi + 1}</span>
+                  <span className="flex-1 min-w-0 text-sm text-muted truncate">
+                    {bi === moveBlock ? 'הבלוק הנוכחי' : items.length ? items.map(x => x.Exercise.Name).join(' · ') : 'ריק'}
+                  </span>
+                </button>
+              ))}
+              <button type="button" onClick={() => { moveToBlock(moving.WorkoutExerciseID, model.length); setMoveId(null) }}
+                className="min-h-[52px] rounded-[14px] border border-dashed border-line-strong text-accent font-extrabold">
+                + בלוק חדש
+              </button>
+            </div>
+            <button type="button" onClick={() => setMoveId(null)} className="h-[50px] rounded-[14px] border border-line-strong bg-surface font-bold">ביטול</button>
           </div>
         </div>,
         document.body,
