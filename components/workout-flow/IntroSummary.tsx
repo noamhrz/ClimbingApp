@@ -161,19 +161,16 @@ function ClimbCard({ c }: { c: ClimbDetail }) {
 
 export interface SummaryRow { key: string; title: string; text: string | null; pr?: boolean; onOpen: () => void }
 
-// Climbing session details on the summary: the wall and the gross climbing time
+// Climbing session details on the summary: the wall
 export interface SummarySession {
   locations: { LocationID: number; LocationName: string }[]
   locationId: number | null
   locationRequired: boolean                 // routes were logged → a wall must be chosen
   onLocation: (id: number | null) => void
   onAddLocation: (name?: string) => void
-  minutes: number | null                    // null = not reported (reports use the planned time)
-  plannedMinutes: number | null
-  onMinutes: (v: number | null) => void
 }
 
-// Actual time spent on the exercises (optional), compared later with the workout's calculated time
+// Actual workout time (optional). null = not reported → reports use the workout's estimated time
 export interface SummaryTime { minutes: number | null; plannedMinutes: number | null; onMinutes: (v: number | null) => void }
 
 function TimeField({ id, label, hint, t }: { id: string; label: string; hint: string; t: SummaryTime }) {
@@ -190,10 +187,10 @@ function TimeField({ id, label, hint, t }: { id: string; label: string; hint: st
   )
 }
 
-export function SummaryStep({ rows, climbing, climberNotes, onClimberNotes, warning, session, exerciseTime }: {
+export function SummaryStep({ rows, climbing, climberNotes, onClimberNotes, warning, session, actualTime }: {
   rows: SummaryRow[]
   session?: SummarySession | null
-  exerciseTime?: SummaryTime | null
+  actualTime?: SummaryTime | null
   climbing: ClimbDetail | null
   climberNotes: string
   onClimberNotes: (v: string) => void
@@ -227,11 +224,6 @@ export function SummaryStep({ rows, climbing, climberNotes, onClimberNotes, warn
           </button>
         ))}
       </div>
-      {exerciseTime && (
-        <section className="rounded-2xl border-2 border-line bg-surface p-4" aria-label="זמן התרגילים">
-          <TimeField id="summary-exercise-minutes" label="זמן התרגילים" hint="מהתרגיל הראשון עד האחרון, כולל מנוחות." t={exerciseTime} />
-        </section>
-      )}
       {session && (() => {
         const missing = session.locationRequired && !session.locationId
         return (
@@ -250,11 +242,15 @@ export function SummaryStep({ rows, climbing, climberNotes, onClimberNotes, warn
                 tone="large"
               />
             </div>
-            <TimeField id="summary-climb-minutes" label="זמן טיפוס ברוטו" hint="מהכניסה לקיר עד הסיום, כולל מנוחות." t={{ minutes: session.minutes, plannedMinutes: session.plannedMinutes, onMinutes: session.onMinutes }} />
           </section>
         )
       })()}
       {climbing && <ClimbCard c={climbing} />}
+      {actualTime && (
+        <section className="rounded-2xl border-2 border-line bg-surface p-4" aria-label="זמן אימון בפועל">
+          <TimeField id="summary-actual-minutes" label="זמן אימון בפועל" hint="מתחילת האימון עד הסוף, כולל חימום ומנוחות." t={actualTime} />
+        </section>
+      )}
       <label htmlFor="climberNotes" className="text-[15px] font-bold text-fg-2 pt-1">איך היה האימון?</label>
       <textarea
         id="climberNotes"
