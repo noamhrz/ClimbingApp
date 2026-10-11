@@ -426,15 +426,26 @@ export async function deleteWorkout(workoutId: number): Promise<void> {
  * Fetch all unique categories
  */
 export async function fetchCategories(): Promise<string[]> {
-  const { data } = await supabase
+  // Same query shape as the assign-workouts page (which shows categories fine);
+  // null/empty values are filtered here rather than with a server-side filter.
+  const { data, error } = await supabase
     .from('Workouts')
     .select('Category')
-    .not('Category', 'is', null)
 
+  if (error) {
+    console.error('Error fetching workout categories:', error)
+    return []
+  }
   if (!data) return []
 
-  const categories = [...new Set(data.map((d) => d.Category).filter(Boolean))]
-  return categories.sort()
+  const categories = [
+    ...new Set(
+      data
+        .map((d) => (typeof d.Category === 'string' ? d.Category.trim() : ''))
+        .filter(Boolean)
+    ),
+  ]
+  return categories.sort((a, b) => a.localeCompare(b))
 }
 
 // ========================================
