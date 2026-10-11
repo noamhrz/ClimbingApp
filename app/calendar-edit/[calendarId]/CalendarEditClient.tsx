@@ -32,8 +32,7 @@ export default function CalendarEditClient() {
   // Climbing state
   const [routes, setRoutes] = useState<ClimbingRoute[]>([])
   const [selectedLocation, setSelectedLocation] = useState<number | null>(null)
-  const [climbMinutes, setClimbMinutes] = useState<number | null>(null)   // gross climbing time, optional
-  const [exerciseMinutes, setExerciseMinutes] = useState<number | null>(null)   // actual exercise time, optional
+  const [actualMinutes, setActualMinutes] = useState<number | null>(null)   // actual workout time, optional
   const [selectedBoardType, setSelectedBoardType] = useState<number | null>(null)
   
   const [leadGrades, setLeadGrades] = useState<LeadGrade[]>([])
@@ -121,9 +120,8 @@ export default function CalendarEditClient() {
     selectedLocation,
     selectedBoardType,
     climberNotes,
-    climbMinutes,
-    exerciseMinutes,
-  }), [exerciseForms, routes, selectedLocation, selectedBoardType, climberNotes, climbMinutes, exerciseMinutes])
+    actualMinutes,
+  }), [exerciseForms, routes, selectedLocation, selectedBoardType, climberNotes, actualMinutes])
 
   const onDraftRestore = useCallback((draft: typeof draftState) => {
     if (draft.exerciseForms?.length > 0) {
@@ -159,8 +157,7 @@ export default function CalendarEditClient() {
     if (draft.selectedLocation !== undefined) setSelectedLocation(draft.selectedLocation)
     if (draft.selectedBoardType !== undefined) setSelectedBoardType(draft.selectedBoardType)
     if (draft.climberNotes !== undefined) setClimberNotes(draft.climberNotes)
-    if (draft.climbMinutes !== undefined) setClimbMinutes(draft.climbMinutes)
-    if (draft.exerciseMinutes !== undefined) setExerciseMinutes(draft.exerciseMinutes)
+    if (draft.actualMinutes !== undefined) setActualMinutes(draft.actualMinutes)
   }, [])
 
   const { clearDraft } = useFormDraft(
@@ -198,8 +195,7 @@ export default function CalendarEditClient() {
         if (!cal) throw new Error('Calendar not found')
         setCalendarRow(cal)
         setClimberNotes(cal.ClimberNotes || '')
-        setClimbMinutes(cal.ClimbingMinutes ?? null)
-        setExerciseMinutes(cal.ExerciseMinutes ?? null)
+        setActualMinutes(cal.ActualMinutes ?? null)
 
         // Load Workout
         const { data: w } = await supabase
@@ -649,13 +645,13 @@ export default function CalendarEditClient() {
         })
         .eq('CalendarID', calendarId)
 
-      // Gross climbing time — separate update so a missing column never blocks the save
-      const minutesPatch: Record<string, number | null> = {}
-      if (containsClimbing) minutesPatch.ClimbingMinutes = climbMinutes == null ? null : Math.round(climbMinutes)
-      if (workout?.containExercise) minutesPatch.ExerciseMinutes = exerciseMinutes == null ? null : Math.round(exerciseMinutes)
-      if (Object.keys(minutesPatch).length) {
-        const { error: minErr } = await supabase.from('Calendar').update(minutesPatch).eq('CalendarID', calendarId)
-        if (minErr) console.warn('Actual minutes not saved:', minErr.message)
+      // Actual workout time — separate update so a missing column never blocks the save
+      {
+        const { error: minErr } = await supabase
+          .from('Calendar')
+          .update({ ActualMinutes: actualMinutes == null ? null : Math.round(actualMinutes) })
+          .eq('CalendarID', calendarId)
+        if (minErr) console.warn('ActualMinutes not saved:', minErr.message)
       }
 
       // ✅ Build success message
@@ -756,15 +752,12 @@ export default function CalendarEditClient() {
           locationRequired: routes.length > 0,
           onLocation: setSelectedLocation,
           onAddLocation: (name?: string) => { setNewLocationName(name ?? ''); setShowAddLocationModal(true) },
-          minutes: climbMinutes,
-          plannedMinutes: workout?.EstimatedClimbingTime || null,
-          onMinutes: setClimbMinutes,
         } : null}
-        exerciseTime={workout?.containExercise ? {
-          minutes: exerciseMinutes,
-          plannedMinutes: workout?.CalculatedExercisesTime || null,
-          onMinutes: setExerciseMinutes,
-        } : null}
+        actualTime={{
+          minutes: actualMinutes,
+          plannedMinutes: workout?.EstimatedTotalTime || null,
+          onMinutes: setActualMinutes,
+        }}
       />
     ),
   })
