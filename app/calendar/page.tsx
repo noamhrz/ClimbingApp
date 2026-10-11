@@ -109,6 +109,8 @@ export default function CalendarPage() {
       setIsMobile(mobile)
     }
     checkMobile()
+    // Desktop opens on the month calendar; phones keep the day list
+    if (window.innerWidth >= 1024) setView('month')
     window.addEventListener('resize', checkMobile)
     return () => window.removeEventListener('resize', checkMobile)
   }, [])
