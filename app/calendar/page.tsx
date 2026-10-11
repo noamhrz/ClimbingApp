@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Calendar as BigCalendar, momentLocalizer, View } from 'react-big-calendar'
 import withDragAndDrop from 'react-big-calendar/lib/addons/dragAndDrop'
 import 'react-big-calendar/lib/css/react-big-calendar.css'
@@ -20,6 +20,7 @@ import WeekDuplicateModal from '@/components/WeekDuplicateModal'
 import DeleteRangeModal from '@/components/DeleteRangeModal'
 import DayListView from '@/components/calendar/DayListView'
 import CalendarToolbar from '@/components/calendar/CalendarToolbar'
+import AssignedWorkoutsPanel, { PanelWorkout } from '@/components/calendar/AssignedWorkoutsPanel'
 import { copyPreviousWorkout } from '@/utils/copyPreviousWorkout'
 import { LuPlus, LuCalendarDays, LuList, LuCalendar, LuCopy, LuBatteryLow, LuX, LuTrash2, LuSave, LuCalendarPlus } from 'react-icons/lu'
 import { PageSkeleton } from '@/components/ui/Skeleton'
@@ -89,6 +90,17 @@ export default function CalendarPage() {
     Order: number | null
   }>>(new Map())
   const hasPendingChanges = pendingChanges.size > 0
+
+  // Desktop coach panel: drag an assigned workout onto a day
+  const dragWorkout = useRef<PanelWorkout | null>(null)
+  const [dayDropOver, setDayDropOver] = useState(false)
+  const [toast, setToast] = useState<{ text: string; undo?: () => void } | null>(null)
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const showToast = (text: string, undo?: () => void) => {
+    setToast({ text, undo })
+    if (toastTimer.current) clearTimeout(toastTimer.current)
+    toastTimer.current = setTimeout(() => setToast(null), 5000)
+  }
 
   // Mobile detection
   useEffect(() => {
@@ -287,6 +299,44 @@ export default function CalendarPage() {
 
   const handleModalSuccess = async () => {
     await fetchCalendar()
+  }
+
+  // Schedule an assigned workout on a day (drag from the panel, or "+" in day view).
+  // Same shape as AddWorkoutModal: morning slot, StartTime minute encodes the day's order.
+  const addWorkoutToDay = async (w: PanelWorkout, day: Date) => {
+    if (!activeEmail) return
+    if (hasPendingChanges) {
+      alert('יש שינויים שלא נשמרו בלוח. שמור או בטל אותם קודם.')
+      return
+    }
+    const dateStr = moment(day).format('YYYY-MM-DD')
+    const order = events.filter(e => moment(e.start).format('YYYY-MM-DD') === dateStr).length + 1
+    const { data: wd } = await supabase.from('Workouts').select('EstimatedTotalTime').eq('WorkoutID', w.id).maybeSingle()
+    const start = moment.tz(dateStr, 'Asia/Jerusalem').hour(9).minute(order - 1).second(0).millisecond(0)
+    const end = start.clone().add(wd?.EstimatedTotalTime || 60, 'minutes')
+    const { data, error } = await supabase
+      .from('Calendar')
+      .insert({
+        Email: activeEmail,
+        WorkoutID: w.id,
+        StartTime: start.toDate(),
+        EndTime: end.toDate(),
+        Completed: false,
+        Deloading: false,
+        Color: '#3b82f6',
+        Order: order,
+      })
+      .select('CalendarID')
+      .single()
+    if (error || !data) {
+      alert('שגיאה בהוספת האימון: ' + (error?.message ?? ''))
+      return
+    }
+    await fetchCalendar()
+    showToast(`${w.name} נוסף ל-${moment(day).format('DD/MM')}`, async () => {
+      await supabase.from('Calendar').delete().eq('CalendarID', data.CalendarID)
+      await fetchCalendar()
+    })
   }
 
   const handleEventDrop = ({ event, start }: any) => {
@@ -560,6 +610,7 @@ export default function CalendarPage() {
   }
 
   const ActiveCalendar = isMobile ? BigCalendar : DnDCalendar
+  const showPanel = isAdmin && !isMobile
 
   if (authLoading) {
     return (
@@ -772,9 +823,15 @@ export default function CalendarPage() {
         </div>
       )}
 
-      <div className="max-w-7xl mx-auto p-4">
+      <div className={`mx-auto p-4 ${showPanel ? 'max-w-[1600px] grid grid-cols-[minmax(0,1fr)_300px] gap-4 items-start' : 'max-w-7xl'}`}>
         <div className="bg-surface rounded-xl p-4 overflow-hidden">
           {view === 'day' ? (
+            <div
+              onDragOver={e => { if (showPanel && dragWorkout.current) { e.preventDefault(); if (!dayDropOver) setDayDropOver(true) } }}
+              onDragLeave={e => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setDayDropOver(false) }}
+              onDrop={e => { e.preventDefault(); setDayDropOver(false); const w = dragWorkout.current; dragWorkout.current = null; if (w) addWorkoutToDay(w, date) }}
+              className={`rounded-xl transition-shadow ${dayDropOver ? 'ring-2 ring-accent ring-offset-2 ring-offset-surface' : ''}`}
+            >
             <DayListView
               events={events}
               date={date}
@@ -785,6 +842,7 @@ export default function CalendarPage() {
               pendingIds={new Set(pendingChanges.keys())}
               isDesktop={!isMobile}
             />
+            </div>
           ) : (
             <ActiveCalendar
               localizer={localizer}
@@ -816,6 +874,17 @@ export default function CalendarPage() {
               resizable={false}
               draggableAccessor={() => !isSelectingDate}
               onEventDrop={!isSelectingDate ? handleEventDrop : undefined}
+              {...(showPanel ? {
+                // null while nothing is being dragged from the panel (the addon checks for it)
+                dragFromOutsideItem: () => (dragWorkout.current
+                  ? { title: dragWorkout.current.name, start: new Date(), end: new Date(Date.now() + 3600000) }
+                  : null) as unknown as object,
+                onDropFromOutside: ({ start }: { start: string | Date }) => {
+                  const w = dragWorkout.current
+                  dragWorkout.current = null
+                  if (w) addWorkoutToDay(w, new Date(start))
+                },
+              } : {})}
               components={{
                 toolbar: CalendarToolbar as any,
                 event: (props: any) => (
@@ -831,7 +900,29 @@ export default function CalendarPage() {
             />
           )}
         </div>
+
+        {showPanel && activeEmail && (
+          <AssignedWorkoutsPanel
+            email={activeEmail}
+            name={activeUser?.Name}
+            workouts={workouts}
+            onAssignedChange={fetchWorkouts}
+            onDragStart={w => { dragWorkout.current = w }}
+            onDragEnd={() => { setTimeout(() => { dragWorkout.current = null }, 0); setDayDropOver(false) }}
+            addLabel={view === 'day' ? `ל-${moment(date).format('DD/MM')}` : undefined}
+            onAdd={view === 'day' ? w => addWorkoutToDay(w, date) : undefined}
+          />
+        )}
       </div>
+
+      {toast && (
+        <div role="status" className="fixed z-[70] left-1/2 -translate-x-1/2 bottom-8 bg-fg text-bg rounded-full ps-4 pe-1.5 py-1.5 flex items-center gap-3 text-[15px] font-bold whitespace-nowrap shadow-lg">
+          <span>{toast.text}</span>
+          {toast.undo
+            ? <button type="button" onClick={() => { toast.undo?.(); setToast(null) }} className="h-9 px-4 rounded-full bg-bg text-fg font-extrabold">ביטול</button>
+            : <span className="w-1" />}
+        </div>
+      )}
     </div>
   )
 }
