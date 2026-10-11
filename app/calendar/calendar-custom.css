@@ -177,3 +177,8 @@
 [dir="rtl"] .rbc-show-more {
   text-align: center !important;
 }
+/* Month cell under a workout dragged from the coach panel */
+.rbc-day-bg.mw-drop-target {
+  background: color-mix(in srgb, var(--color-accent, #E0763A) 22%, transparent) !important;
+  box-shadow: inset 0 0 0 2px var(--color-accent, #E0763A);
+}

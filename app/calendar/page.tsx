@@ -303,6 +303,43 @@ export default function CalendarPage() {
     await fetchCalendar()
   }
 
+  // Month grid: find the day cell under the pointer (rows/cells are in date order in the DOM,
+  // RTL only flips them visually), so the drop needs no help from the calendar library.
+  const monthCellAt = (x: number, y: number): { el: HTMLElement; day: Date } | null => {
+    const rows = [...document.querySelectorAll<HTMLElement>('.rbc-month-view .rbc-month-row')]
+    const ri = rows.findIndex(r => { const b = r.getBoundingClientRect(); return y >= b.top && y < b.bottom })
+    if (ri === -1) return null
+    const cells = [...rows[ri].querySelectorAll<HTMLElement>('.rbc-row-bg > .rbc-day-bg')]
+    const ci = cells.findIndex(c => { const b = c.getBoundingClientRect(); return x >= b.left && x < b.right })
+    if (ci === -1) return null
+    const first = moment(date).startOf('month').startOf('week')
+    return { el: cells[ci], day: first.clone().add(ri * 7 + ci, 'days').toDate() }
+  }
+  const dropCell = useRef<HTMLElement | null>(null)
+  const markDropCell = (el: HTMLElement | null) => {
+    if (dropCell.current === el) return
+    dropCell.current?.classList.remove('mw-drop-target')
+    el?.classList.add('mw-drop-target')
+    dropCell.current = el
+  }
+  const onMonthDragOver = (e: React.DragEvent) => {
+    if (!dragWorkout.current) return
+    const hit = monthCellAt(e.clientX, e.clientY)
+    if (!hit) { markDropCell(null); return }
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'copy'
+    markDropCell(hit.el)
+  }
+  const onMonthDrop = (e: React.DragEvent) => {
+    const w = dragWorkout.current
+    const hit = monthCellAt(e.clientX, e.clientY)
+    markDropCell(null)
+    dragWorkout.current = null
+    if (!w || !hit) return
+    e.preventDefault()
+    addWorkoutToDay(w, hit.day)
+  }
+
   // Schedule an assigned workout on a day (drag from the panel, or "+" in day view).
   // Same shape as AddWorkoutModal: morning slot, StartTime minute encodes the day's order.
   const addWorkoutToDay = async (w: PanelWorkout, day: Date) => {
@@ -312,7 +349,15 @@ export default function CalendarPage() {
       return
     }
     const dateStr = moment(day).format('YYYY-MM-DD')
-    const order = events.filter(e => moment(e.start).format('YYYY-MM-DD') === dateStr).length + 1
+    // count from the DB, not from state, so quick consecutive drops don't share a slot
+    const dayStart = moment.tz(dateStr, 'Asia/Jerusalem').startOf('day')
+    const { data: dayRows } = await supabase
+      .from('Calendar')
+      .select('Order')
+      .eq('Email', activeEmail)
+      .gte('StartTime', dayStart.toISOString())
+      .lt('StartTime', dayStart.clone().add(1, 'day').toISOString())
+    const order = Math.max(0, ...(dayRows ?? []).map(r => r.Order ?? 0), (dayRows ?? []).length) + 1
     const { data: wd } = await supabase.from('Workouts').select('EstimatedTotalTime').eq('WorkoutID', w.id).maybeSingle()
     const start = moment.tz(dateStr, 'Asia/Jerusalem').hour(9).minute(order - 1).second(0).millisecond(0)
     const end = start.clone().add(wd?.EstimatedTotalTime || 60, 'minutes')
@@ -343,6 +388,7 @@ export default function CalendarPage() {
 
   const handleEventDrop = ({ event, start }: any) => {
     if (isMobile || isSelectingDate) return
+    if (typeof event?.id !== 'number') return   // not a calendar entry (e.g. a stray drag preview)
 
     const isSameDay = moment(start).format('YYYY-MM-DD') === moment(event.start).format('YYYY-MM-DD')
     if (view === 'month' && isSameDay) return
@@ -826,7 +872,12 @@ export default function CalendarPage() {
       )}
 
       <div className={`mx-auto p-4 ${showPanel ? 'max-w-[1600px] grid grid-cols-[minmax(0,1fr)_300px] gap-4 items-start' : 'max-w-7xl'}`}>
-        <div className="bg-surface rounded-xl p-4 overflow-hidden">
+        <div
+          className="bg-surface rounded-xl p-4 overflow-hidden"
+          onDragOver={view === 'month' && showPanel ? onMonthDragOver : undefined}
+          onDragLeave={view === 'month' && showPanel ? e => { if (!e.currentTarget.contains(e.relatedTarget as Node)) markDropCell(null) } : undefined}
+          onDrop={view === 'month' && showPanel ? onMonthDrop : undefined}
+        >
           {view === 'day' ? (
             <div
               onDragOver={e => { if (showPanel && dragWorkout.current) { e.preventDefault(); if (!dayDropOver) setDayDropOver(true) } }}
@@ -876,17 +927,6 @@ export default function CalendarPage() {
               resizable={false}
               draggableAccessor={() => !isSelectingDate}
               onEventDrop={!isSelectingDate ? handleEventDrop : undefined}
-              {...(showPanel ? {
-                // null while nothing is being dragged from the panel (the addon checks for it)
-                dragFromOutsideItem: () => (dragWorkout.current
-                  ? { title: dragWorkout.current.name, start: new Date(), end: new Date(Date.now() + 3600000) }
-                  : null) as unknown as object,
-                onDropFromOutside: ({ start }: { start: string | Date }) => {
-                  const w = dragWorkout.current
-                  dragWorkout.current = null
-                  if (w) addWorkoutToDay(w, new Date(start))
-                },
-              } : {})}
               components={{
                 toolbar: CalendarToolbar as any,
                 event: (props: any) => (
@@ -910,7 +950,7 @@ export default function CalendarPage() {
             workouts={workouts}
             onAssignedChange={fetchWorkouts}
             onDragStart={w => { dragWorkout.current = w }}
-            onDragEnd={() => { setTimeout(() => { dragWorkout.current = null }, 0); setDayDropOver(false) }}
+            onDragEnd={() => { setTimeout(() => { dragWorkout.current = null }, 0); setDayDropOver(false); markDropCell(null) }}
             addLabel={view === 'day' ? `ל-${moment(date).format('DD/MM')}` : undefined}
             onAdd={view === 'day' ? w => addWorkoutToDay(w, date) : undefined}
           />
