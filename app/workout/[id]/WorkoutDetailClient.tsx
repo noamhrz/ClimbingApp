@@ -228,6 +228,25 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
     return () => { cancelled = true }
   }, [email, exerciseIdsKey, calendarIdNum])
 
+  // Actual time the last time this trainee did this workout — used by "same as last time"
+  const [lastActualMinutes, setLastActualMinutes] = useState<number | null>(null)
+  useEffect(() => {
+    if (!email || !id) return
+    let cancelled = false
+    let q = supabase
+      .from('Calendar')
+      .select('ActualMinutes')
+      .eq('Email', email)
+      .eq('WorkoutID', id)
+      .eq('Completed', true)
+      .not('ActualMinutes', 'is', null)
+      .order('StartTime', { ascending: false })
+      .limit(1)
+    if (calendarIdNum) q = q.neq('CalendarID', calendarIdNum)
+    q.then(({ data }) => { if (!cancelled) setLastActualMinutes(data?.[0]?.ActualMinutes ?? null) })
+    return () => { cancelled = true }
+  }, [email, id, calendarIdNum])
+
   // reopen at the step where the trainee stopped (stored per workout, with the draft)
   const stepKey = `${calendarIdNum ? `workout-draft-${calendarIdNum}` : `workout-draft-new-${id}`}-step`
   const [stepRestored, setStepRestored] = useState(false)
@@ -896,6 +915,8 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
       if (changed) filled++
       return next
     }))
+    // the actual time from last time, unless one was already entered
+    if (actualMinutes == null && lastActualMinutes != null) setActualMinutes(lastActualMinutes)
     setBackToSummary(false)
     setStepRaw(Number.MAX_SAFE_INTEGER) // clamped to the summary below
     showToast(filled || lastCount ? 'מולא כמו בפעם הקודמת. לחץ על תרגיל כדי לשנות אותו' : 'אין נתונים מהפעם הקודמת', 'blue')

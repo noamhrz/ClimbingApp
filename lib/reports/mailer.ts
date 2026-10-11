@@ -14,19 +14,29 @@ export function mailerMissing(): string {
   return `חסר: ${missing.join(', ') || 'אין'} · סביבת Vercel: ${process.env.VERCEL_ENV ?? 'לא ידוע'}`
 }
 
-export async function sendReportEmail(subject: string, html: string, text: string) {
-  const user = process.env.SMTP_USER
-  const pass = process.env.SMTP_PASS
-  if (!user || !pass) throw new Error('SMTP_USER / SMTP_PASS are not set')
-
-  const transporter = nodemailer.createTransport({
+function transport(user: string, pass: string) {
+  return nodemailer.createTransport({
     host: 'smtp.gmail.com',
     port: 465,
     secure: true,
     auth: { user, pass: pass.replace(/\s+/g, '') },
   })
+}
 
-  return transporter.sendMail({
+/** Logs in to the SMTP server without sending anything. Returns null when OK, else the error. */
+export async function verifyMailer(): Promise<string | null> {
+  const user = process.env.SMTP_USER, pass = process.env.SMTP_PASS
+  if (!user || !pass) return 'SMTP_USER / SMTP_PASS are not set'
+  try { await transport(user, pass).verify(); return null }
+  catch (e) { return e instanceof Error ? e.message : String(e) }
+}
+
+export async function sendReportEmail(subject: string, html: string, text: string) {
+  const user = process.env.SMTP_USER
+  const pass = process.env.SMTP_PASS
+  if (!user || !pass) throw new Error('SMTP_USER / SMTP_PASS are not set')
+
+  return transport(user, pass).sendMail({
     from: { name: 'MY WAY', address: user },
     to: process.env.REPORT_TO || user,
     subject,
