@@ -109,13 +109,27 @@ export default function ExercisePicker({ blockLabel, onAdd, onClose, panel = fal
           <input ref={input} value={q} onChange={e => setQ(e.target.value)} placeholder="חיפוש תרגיל" aria-label="חיפוש תרגיל" autoComplete="off" enterKeyHint="search" className="flex-1 min-w-0 bg-transparent text-fg text-[17px] focus:outline-none" />
           {q && <button type="button" onClick={() => setQ('')} aria-label="נקה חיפוש" className="text-faint"><LuX aria-hidden className="w-4 h-4" /></button>}
         </label>
-        <div className={`flex gap-1.5 pb-1.5 ${panel ? 'flex-wrap' : 'overflow-x-auto -mx-4 px-4 [scrollbar-width:none]'}`} role="group" aria-label="קטגוריות">
-          {usage.size > 0 && <button type="button" aria-pressed={cat === 'frequent' && !term} onClick={() => { setCat('frequent'); setQ('') }} className={chip(cat === 'frequent' && !term)}>נפוצים</button>}
-          <button type="button" aria-pressed={cat === 'all' && !term} onClick={() => { setCat('all'); setQ('') }} className={chip(cat === 'all' && !term)}>הכל</button>
-          {cats.map(c => (
-            <button key={c} type="button" aria-pressed={cat === c && !term} onClick={() => { setCat(c); setQ('') }} className={chip(cat === c && !term)}>{c}</button>
-          ))}
-        </div>
+        {panel ? (
+          <select
+            value={term ? '' : cat}
+            onChange={e => { setCat(e.target.value); setQ('') }}
+            aria-label="קטגוריה"
+            className="h-10 rounded-xl border-2 border-line-strong bg-surface text-fg px-3 text-[15px] font-bold focus:outline-none focus:border-accent"
+          >
+            {term && <option value="">תוצאות חיפוש</option>}
+            {usage.size > 0 && <option value="frequent">נפוצים</option>}
+            <option value="all">כל הקטגוריות</option>
+            {cats.map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
+        ) : (
+          <div className="flex gap-1.5 pb-1.5 overflow-x-auto -mx-4 px-4 [scrollbar-width:none]" role="group" aria-label="קטגוריות">
+            {usage.size > 0 && <button type="button" aria-pressed={cat === 'frequent' && !term} onClick={() => { setCat('frequent'); setQ('') }} className={chip(cat === 'frequent' && !term)}>נפוצים</button>}
+            <button type="button" aria-pressed={cat === 'all' && !term} onClick={() => { setCat('all'); setQ('') }} className={chip(cat === 'all' && !term)}>הכל</button>
+            {cats.map(c => (
+              <button key={c} type="button" aria-pressed={cat === c && !term} onClick={() => { setCat(c); setQ('') }} className={chip(cat === c && !term)}>{c}</button>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="flex-1 overflow-y-auto overscroll-contain px-2 pt-1 pb-4">

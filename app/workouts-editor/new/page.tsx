@@ -123,7 +123,7 @@ export default function NewWorkoutPage() {
       )}
 
       {/* Action Buttons */}
-      <div className="flex gap-3 justify-end sticky bottom-6 bg-surface p-4 border-t border-line rounded-lg">
+      <div className="flex gap-3 justify-end sticky bottom-[calc(8rem+env(safe-area-inset-bottom))] md:bottom-[5.5rem] z-10 bg-surface p-4 border-t border-line rounded-lg">
         <button
           onClick={handleCancel}
           className="px-6 py-3 border border-line rounded-lg hover:bg-surface font-medium"
