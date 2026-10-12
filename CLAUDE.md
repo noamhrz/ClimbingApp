@@ -60,7 +60,7 @@ The `Footer` component (fixed bottom bar) is only shown to coaches/admins and pr
 app/                    # Next.js App Router pages
   api/
     admin/              # Admin API routes
-    test-whatsapp/      # WhatsApp integration (Twilio)
+    cron/               # Scheduled jobs (WhatsApp reminders, coach reports)
   calendar/             # Calendar view (react-big-calendar + FullCalendar)
   dashboard/            # Stats dashboard
   workout/[id]/         # Workout execution page
