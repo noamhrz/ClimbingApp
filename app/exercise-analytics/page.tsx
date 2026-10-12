@@ -6,7 +6,6 @@
 import { isActiveUser } from '@/lib/active-users'
 import { useState, useEffect, useMemo } from 'react'
 import { useAuth } from '@/context/AuthContext'
-import { useUserContext } from '@/context/UserContext'
 import { supabase } from '@/lib/supabaseClient'
 import { useRouter } from 'next/navigation'
 import moment from 'moment'
@@ -28,9 +27,8 @@ import { PageSkeleton } from '@/components/ui/Skeleton'
 export default function ExerciseAnalyticsPage() {
   const router = useRouter()
   const { activeUser, loading: authLoading } = useAuth()
-  const { selectedUser } = useUserContext()
 
-  // ✅ EMAIL HIERARCHY: URL param > Manual selection > UserContext > AuthContext
+  // ✅ EMAIL HIERARCHY: URL param > Manual selection > AuthContext
   const [targetEmail, setTargetEmail] = useState<string>('')
   const [bodyWeight, setBodyWeight] = useState<number | null>(null)
   const [users, setUsers] = useState<Array<{ Email: string; Name: string; Status?: string }>>([])
@@ -75,17 +73,11 @@ export default function ExerciseAnalyticsPage() {
       return
     }
     
-    // 2️⃣ Try UserContext (admin impersonation)
-    if (!targetEmail && (selectedUser?.userEmail || selectedUser?.Email)) {
-      setTargetEmail(selectedUser.userEmail || selectedUser.Email)
-      return
-    }
-    
     // 3️⃣ Fallback to current user
     if (!targetEmail && activeUser?.Email) {
       setTargetEmail(activeUser.Email)
     }
-  }, [initialUrlParamsLoaded, selectedUser, users, canViewOthers, activeUser])
+  }, [initialUrlParamsLoaded, users, canViewOthers, activeUser])
 
   const loadUsers = async () => {
     try {
