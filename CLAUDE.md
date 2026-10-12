@@ -39,7 +39,6 @@ This impersonation pattern is central to the app. Coaches can switch to view the
 - Loads accessible users from `CoachTraineesActiveView` (for coaches) or all Users (for admin)
 - Persists the active user selection to `localStorage`
 
-**`UserContext`** (`context/UserContext.tsx`) is a secondary/legacy context used in some components for a simpler `selectedUser` state.
 
 ### Role & Permission System (`lib/permissions.ts`)
 
@@ -94,7 +93,6 @@ lib/                    # Business logic and API calls
   workout-calculations.ts # Volume/time calculations
   *-metrics.ts          # Stats aggregation per domain
   *-stats-metrics.ts    # Metrics for athlete stats
-  urgency-*.ts          # Urgency/deload algorithm
 
 types/                  # TypeScript types per domain
   workouts.ts
@@ -104,7 +102,6 @@ types/                  # TypeScript types per domain
 
 context/
   AuthContext.tsx       # Primary auth + user switching context
-  UserContext.tsx       # Legacy secondary user selection context
 
 documentation/          # Internal project docs (Hebrew)
 ```
