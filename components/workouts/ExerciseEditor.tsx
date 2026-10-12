@@ -6,14 +6,14 @@
 // Phone: adding opens a full-screen picker. Desktop: the picker is a side panel that is always
 // open (adds to the highlighted block), rows have inline number fields and can be dragged.
 
-import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { LuCheck, LuChevronDown, LuChevronUp, LuCopy, LuGripVertical, LuPlus, LuSearch, LuTrash2, LuX } from 'react-icons/lu'
+import { LuChevronDown, LuChevronUp, LuCopy, LuGripVertical, LuTrash2 } from 'react-icons/lu'
 import { Exercise, WorkoutExerciseWithDetails, DEFAULT_WORKOUT_EXERCISE } from '@/types/workouts'
-import { supabase } from '@/lib/supabaseClient'
 import { calculateWorkoutExercisesTime, formatRestTime } from '@/lib/workout-calculations'
 import NumberStepper from '@/components/workout-flow/NumberStepper'
-import NewExerciseForm from './NewExerciseForm'
+import ExercisePicker from './ExercisePicker'
+import { InlineNum, useIsDesktop } from './editor-bits'
 
 type Ex = WorkoutExerciseWithDetails
 type Model = Ex[][]   // blocks in order, each with its exercises in order
@@ -22,41 +22,6 @@ interface Props {
   exercises: Ex[]
   blocks: number[]                       // all block numbers in order (incl. empty ones)
   onChange: (exercises: Ex[], emptyBlocks: number[]) => void
-}
-
-// md breakpoint, read without an effect (server render = phone)
-const mq = () => window.matchMedia('(min-width: 768px)')
-function useIsDesktop() {
-  return useSyncExternalStore(
-    cb => { const m = mq(); m.addEventListener('change', cb); return () => m.removeEventListener('change', cb) },
-    () => mq().matches,
-    () => false,
-  )
-}
-
-// Small number field for the desktop rows: keeps its own text so it can be emptied while typing
-function InlineNum({ label, value, min = 0, onChange }: { label: string; value: number; min?: number; onChange: (v: number) => void }) {
-  const [text, setText] = useState(String(value))
-  const [seen, setSeen] = useState(value)
-  if (value !== seen) { setSeen(value); if (Number(text) !== value) setText(String(value)) }
-  return (
-    <label className="flex flex-col items-center gap-0.5 text-[11px] font-bold text-muted">
-      {label}
-      <input
-        type="text"
-        inputMode="numeric"
-        value={text}
-        onFocus={e => e.currentTarget.select()}
-        onChange={e => {
-          const raw = e.target.value.replace(/[^0-9]/g, '')
-          setText(raw)
-          if (raw !== '') onChange(Math.max(min, Number(raw)))
-        }}
-        onBlur={() => { if (text === '' || Number(text) < min) { setText(String(Math.max(min, value))); onChange(Math.max(min, value)) } }}
-        className="w-16 h-9 rounded-lg border-2 border-line-strong bg-raised text-fg text-center text-base font-extrabold tabular-nums focus:outline-none focus:border-accent"
-      />
-    </label>
-  )
 }
 
 let tmpId = -1_000_000_000
@@ -367,7 +332,7 @@ export default function ExerciseEditor({ exercises, blocks, onChange }: Props) {
             panel
             focusSig={focusSig}
             blockLabel={`בלוק ${tgt + 1}`}
-            blocks={Math.max(model.length, 1)}
+            targets={Array.from({ length: Math.max(model.length, 1) }, (_, i) => `בלוק ${i + 1}`)}
             target={tgt}
             onTarget={setTarget}
             onAdd={ex => addToBlock(tgt, ex)}
@@ -387,175 +352,5 @@ export default function ExerciseEditor({ exercises, blocks, onChange }: Props) {
         document.body,
       )}
     </div>
-  )
-}
-
-// ── Picker: full screen on the phone, a side panel on the desktop ────────────
-
-function ExercisePicker({ blockLabel, onAdd, onClose, panel = false, focusSig = 0, blocks = 1, target = 0, onTarget }: {
-  blockLabel: string
-  onAdd: (ex: Exercise) => void
-  onClose: (added: number) => void
-  panel?: boolean
-  focusSig?: number
-  blocks?: number
-  target?: number
-  onTarget?: (bi: number) => void
-}) {
-  const [lib, setLib] = useState<Exercise[] | null>(null)
-  const [usage, setUsage] = useState<Map<number, number>>(new Map())
-  const [cat, setCat] = useState<string>('frequent')
-  const [q, setQ] = useState('')
-  const [added, setAdded] = useState<Map<number, number>>(new Map())
-  const [creating, setCreating] = useState(false)
-  const input = useRef<HTMLInputElement>(null)
-
-  useEffect(() => {
-    let cancelled = false
-    Promise.all([
-      supabase.from('Exercises').select('*').eq('Status', 'Active').order('Name'),
-      supabase.from('WorkoutsExercises').select('ExerciseID').range(0, 9999),
-    ]).then(([exs, uses]) => {
-      if (cancelled) return
-      const counts = new Map<number, number>()
-      for (const r of uses.data ?? []) counts.set(r.ExerciseID as number, (counts.get(r.ExerciseID as number) ?? 0) + 1)
-      setUsage(counts)
-      setLib((exs.data ?? []) as Exercise[])
-      if (!counts.size) setCat('all')
-    })
-    return () => { cancelled = true }
-  }, [])
-
-  const n = [...added.values()].reduce((a, b) => a + b, 0)
-  useEffect(() => {
-    if (panel) return
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(n) }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  })
-  useEffect(() => { if (panel && focusSig) input.current?.focus() }, [panel, focusSig])
-
-  const cats = [...new Set((lib ?? []).map(e => e.Category).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'he'))
-  const term = q.trim().toLowerCase()
-
-  let groups: [string, Exercise[]][] = []
-  if (lib) {
-    if (term) groups = [['תוצאות', lib.filter(e => e.Name.toLowerCase().includes(term) || e.Description?.toLowerCase().includes(term))]]
-    else if (cat === 'frequent') groups = [['הכי בשימוש באימונים', [...lib].filter(e => usage.has(e.ExerciseID)).sort((a, b) => (usage.get(b.ExerciseID) ?? 0) - (usage.get(a.ExerciseID) ?? 0)).slice(0, 20)]]
-    else if (cat === 'all') groups = cats.map(c => [c, lib.filter(e => e.Category === c)])
-    else groups = [[cat, lib.filter(e => e.Category === cat)]]
-  }
-
-  const add = (ex: Exercise) => {
-    onAdd(ex)
-    setAdded(m => new Map(m).set(ex.ExerciseID, (m.get(ex.ExerciseID) ?? 0) + 1))
-    try { navigator.vibrate?.(8) } catch { /* not supported */ }
-  }
-  const chip = (on: boolean) => `h-10 px-3.5 rounded-full border text-sm font-bold whitespace-nowrap shrink-0 ${on ? 'bg-accent border-accent text-on-accent' : 'border-line-strong bg-surface text-fg-2'}`
-
-  const body = (
-    <>
-      <div className="px-4 pt-3 pb-2 flex flex-col gap-2.5 border-b border-line">
-        {panel ? (
-          <div className="flex items-center gap-2 flex-wrap">
-            <h2 id="pick-title" className="text-lg font-extrabold">הוספת תרגילים</h2>
-            {blocks > 1 ? (
-              <div className="flex gap-1 flex-wrap ms-auto" role="group" aria-label="לאיזה בלוק להוסיף">
-                {Array.from({ length: blocks }, (_, bi) => (
-                  <button key={bi} type="button" aria-pressed={bi === target} onClick={() => onTarget?.(bi)}
-                    className={`h-8 px-3 rounded-full border text-[13px] font-bold ${bi === target ? 'bg-accent border-accent text-on-accent' : 'border-line-strong text-fg-2 hover:border-accent'}`}>
-                    בלוק {bi + 1}
-                  </button>
-                ))}
-              </div>
-            ) : <span className="ms-auto text-sm text-muted">ל{blockLabel}</span>}
-          </div>
-        ) : (
-          <div className="flex items-center gap-2.5">
-            <h2 id="pick-title" className="flex-1 text-[19px] font-extrabold">הוספה ל{blockLabel}</h2>
-            <button type="button" onClick={() => onClose(n)} aria-label="סגירה" className="w-11 h-11 rounded-xl border border-line bg-surface grid place-items-center text-fg-2"><LuX aria-hidden className="w-5 h-5" /></button>
-          </div>
-        )}
-        <label className="flex items-center gap-2 h-12 rounded-xl border-2 border-line-strong bg-surface px-3 focus-within:border-accent">
-          <LuSearch aria-hidden className="w-5 h-5 text-muted shrink-0" />
-          <input ref={input} value={q} onChange={e => setQ(e.target.value)} placeholder="חיפוש תרגיל" aria-label="חיפוש תרגיל" autoComplete="off" enterKeyHint="search" className="flex-1 min-w-0 bg-transparent text-fg text-[17px] focus:outline-none" />
-          {q && <button type="button" onClick={() => setQ('')} aria-label="נקה חיפוש" className="text-faint"><LuX aria-hidden className="w-4 h-4" /></button>}
-        </label>
-        <div className={`flex gap-1.5 pb-1.5 ${panel ? 'flex-wrap' : 'overflow-x-auto -mx-4 px-4 [scrollbar-width:none]'}`} role="group" aria-label="קטגוריות">
-          {usage.size > 0 && <button type="button" aria-pressed={cat === 'frequent' && !term} onClick={() => { setCat('frequent'); setQ('') }} className={chip(cat === 'frequent' && !term)}>נפוצים</button>}
-          <button type="button" aria-pressed={cat === 'all' && !term} onClick={() => { setCat('all'); setQ('') }} className={chip(cat === 'all' && !term)}>הכל</button>
-          {cats.map(c => (
-            <button key={c} type="button" aria-pressed={cat === c && !term} onClick={() => { setCat(c); setQ('') }} className={chip(cat === c && !term)}>{c}</button>
-          ))}
-        </div>
-      </div>
-
-      <div className="flex-1 overflow-y-auto overscroll-contain px-2 pt-1 pb-4">
-        {creating ? (
-          <div className="px-2">
-            <NewExerciseForm
-              initialName={q}
-              categories={cats}
-              onCancel={() => setCreating(false)}
-              onCreated={ex => {
-                setLib(l => [...(l ?? []), ex].sort((a, b) => a.Name.localeCompare(b.Name, 'he')))
-                setCreating(false)
-                setQ('')
-                add(ex)
-              }}
-            />
-          </div>
-        ) : (
-          <button type="button" onClick={() => setCreating(true)} className="mx-2 mt-2 w-[calc(100%-16px)] h-11 rounded-xl border border-dashed border-line-strong text-accent text-[15px] font-bold">
-            + תרגיל חדש{q.trim() ? `: ${q.trim()}` : ''}
-          </button>
-        )}
-
-        {!lib && <p className="px-3 py-6 text-center text-muted">טוען תרגילים…</p>}
-        {lib && groups.every(([, items]) => !items.length) && <p className="px-3 py-6 text-center text-muted">לא נמצא תרגיל.</p>}
-        {groups.map(([title, items]) => items.length > 0 && (
-          <div key={title}>
-            <p className="text-xs font-extrabold text-muted px-2 pt-3 pb-1">{title}</p>
-            {items.map(ex => {
-              const count = added.get(ex.ExerciseID) ?? 0
-              return (
-                <button key={ex.ExerciseID} type="button" onClick={() => add(ex)} className={`w-full flex items-center gap-2.5 px-2 py-1.5 rounded-xl text-right active:bg-surface ${panel ? 'min-h-12 hover:bg-raised' : 'min-h-14'}`}>
-                  <span className="flex-1 min-w-0">
-                    <b className="block text-base truncate">{ex.Name}</b>
-                    <small className="text-[13px] text-muted">{ex.Category} · {ex.isDuration ? 'זמן' : 'חזרות'}{ex.IsSingleHand ? ' · יד אחת' : ''}</small>
-                  </span>
-                  <span className={`w-10 h-10 rounded-xl grid place-items-center shrink-0 border font-extrabold ${count ? 'bg-success border-success text-bg' : 'bg-raised border-line-strong text-accent'}`}>
-                    {count ? (count > 1 ? `×${count}` : <LuCheck aria-hidden className="w-5 h-5" />) : <LuPlus aria-hidden className="w-5 h-5" />}
-                  </span>
-                </button>
-              )
-            })}
-          </div>
-        ))}
-      </div>
-
-      {panel ? (
-        <p className="px-4 py-2.5 border-t border-line text-sm text-muted" aria-live="polite">{n ? `נוספו ${n} תרגילים` : `לחיצה על תרגיל מוסיפה אותו ל${blockLabel}`}</p>
-      ) : (
-        <div className="px-4 pt-2.5 pb-[calc(14px+env(safe-area-inset-bottom))] border-t border-line flex items-center gap-2.5">
-          <span className="flex-1 text-sm text-muted" aria-live="polite">{n ? `נוספו ${n} תרגילים` : 'לחיצה על תרגיל מוסיפה אותו'}</span>
-          <button type="button" onClick={() => onClose(n)} className="h-[50px] px-7 rounded-[14px] bg-accent text-on-accent font-extrabold">סיום</button>
-        </div>
-      )}
-    </>
-  )
-
-  if (panel) {
-    return (
-      <section aria-labelledby="pick-title" className="rounded-2xl border border-line bg-surface text-fg flex flex-col overflow-hidden" style={{ height: 'calc(100vh - var(--app-header-height, 0px) - 10rem)' }}>
-        {body}
-      </section>
-    )
-  }
-  return createPortal(
-    <div role="dialog" data-flow aria-modal="true" aria-labelledby="pick-title" className="fixed inset-0 z-[100] bg-bg text-fg flex flex-col">
-      {body}
-    </div>,
-    document.body,
   )
 }
