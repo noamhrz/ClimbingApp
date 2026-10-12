@@ -14,6 +14,7 @@ import { climbSummary } from '@/components/workout-flow/climbSummary'
 import { IntroStep, SummaryStep } from '@/components/workout-flow/IntroSummary'
 import moment from 'moment-timezone'
 import { useFormDraft } from '@/lib/useFormDraft'
+import { DRAFT_FIELDS, mergeDraftForms, saveExerciseLogs } from '@/lib/exercise-log-save'
 import { LuCircleCheck, LuLightbulb, LuLoaderCircle, LuMapPin } from 'react-icons/lu'
 import { PageSkeleton } from '@/components/ui/Skeleton'
 
@@ -312,27 +313,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
       setExerciseForms(prev => {
         // If exercises are already loaded from server, merge only user-entered performance
         // data into them — never replace the exercise structure (prevents stale level from overriding)
-        if (prev.length > 0) {
-          return prev.map(ex => {
-            const saved = draft.exerciseForms.find((d: any) => d.ExerciseID === ex.ExerciseID)
-            if (!saved) return ex
-            return {
-              ...ex,
-              RepsDone: saved.RepsDone,
-              DurationSec: saved.DurationSec,
-              WeightKG: saved.WeightKG,
-              RPE: saved.RPE,
-              Notes: saved.Notes,
-              Completed: saved.Completed,
-              RepsDoneLeft: saved.RepsDoneLeft,
-              DurationSecLeft: saved.DurationSecLeft,
-              WeightKGLeft: saved.WeightKGLeft,
-              RPELeft: saved.RPELeft,
-              NotesLeft: saved.NotesLeft,
-              CompletedLeft: saved.CompletedLeft,
-            }
-          })
-        }
+        if (prev.length > 0) return mergeDraftForms(prev, draft.exerciseForms, DRAFT_FIELDS)
         // Exercises not loaded yet — restore fully
         return draft.exerciseForms
       })
@@ -692,69 +673,14 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
       // One log per (exercise, hand side). Existing logs of this calendar entry are read once;
       // updates run in parallel and new logs go in one insert.
       if (workout.containExercise && exerciseForms.length > 0) {
-        type Side = 'Right' | 'Left' | 'Both'
-        const filled = (v: unknown) => v !== null && v !== undefined
-        const byKey = new Map<string, Record<string, unknown>>()   // last one wins, as before
-        const add = (ex: typeof exerciseForms[number], side: Side, left: boolean) => {
-          const reps = left ? ex.RepsDoneLeft : ex.RepsDone
-          const dur = left ? ex.DurationSecLeft : ex.DurationSec
-          const kg = left ? ex.WeightKGLeft : ex.WeightKG
-          const rpe = left ? ex.RPELeft : ex.RPE
-          const notes = (left ? ex.NotesLeft : ex.Notes) as string | undefined
-          if (!(filled(reps) || filled(dur) || filled(kg) || filled(rpe) || (notes && notes.trim() !== ''))) return
-          byKey.set(`${ex.ExerciseID}:${side}`, {
-            Email: email,
-            WorkoutID: id,
-            CalendarID: activeCalendarId,
-            ExerciseID: ex.ExerciseID,
-            HandSide: side,
-            RepsDone: ex.isDuration ? null : (reps || null),
-            DurationSec: ex.isDuration ? (dur || null) : null,
-            WeightKG: kg || null,
-            RPE: rpe || null,
-            Notes: notes?.trim() || null,
-            Completed: true,
-            UpdatedAt: now,
-          })
-        }
-        for (const ex of exerciseForms) {
-          if (ex.IsSingleHand) { add(ex, 'Right', false); add(ex, 'Left', true) }
-          else add(ex, 'Both', false)
-        }
-
-        if (byKey.size > 0) {
-          // a calendar row created just now has no logs yet
-          const existing = new Map<string, number>()
-          const duplicates: number[] = []
-          if (calendarIdNum) {
-            const { data: rows, error: exErr } = await supabase
-              .from('ExerciseLogs')
-              .select('ExerciseLogID, ExerciseID, HandSide')
-              .eq('CalendarID', activeCalendarId)
-              .order('ExerciseLogID')
-            if (exErr) throw exErr
-            // keep the oldest log per exercise+side; extra copies are removed
-            for (const r of rows ?? []) {
-              const k = `${r.ExerciseID}:${r.HandSide}`
-              if (existing.has(k)) duplicates.push(r.ExerciseLogID)
-              else existing.set(k, r.ExerciseLogID)
-            }
-          }
-          const inserts: Record<string, unknown>[] = []
-          const updates: PromiseLike<{ error: unknown }>[] = []
-          for (const [key, payload] of byKey) {
-            const logId = existing.get(key)
-            if (logId) updates.push(supabase.from('ExerciseLogs').update(payload).eq('ExerciseLogID', logId).select('ExerciseLogID').then(r => ({ error: r.error ?? (r.data?.length ? null : new Error('עדכון תרגיל נחסם (0 שורות עודכנו)')) })))
-            else inserts.push({ ...payload, CreatedAt: now })
-          }
-          const results = await Promise.all([
-            ...updates,
-            ...(inserts.length ? [supabase.from('ExerciseLogs').insert(inserts)] : []),
-            ...(duplicates.length ? [supabase.from('ExerciseLogs').delete().in('ExerciseLogID', duplicates)] : []),
-          ])
-          const failed = results.find(r => r.error)
-          if (failed) throw failed.error
-        }
+        // one log per (exercise occurrence, hand side); see lib/exercise-log-save
+        await saveExerciseLogs({
+          calendarId: activeCalendarId as number,
+          forms: exerciseForms,
+          base: { Email: email, WorkoutID: id, CalendarID: activeCalendarId },
+          now,
+          isNewCalendar: !calendarIdNum,
+        })
       }
 
       // === טיפוס ===
