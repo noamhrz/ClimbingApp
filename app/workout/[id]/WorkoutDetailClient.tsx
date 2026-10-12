@@ -355,12 +355,27 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
       if (!id) return
       if (!email) return  // wait for auth/email — needed for dynamic exercise level lookup
       try {
+        // Independent queries start together: reference tables, calendar row, workout, its exercises
+        const gradesP = Promise.all([
+          supabase.from('LeadGrades').select('*').order('LeadGradeID'),
+          supabase.from('BoulderGrades').select('*').order('BoulderGradeID'),
+          supabase.from('ClimbingLocations').select('*').order('LocationName'),
+          supabase.from('BoardTypes').select('*').order('BoardName'),
+        ])
+        const [{ data: c }, { data: w }, { data: rels }] = await Promise.all([
+          calendarIdNum
+            ? supabase.from('Calendar').select('*').eq('CalendarID', calendarIdNum).maybeSingle()
+            : Promise.resolve({ data: null }),
+          supabase.from('Workouts').select('*').eq('WorkoutID', id).maybeSingle(),
+          supabase
+            .from('WorkoutsExercises')
+            .select('ExerciseID, Block, Sets, Reps, Duration, Rest, Order')
+            .eq('WorkoutID', id)
+            .order('Block')
+            .order('Order'),
+        ])
+
         if (calendarIdNum) {
-          const { data: c } = await supabase
-            .from('Calendar')
-            .select('*')
-            .eq('CalendarID', calendarIdNum)
-            .maybeSingle()
           if (c && isMounted) {
             setCalendarRow(c)
             setClimberNotes(c.ClimberNotes || '')
@@ -368,12 +383,6 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
             setDeloadingPercentage(c.DeloadingPercentage || null)
           }
         }
-
-        const { data: w } = await supabase
-          .from('Workouts')
-          .select('*')
-          .eq('WorkoutID', id)
-          .maybeSingle()
 
         if (!isMounted) return
 
@@ -383,14 +392,6 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
           w.containExercise = w?.containExercise === true || w?.containExercise === 'true'
           w.containClimbing = w?.containClimbing === true || w?.containClimbing === 'true'
         }
-
-        // Load WorkoutsExercises with Block, Sets, Reps, Duration, Rest
-        const { data: rels } = await supabase
-          .from('WorkoutsExercises')
-          .select('ExerciseID, Block, Sets, Reps, Duration, Rest, Order')
-          .eq('WorkoutID', id)
-          .order('Block')
-          .order('Order')
 
         let mapped: any[] = []
         if (rels?.length) {
@@ -442,28 +443,28 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
           if (dynamicExs.length > 0) {
             const catIds = [...new Set(dynamicExs.map(m => m.RoadmapCategoryID as number))]
 
-            // Fetch user's current level via API route (uses service role, bypasses RLS)
-            const { data: { session } } = await supabase.auth.getSession()
-            let progressRows: { CategoryID: number; CurrentLevel: number }[] = []
-            if (session && email) {
+            // User's current level (API route, service role) and the categories' levels — in parallel
+            const progressP = (async (): Promise<{ CategoryID: number; CurrentLevel: number }[]> => {
+              const { data: { session } } = await supabase.auth.getSession()
+              if (!session || !email) return []
               try {
                 const res = await fetch(`/api/admin/roadmap/progress?email=${encodeURIComponent(email)}`, {
                   headers: { Authorization: `Bearer ${session.access_token}` },
                 })
-                if (res.ok) progressRows = await res.json()
+                return res.ok ? await res.json() : []
               } catch {
-                // fallback: level 0
+                return [] // fallback: level 0
               }
-            }
+            })()
+            const levelsP = supabase
+              .from('RoadmapLevels')
+              .select('LevelID, CategoryID, LevelNumber')
+              .in('CategoryID', catIds)
+            const [progressRows, { data: levelsRows }] = await Promise.all([progressP, levelsP])
 
             const levelNumByCategory: Record<number, number> = {}
             for (const catId of catIds) levelNumByCategory[catId] = 0
             for (const row of progressRows) levelNumByCategory[row.CategoryID] = row.CurrentLevel
-            // Fetch all RoadmapLevels for relevant categories
-            const { data: levelsRows } = await supabase
-              .from('RoadmapLevels')
-              .select('LevelID, CategoryID, LevelNumber')
-              .in('CategoryID', catIds)
             const levelIdByCategory: Record<number, number | null> = {}
             for (const catId of catIds) {
               const targetNum = levelNumByCategory[catId]
@@ -550,12 +551,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
         setExercises(mapped)
         setExerciseForms(mapped)
 
-        const [lg, bg, loc, bt] = await Promise.all([
-          supabase.from('LeadGrades').select('*').order('LeadGradeID'),
-          supabase.from('BoulderGrades').select('*').order('BoulderGradeID'),
-          supabase.from('ClimbingLocations').select('*').order('LocationName'),
-          supabase.from('BoardTypes').select('*').order('BoardName'),
-        ])
+        const [lg, bg, loc, bt] = await gradesP
 
         if (!isMounted) return
 
