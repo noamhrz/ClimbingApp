@@ -474,7 +474,7 @@ export default function CalendarEditClient() {
           const writes: PromiseLike<{ error: unknown }>[] = []
           for (const [key, payload] of byKey) {
             const logId = existing.get(key)
-            if (logId) writes.push(supabase.from('ExerciseLogs').update(payload).eq('ExerciseLogID', logId))
+            if (logId) writes.push(supabase.from('ExerciseLogs').update(payload).eq('ExerciseLogID', logId).select('ExerciseLogID').then(r => ({ error: r.error ?? (r.data?.length ? null : new Error('עדכון תרגיל נחסם (0 שורות עודכנו)')) })))
             else inserts.push({ ...payload, CreatedAt: now })
           }
           if (inserts.length) writes.push(supabase.from('ExerciseLogs').insert(inserts))
@@ -532,7 +532,7 @@ export default function CalendarEditClient() {
             UpdatedAt: now,
           }
           const existingId = existingLogIds.get(route.id)
-          if (existingId) routeWrites.push(supabase.from('ClimbingLog').update(payload).eq('ClimbingLogID', existingId))
+          if (existingId) routeWrites.push(supabase.from('ClimbingLog').update(payload).eq('ClimbingLogID', existingId).select('ClimbingLogID').then(r => ({ error: r.error ?? (r.data?.length ? null : new Error('עדכון מסלול נחסם (0 שורות עודכנו)')) })))
           else routeInserts.push({ ...payload, CreatedAt: now })
         }
         if (routeInserts.length) routeWrites.push(supabase.from('ClimbingLog').insert(routeInserts))
