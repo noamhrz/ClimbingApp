@@ -186,6 +186,16 @@ export default function CalendarEditClient() {
       if (!calendarId) return
       setLoading(true)
       try {
+        // Everything that depends only on calendarId starts together
+        const gradesP = Promise.all([
+          supabase.from('LeadGrades').select('*').order('LeadGradeID'),
+          supabase.from('BoulderGrades').select('*').order('BoulderGradeID'),
+          supabase.from('ClimbingLocations').select('*').order('LocationName'),
+          supabase.from('BoardTypes').select('*').order('BoardName'),
+        ])
+        const logsP = supabase.from('ExerciseLogs').select('*').eq('CalendarID', calendarId)
+        const climbLogsP = supabase.from('ClimbingLog').select('*').eq('CalendarID', calendarId)
+
         // Load Calendar
         const { data: cal } = await supabase
           .from('Calendar')
@@ -197,35 +207,28 @@ export default function CalendarEditClient() {
         setClimberNotes(cal.ClimberNotes || '')
         setActualMinutes(cal.ActualMinutes ?? null)
 
-        // Load Workout
-        const { data: w } = await supabase
-          .from('Workouts')
-          .select('*')
-          .eq('WorkoutID', cal.WorkoutID)
-          .maybeSingle()
+        // Workout + its exercise list, in parallel
+        const [{ data: w }, { data: rels }] = await Promise.all([
+          supabase.from('Workouts').select('*').eq('WorkoutID', cal.WorkoutID).maybeSingle(),
+          supabase
+            .from('WorkoutsExercises')
+            .select('ExerciseID, Block, Sets, Reps, Duration, Rest, Order')
+            .eq('WorkoutID', cal.WorkoutID)
+            .order('Block')
+            .order('Order'),
+        ])
         setWorkout(w)
-
-        // Load WorkoutsExercises with Block, Sets, Reps, Duration, Rest
-        const { data: rels } = await supabase
-          .from('WorkoutsExercises')
-          .select('ExerciseID, Block, Sets, Reps, Duration, Rest, Order')
-          .eq('WorkoutID', cal.WorkoutID)
-          .order('Block')
-          .order('Order')
 
         const ids = rels?.map((r) => r.ExerciseID) || []
 
-        // Load Exercises (including is_dynamic to detect dynamic placeholders)
-        const { data: exs } = await supabase
-          .from('Exercises')
-          .select('ExerciseID, Name, Description, IsSingleHand, isDuration, ImageURL, VideoURL, is_dynamic')
-          .in('ExerciseID', ids)
-
-        // Load existing logs
-        const { data: logs } = await supabase
-          .from('ExerciseLogs')
-          .select('*')
-          .eq('CalendarID', calendarId)
+        // Exercises (including is_dynamic to detect dynamic placeholders) + existing logs
+        const [{ data: exs }, { data: logs }] = await Promise.all([
+          supabase
+            .from('Exercises')
+            .select('ExerciseID, Name, Description, IsSingleHand, isDuration, ImageURL, VideoURL, is_dynamic')
+            .in('ExerciseID', ids),
+          logsP,
+        ])
 
         // Detect concrete exercise logs from dynamic expansion:
         // log ExerciseIDs that are NOT in WorkoutsExercises are concrete exercises
@@ -333,22 +336,14 @@ export default function CalendarEditClient() {
         setExerciseForms(mappedExercises)
 
         // Load Grades & Locations
-        const [lg, bg, loc, bt] = await Promise.all([
-          supabase.from('LeadGrades').select('*').order('LeadGradeID'),
-          supabase.from('BoulderGrades').select('*').order('BoulderGradeID'),
-          supabase.from('ClimbingLocations').select('*').order('LocationName'),
-          supabase.from('BoardTypes').select('*').order('BoardName'),
-        ])
+        const [lg, bg, loc, bt] = await gradesP
         setLeadGrades(lg.data || [])
         setBoulderGrades(bg.data || [])
         setLocations(loc.data || [])
         setBoardTypes(bt.data || [])
 
         // Load existing ClimbingLogs
-        const { data: climbLogs } = await supabase
-          .from('ClimbingLog')
-          .select('*')
-          .eq('CalendarID', calendarId)
+        const { data: climbLogs } = await climbLogsP
 
         if (climbLogs && climbLogs.length > 0) {
           if (climbLogs[0].LocationID) {
