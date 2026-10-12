@@ -737,7 +737,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
           const updates: PromiseLike<{ error: unknown }>[] = []
           for (const [key, payload] of byKey) {
             const logId = existing.get(key)
-            if (logId) updates.push(supabase.from('ExerciseLogs').update(payload).eq('ExerciseLogID', logId))
+            if (logId) updates.push(supabase.from('ExerciseLogs').update(payload).eq('ExerciseLogID', logId).select('ExerciseLogID').then(r => ({ error: r.error ?? (r.data?.length ? null : new Error('עדכון תרגיל נחסם (0 שורות עודכנו)')) })))
             else inserts.push({ ...payload, CreatedAt: now })
           }
           const results = await Promise.all([
