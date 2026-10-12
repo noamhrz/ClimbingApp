@@ -131,7 +131,7 @@ export default function WorkoutsPage() {
   return (
     <div dir="rtl" className="min-h-screen bg-surface pb-20">
       {/* Header */}
-      <div className="bg-surface border-b sticky top-0 z-30">
+      <div className="bg-surface border-b sticky top-[var(--app-header-height,0px)] z-30">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <h1 className="text-2xl font-bold text-fg mb-4 flex items-center gap-2">
             <LuDumbbell aria-hidden className="w-6 h-6 shrink-0 text-accent" />האימונים של {userToShow?.Name || 'המשתמש'}
