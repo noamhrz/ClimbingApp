@@ -174,7 +174,7 @@ export default function UserHeader() {
         <nav className="hidden md:flex gap-2 items-center flex-wrap">
 
           {/* Pinned */}
-          <Link href="/dashboard" className={navCls('/dashboard')}><LuLayoutDashboard aria-hidden className={ic} />Dashboard</Link>
+          <Link href="/dashboard" className={navCls('/dashboard')}><LuLayoutDashboard aria-hidden className={ic} />ראשי</Link>
           <Link href="/calendar"  className={navCls('/calendar')}><LuCalendarDays aria-hidden className={ic} />לוח</Link>
           <Link href="/workouts"  className={navCls('/workouts')}><LuDumbbell aria-hidden className={ic} />אימונים</Link>
 
@@ -183,7 +183,7 @@ export default function UserHeader() {
             <DropdownItem href="/climbing-log"><LuBookOpen aria-hidden className={ic} />לוג</DropdownItem>
             <DropdownItem href={statsHref}><LuChartColumn aria-hidden className={ic} />סטטיסטיקות</DropdownItem>
             <DropdownItem href="/exercise-analytics"><LuTrendingUp aria-hidden className={ic} />ניתוח תרגילים</DropdownItem>
-            <DropdownItem href="/roadmap-progress"><LuMap aria-hidden className={ic} />התקדמות Roadmap</DropdownItem>
+            <DropdownItem href="/roadmap-progress"><LuMap aria-hidden className={ic} />מפת ההתקדמות</DropdownItem>
             {isCoachOrAdmin && <DropdownItem href="/reports/monthly"><LuFileChartColumn aria-hidden className={ic} />דו״ח חודשי</DropdownItem>}
           </NavDropdown>
 
@@ -196,7 +196,7 @@ export default function UserHeader() {
               <DropdownItem href="/exercises/dynamic"><LuPuzzle aria-hidden className={ic} />תרגילים דינמיים</DropdownItem>
               <DropdownItem href="/workouts-editor"><LuNotebookPen aria-hidden className={ic} />עורך אימונים</DropdownItem>
               {isAdmin && <DropdownItem href="/admin/roadmap-builder"><LuMap aria-hidden className={ic} />בניית Roadmap</DropdownItem>}
-              {isAdmin && <DropdownItem href="/admin/roadmap-progress"><LuChartColumn aria-hidden className={ic} />התקדמות Roadmap</DropdownItem>}
+              {isAdmin && <DropdownItem href="/admin/roadmap-progress"><LuChartColumn aria-hidden className={ic} />עדכון התקדמות Roadmap</DropdownItem>}
             </NavDropdown>
           )}
 
@@ -265,7 +265,7 @@ export default function UserHeader() {
             <SheetLink href="/climbing-log" onClick={() => setMoreOpen(false)} icon={<LuBookOpen />}>לוג</SheetLink>
             <SheetLink href={statsHref} onClick={() => setMoreOpen(false)} icon={<LuChartColumn />}>סטטיסטיקות</SheetLink>
             <SheetLink href="/exercise-analytics" onClick={() => setMoreOpen(false)} icon={<LuTrendingUp />}>ניתוח תרגילים</SheetLink>
-            <SheetLink href="/roadmap-progress" onClick={() => setMoreOpen(false)} icon={<LuMap />}>התקדמות Roadmap</SheetLink>
+            <SheetLink href="/roadmap-progress" onClick={() => setMoreOpen(false)} icon={<LuMap />}>מפת ההתקדמות</SheetLink>
             {isCoachOrAdmin && <SheetLink href="/reports/monthly" onClick={() => setMoreOpen(false)} icon={<LuFileChartColumn />}>דו״ח חודשי</SheetLink>}
           </SheetGroup>
           {isCoachOrAdmin && (
@@ -276,7 +276,7 @@ export default function UserHeader() {
               <SheetLink href="/exercises/dynamic" onClick={() => setMoreOpen(false)} icon={<LuPuzzle />}>תרגילים דינמיים</SheetLink>
               <SheetLink href="/workouts-editor" onClick={() => setMoreOpen(false)} icon={<LuNotebookPen />}>עורך אימונים</SheetLink>
               {isAdmin && <SheetLink href="/admin/roadmap-builder" onClick={() => setMoreOpen(false)} icon={<LuMap />}>בניית Roadmap</SheetLink>}
-              {isAdmin && <SheetLink href="/admin/roadmap-progress" onClick={() => setMoreOpen(false)} icon={<LuChartColumn />}>התקדמות Roadmap</SheetLink>}
+              {isAdmin && <SheetLink href="/admin/roadmap-progress" onClick={() => setMoreOpen(false)} icon={<LuChartColumn />}>עדכון התקדמות Roadmap</SheetLink>}
             </SheetGroup>
           )}
           <SheetGroup title="תוכן">
