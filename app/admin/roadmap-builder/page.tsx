@@ -790,7 +790,7 @@ export default function RoadmapBuilderPage() {
     <DndProvider backend={HTML5Backend}>
     <div dir="rtl" className="min-h-screen bg-surface pb-20">
       {/* Header */}
-      <div className="bg-surface border-b sticky top-0 z-30">
+      <div className="bg-surface border-b sticky top-[var(--app-header-height,0px)] z-30">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <h1 className="text-2xl font-bold text-fg"><LuMap aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />בניית Roadmap</h1>
           <p className="text-sm text-muted mt-0.5">ניהול קטגוריות ורמות מסלול ההתקדמות</p>
