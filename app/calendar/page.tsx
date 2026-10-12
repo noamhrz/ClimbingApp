@@ -22,7 +22,7 @@ import DayListView from '@/components/calendar/DayListView'
 import CalendarToolbar from '@/components/calendar/CalendarToolbar'
 import AssignedWorkoutsPanel, { PanelWorkout } from '@/components/calendar/AssignedWorkoutsPanel'
 import { copyPreviousWorkout } from '@/utils/copyPreviousWorkout'
-import { LuPlus, LuCalendarDays, LuList, LuCalendar, LuCopy, LuBatteryLow, LuX, LuTrash2, LuSave, LuCalendarPlus } from 'react-icons/lu'
+import { LuPlus, LuCalendarDays, LuList, LuCalendar, LuCopy, LuBatteryLow, LuX, LuTrash2, LuSave, LuCalendarPlus, LuSlidersHorizontal } from 'react-icons/lu'
 import { PageSkeleton } from '@/components/ui/Skeleton'
 
 moment.locale('he')
@@ -68,6 +68,7 @@ export default function CalendarPage() {
   const [isMobile, setIsMobile] = useState(false)
   const [showAddModal, setShowAddModal] = useState(false)
   const [showSchedule, setShowSchedule] = useState(false)
+  const [toolsOpen, setToolsOpen] = useState(false)   // phone: coach tools folded into one button
   const [modalInitialDate, setModalInitialDate] = useState<Date | undefined>()
   const [showContextMenu, setShowContextMenu] = useState(false)
   const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 })
@@ -683,7 +684,7 @@ export default function CalendarPage() {
   }
 
   return (
-    <div dir="rtl" className="min-h-screen bg-surface pb-20">
+    <div dir="rtl" className="min-h-screen bg-surface pb-[calc(10rem+env(safe-area-inset-bottom))] lg:pb-28">
       <div className="bg-surface border-b">
         <div className="max-w-7xl mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
@@ -717,7 +718,7 @@ export default function CalendarPage() {
 
       <button
         onClick={handleAddButtonClick}
-        className={`fixed bottom-28 max-md:bottom-40 left-6 text-on-accent text-3xl rounded-full w-16 h-16 shadow-lg transition-all duration-200 z-40 flex items-center justify-center ${
+        className={`fixed bottom-[calc(8.5rem+env(safe-area-inset-bottom))] lg:bottom-24 left-4 lg:left-6 text-on-accent text-3xl rounded-full w-16 h-16 shadow-lg transition-all duration-200 z-40 flex items-center justify-center ${
  isSelectingDate 
  ? 'bg-warning hover:bg-warning/90 animate-pulse' 
  : 'bg-accent hover:bg-accent-hover'
@@ -814,43 +815,62 @@ export default function CalendarPage() {
       )}
 
       {isAdmin && (
-        <div className="fixed bottom-28 max-md:bottom-40 right-4 md:right-6 flex flex-col gap-2 z-40">
-          <button
-            onClick={() => setShowSchedule(true)}
-            className="inline-flex items-center gap-1.5 bg-accent hover:bg-accent-hover text-on-accent px-4 py-2 rounded-lg text-sm font-bold transition-all"
-            title="שיבוץ שבועי"
-          >
-            <LuCalendarPlus aria-hidden className="w-4 h-4 shrink-0" />שיבוץ שבועי
-          </button>
-          <button
-            onClick={() => setShowDuplicateModal(true)}
-            className="inline-flex items-center gap-1.5 bg-info hover:bg-info text-on-accent px-4 py-2 rounded-lg text-sm font-medium transition-all"
-            title="שכפול שבוע"
-          >
-            <LuCopy aria-hidden className="w-4 h-4 shrink-0" />שכפול שבוע
-          </button>
-          <button
-            onClick={handleApplyDeloading}
-            className="inline-flex items-center gap-1.5 bg-info hover:bg-info text-on-accent px-4 py-2 rounded-lg text-sm font-medium transition-all"
-            title="החל דילודינג"
-          >
-            <LuBatteryLow aria-hidden className="w-4 h-4 shrink-0" />דילודינג
-          </button>
-          <button
-            onClick={handleRemoveDeloading}
-            className="inline-flex items-center gap-1.5 bg-raised hover:bg-raised/90 text-fg px-4 py-2 rounded-lg text-sm font-medium transition-all"
-            title="הסר דילודינג"
-          >
-            <LuX aria-hidden className="w-4 h-4 shrink-0" />הסר דילודינג
-          </button>
-          <button
-            onClick={() => setShowDeleteRangeModal(true)}
-            className="inline-flex items-center gap-1.5 bg-danger hover:bg-danger/90 text-on-accent px-4 py-2 rounded-lg text-sm font-medium transition-all"
-            title="נקה טווח תאריכים"
-          >
-            <LuTrash2 aria-hidden className="w-4 h-4 shrink-0" />נקה טווח
-          </button>
-        </div>
+        <>
+          {isMobile && toolsOpen && <div className="fixed inset-0 z-30" onClick={() => setToolsOpen(false)} aria-hidden />}
+          <div className="fixed bottom-[calc(8.5rem+env(safe-area-inset-bottom))] lg:bottom-24 right-4 lg:right-6 flex flex-col items-end gap-2 z-40">
+            {(!isMobile || toolsOpen) && (
+              <div className="flex flex-col items-stretch gap-2" id="coach-tools">
+              <button
+                onClick={() => { setToolsOpen(false); setShowSchedule(true) }}
+                className="inline-flex items-center gap-1.5 bg-accent hover:bg-accent-hover text-on-accent px-4 py-2 rounded-lg text-sm font-bold transition-all"
+                title="שיבוץ שבועי"
+              >
+                <LuCalendarPlus aria-hidden className="w-4 h-4 shrink-0" />שיבוץ שבועי
+              </button>
+              <button
+                onClick={() => { setToolsOpen(false); setShowDuplicateModal(true) }}
+                className="inline-flex items-center gap-1.5 bg-info hover:bg-info text-on-accent px-4 py-2 rounded-lg text-sm font-medium transition-all"
+                title="שכפול שבוע"
+              >
+                <LuCopy aria-hidden className="w-4 h-4 shrink-0" />שכפול שבוע
+              </button>
+              <button
+                onClick={() => { setToolsOpen(false); handleApplyDeloading() }}
+                className="inline-flex items-center gap-1.5 bg-info hover:bg-info text-on-accent px-4 py-2 rounded-lg text-sm font-medium transition-all"
+                title="החל דילודינג"
+              >
+                <LuBatteryLow aria-hidden className="w-4 h-4 shrink-0" />דילודינג
+              </button>
+              <button
+                onClick={() => { setToolsOpen(false); handleRemoveDeloading() }}
+                className="inline-flex items-center gap-1.5 bg-raised hover:bg-raised/90 text-fg px-4 py-2 rounded-lg text-sm font-medium transition-all"
+                title="הסר דילודינג"
+              >
+                <LuX aria-hidden className="w-4 h-4 shrink-0" />הסר דילודינג
+              </button>
+              <button
+                onClick={() => { setToolsOpen(false); setShowDeleteRangeModal(true) }}
+                className="inline-flex items-center gap-1.5 bg-danger hover:bg-danger/90 text-on-accent px-4 py-2 rounded-lg text-sm font-medium transition-all"
+                title="נקה טווח תאריכים"
+              >
+                <LuTrash2 aria-hidden className="w-4 h-4 shrink-0" />נקה טווח
+              </button>
+              </div>
+            )}
+            {isMobile && (
+              <button
+                type="button"
+                onClick={() => setToolsOpen(o => !o)}
+                aria-expanded={toolsOpen}
+                aria-controls="coach-tools"
+                className={`inline-flex items-center gap-1.5 h-12 px-4 rounded-full font-bold shadow-lg border ${toolsOpen ? 'bg-raised border-line-strong text-fg' : 'bg-surface border-accent text-accent'}`}
+              >
+                {toolsOpen ? <LuX aria-hidden className="w-5 h-5" /> : <LuSlidersHorizontal aria-hidden className="w-5 h-5" />}
+                כלי מאמן
+              </button>
+            )}
+          </div>
+        </>
       )}
 
       {!isMobile && hasPendingChanges && (
@@ -958,7 +978,7 @@ export default function CalendarPage() {
       </div>
 
       {toast && (
-        <div role="status" className="fixed z-[70] left-1/2 -translate-x-1/2 bottom-8 bg-fg text-bg rounded-full ps-4 pe-1.5 py-1.5 flex items-center gap-3 text-[15px] font-bold whitespace-nowrap shadow-lg">
+        <div role="status" className="fixed z-[70] left-1/2 -translate-x-1/2 bottom-[calc(9rem+env(safe-area-inset-bottom))] lg:bottom-28 bg-fg text-bg rounded-full ps-4 pe-1.5 py-1.5 flex items-center gap-3 text-[15px] font-bold whitespace-nowrap shadow-lg">
           <span>{toast.text}</span>
           {toast.undo
             ? <button type="button" onClick={() => { toast.undo?.(); setToast(null) }} className="h-9 px-4 rounded-full bg-bg text-fg font-extrabold">ביטול</button>
