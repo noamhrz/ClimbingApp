@@ -61,7 +61,7 @@ app/                    # Next.js App Router pages
   api/
     admin/              # Admin API routes
     cron/               # Scheduled jobs (WhatsApp reminders, coach reports)
-  calendar/             # Calendar view (react-big-calendar + FullCalendar)
+  calendar/             # Calendar view (react-big-calendar)
   dashboard/            # Stats dashboard
   workout/[id]/         # Workout execution page
   workouts/             # Workout list
@@ -130,7 +130,7 @@ Domain-specific API functions live in `lib/*-api.ts` files and use `activeUser.E
 - Tailwind CSS v4 for all styling
 - RTL layout throughout (Hebrew UI)
 - `framer-motion` for animations
-- `recharts` and `chart.js`/`react-chartjs-2` for data visualization
-- `react-big-calendar` and `@fullcalendar/*` for calendar views
+- `recharts` (dashboard, analytics) and `chart.js` (climbing log chart) for data visualization
+- `react-big-calendar` for calendar views
 - `react-dnd` for drag-and-drop in workout editor
 - `react-icons` for icons
