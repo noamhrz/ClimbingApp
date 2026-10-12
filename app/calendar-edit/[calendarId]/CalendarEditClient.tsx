@@ -16,6 +16,7 @@ import { ClimbingRoute, BoulderGrade, LeadGrade, ClimbingLocation, ClimbingLogEn
 import { generateTempId, getGradeDisplay } from '@/lib/climbing-helpers'
 import moment from 'moment-timezone'
 import { useFormDraft } from '@/lib/useFormDraft'
+import { DRAFT_FIELDS, matchLogs, mergeDraftForms, occurrences, saveExerciseLogs } from '@/lib/exercise-log-save'
 import { LuCircleCheck, LuLightbulb, LuLoaderCircle, LuMapPin } from 'react-icons/lu'
 
 export default function CalendarEditClient() {
@@ -129,27 +130,7 @@ export default function CalendarEditClient() {
         // When exercises are already loaded from DB, only merge performance fields
         // from the draft — never replace the exercise structure (which may differ
         // from stale draft after dynamic expansion resolves to concrete exercises).
-        if (prev.length > 0) {
-          return prev.map(ex => {
-            const saved = draft.exerciseForms.find((d: any) => d.ExerciseID === ex.ExerciseID)
-            if (!saved) return ex
-            return {
-              ...ex,
-              RepsDone: saved.RepsDone,
-              DurationSec: saved.DurationSec,
-              WeightKG: saved.WeightKG,
-              RPE: saved.RPE,
-              Notes: saved.Notes,
-              Completed: saved.Completed,
-              RepsDoneLeft: saved.RepsDoneLeft,
-              DurationSecLeft: saved.DurationSecLeft,
-              WeightKGLeft: saved.WeightKGLeft,
-              RPELeft: saved.RPELeft,
-              NotesLeft: saved.NotesLeft,
-              CompletedLeft: saved.CompletedLeft,
-            }
-          })
-        }
+        if (prev.length > 0) return mergeDraftForms(prev, draft.exerciseForms, DRAFT_FIELDS)
         return draft.exerciseForms
       })
     }
@@ -248,63 +229,21 @@ export default function CalendarEditClient() {
           for (const ex of concreteExs || []) concreteExMap[ex.ExerciseID] = ex
         }
 
-        const buildFormEntry = (ex: any, weData: any) => {
-          if (ex.IsSingleHand) {
-            const logRight = logs?.find(l => l.ExerciseID === ex.ExerciseID && l.HandSide === 'Right')
-            const logLeft  = logs?.find(l => l.ExerciseID === ex.ExerciseID && l.HandSide === 'Left')
-            return {
-              ExerciseLogID: logRight?.ExerciseLogID || null,
-              ExerciseLogIDLeft: logLeft?.ExerciseLogID || null,
-              ExerciseID: ex.ExerciseID,
-              Name: ex.Name,
-              Description: ex.Description,
-              IsSingleHand: ex.IsSingleHand,
-              isDuration: ex.isDuration,
-              ImageURL: ex.ImageURL,
-              VideoURL: ex.VideoURL,
-              Block: weData?.Block || 1,
-              Sets: weData?.Sets || null,
-              Reps: weData?.Reps || null,
-              Duration: weData?.Duration || null,
-              Rest: weData?.Rest || null,
-              RepsDone: logRight?.RepsDone ?? null,
-              DurationSec: logRight?.DurationSec ?? null,
-              WeightKG: logRight?.WeightKG ?? null,
-              RPE: logRight?.RPE ?? null,
-              Notes: logRight?.Notes ?? '',
-              Completed: logRight?.Completed ?? false,
-              RepsDoneLeft: logLeft?.RepsDone ?? null,
-              DurationSecLeft: logLeft?.DurationSec ?? null,
-              WeightKGLeft: logLeft?.WeightKG ?? null,
-              RPELeft: logLeft?.RPE ?? null,
-              NotesLeft: logLeft?.Notes ?? '',
-              CompletedLeft: logLeft?.Completed ?? false,
-            }
-          } else {
-            const log = logs?.find(l => l.ExerciseID === ex.ExerciseID && l.HandSide === 'Both')
-            return {
-              ExerciseLogID: log?.ExerciseLogID || null,
-              ExerciseID: ex.ExerciseID,
-              Name: ex.Name,
-              Description: ex.Description,
-              IsSingleHand: ex.IsSingleHand,
-              isDuration: ex.isDuration,
-              ImageURL: ex.ImageURL,
-              VideoURL: ex.VideoURL,
-              Block: weData?.Block || 1,
-              Sets: weData?.Sets || null,
-              Reps: weData?.Reps || null,
-              Duration: weData?.Duration || null,
-              Rest: weData?.Rest || null,
-              RepsDone: log?.RepsDone ?? null,
-              DurationSec: log?.DurationSec ?? null,
-              WeightKG: log?.WeightKG ?? null,
-              RPE: log?.RPE ?? null,
-              Notes: log?.Notes ?? '',
-              Completed: log?.Completed ?? false,
-            }
-          }
-        }
+        // exercise + plan; the logged values are filled in below, per occurrence
+        const buildFormEntry = (ex: any, weData: any) => ({
+          ExerciseID: ex.ExerciseID,
+          Name: ex.Name,
+          Description: ex.Description,
+          IsSingleHand: ex.IsSingleHand,
+          isDuration: ex.isDuration,
+          ImageURL: ex.ImageURL,
+          VideoURL: ex.VideoURL,
+          Block: weData?.Block || 1,
+          Sets: weData?.Sets || null,
+          Reps: weData?.Reps || null,
+          Duration: weData?.Duration || null,
+          Rest: weData?.Rest || null,
+        })
 
         const mappedExercises: any[] = []
 
@@ -334,7 +273,31 @@ export default function CalendarEditClient() {
           mappedExercises.push(buildFormEntry(ex, rel))
         }
 
-        setExerciseForms(mappedExercises)
+        // each occurrence of an exercise gets its own log (see lib/exercise-log-save)
+        const { occ } = occurrences(mappedExercises)
+        const { byOcc } = matchLogs(mappedExercises, logs || [])
+        const withLogs = mappedExercises.map((m, i) => {
+          const get = (side: string) => byOcc.get(`${m.ExerciseID}:${side}:${occ[i]}`) as any
+          if (m.IsSingleHand) {
+            const r = get('Right'), l = get('Left')
+            return {
+              ...m,
+              ExerciseLogID: r?.ExerciseLogID || null, ExerciseLogIDLeft: l?.ExerciseLogID || null,
+              RepsDone: r?.RepsDone ?? null, DurationSec: r?.DurationSec ?? null, WeightKG: r?.WeightKG ?? null,
+              RPE: r?.RPE ?? null, Notes: r?.Notes ?? '', Completed: r?.Completed ?? false,
+              RepsDoneLeft: l?.RepsDone ?? null, DurationSecLeft: l?.DurationSec ?? null, WeightKGLeft: l?.WeightKG ?? null,
+              RPELeft: l?.RPE ?? null, NotesLeft: l?.Notes ?? '', CompletedLeft: l?.Completed ?? false,
+            }
+          }
+          const b = get('Both')
+          return {
+            ...m,
+            ExerciseLogID: b?.ExerciseLogID || null,
+            RepsDone: b?.RepsDone ?? null, DurationSec: b?.DurationSec ?? null, WeightKG: b?.WeightKG ?? null,
+            RPE: b?.RPE ?? null, Notes: b?.Notes ?? '', Completed: b?.Completed ?? false,
+          }
+        })
+        setExerciseForms(withLogs)
 
         // Load Grades & Locations
         const [lg, bg, loc, bt] = await gradesP
@@ -429,68 +392,13 @@ export default function CalendarEditClient() {
       let climbingCount = 0
       let deletedLogIds: number[] = []
 
-      // Save Exercises — one log per (exercise, hand side). Existing logs are read once,
-      // updates run in parallel and new logs go in one insert.
-      {
-        type Side = 'Right' | 'Left' | 'Both'
-        const filled = (v: unknown) => v !== null && v !== undefined
-        const byKey = new Map<string, Record<string, unknown>>()   // last one wins, as before
-        const add = (ex: typeof exerciseForms[number], side: Side, left: boolean) => {
-          const reps = left ? ex.RepsDoneLeft : ex.RepsDone
-          const dur = left ? ex.DurationSecLeft : ex.DurationSec
-          const kg = left ? ex.WeightKGLeft : ex.WeightKG
-          const rpe = left ? ex.RPELeft : ex.RPE
-          const notes = (left ? ex.NotesLeft : ex.Notes) as string | undefined
-          if (!(filled(reps) || filled(dur) || filled(kg) || filled(rpe) || (notes && notes.trim() !== ''))) return
-          byKey.set(`${ex.ExerciseID}:${side}`, {
-            CalendarID: calendarId,
-            WorkoutID: workout?.WorkoutID,
-            ExerciseID: ex.ExerciseID,
-            Email: email,
-            HandSide: side,
-            RepsDone: ex.isDuration ? null : (reps || null),
-            DurationSec: ex.isDuration ? (dur || null) : null,
-            WeightKG: kg || null,
-            RPE: rpe || null,
-            Notes: notes?.trim() || null,
-            Completed: true,
-            UpdatedAt: now,
-          })
-        }
-        for (const ex of exerciseForms) {
-          if (ex.IsSingleHand) { add(ex, 'Right', false); add(ex, 'Left', true) }
-          else add(ex, 'Both', false)
-        }
-        exerciseCount = [...byKey.keys()].filter(k => !k.endsWith(':Left')).length
-
-        if (byKey.size > 0) {
-          const { data: rows, error: exErr } = await supabase
-            .from('ExerciseLogs')
-            .select('ExerciseLogID, ExerciseID, HandSide')
-            .eq('CalendarID', calendarId)
-            .order('ExerciseLogID')
-          if (exErr) throw exErr
-          // keep the oldest log per exercise+side (the one the screen shows); extra copies are removed
-          const existing = new Map<string, number>()
-          const duplicates: number[] = []
-          for (const r of rows ?? []) {
-            const k = `${r.ExerciseID}:${r.HandSide}`
-            if (existing.has(k)) duplicates.push(r.ExerciseLogID)
-            else existing.set(k, r.ExerciseLogID)
-          }
-          const inserts: Record<string, unknown>[] = []
-          const writes: PromiseLike<{ error: unknown }>[] = []
-          for (const [key, payload] of byKey) {
-            const logId = existing.get(key)
-            if (logId) writes.push(supabase.from('ExerciseLogs').update(payload).eq('ExerciseLogID', logId).select('ExerciseLogID').then(r => ({ error: r.error ?? (r.data?.length ? null : new Error('עדכון תרגיל נחסם (0 שורות עודכנו)')) })))
-            else inserts.push({ ...payload, CreatedAt: now })
-          }
-          if (inserts.length) writes.push(supabase.from('ExerciseLogs').insert(inserts))
-          if (duplicates.length) writes.push(supabase.from('ExerciseLogs').delete().in('ExerciseLogID', duplicates))
-          const failed = (await Promise.all(writes)).find(r => r.error)
-          if (failed) throw failed.error
-        }
-      }
+      // Save Exercises — one log per (exercise occurrence, hand side); see lib/exercise-log-save
+      exerciseCount = await saveExerciseLogs({
+        calendarId,
+        forms: exerciseForms,
+        base: { CalendarID: calendarId, WorkoutID: workout?.WorkoutID, Email: email },
+        now,
+      })
 
       // Handle Climbing Routes - DELETE, UPDATE, INSERT
       const currentRouteIds = new Set(routes.map(r => r.id))
