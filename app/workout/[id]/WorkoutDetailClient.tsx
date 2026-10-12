@@ -725,13 +725,20 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
         if (byKey.size > 0) {
           // a calendar row created just now has no logs yet
           const existing = new Map<string, number>()
+          const duplicates: number[] = []
           if (calendarIdNum) {
             const { data: rows, error: exErr } = await supabase
               .from('ExerciseLogs')
               .select('ExerciseLogID, ExerciseID, HandSide')
               .eq('CalendarID', activeCalendarId)
+              .order('ExerciseLogID')
             if (exErr) throw exErr
-            for (const r of rows ?? []) existing.set(`${r.ExerciseID}:${r.HandSide}`, r.ExerciseLogID)
+            // keep the oldest log per exercise+side; extra copies are removed
+            for (const r of rows ?? []) {
+              const k = `${r.ExerciseID}:${r.HandSide}`
+              if (existing.has(k)) duplicates.push(r.ExerciseLogID)
+              else existing.set(k, r.ExerciseLogID)
+            }
           }
           const inserts: Record<string, unknown>[] = []
           const updates: PromiseLike<{ error: unknown }>[] = []
@@ -743,6 +750,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
           const results = await Promise.all([
             ...updates,
             ...(inserts.length ? [supabase.from('ExerciseLogs').insert(inserts)] : []),
+            ...(duplicates.length ? [supabase.from('ExerciseLogs').delete().in('ExerciseLogID', duplicates)] : []),
           ])
           const failed = results.find(r => r.error)
           if (failed) throw failed.error
