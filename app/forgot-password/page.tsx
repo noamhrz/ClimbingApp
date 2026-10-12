@@ -70,7 +70,7 @@ export default function ForgotPasswordPage() {
             </div>
 
             <Link
-              href="/login"
+              href="/"
               className="block w-full py-3 min-h-12 bg-accent text-on-accent rounded-full font-bold hover:bg-accent-hover transition-colors"
             >
               חזרה להתחברות
@@ -142,7 +142,7 @@ export default function ForgotPasswordPage() {
 
         <div className="mt-6 text-center">
           <Link
-            href="/login"
+            href="/"
             className="text-sm text-accent hover:text-accent-hover font-semibold"
           >
             ← חזרה להתחברות
