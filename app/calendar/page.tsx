@@ -116,12 +116,22 @@ export default function CalendarPage() {
     return () => window.removeEventListener('resize', checkMobile)
   }, [])
 
-  // Fetch data when activeEmail changes
+  // Calendar rows are loaded for the visible month plus the weeks shown around it,
+  // and reloaded when navigation moves to another month (not the whole history).
+  const rangeKey = moment(date).format('YYYY-MM')
+  const rangeRef = useRef(rangeKey)
+  rangeRef.current = rangeKey
+  const fetchSeq = useRef(0)
+
   useEffect(() => {
     if (!activeEmail) return
     fetchWorkouts()
-    fetchCalendar()
   }, [activeEmail])
+
+  useEffect(() => {
+    if (!activeEmail) return
+    fetchCalendar()
+  }, [activeEmail, rangeKey])
 
   // Fetch workouts assigned to user
   const fetchWorkouts = async () => {
@@ -162,30 +172,38 @@ export default function CalendarPage() {
   // Fetch calendar events
   const fetchCalendar = async () => {
     if (!activeEmail) return
+    const seq = ++fetchSeq.current
+    const month = moment(rangeRef.current + '-01')
+    // StartTime is stored as naive UTC
+    const from = month.clone().startOf('month').subtract(7, 'days').utc().format('YYYY-MM-DD HH:mm:ss')
+    const to = month.clone().endOf('month').add(14, 'days').utc().format('YYYY-MM-DD HH:mm:ss')
 
     const { data, error } = await supabase
       .from('Calendar')
       .select('CalendarID, WorkoutID, StartTime, EndTime, Completed, Deloading, DeloadingPercentage, Order')
       .eq('Email', activeEmail)
+      .gte('StartTime', from)
+      .lte('StartTime', to)
 
+    if (seq !== fetchSeq.current) return   // a newer load (another month) is on its way
     if (error) {
       console.error('❌ Error loading calendar:', error)
       setLoading(false)
       return
     }
 
-    // Personal coach notes for this trainee (set in workout assignment)
-    const { data: notesData } = await supabase
-      .from('WorkoutsForUser')
-      .select('WorkoutID, Notes, CoachNote')
-      .eq('Email', activeEmail)
+    // Personal coach notes (from the assignment) + details of only the workouts on screen, in parallel
+    const ids = [...new Set((data || []).map((r) => r.WorkoutID))]
+    const [{ data: notesData }, { data: workoutsData }] = await Promise.all([
+      supabase.from('WorkoutsForUser').select('WorkoutID, Notes, CoachNote').eq('Email', activeEmail),
+      ids.length
+        ? supabase.from('Workouts').select('WorkoutID, Name, EstimatedTotalTime, EstimatedClimbingTime, CalculatedExercisesTime, containClimbing, containExercise').in('WorkoutID', ids)
+        : Promise.resolve({ data: [] as { WorkoutID: number; Name: string; EstimatedTotalTime: number | null; EstimatedClimbingTime: number | null; CalculatedExercisesTime: number | null; containClimbing: boolean; containExercise: boolean }[] }),
+    ])
+    if (seq !== fetchSeq.current) return
     const noteMap: Record<number, string> = Object.fromEntries(
       (notesData || []).map((n) => [n.WorkoutID, ((n.Notes || n.CoachNote || '') as string).trim()])
     )
-
-    const { data: workoutsData } = await supabase
-      .from('Workouts')
-      .select('WorkoutID, Name, EstimatedTotalTime, EstimatedClimbingTime, CalculatedExercisesTime, containClimbing, containExercise')
 
     const workoutMap = Object.fromEntries(
       (workoutsData || []).map((w) => [w.WorkoutID, w.Name])
