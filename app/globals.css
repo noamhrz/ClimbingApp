@@ -77,14 +77,8 @@ body {
   outline-offset: 2px;
 }
 
-footer {
-  position: sticky;
-  bottom: 0;
-  z-index: 50;
-  background-color: var(--color-raised);
-  border-top: 1px solid var(--color-line);
-  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.3);
-}
+/* (No global footer rule: an unlayered rule beats Tailwind utilities and pinned the coach
+   bar to bottom:0 under the mobile tab bar. Footers style themselves with utilities.) */
 
 /* ============================= */
 /* 🧩 Component utilities */
