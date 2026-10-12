@@ -428,142 +428,58 @@ export default function CalendarEditClient() {
       let climbingCount = 0
       let deletedLogIds: number[] = []
 
-      // Save Exercises
-      for (const ex of exerciseForms) {
-        if (ex.IsSingleHand) {
-          // Right hand
-          const hasDataRight =
-            (ex.RepsDone !== null && ex.RepsDone !== undefined) ||
-            (ex.DurationSec !== null && ex.DurationSec !== undefined) ||
-            (ex.WeightKG !== null && ex.WeightKG !== undefined) ||
-            (ex.RPE !== null && ex.RPE !== undefined) ||
-            (ex.Notes && ex.Notes.trim() !== '')
+      // Save Exercises — one log per (exercise, hand side). Existing logs are read once,
+      // updates run in parallel and new logs go in one insert.
+      {
+        type Side = 'Right' | 'Left' | 'Both'
+        const filled = (v: unknown) => v !== null && v !== undefined
+        const byKey = new Map<string, Record<string, unknown>>()   // last one wins, as before
+        const add = (ex: typeof exerciseForms[number], side: Side, left: boolean) => {
+          const reps = left ? ex.RepsDoneLeft : ex.RepsDone
+          const dur = left ? ex.DurationSecLeft : ex.DurationSec
+          const kg = left ? ex.WeightKGLeft : ex.WeightKG
+          const rpe = left ? ex.RPELeft : ex.RPE
+          const notes = (left ? ex.NotesLeft : ex.Notes) as string | undefined
+          if (!(filled(reps) || filled(dur) || filled(kg) || filled(rpe) || (notes && notes.trim() !== ''))) return
+          byKey.set(`${ex.ExerciseID}:${side}`, {
+            CalendarID: calendarId,
+            WorkoutID: workout?.WorkoutID,
+            ExerciseID: ex.ExerciseID,
+            Email: email,
+            HandSide: side,
+            RepsDone: ex.isDuration ? null : (reps || null),
+            DurationSec: ex.isDuration ? (dur || null) : null,
+            WeightKG: kg || null,
+            RPE: rpe || null,
+            Notes: notes?.trim() || null,
+            Completed: true,
+            UpdatedAt: now,
+          })
+        }
+        for (const ex of exerciseForms) {
+          if (ex.IsSingleHand) { add(ex, 'Right', false); add(ex, 'Left', true) }
+          else add(ex, 'Both', false)
+        }
+        exerciseCount = [...byKey.keys()].filter(k => !k.endsWith(':Left')).length
 
-          if (hasDataRight) {
-            exerciseCount++
-            const payloadRight = {
-              CalendarID: calendarId,
-              WorkoutID: workout?.WorkoutID,
-              ExerciseID: ex.ExerciseID,
-              Email: email,
-              HandSide: 'Right',
-              RepsDone: ex.isDuration ? null : (ex.RepsDone || null),
-              DurationSec: ex.isDuration ? (ex.DurationSec || null) : null,
-              WeightKG: ex.WeightKG || null,
-              RPE: ex.RPE || null,
-              Notes: ex.Notes?.trim() || null,
-              Completed: true,
-              UpdatedAt: now,
-            }
-            
-            const { data: existingRight } = await supabase
-              .from('ExerciseLogs')
-              .select('ExerciseLogID')
-              .eq('CalendarID', calendarId)
-              .eq('ExerciseID', ex.ExerciseID)
-              .eq('HandSide', 'Right')
-              .maybeSingle()
-
-            if (existingRight) {
-              await supabase
-                .from('ExerciseLogs')
-                .update(payloadRight)
-                .eq('ExerciseLogID', existingRight.ExerciseLogID)
-            } else {
-              await supabase
-                .from('ExerciseLogs')
-                .insert({ ...payloadRight, CreatedAt: now })
-            }
+        if (byKey.size > 0) {
+          const { data: rows, error: exErr } = await supabase
+            .from('ExerciseLogs')
+            .select('ExerciseLogID, ExerciseID, HandSide')
+            .eq('CalendarID', calendarId)
+          if (exErr) throw exErr
+          const existing = new Map<string, number>()
+          for (const r of rows ?? []) existing.set(`${r.ExerciseID}:${r.HandSide}`, r.ExerciseLogID)
+          const inserts: Record<string, unknown>[] = []
+          const writes: PromiseLike<{ error: unknown }>[] = []
+          for (const [key, payload] of byKey) {
+            const logId = existing.get(key)
+            if (logId) writes.push(supabase.from('ExerciseLogs').update(payload).eq('ExerciseLogID', logId))
+            else inserts.push({ ...payload, CreatedAt: now })
           }
-
-          // Left hand
-          const hasDataLeft =
-            (ex.RepsDoneLeft !== null && ex.RepsDoneLeft !== undefined) ||
-            (ex.DurationSecLeft !== null && ex.DurationSecLeft !== undefined) ||
-            (ex.WeightKGLeft !== null && ex.WeightKGLeft !== undefined) ||
-            (ex.RPELeft !== null && ex.RPELeft !== undefined) ||
-            (ex.NotesLeft && ex.NotesLeft.trim() !== '')
-
-          if (hasDataLeft) {
-            const payloadLeft = {
-              CalendarID: calendarId,
-              WorkoutID: workout?.WorkoutID,
-              ExerciseID: ex.ExerciseID,
-              Email: email,
-              HandSide: 'Left',
-              RepsDone: ex.isDuration ? null : (ex.RepsDoneLeft || null),
-              DurationSec: ex.isDuration ? (ex.DurationSecLeft || null) : null,
-              WeightKG: ex.WeightKGLeft || null,
-              RPE: ex.RPELeft || null,
-              Notes: ex.NotesLeft?.trim() || null,
-              Completed: true,
-              UpdatedAt: now,
-            }
-            
-            const { data: existingLeft } = await supabase
-              .from('ExerciseLogs')
-              .select('ExerciseLogID')
-              .eq('CalendarID', calendarId)
-              .eq('ExerciseID', ex.ExerciseID)
-              .eq('HandSide', 'Left')
-              .maybeSingle()
-
-            if (existingLeft) {
-              await supabase
-                .from('ExerciseLogs')
-                .update(payloadLeft)
-                .eq('ExerciseLogID', existingLeft.ExerciseLogID)
-            } else {
-              await supabase
-                .from('ExerciseLogs')
-                .insert({ ...payloadLeft, CreatedAt: now })
-            }
-          }
-        } else {
-          // Regular exercise
-          const hasData =
-            (ex.RepsDone !== null && ex.RepsDone !== undefined) ||
-            (ex.DurationSec !== null && ex.DurationSec !== undefined) ||
-            (ex.WeightKG !== null && ex.WeightKG !== undefined) ||
-            (ex.RPE !== null && ex.RPE !== undefined) ||
-            (ex.Notes && ex.Notes.trim() !== '')
-
-          if (hasData) {
-            exerciseCount++
-            const payloadBoth = {
-              CalendarID: calendarId,
-              WorkoutID: workout?.WorkoutID,
-              ExerciseID: ex.ExerciseID,
-              Email: email,
-              HandSide: 'Both',
-              RepsDone: ex.isDuration ? null : (ex.RepsDone || null),
-              DurationSec: ex.isDuration ? (ex.DurationSec || null) : null,
-              WeightKG: ex.WeightKG || null,
-              RPE: ex.RPE || null,
-              Notes: ex.Notes?.trim() || null,
-              Completed: true,
-              UpdatedAt: now,
-            }
-            
-            const { data: existingBoth } = await supabase
-              .from('ExerciseLogs')
-              .select('ExerciseLogID')
-              .eq('CalendarID', calendarId)
-              .eq('ExerciseID', ex.ExerciseID)
-              .eq('HandSide', 'Both')
-              .maybeSingle()
-
-            if (existingBoth) {
-              await supabase
-                .from('ExerciseLogs')
-                .update(payloadBoth)
-                .eq('ExerciseLogID', existingBoth.ExerciseLogID)
-            } else {
-              await supabase
-                .from('ExerciseLogs')
-                .insert({ ...payloadBoth, CreatedAt: now })
-            }
-          }
+          if (inserts.length) writes.push(supabase.from('ExerciseLogs').insert(inserts))
+          const failed = (await Promise.all(writes)).find(r => r.error)
+          if (failed) throw failed.error
         }
       }
 
@@ -595,6 +511,9 @@ export default function CalendarEditClient() {
           throw new Error('יש לבחור מיקום לפני שמירת מסלולי טיפוס')
         }
 
+        // updates in parallel, new routes in one insert
+        const routeInserts: Record<string, unknown>[] = []
+        const routeWrites: PromiseLike<{ error: unknown }>[] = []
         for (const route of routes) {
           climbingCount++
           const payload = {
@@ -612,17 +531,13 @@ export default function CalendarEditClient() {
             LogDateTime: logDateTime,
             UpdatedAt: now,
           }
-
           const existingId = existingLogIds.get(route.id)
-          if (existingId) {
-            await supabase
-              .from('ClimbingLog')
-              .update(payload)
-              .eq('ClimbingLogID', existingId)
-          } else {
-            await supabase.from('ClimbingLog').insert({ ...payload, CreatedAt: now })
-          }
+          if (existingId) routeWrites.push(supabase.from('ClimbingLog').update(payload).eq('ClimbingLogID', existingId))
+          else routeInserts.push({ ...payload, CreatedAt: now })
         }
+        if (routeInserts.length) routeWrites.push(supabase.from('ClimbingLog').insert(routeInserts))
+        const routeFailed = (await Promise.all(routeWrites)).find(r => r.error)
+        if (routeFailed) throw routeFailed.error
       } else if (existingLogIds.size > 0) {
         const allLogIds = Array.from(existingLogIds.values())
         await supabase
