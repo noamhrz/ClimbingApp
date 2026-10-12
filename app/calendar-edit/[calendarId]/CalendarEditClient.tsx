@@ -193,7 +193,8 @@ export default function CalendarEditClient() {
           supabase.from('ClimbingLocations').select('*').order('LocationName'),
           supabase.from('BoardTypes').select('*').order('BoardName'),
         ])
-        const logsP = supabase.from('ExerciseLogs').select('*').eq('CalendarID', calendarId)
+        // oldest first: if an exercise has duplicate logs, the screen shows (and saving updates) the oldest
+        const logsP = supabase.from('ExerciseLogs').select('*').eq('CalendarID', calendarId).order('ExerciseLogID')
         const climbLogsP = supabase.from('ClimbingLog').select('*').eq('CalendarID', calendarId)
 
         // Load Calendar
@@ -467,9 +468,16 @@ export default function CalendarEditClient() {
             .from('ExerciseLogs')
             .select('ExerciseLogID, ExerciseID, HandSide')
             .eq('CalendarID', calendarId)
+            .order('ExerciseLogID')
           if (exErr) throw exErr
+          // keep the oldest log per exercise+side (the one the screen shows); extra copies are removed
           const existing = new Map<string, number>()
-          for (const r of rows ?? []) existing.set(`${r.ExerciseID}:${r.HandSide}`, r.ExerciseLogID)
+          const duplicates: number[] = []
+          for (const r of rows ?? []) {
+            const k = `${r.ExerciseID}:${r.HandSide}`
+            if (existing.has(k)) duplicates.push(r.ExerciseLogID)
+            else existing.set(k, r.ExerciseLogID)
+          }
           const inserts: Record<string, unknown>[] = []
           const writes: PromiseLike<{ error: unknown }>[] = []
           for (const [key, payload] of byKey) {
@@ -478,6 +486,7 @@ export default function CalendarEditClient() {
             else inserts.push({ ...payload, CreatedAt: now })
           }
           if (inserts.length) writes.push(supabase.from('ExerciseLogs').insert(inserts))
+          if (duplicates.length) writes.push(supabase.from('ExerciseLogs').delete().in('ExerciseLogID', duplicates))
           const failed = (await Promise.all(writes)).find(r => r.error)
           if (failed) throw failed.error
         }
