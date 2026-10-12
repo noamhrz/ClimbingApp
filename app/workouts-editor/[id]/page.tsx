@@ -246,7 +246,7 @@ export default function EditWorkoutPage() {
       )}
 
       {/* Action Buttons */}
-      <div className="flex gap-2 sm:gap-3 justify-end sticky bottom-[calc(4rem+env(safe-area-inset-bottom))] md:bottom-6 z-10 bg-surface p-2.5 sm:p-4 border-t border-line rounded-lg">
+      <div className="flex gap-2 sm:gap-3 justify-end sticky bottom-[calc(8rem+env(safe-area-inset-bottom))] md:bottom-[5.5rem] z-10 bg-surface p-2.5 sm:p-4 border-t border-line rounded-lg">
         <button
           onClick={() => setShowAssign(true)}
           className="me-auto px-3 sm:px-5 py-3 border border-accent text-accent rounded-lg hover:bg-accent/10 font-bold inline-flex items-center gap-1.5 whitespace-nowrap text-sm sm:text-base"

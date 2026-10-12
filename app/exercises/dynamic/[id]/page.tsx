@@ -337,7 +337,31 @@ export default function DynamicExerciseEditorPage() {
       {levels.length > 0 && (
         <div className="md:grid md:grid-cols-[minmax(0,1fr)_360px] md:gap-6 md:items-start">
           <div className="flex flex-col gap-3">
-            <p className="text-sm text-muted">{levels.length} רמות · {total} תרגילים<span className="hidden md:inline"> · לחיצה על כותרת רמה בוחרת לאן להוסיף, ואפשר לגרור תרגילים מהרשימה או בין רמות</span></p>
+            <p className="text-sm text-muted">{levels.length} רמות · {total} תרגילים<span className="hidden md:inline"> · אפשר לגרור תרגילים מהרשימה או בין רמות</span></p>
+
+            {/* desktop: which level the library adds to — stays visible while scrolling */}
+            {isDesktop && (
+              <div className="sticky z-10 -mx-1 px-1 py-2 bg-bg/95 backdrop-blur" style={{ top: 'var(--app-header-height, 0px)' }}>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <div className="flex items-center gap-1.5 flex-wrap" role="group" aria-label="לאיזו רמה להוסיף">
+                    <span className="text-sm font-bold text-fg-2">מוסיף ל:</span>
+                    {levels.map((l, li) => (
+                      <button key={l.LevelID} type="button" aria-pressed={li === tgt} onClick={() => { setTarget(li); setFocusSig(n => n + 1) }}
+                        className={`h-8 px-3 rounded-full border text-[13px] font-bold ${li === tgt ? 'bg-accent border-accent text-on-accent' : list(l.LevelID).length ? 'border-line-strong text-fg-2 hover:border-accent' : 'border-line text-muted hover:border-accent'}`}>
+                        רמה {l.LevelNumber}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="ms-auto flex items-center gap-2">
+                    <span className={`text-sm ${dirty ? 'text-warning font-bold' : 'text-muted'}`}>{dirty ? 'לא נשמר' : 'נשמר'}</span>
+                    <button type="button" onClick={leave} className="h-9 px-3 rounded-lg border border-line text-sm font-medium">סגור</button>
+                    <button type="button" onClick={handleSave} disabled={saving || !dirty || !dynamicExercise.RoadmapCategoryID} className="h-9 px-4 rounded-lg bg-accent text-on-accent text-sm font-extrabold inline-flex items-center gap-1.5 disabled:opacity-50">
+                      <LuSave aria-hidden className="w-4 h-4" />{saving ? 'שומר…' : 'שמור'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {levels.map((l, li) => {
               const its = list(l.LevelID)
@@ -429,7 +453,6 @@ export default function DynamicExerciseEditorPage() {
                 panel
                 focusSig={focusSig}
                 blockLabel={`רמה ${levels[tgt]?.LevelNumber ?? ''}`}
-                targets={levels.map(l => `רמה ${l.LevelNumber}`)}
                 target={tgt}
                 onTarget={setTarget}
                 resetKey={tgt}
@@ -456,7 +479,7 @@ export default function DynamicExerciseEditorPage() {
       })()}
 
       {/* save bar */}
-      <div className="sticky bottom-[calc(4rem+env(safe-area-inset-bottom))] md:bottom-6 z-10 mt-6 flex items-center gap-3 bg-surface border border-line rounded-xl p-2.5 md:p-3">
+      <div className="md:hidden sticky bottom-[calc(8rem+env(safe-area-inset-bottom))] z-10 mt-6 flex items-center gap-3 bg-surface border border-line rounded-xl p-2.5 md:p-3">
         <span className={`flex-1 text-sm ${dirty ? 'text-warning font-bold' : 'text-muted'}`}>{dirty ? 'יש שינויים שלא נשמרו' : 'הכול שמור'}</span>
         <button type="button" onClick={leave} className="h-11 px-4 rounded-lg border border-line text-sm font-medium">סגור</button>
         <button type="button" onClick={handleSave} disabled={saving || !dirty || !dynamicExercise.RoadmapCategoryID} className="h-11 px-5 rounded-lg bg-accent text-on-accent text-sm font-extrabold inline-flex items-center gap-1.5 disabled:opacity-50">
