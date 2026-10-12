@@ -263,7 +263,7 @@ export default function WorkoutFlow({
         </div>
 
         {/* actions */}
-        <footer className="px-4 pt-3 pb-[calc(14px+env(safe-area-inset-bottom))] border-t border-line flex flex-col gap-2.5 bg-bg">
+        <footer className="px-4 pt-3 pb-[calc(14px+env(safe-area-inset-bottom))] border-t border-line flex flex-col gap-2.5 bg-raised shadow-[0_-2px_10px_rgba(0,0,0,0.3)]">
           {aboveActions}
           <div className="flex gap-2.5">
           <button
