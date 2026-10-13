@@ -787,7 +787,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
       // Show the real reason (DB message + code) so a failed save can be diagnosed from the phone
       const e = err as { message?: string; code?: string; details?: string; hint?: string } | null
       const reason = [e?.message, e?.details, e?.code && `(${e.code})`].filter(Boolean).join(' · ').slice(0, 220)
-      showToast(reason ? `❌ שגיאה בשמירה: ${reason}` : '❌ שגיאה בשמירה', 'red', 12000)
+      showToast(`❌ שגיאה בשמירה${reason ? ': ' + reason : ''} [v1013b]`, 'red', 12000)
       setIsSaving(false) // Only reset on error - on success, redirect will happen
     }
   }
