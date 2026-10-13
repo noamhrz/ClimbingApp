@@ -426,7 +426,8 @@ export default function ClimbBulkLogPage() {
                       className="min-w-0 h-9 rounded-lg border border-transparent bg-transparent px-2 text-base placeholder:text-faint hover:border-line-strong focus:border-line-strong focus:bg-raised focus:outline-none" />
                     <button type="button" onClick={() => updateRow(r.key, { ok: !r.ok })} aria-label={r.ok ? 'טופס, לחץ לשינוי' : 'לא טופס, לחץ לשינוי'}
                       className={`w-9 h-9 rounded-lg border bg-raised font-extrabold ${r.ok ? 'text-success border-success/60' : 'text-danger border-danger/60'}`}>{r.ok ? '✓' : '✗'}</button>
-                    <div className="max-sm:col-start-2 max-sm:row-start-2 max-sm:justify-self-start">
+                    <div className="flex items-center gap-1.5 max-sm:col-start-2 max-sm:row-start-2 max-sm:justify-self-start">
+                      <span className="text-xs font-bold text-muted">ניסיונות</span>
                       <Stepper value={r.att} onChange={v => updateRow(r.key, { att: v })} label="ניסיונות" />
                     </div>
                     <button type="button" onClick={() => removeRow(r.key)} aria-label={`מחק מסלול ${labelOf(r.type, r.gradeId)}`} className="w-8 h-8 grid place-items-center rounded-lg text-faint hover:text-danger max-sm:col-start-4 max-sm:row-start-1">
