@@ -80,9 +80,9 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
   const [isSaving, setIsSaving] = useState(false)
 
   const [toast, setToast] = useState<{ text: string; color: string } | null>(null)
-  const showToast = (text: string, color: string) => {
+  const showToast = (text: string, color: string, ms = 1600) => {
     setToast({ text, color })
-    setTimeout(() => setToast(null), 1600)
+    setTimeout(() => setToast(null), ms)
   }
 
   // === חישוב סטטוס תאריך ===
@@ -711,13 +711,13 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
         const inserts: Record<string, unknown>[] = []
         const writes: PromiseLike<{ error: unknown }>[] = []
         const put = (ex: typeof exerciseForms[number], side: Side, left: boolean) => {
-          const logId = queue.get(`${ex.ExerciseID}:${side}`)?.shift()   // this entry's log, if any
           const reps = left ? ex.RepsDoneLeft : ex.RepsDone
           const dur = left ? ex.DurationSecLeft : ex.DurationSec
           const kg = left ? ex.WeightKGLeft : ex.WeightKG
           const rpe = left ? ex.RPELeft : ex.RPE
           const notes = (left ? ex.NotesLeft : ex.Notes) as string | undefined
           if (!(filled(reps) || filled(dur) || filled(kg) || filled(rpe) || (notes && notes.trim() !== ''))) return
+          const logId = queue.get(`${ex.ExerciseID}:${side}`)?.shift()   // this entry's log, if any (only entries that are saved take one)
           const payload = {
             Email: email,
             WorkoutID: id,
@@ -781,7 +781,10 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
       }, 800)
     } catch (err) {
       console.error('❌ שגיאה בשמירה:', err)
-      showToast('❌ שגיאה בשמירה', 'red')
+      // Show the real reason (DB message + code) so a failed save can be diagnosed from the phone
+      const e = err as { message?: string; code?: string; details?: string; hint?: string } | null
+      const reason = [e?.message, e?.details, e?.code && `(${e.code})`].filter(Boolean).join(' · ').slice(0, 220)
+      showToast(reason ? `❌ שגיאה בשמירה: ${reason}` : '❌ שגיאה בשמירה', 'red', 12000)
       setIsSaving(false) // Only reset on error - on success, redirect will happen
     }
   }
@@ -991,7 +994,8 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 20 }}
-              className={`fixed bottom-24 left-1/2 -translate-x-1/2 px-6 py-3 rounded-lg shadow-lg text-on-accent text-sm z-[9999] ${
+              onClick={() => setToast(null)}
+              className={`fixed bottom-24 left-1/2 -translate-x-1/2 w-max max-w-[calc(100vw-32px)] break-words text-center px-6 py-3 rounded-lg shadow-lg text-on-accent text-sm z-[9999] ${
  toast.color === 'blue'
  ? 'bg-accent'
  : toast.color === 'red'
