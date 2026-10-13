@@ -689,20 +689,36 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
       }
 
       // === תרגילים - with Single Hand & isDuration support ===
-      // One log per (exercise, hand side). Existing logs of this calendar entry are read once;
-      // updates run in parallel and new logs go in one insert.
+      // Each entry of the workout gets its own log (an exercise can appear twice). When this
+      // calendar entry already has logs, they are matched to the entries in order (oldest first),
+      // the same way the saved-workout screen reads them. Updates in parallel, inserts in one request.
       if (workout.containExercise && exerciseForms.length > 0) {
         type Side = 'Right' | 'Left' | 'Both'
+        const queue = new Map<string, number[]>()   // existing log IDs per exercise+side, oldest first
+        if (calendarIdNum) {
+          const { data: rows, error: exErr } = await supabase
+            .from('ExerciseLogs')
+            .select('ExerciseLogID, ExerciseID, HandSide')
+            .eq('CalendarID', activeCalendarId)
+            .order('ExerciseLogID')
+          if (exErr) throw exErr
+          for (const r of rows ?? []) {
+            const k = `${r.ExerciseID}:${r.HandSide}`
+            queue.set(k, [...(queue.get(k) ?? []), r.ExerciseLogID])
+          }
+        }
         const filled = (v: unknown) => v !== null && v !== undefined
-        const byKey = new Map<string, Record<string, unknown>>()   // last one wins, as before
-        const add = (ex: typeof exerciseForms[number], side: Side, left: boolean) => {
+        const inserts: Record<string, unknown>[] = []
+        const writes: PromiseLike<{ error: unknown }>[] = []
+        const put = (ex: typeof exerciseForms[number], side: Side, left: boolean) => {
+          const logId = queue.get(`${ex.ExerciseID}:${side}`)?.shift()   // this entry's log, if any
           const reps = left ? ex.RepsDoneLeft : ex.RepsDone
           const dur = left ? ex.DurationSecLeft : ex.DurationSec
           const kg = left ? ex.WeightKGLeft : ex.WeightKG
           const rpe = left ? ex.RPELeft : ex.RPE
           const notes = (left ? ex.NotesLeft : ex.Notes) as string | undefined
           if (!(filled(reps) || filled(dur) || filled(kg) || filled(rpe) || (notes && notes.trim() !== ''))) return
-          byKey.set(`${ex.ExerciseID}:${side}`, {
+          const payload = {
             Email: email,
             WorkoutID: id,
             CalendarID: activeCalendarId,
@@ -715,46 +731,21 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
             Notes: notes?.trim() || null,
             Completed: true,
             UpdatedAt: now,
-          })
+          }
+          if (logId) {
+            writes.push(supabase.from('ExerciseLogs').update(payload).eq('ExerciseLogID', logId).select('ExerciseLogID')
+              .then(r => ({ error: r.error ?? (r.data?.length ? null : new Error('עדכון תרגיל נחסם (0 שורות עודכנו)')) })))
+          } else {
+            inserts.push({ ...payload, CreatedAt: now })
+          }
         }
         for (const ex of exerciseForms) {
-          if (ex.IsSingleHand) { add(ex, 'Right', false); add(ex, 'Left', true) }
-          else add(ex, 'Both', false)
+          if (ex.IsSingleHand) { put(ex, 'Right', false); put(ex, 'Left', true) }
+          else put(ex, 'Both', false)
         }
-
-        if (byKey.size > 0) {
-          // a calendar row created just now has no logs yet
-          const existing = new Map<string, number>()
-          const duplicates: number[] = []
-          if (calendarIdNum) {
-            const { data: rows, error: exErr } = await supabase
-              .from('ExerciseLogs')
-              .select('ExerciseLogID, ExerciseID, HandSide')
-              .eq('CalendarID', activeCalendarId)
-              .order('ExerciseLogID')
-            if (exErr) throw exErr
-            // keep the oldest log per exercise+side; extra copies are removed
-            for (const r of rows ?? []) {
-              const k = `${r.ExerciseID}:${r.HandSide}`
-              if (existing.has(k)) duplicates.push(r.ExerciseLogID)
-              else existing.set(k, r.ExerciseLogID)
-            }
-          }
-          const inserts: Record<string, unknown>[] = []
-          const updates: PromiseLike<{ error: unknown }>[] = []
-          for (const [key, payload] of byKey) {
-            const logId = existing.get(key)
-            if (logId) updates.push(supabase.from('ExerciseLogs').update(payload).eq('ExerciseLogID', logId).select('ExerciseLogID').then(r => ({ error: r.error ?? (r.data?.length ? null : new Error('עדכון תרגיל נחסם (0 שורות עודכנו)')) })))
-            else inserts.push({ ...payload, CreatedAt: now })
-          }
-          const results = await Promise.all([
-            ...updates,
-            ...(inserts.length ? [supabase.from('ExerciseLogs').insert(inserts)] : []),
-            ...(duplicates.length ? [supabase.from('ExerciseLogs').delete().in('ExerciseLogID', duplicates)] : []),
-          ])
-          const failed = results.find(r => r.error)
-          if (failed) throw failed.error
-        }
+        if (inserts.length) writes.push(supabase.from('ExerciseLogs').insert(inserts))
+        const failed = (await Promise.all(writes)).find(r => r.error)
+        if (failed) throw failed.error
       }
 
       // === טיפוס ===
