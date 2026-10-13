@@ -214,6 +214,7 @@ export default function DashboardPage() {
         .from('ClimbingLog')
         .select('LogDateTime, ClimbType, VolumeScore')
         .eq('Email', userToShow?.Email)
+        .is('DatePrecision', null)
         .gte('LogDateTime', start.toISOString())
         .lte('LogDateTime', end.toISOString())
         .order('LogDateTime')

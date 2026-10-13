@@ -84,6 +84,34 @@ export async function addClimbingLog(
   return data
 }
 
+export interface BulkClimbRow {
+  ClimbType: 'Boulder' | 'Board' | 'Lead'
+  GradeID: number
+  RouteName: string | null
+  Attempts: number
+  Successful: boolean
+  LogDateTime: string // naive 'YYYY-MM-DDT12:00:00'
+  DatePrecision: 'month' | 'year' | null
+  LocationID: number | null
+  BoardTypeID: number | null
+}
+
+/**
+ * Add many climbing log entries at once (trip / history entry). Inserts in chunks.
+ */
+export async function addClimbingLogsBulk(email: string, rows: BulkClimbRow[]): Promise<number> {
+  let saved = 0
+  for (let i = 0; i < rows.length; i += 300) {
+    const chunk = rows.slice(i, i + 300).map(r => ({
+      Email: email, WorkoutID: null, CalendarID: null, Notes: null, ...r,
+    }))
+    const { error } = await supabase.from('ClimbingLog').insert(chunk)
+    if (error) throw error
+    saved += chunk.length
+  }
+  return saved
+}
+
 /**
  * Delete a climbing log entry
  */

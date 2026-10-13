@@ -113,7 +113,7 @@ export async function buildMonthlyReport(db: SupabaseClient, email: string, year
         .gte('StartTime', `${addDays(calFrom, -1)}T00:00:00`).lt('StartTime', `${addDays(asOf, 1)}T23:59:59`)
         .order('StartTime').range(f, t)),
     fetchAll<{ LogDateTime: string; ClimbType: ClimbType; GradeID: number; Successful: boolean | null; VolumeScore: number | null }>((f, t) =>
-      db.from('ClimbingLog').select('LogDateTime, ClimbType, GradeID, Successful, VolumeScore').eq('Email', email)
+      db.from('ClimbingLog').select('LogDateTime, ClimbType, GradeID, Successful, VolumeScore').eq('Email', email).is('DatePrecision', null)
         .gte('LogDateTime', [monthStart(y6, m6), qStart].sort()[0]).lte('LogDateTime', `${[mEnd, qEnd].sort()[1]}T23:59:59.999`)
         .order('LogDateTime').range(f, t)),
     db.from('WellnessLog').select('Date, SleepHours, VitalityLevel, PainLevel').eq('Email', email)
