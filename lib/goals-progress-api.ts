@@ -50,6 +50,7 @@ export async function getBoulderProgress(
       .eq('Email', email)
       .eq('ClimbType', 'Boulder')
       .eq('Successful', true)
+      .is('DatePrecision', null)
       .gte('LogDateTime', dateRange.start)
       .lte('LogDateTime', dateRange.end + 'T23:59:59.999')
     
@@ -115,6 +116,7 @@ export async function getBoardProgress(
       .eq('Email', email)
       .eq('ClimbType', 'Board')
       .eq('Successful', true)
+      .is('DatePrecision', null)
       .gte('LogDateTime', dateRange.start)
       .lte('LogDateTime', dateRange.end + 'T23:59:59.999')
     
@@ -180,6 +182,7 @@ export async function getLeadProgress(
       .eq('Email', email)
       .eq('ClimbType', 'Lead')
       .eq('Successful', true)
+      .is('DatePrecision', null)
       .gte('LogDateTime', dateRange.start)
       .lte('LogDateTime', dateRange.end + 'T23:59:59.999')
     

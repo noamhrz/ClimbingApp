@@ -17,8 +17,11 @@ export default function ClimbingLogList({ logs, boulderGrades, leadGrades, onDel
   const leadLogs = logs.filter((log) => log.ClimbType === 'Lead')
   const boulderBoardLogs = logs.filter((log) => log.ClimbType === 'Boulder' || log.ClimbType === 'Board')
 
-  const formatDate = (dateString?: string) => {
+  const formatDate = (dateString?: string, precision?: ClimbingLogEntry['DatePrecision']) => {
     if (!dateString) return ''
+    // approximate dates: only the month or year is known (stored as the 1st)
+    if (precision === 'year') return `${dateString.slice(0, 4)} (משוער)`
+    if (precision === 'month') return `${dateString.slice(5, 7)}/${dateString.slice(0, 4)} (משוער)`
     const date = new Date(dateString)
     return date.toLocaleDateString('he-IL', {
       day: '2-digit',
@@ -54,7 +57,7 @@ export default function ClimbingLogList({ logs, boulderGrades, leadGrades, onDel
           <div className="flex-1">
             {/* Date */}
             <div className="text-xs text-muted mb-1">
-              <LuCalendarDays aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />{formatDate(log.LogDateTime)}
+              <LuCalendarDays aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />{formatDate(log.LogDateTime, log.DatePrecision)}
             </div>
 
             {/* Grade & Route Name */}

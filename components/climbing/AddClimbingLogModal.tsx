@@ -367,7 +367,7 @@ export default function AddClimbingLogModal({
                 >
                   <option value="">בחר בורד</option>
                   {boardTypes.map((board) => (
-                    <option key={board.BoardTypeID} value={board.BoardTypeID}>
+                    <option key={board.BoardID} value={board.BoardID}>
                       {board.BoardName}
                     </option>
                   ))}
