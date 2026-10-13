@@ -48,6 +48,8 @@ export interface ClimbingLogEntry {
   DurationSeconds?: number | null
   Notes?: string | null
   LogDateTime?: string
+  /** null = exact date; 'month' / 'year' = only that much is known (date is the 1st) */
+  DatePrecision?: 'month' | 'year' | null
   CreatedAt?: string
   UpdatedAt?: string
   CalendarID?: number | null

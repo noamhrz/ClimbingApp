@@ -55,6 +55,7 @@ export async function getClimbingPerformance(
     .from('ClimbingLog')
     .select('ClimbingLogID, ClimbType, GradeID, Attempts, Successful, LogDateTime')
     .eq('Email', email)
+    .is('DatePrecision', null) // approximate (history) dates don't belong to a period
     .gte('LogDateTime', startDate)
     .lte('LogDateTime', `${endDate}T23:59:59.999`)
     .order('LogDateTime', { ascending: false })

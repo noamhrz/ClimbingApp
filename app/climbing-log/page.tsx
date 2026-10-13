@@ -192,6 +192,12 @@ export default function ClimbingLogPage() {
           >
             + הוסף מסלול
           </button>
+          <button
+            onClick={() => router.push('/climbing-log/bulk')}
+            className="border border-accent text-accent px-4 py-2 rounded-lg hover:bg-accent/15 font-medium"
+          >
+            הוספת טיול או היסטוריה
+          </button>
           <div className="text-sm text-fg-3">
             סה"כ {allLogs.length} מסלולים
           </div>
