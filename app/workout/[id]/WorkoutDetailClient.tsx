@@ -3,6 +3,7 @@
 import { useEffect, useState, useMemo, useCallback } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
+import { insertExerciseLogs } from '@/lib/exercise-log-writes'
 import { useAuth, useActiveUserEmail } from '@/context/AuthContext'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ClimbingRoute, BoulderGrade, LeadGrade, ClimbingLocation, BoardType } from '@/types/climbing'
@@ -710,6 +711,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
         const filled = (v: unknown) => v !== null && v !== undefined
         const inserts: Record<string, unknown>[] = []
         const writes: PromiseLike<{ error: unknown }>[] = []
+        const updatedKeys = new Set<string>()
         const put = (ex: typeof exerciseForms[number], side: Side, left: boolean) => {
           const reps = left ? ex.RepsDoneLeft : ex.RepsDone
           const dur = left ? ex.DurationSecLeft : ex.DurationSec
@@ -733,6 +735,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
             UpdatedAt: now,
           }
           if (logId) {
+            updatedKeys.add(`${ex.ExerciseID}:${side}`)
             writes.push(supabase.from('ExerciseLogs').update(payload).eq('ExerciseLogID', logId).select('ExerciseLogID')
               .then(r => ({ error: r.error ?? (r.data?.length ? null : new Error('עדכון תרגיל נחסם (0 שורות עודכנו)')) })))
           } else {
@@ -743,7 +746,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
           if (ex.IsSingleHand) { put(ex, 'Right', false); put(ex, 'Left', true) }
           else put(ex, 'Both', false)
         }
-        if (inserts.length) writes.push(supabase.from('ExerciseLogs').insert(inserts))
+        if (inserts.length) writes.push(insertExerciseLogs(inserts, updatedKeys))
         const failed = (await Promise.all(writes)).find(r => r.error)
         if (failed) throw failed.error
       }
