@@ -186,7 +186,7 @@ export default function ExerciseStep({ exercise: ex, position, last, bests, onCh
 
       <NumberStepper
         key={primKey}
-        id={`ex-${ex.ExerciseID}-${primKey}`}
+        id={`ex-${position.n}-${ex.ExerciseID}-${primKey}`}
         label={ex.isDuration ? 'זמן' : 'חזרות'}
         unit={ex.isDuration ? 'שניות' : undefined}
         value={n(ex[primKey])}
@@ -196,7 +196,7 @@ export default function ExerciseStep({ exercise: ex, position, last, bests, onCh
       />
       <NumberStepper
         key={'WeightKG' + s}
-        id={`ex-${ex.ExerciseID}-WeightKG${s}`}
+        id={`ex-${position.n}-${ex.ExerciseID}-WeightKG${s}`}
         label="משקל"
         unit="ק״ג"
         value={n(ex['WeightKG' + s])}

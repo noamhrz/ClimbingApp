@@ -193,7 +193,8 @@ export default function CalendarEditClient() {
           supabase.from('ClimbingLocations').select('*').order('LocationName'),
           supabase.from('BoardTypes').select('*').order('BoardName'),
         ])
-        // oldest first: if an exercise has duplicate logs, the screen shows (and saving updates) the oldest
+        // oldest first: when an exercise appears more than once in the workout, its logs are
+        // handed to the entries in order (1st entry ↔ 1st log), and each entry keeps its own log ID
         const logsP = supabase.from('ExerciseLogs').select('*').eq('CalendarID', calendarId).order('ExerciseLogID')
         const climbLogsP = supabase.from('ClimbingLog').select('*').eq('CalendarID', calendarId)
 
@@ -248,10 +249,16 @@ export default function CalendarEditClient() {
           for (const ex of concreteExs || []) concreteExMap[ex.ExerciseID] = ex
         }
 
+        const usedLogIds = new Set<number>()
+        const takeLog = (exerciseId: number, side: string) => {
+          const l = logs?.find(x => x.ExerciseID === exerciseId && x.HandSide === side && !usedLogIds.has(x.ExerciseLogID))
+          if (l) usedLogIds.add(l.ExerciseLogID)
+          return l
+        }
         const buildFormEntry = (ex: any, weData: any) => {
           if (ex.IsSingleHand) {
-            const logRight = logs?.find(l => l.ExerciseID === ex.ExerciseID && l.HandSide === 'Right')
-            const logLeft  = logs?.find(l => l.ExerciseID === ex.ExerciseID && l.HandSide === 'Left')
+            const logRight = takeLog(ex.ExerciseID, 'Right')
+            const logLeft  = takeLog(ex.ExerciseID, 'Left')
             return {
               ExerciseLogID: logRight?.ExerciseLogID || null,
               ExerciseLogIDLeft: logLeft?.ExerciseLogID || null,
@@ -281,7 +288,7 @@ export default function CalendarEditClient() {
               CompletedLeft: logLeft?.Completed ?? false,
             }
           } else {
-            const log = logs?.find(l => l.ExerciseID === ex.ExerciseID && l.HandSide === 'Both')
+            const log = takeLog(ex.ExerciseID, 'Both')
             return {
               ExerciseLogID: log?.ExerciseLogID || null,
               ExerciseID: ex.ExerciseID,
@@ -429,20 +436,22 @@ export default function CalendarEditClient() {
       let climbingCount = 0
       let deletedLogIds: number[] = []
 
-      // Save Exercises — one log per (exercise, hand side). Existing logs are read once,
-      // updates run in parallel and new logs go in one insert.
+      // Save Exercises — each entry of the workout has its own log (an exercise can appear twice).
+      // Entries loaded with a log update it; the rest are inserted. Updates run in parallel,
+      // inserts go in one request.
       {
-        type Side = 'Right' | 'Left' | 'Both'
         const filled = (v: unknown) => v !== null && v !== undefined
-        const byKey = new Map<string, Record<string, unknown>>()   // last one wins, as before
-        const add = (ex: typeof exerciseForms[number], side: Side, left: boolean) => {
+        const inserts: Record<string, unknown>[] = []
+        const writes: PromiseLike<{ error: unknown }>[] = []
+        const put = (ex: typeof exerciseForms[number], side: 'Right' | 'Left' | 'Both', left: boolean) => {
           const reps = left ? ex.RepsDoneLeft : ex.RepsDone
           const dur = left ? ex.DurationSecLeft : ex.DurationSec
           const kg = left ? ex.WeightKGLeft : ex.WeightKG
           const rpe = left ? ex.RPELeft : ex.RPE
           const notes = (left ? ex.NotesLeft : ex.Notes) as string | undefined
           if (!(filled(reps) || filled(dur) || filled(kg) || filled(rpe) || (notes && notes.trim() !== ''))) return
-          byKey.set(`${ex.ExerciseID}:${side}`, {
+          if (!left) exerciseCount++
+          const payload = {
             CalendarID: calendarId,
             WorkoutID: workout?.WorkoutID,
             ExerciseID: ex.ExerciseID,
@@ -455,41 +464,22 @@ export default function CalendarEditClient() {
             Notes: notes?.trim() || null,
             Completed: true,
             UpdatedAt: now,
-          })
+          }
+          const logId = (left ? ex.ExerciseLogIDLeft : ex.ExerciseLogID) as number | null | undefined
+          if (logId) {
+            writes.push(supabase.from('ExerciseLogs').update(payload).eq('ExerciseLogID', logId).select('ExerciseLogID')
+              .then(r => ({ error: r.error ?? (r.data?.length ? null : new Error('עדכון תרגיל נחסם (0 שורות עודכנו)')) })))
+          } else {
+            inserts.push({ ...payload, CreatedAt: now })
+          }
         }
         for (const ex of exerciseForms) {
-          if (ex.IsSingleHand) { add(ex, 'Right', false); add(ex, 'Left', true) }
-          else add(ex, 'Both', false)
+          if (ex.IsSingleHand) { put(ex, 'Right', false); put(ex, 'Left', true) }
+          else put(ex, 'Both', false)
         }
-        exerciseCount = [...byKey.keys()].filter(k => !k.endsWith(':Left')).length
-
-        if (byKey.size > 0) {
-          const { data: rows, error: exErr } = await supabase
-            .from('ExerciseLogs')
-            .select('ExerciseLogID, ExerciseID, HandSide')
-            .eq('CalendarID', calendarId)
-            .order('ExerciseLogID')
-          if (exErr) throw exErr
-          // keep the oldest log per exercise+side (the one the screen shows); extra copies are removed
-          const existing = new Map<string, number>()
-          const duplicates: number[] = []
-          for (const r of rows ?? []) {
-            const k = `${r.ExerciseID}:${r.HandSide}`
-            if (existing.has(k)) duplicates.push(r.ExerciseLogID)
-            else existing.set(k, r.ExerciseLogID)
-          }
-          const inserts: Record<string, unknown>[] = []
-          const writes: PromiseLike<{ error: unknown }>[] = []
-          for (const [key, payload] of byKey) {
-            const logId = existing.get(key)
-            if (logId) writes.push(supabase.from('ExerciseLogs').update(payload).eq('ExerciseLogID', logId).select('ExerciseLogID').then(r => ({ error: r.error ?? (r.data?.length ? null : new Error('עדכון תרגיל נחסם (0 שורות עודכנו)')) })))
-            else inserts.push({ ...payload, CreatedAt: now })
-          }
-          if (inserts.length) writes.push(supabase.from('ExerciseLogs').insert(inserts))
-          if (duplicates.length) writes.push(supabase.from('ExerciseLogs').delete().in('ExerciseLogID', duplicates))
-          const failed = (await Promise.all(writes)).find(r => r.error)
-          if (failed) throw failed.error
-        }
+        if (inserts.length) writes.push(supabase.from('ExerciseLogs').insert(inserts))
+        const failed = (await Promise.all(writes)).find(r => r.error)
+        if (failed) throw failed.error
       }
 
       // Handle Climbing Routes - DELETE, UPDATE, INSERT
