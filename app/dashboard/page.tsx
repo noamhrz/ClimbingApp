@@ -1,13 +1,14 @@
 // app/dashboard/page.tsx - UPDATED: Days back instead of calendar weeks
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '@/context/AuthContext'
 import { supabase } from '@/lib/supabaseClient'
 import TimeRangeSelector from '@/components/dashboard/TimeRangeSelector'
 import StatsCards from '@/components/dashboard/StatsCards'
 import WellnessChart from '@/components/dashboard/WellnessChart'
 import ClimbingVolumeChart from '@/components/dashboard/ClimbingVolumeChart'
+import { formatGradeAverage, gradeAverage, gradeScale, GradeScale, GradeType } from '@/lib/grade-average'
 import ExerciseAmountChart from '@/components/dashboard/ExerciseAmountChart'
 import MotivationalQuote from '@/components/dashboard/MotivationalQuote'
 import WellnessModal from '@/components/dashboard/WellnessModal'
@@ -208,84 +209,72 @@ export default function DashboardPage() {
     }
   }
 
+  const gradeScaleP = useRef<Promise<GradeScale> | null>(null)
+  const loadGradeScale = () => {
+    gradeScaleP.current ??= Promise.all([
+      supabase.from('BoulderGrades').select('BoulderGradeID, VGrade'),
+      supabase.from('LeadGrades').select('LeadGradeID, FrenchGrade'),
+    ]).then(([b, l]) => gradeScale(b.data ?? [], l.data ?? []))
+    return gradeScaleP.current
+  }
+
   const loadClimbingData = async ({ start, end }: { start: Date, end: Date }) => {
     try {
-      const { data, error } = await supabase
-        .from('ClimbingLog')
-        .select('LogDateTime, ClimbType, VolumeScore')
-        .eq('Email', userToShow?.Email)
-        .is('DatePrecision', null)
-        .gte('LogDateTime', start.toISOString())
-        .lte('LogDateTime', end.toISOString())
-        .order('LogDateTime')
-      
+      const [{ data, error }, scale] = await Promise.all([
+        supabase
+          .from('ClimbingLog')
+          .select('LogDateTime, ClimbType, VolumeScore, GradeID')
+          .eq('Email', userToShow?.Email)
+          .is('DatePrecision', null)
+          .gte('LogDateTime', start.toISOString())
+          .lte('LogDateTime', end.toISOString())
+          .order('LogDateTime'),
+        loadGradeScale(),
+      ])
+
       if (error) return
-      
-      // ✅ CHANGED: Always group by days for 10 days, by weeks for longer periods
+
+      // Always group by days for 10 days, by weeks for longer periods
       const groupByDays = timeRange === '10days'
       const now = new Date()
-      
-      if (groupByDays) {
-        const volumeMap = new Map<string, { lead: number, board: number, boulder: number }>()
-        
-        data?.forEach(log => {
-          const dateKey = format(new Date(log.LogDateTime), 'dd/MM')
-          if (!volumeMap.has(dateKey)) {
-            volumeMap.set(dateKey, { lead: 0, board: 0, boulder: 0 })
-          }
-          
-          const volumes = volumeMap.get(dateKey)!
-          const volume = log.VolumeScore || 0
-          const climbType = log.ClimbType?.toLowerCase() || ''
-          
-          if (climbType === 'lead') volumes.lead += volume
-          else if (climbType === 'board') volumes.board += volume
-          else if (climbType === 'boulder') volumes.boulder += volume
-        })
-        
-        const allDays = eachDayOfInterval({ start, end })
-        const chartData = allDays.map(day => {
-          const dateKey = format(day, 'dd/MM')
-          const volumes = volumeMap.get(dateKey) || { lead: 0, board: 0, boulder: 0 }
-          return { date: dateKey, ...volumes }
-        })
-        
-        setClimbingData(chartData)
-      } else {
-        const volumeMap = new Map<string, { lead: number, board: number, boulder: number, weekStart: Date }>()
-        
-        data?.forEach(log => {
-          const logDate = new Date(log.LogDateTime)
-          const weekStart = startOfWeek(logDate, { weekStartsOn: WEEK_STARTS_ON })
-          const weekKey = format(weekStart, 'yyyy-MM-dd')
-          
-          if (!volumeMap.has(weekKey)) {
-            volumeMap.set(weekKey, { lead: 0, board: 0, boulder: 0, weekStart })
-          }
-          
-          const volumes = volumeMap.get(weekKey)!
-          const volume = log.VolumeScore || 0
-          const climbType = log.ClimbType?.toLowerCase() || ''
-          
-          if (climbType === 'lead') volumes.lead += volume
-          else if (climbType === 'board') volumes.board += volume
-          else if (climbType === 'boulder') volumes.boulder += volume
-        })
-        
-        const allWeeks = eachWeekOfInterval({ start, end }, { weekStartsOn: WEEK_STARTS_ON })
-        const chartData = allWeeks.map(weekStart => {
-          const weekKey = format(weekStart, 'yyyy-MM-dd')
-          const volumes = volumeMap.get(weekKey) || { lead: 0, board: 0, boulder: 0, weekStart }
-          return {
-            date: getWeekLabel(weekStart, now),
-            lead: volumes.lead,
-            board: volumes.board,
-            boulder: volumes.boulder
-          }
-        })
-        
-        setClimbingData(chartData)
+      const keyOf = (d: Date) => groupByDays
+        ? format(d, 'dd/MM')
+        : format(startOfWeek(d, { weekStartsOn: WEEK_STARTS_ON }), 'yyyy-MM-dd')
+
+      type Bucket = { lead: number; board: number; boulder: number; ids: Record<GradeType, number[]> }
+      const buckets = new Map<string, Bucket>()
+      data?.forEach(log => {
+        const k = keyOf(new Date(log.LogDateTime))
+        if (!buckets.has(k)) buckets.set(k, { lead: 0, board: 0, boulder: 0, ids: { Lead: [], Board: [], Boulder: [] } })
+        const b = buckets.get(k)!
+        const volume = log.VolumeScore || 0
+        const t = log.ClimbType as GradeType
+        if (t === 'Lead') b.lead += volume
+        else if (t === 'Board') b.board += volume
+        else if (t === 'Boulder') b.boulder += volume
+        if (b.ids[t] && log.GradeID != null) b.ids[t].push(log.GradeID)
+      })
+
+      const row = (label: string, k: string) => {
+        const b = buckets.get(k)
+        const avg = (t: GradeType) => (b ? gradeAverage(scale, t, b.ids[t]) : null)
+        const [bo, bd, ld] = [avg('Boulder'), avg('Board'), avg('Lead')]
+        return {
+          date: label,
+          lead: b?.lead ?? 0, board: b?.board ?? 0, boulder: b?.boulder ?? 0,
+          boulderAvg: bo, boardAvg: bd, leadAvg: ld,
+          boulderAvgText: formatGradeAverage(scale, 'Boulder', bo),
+          boardAvgText: formatGradeAverage(scale, 'Board', bd),
+          leadAvgText: formatGradeAverage(scale, 'Lead', ld),
+        }
       }
+
+      const chartData = groupByDays
+        ? eachDayOfInterval({ start, end }).map(day => row(format(day, 'dd/MM'), format(day, 'dd/MM')))
+        : eachWeekOfInterval({ start, end }, { weekStartsOn: WEEK_STARTS_ON })
+            .map(ws => row(getWeekLabel(ws, now), format(ws, 'yyyy-MM-dd')))
+
+      setClimbingData(chartData)
     } catch (error) {
       setClimbingData([])
     }

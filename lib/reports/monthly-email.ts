@@ -87,7 +87,19 @@ function volumeChart(buckets: VolumeBucket[], height: number): string {
   }).join('')
   return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-bottom:1px solid ${C.lineStrong};">
     <tr style="height:${height + 20}px;">${cols}${axisCell(ticks, height)}</tr></table>
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">${labelsRow(buckets.map(b => ({ text: b.note ? `${b.label} (${b.note})` : b.label, current: b.current })))}</table>`
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">${labelsRow(buckets.map(b => ({ text: b.note ? `${b.label} (${b.note})` : b.label, current: b.current })))}${avgRows(buckets)}</table>`
+}
+
+/** Average grade per type under the volume bars (V avg / French avg), ▲▼ against the previous bucket. */
+function avgRows(buckets: VolumeBucket[]): string {
+  const names: Record<ClimbType, string> = { Boulder: 'V בולדר', Board: 'V בורד', Lead: 'הובלה' }
+  return (['Boulder', 'Board', 'Lead'] as ClimbType[])
+    .filter(t => buckets.some(b => b.avg?.[t]))
+    .map(t => `<tr>${buckets.map((b, i) => {
+      const a = b.avg?.[t], p = i ? buckets[i - 1].avg?.[t] : undefined
+      const arrow = a && p ? (a.n > p.n + 0.05 ? ` <span style="color:${C.success}">▲</span>` : a.n < p.n - 0.05 ? ` <span style="color:${C.danger}">▼</span>` : '') : ''
+      return `<td align="center" style="padding-top:3px;font-size:12px;font-weight:700;color:${TYPE_COLOR[t]};">${a ? `<span dir="ltr">&lrm;${esc(a.text)}&lrm;</span>` + arrow : `<span style="color:${C.faint}">–</span>`}</td>`
+    }).join('')}<td style="padding-top:3px;font-size:10px;color:${C.muted};white-space:nowrap;">${names[t]}</td></tr>`).join('')
 }
 
 function legend(totals?: Record<ClimbType, number>): string {
