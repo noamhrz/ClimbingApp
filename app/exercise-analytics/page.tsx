@@ -3,7 +3,7 @@
 
 'use client'
 
-import { isActiveUser } from '@/lib/active-users'
+import { useFollowActiveUser, useSelectUser } from '@/lib/useFollowActiveUser'
 import { useState, useEffect, useMemo } from 'react'
 import { useAuth } from '@/context/AuthContext'
 import { supabase } from '@/lib/supabaseClient'
@@ -26,117 +26,30 @@ import { PageSkeleton } from '@/components/ui/Skeleton'
 
 export default function ExerciseAnalyticsPage() {
   const router = useRouter()
-  const { activeUser, loading: authLoading } = useAuth()
+  const { activeUser, currentUser, availableUsers, loading: authLoading } = useAuth()
 
-  // ✅ EMAIL HIERARCHY: URL param > Manual selection > AuthContext
-  const [targetEmail, setTargetEmail] = useState<string>('')
+  // The analysed user is always the one selected in the footer (active user).
+  // A ?email= link selects that user on load; the picker below selects app-wide.
+  const targetEmail = activeUser?.Email ?? ''
   const [bodyWeight, setBodyWeight] = useState<number | null>(null)
-  const [users, setUsers] = useState<Array<{ Email: string; Name: string; Status?: string }>>([])
-  const [initialUrlParamsLoaded, setInitialUrlParamsLoaded] = useState(false)
+  const [urlEmail] = useState(() => (typeof window === 'undefined' ? null : new URLSearchParams(window.location.search).get('email')))
+  useFollowActiveUser(urlEmail, () => {})
+  const selectUser = useSelectUser()
+  const users = availableUsers
 
-  // Check permissions
-  const canViewOthers = activeUser?.Role === 'admin' || activeUser?.Role === 'coach'
+  // Permissions come from the logged-in user, not the one being viewed
+  const canViewOthers = currentUser?.Role === 'admin' || currentUser?.Role === 'coach'
 
-  // ✅ FIRST: Load email from URL on mount (before anything else)
+  // keep ?email= in the URL in step with the analysed user (shareable link)
   useEffect(() => {
+    if (!targetEmail) return
     const urlParams = new URLSearchParams(window.location.search)
-    const urlEmail = urlParams.get('email')
-    
-    if (urlEmail) {
-      setTargetEmail(urlEmail)
-      setInitialUrlParamsLoaded(true)
-    } else {
-      setInitialUrlParamsLoaded(true)
-    }
-  }, [])
+    if (urlParams.get('email') === targetEmail) return
+    urlParams.set('email', targetEmail)
+    window.history.replaceState({}, '', `${window.location.pathname}?${urlParams.toString()}`)
+  }, [targetEmail])
 
-  useEffect(() => {
-    // Load users list for admin/coach
-    if (canViewOthers) {
-      loadUsers()
-    }
-  }, [canViewOthers, activeUser])
-
-  useEffect(() => {
-    // Skip if we haven't loaded URL params yet
-    if (!initialUrlParamsLoaded) return
-    
-    // Skip if we already have email from URL
-    const urlParams = new URLSearchParams(window.location.search)
-    const urlEmail = urlParams.get('email')
-    if (urlEmail && targetEmail === urlEmail) return
-    
-    // 1️⃣ If admin/coach and users loaded, keep current selection or use first user
-    if (canViewOthers && users.length > 0 && !targetEmail) {
-      // Use first user from list as default
-      setTargetEmail(users[0].Email)
-      return
-    }
-    
-    // 3️⃣ Fallback to current user
-    if (!targetEmail && activeUser?.Email) {
-      setTargetEmail(activeUser.Email)
-    }
-  }, [initialUrlParamsLoaded, users, canViewOthers, activeUser])
-
-  const loadUsers = async () => {
-    try {
-      if (activeUser?.Role === 'admin') {
-        const { data, error } = await supabase
-          .from('Users')
-          .select('Email, Name, Status, IsActive')
-          .order('Name')
-
-        if (error) throw error
-        const sorted = (data || []).sort((a, b) => {
-          const aActive = a.Status === 'Active' ? 0 : 1
-          const bActive = b.Status === 'Active' ? 0 : 1
-          return aActive - bActive
-        })
-        setUsers(sorted.filter(isActiveUser))
-      } else if (activeUser?.Role === 'coach') {
-        const { data, error } = await supabase
-          .from('CoachTraineesActiveView')
-          .select('TraineeEmail, TraineeName')
-          .eq('CoachEmail', activeUser.Email)
-          .order('TraineeName')
-
-        if (error) throw error
-
-        const emails = (data || []).map(t => t.TraineeEmail)
-        const { data: statusData } = emails.length > 0
-          ? await supabase.from('Users').select('Email, Status, IsActive').in('Email', emails)
-          : { data: [] }
-        const statusMap = new Map((statusData || []).map(u => [u.Email, u.Status]))
-
-        const activeSet = new Set((statusData || []).filter(isActiveUser).map(u => u.Email))
-        const trainees = (data || []).filter(t => activeSet.has(t.TraineeEmail)).map(t => ({
-          Email: t.TraineeEmail,
-          Name: t.TraineeName,
-          Status: statusMap.get(t.TraineeEmail) as string | undefined
-        })).sort((a, b) => {
-          const aActive = a.Status === 'Active' ? 0 : 1
-          const bActive = b.Status === 'Active' ? 0 : 1
-          return aActive - bActive
-        })
-
-        setUsers(trainees)
-      }
-    } catch (error) {
-      console.error('Error loading users:', error)
-    }
-  }
-
-  const handleUserChange = (email: string) => {
-    setTargetEmail(email)
-    
-    // Update URL with new email
-    const urlParams = new URLSearchParams(window.location.search)
-    urlParams.set('email', email)
-    
-    const newUrl = `${window.location.pathname}?${urlParams.toString()}`
-    window.history.replaceState({}, '', newUrl)
-  }
+  const handleUserChange = (email: string) => selectUser(email)
 
   // Fetch body weight when targetEmail changes
   useEffect(() => {
@@ -546,7 +459,7 @@ export default function ExerciseAnalyticsPage() {
               <div>
                 <h3 className="text-lg font-bold text-fg">בחירת מתאמן לניתוח</h3>
                 <p className="text-sm text-fg-3">
-                  {activeUser?.Role === 'admin' ? 'כאדמין, ניתן לצפות בכל המשתמשים' : 'מציג את המתאמנים שלך'}
+                  {currentUser?.Role === 'admin' ? 'כאדמין, ניתן לצפות בכל המשתמשים' : 'מציג את המתאמנים שלך'}
                 </p>
               </div>
             </div>
