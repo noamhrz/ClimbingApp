@@ -182,3 +182,19 @@
   background: color-mix(in srgb, var(--color-accent, #E0763A) 22%, transparent) !important;
   box-shadow: inset 0 0 0 2px var(--color-accent, #E0763A);
 }
+
+/* Coach range tools: marking a range on the month grid */
+.range-mode .rbc-month-view { cursor: cell; user-select: none; -webkit-user-select: none; }
+.range-mode .rbc-month-view .rbc-event { pointer-events: none; }
+.rbc-day-bg.rng-in {
+  background: color-mix(in srgb, var(--color-accent, #E0763A) 18%, transparent) !important;
+}
+.rbc-day-bg.rng-edge {
+  box-shadow: inset 0 0 0 2px var(--color-accent, #E0763A);
+}
+.rbc-day-bg.rng-preview {
+  background: repeating-linear-gradient(135deg,
+    color-mix(in srgb, var(--color-info, #7FB0C9) 22%, transparent) 0 6px,
+    transparent 6px 12px) !important;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-info, #7FB0C9) 60%, transparent);
+}
