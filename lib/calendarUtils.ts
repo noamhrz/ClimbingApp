@@ -1,4 +1,3 @@
-import { supabase } from './supabaseClient'
 
 // Event color utility based on state
 export function getEventColor(event: {
@@ -41,77 +40,4 @@ export function getEventColor(event: {
 
   // future
   return { bg: 'rgb(37 99 235)', text: 'white' } // blue-600 for upcoming
-}
-
-// Apply deloading to all events in date range for a user
-export async function applyDeloading(
-  email: string,
-  startDate: Date,
-  endDate: Date,
-  percentage: number
-): Promise<{ success: boolean; error?: string }> {
-  try {
-    // Set time to start of day for startDate and end of day for endDate
-    const start = new Date(startDate)
-    start.setHours(0, 0, 0, 0)
-    
-    const end = new Date(endDate)
-    end.setHours(23, 59, 59, 999)
-
-    const { error } = await supabase
-      .from('Calendar')
-      .update({
-        Deloading: true,
-        DeloadingPercentage: percentage,
-      })
-      .eq('Email', email)
-      .gte('StartTime', start.toISOString())
-      .lte('StartTime', end.toISOString())
-
-    if (error) {
-      console.error('❌ Error applying deloading:', error)
-      return { success: false, error: error.message }
-    }
-
-    return { success: true }
-  } catch (err) {
-    console.error('❌ Exception applying deloading:', err)
-    return { success: false, error: String(err) }
-  }
-}
-
-// Remove deloading from all events in date range for a user
-export async function clearDeloading(
-  email: string,
-  startDate: Date,
-  endDate: Date
-): Promise<{ success: boolean; error?: string }> {
-  try {
-    // Set time to start of day for startDate and end of day for endDate
-    const start = new Date(startDate)
-    start.setHours(0, 0, 0, 0)
-    
-    const end = new Date(endDate)
-    end.setHours(23, 59, 59, 999)
-
-    const { error } = await supabase
-      .from('Calendar')
-      .update({
-        Deloading: false,
-        DeloadingPercentage: null,
-      })
-      .eq('Email', email)
-      .gte('StartTime', start.toISOString())
-      .lte('StartTime', end.toISOString())
-
-    if (error) {
-      console.error('❌ Error clearing deloading:', error)
-      return { success: false, error: error.message }
-    }
-
-    return { success: true }
-  } catch (err) {
-    console.error('❌ Exception clearing deloading:', err)
-    return { success: false, error: String(err) }
-  }
 }

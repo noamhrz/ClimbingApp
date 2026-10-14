@@ -13,16 +13,14 @@ import { useRouter } from 'next/navigation'
 import EventComponent from '@/components/EventComponent'
 import AddWorkoutModal from '@/components/AddWorkoutModal'
 import ScheduleSheet from '@/components/coach/ScheduleSheet'
-import DeloadingModal from '@/components/DeloadingModal'
 import EventContextMenu from '@/components/EventContextMenu'
 import EditEventModal from '@/components/EditEventModal'
-import WeekDuplicateModal from '@/components/WeekDuplicateModal'
-import DeleteRangeModal from '@/components/DeleteRangeModal'
+import RangeToolPanel, { RANGE_TOOLS, RangeTool } from '@/components/calendar/RangeToolPanel'
 import DayListView from '@/components/calendar/DayListView'
 import CalendarToolbar from '@/components/calendar/CalendarToolbar'
 import AssignedWorkoutsPanel, { PanelWorkout } from '@/components/calendar/AssignedWorkoutsPanel'
 import { copyPreviousWorkout } from '@/utils/copyPreviousWorkout'
-import { LuPlus, LuCalendarDays, LuList, LuCalendar, LuCopy, LuBatteryLow, LuX, LuTrash2, LuSave, LuCalendarPlus, LuSlidersHorizontal } from 'react-icons/lu'
+import { LuPlus, LuCalendarDays, LuList, LuCalendar, LuCopy, LuBatteryLow, LuX, LuTrash2, LuSave, LuCalendarPlus } from 'react-icons/lu'
 import { PageSkeleton } from '@/components/ui/Skeleton'
 
 moment.locale('he')
@@ -68,17 +66,17 @@ export default function CalendarPage() {
   const [isMobile, setIsMobile] = useState(false)
   const [showAddModal, setShowAddModal] = useState(false)
   const [showSchedule, setShowSchedule] = useState(false)
-  const [toolsOpen, setToolsOpen] = useState(false)   // phone: coach tools folded into one button
+  // coach range tools: pick an action, then mark a range on the month calendar
+  const [rangeTool, setRangeTool] = useState<RangeTool | null>(null)
+  const [rangeA, setRangeA] = useState<string | null>(null)
+  const [rangeB, setRangeB] = useState<string | null>(null)
+  const [previewDays, setPreviewDays] = useState<Set<string>>(new Set())
   const [modalInitialDate, setModalInitialDate] = useState<Date | undefined>()
   const [showContextMenu, setShowContextMenu] = useState(false)
   const [contextMenuPosition, setContextMenuPosition] = useState({ x: 0, y: 0 })
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null)
   const [showEditModal, setShowEditModal] = useState(false)
   const [isSelectingDate, setIsSelectingDate] = useState(false)
-  const [showDeloadingModal, setShowDeloadingModal] = useState(false)
-  const [deloadingMode, setDeloadingMode] = useState<'apply' | 'remove'>('apply')
-  const [showDuplicateModal, setShowDuplicateModal] = useState(false)
-  const [showDeleteRangeModal, setShowDeleteRangeModal] = useState(false)
   const [pendingChanges, setPendingChanges] = useState<Map<number, {
     newDate: string
     newOrder: number
@@ -649,22 +647,71 @@ export default function CalendarPage() {
     }
   }
 
-  const handleApplyDeloading = () => {
-    setDeloadingMode('apply')
-    setShowDeloadingModal(true)
+  // ── range tools ────────────────────────────────────────────────────────
+  const startRangeTool = (t: RangeTool) => {
+    if (hasPendingChanges) { alert('יש שינויים שלא נשמרו בלוח. שמור או בטל אותם קודם.'); return }
+    setIsSelectingDate(false)
+    setRangeTool(t); setRangeA(null); setRangeB(null); setPreviewDays(new Set())
+    setView('month')
   }
-
-  const handleRemoveDeloading = () => {
-    setDeloadingMode('remove')
-    setShowDeloadingModal(true)
+  const endRangeTool = () => { setRangeTool(null); setRangeA(null); setRangeB(null); setPreviewDays(new Set()) }
+  const [rangeFrom, rangeTo] = rangeA && rangeB ? [rangeA, rangeB].sort() : [rangeA, null]
+  const inMonthGrid = (t: EventTarget | null) => !!(t as Element | null)?.closest?.('.rbc-month-view')
+  // swallow the calendar's own clicks / selection inside the month grid while marking a range
+  const blockInGrid = (e: React.SyntheticEvent) => {
+    if (!rangeTool || !inMonthGrid(e.target)) return
+    e.stopPropagation()
+    if (e.type === 'click') e.preventDefault()
   }
-
-  const handleDeloadingSuccess = async () => {
-    await fetchCalendar()
+  const onRangePointerDown = (e: React.PointerEvent) => {
+    if (!rangeTool || !inMonthGrid(e.target) || e.button > 0) return
+    e.stopPropagation()
+    const hit = monthCellAt(e.clientX, e.clientY)
+    if (!hit) return
+    if (e.pointerType === 'mouse') e.preventDefault()
+    const anchor = moment(hit.day).format('YYYY-MM-DD')
+    let moved = false
+    const onMove = (ev: PointerEvent) => {
+      if (ev.pointerType !== 'mouse') return
+      const h = monthCellAt(ev.clientX, ev.clientY)
+      if (!h) return
+      const d = moment(h.day).format('YYYY-MM-DD')
+      if (d === anchor && !moved) return
+      moved = true
+      setRangeA(anchor); setRangeB(d)
+    }
+    const finish = (ev: PointerEvent) => {
+      window.removeEventListener('pointermove', onMove)
+      window.removeEventListener('pointerup', finish)
+      window.removeEventListener('pointercancel', cancel)
+      if (moved) return
+      if (ev.pointerType !== 'mouse' && (Math.abs(ev.clientX - e.clientX) > 10 || Math.abs(ev.clientY - e.clientY) > 10)) return
+      // tap: first sets the start, second sets the end, a third starts over
+      if (rangeARef.current && !rangeBRef.current) setRangeB(anchor)
+      else { setRangeA(anchor); setRangeB(null) }
+    }
+    const cancel = () => {
+      window.removeEventListener('pointermove', onMove)
+      window.removeEventListener('pointerup', finish)
+      window.removeEventListener('pointercancel', cancel)
+    }
+    window.addEventListener('pointermove', onMove)
+    window.addEventListener('pointerup', finish)
+    window.addEventListener('pointercancel', cancel)
   }
-
-  const handleDeleteRangeSuccess = async () => {
-    await fetchCalendar()
+  const rangeARef = useRef<string | null>(null)
+  const rangeBRef = useRef<string | null>(null)
+  rangeARef.current = rangeA
+  rangeBRef.current = rangeB
+  const dayPropGetter = (day: Date) => {
+    if (!rangeTool) return {}
+    const d = moment(day).format('YYYY-MM-DD')
+    const lo = rangeFrom, hi = rangeTo ?? rangeFrom
+    const cls: string[] = []
+    if (lo && hi && d >= lo && d <= hi) cls.push('rng-in')
+    if (d === lo || d === hi) cls.push('rng-edge')
+    if (previewDays.has(d)) cls.push('rng-preview')
+    return cls.length ? { className: cls.join(' ') } : {}
   }
 
   const handleNavigate = (newDate: Date) => {
@@ -734,7 +781,41 @@ export default function CalendarPage() {
         </div>
       </div>
 
+      {isAdmin && (
+        <div className="sticky top-[var(--app-header-height,0px)] z-30 bg-surface/95 backdrop-blur border-b border-line">
+          <div className="max-w-7xl mx-auto px-4 py-2">
+            {rangeTool ? (
+              <div className="flex items-center gap-3 min-h-10">
+                <span className="w-2.5 h-2.5 rounded-full bg-accent animate-pulse shrink-0" aria-hidden />
+                <p className="text-sm text-fg-2 min-w-0">
+                  <b className="text-fg">{RANGE_TOOLS.find(t => t.key === rangeTool)!.label}:</b>{' '}
+                  {!rangeFrom ? 'לחץ על יום ההתחלה בלוח' : !rangeTo ? 'לחץ על יום הסוף' : 'אפשר לסמן מחדש, או לאשר למטה'}
+                </p>
+                <button type="button" onClick={endRangeTool} className="ms-auto btn-ghost min-h-9 px-4 text-sm">ביטול</button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 overflow-x-auto" role="toolbar" aria-label="כלי מאמן">
+                <button type="button" onClick={() => setShowSchedule(true)} className="shrink-0 inline-flex items-center gap-1.5 h-10 px-4 rounded-full bg-accent hover:bg-accent-hover text-on-accent text-sm font-bold">
+                  <LuCalendarPlus aria-hidden className="w-4 h-4" />שיבוץ שבועי
+                </button>
+                <span className="w-px h-6 bg-line-strong shrink-0" aria-hidden />
+                {RANGE_TOOLS.map(t => {
+                  const Icon = t.key === 'cycle' ? LuCopy : t.key === 'deload' ? LuBatteryLow : t.key === 'undeload' ? LuX : LuTrash2
+                  return (
+                    <button key={t.key} type="button" onClick={() => startRangeTool(t.key)}
+                      className={`shrink-0 inline-flex items-center gap-1.5 h-10 px-3.5 rounded-full border text-sm font-bold bg-surface hover:bg-raised ${t.key === 'clear' ? 'border-danger/50 text-danger' : 'border-line-strong text-fg-2'}`}>
+                      <Icon aria-hidden className="w-4 h-4" />{t.label}
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       <button
+        hidden={!!rangeTool}
         onClick={handleAddButtonClick}
         className={`fixed bottom-[calc(8.5rem+env(safe-area-inset-bottom))] lg:bottom-24 left-4 lg:left-6 text-on-accent text-3xl rounded-full w-16 h-16 shadow-lg transition-all duration-200 z-40 flex items-center justify-center ${
  isSelectingDate 
@@ -774,14 +855,6 @@ export default function CalendarPage() {
             initialDate={modalInitialDate}
           />
           
-          <DeloadingModal
-            isOpen={showDeloadingModal}
-            onClose={() => setShowDeloadingModal(false)}
-            onSuccess={handleDeloadingSuccess}
-            email={activeEmail}
-            mode={deloadingMode}
-          />
-          
           <ScheduleSheet
             isOpen={showSchedule}
             onClose={() => setShowSchedule(false)}
@@ -791,20 +864,23 @@ export default function CalendarPage() {
             workouts={workouts}
           />
 
-          <WeekDuplicateModal
-            isOpen={showDuplicateModal}
-            onClose={() => setShowDuplicateModal(false)}
-            onSuccess={handleModalSuccess}
-            email={activeEmail}
-          />
-          
-          <DeleteRangeModal
-            isOpen={showDeleteRangeModal}
-            onClose={() => setShowDeleteRangeModal(false)}
-            onSuccess={handleDeleteRangeSuccess}
-            email={activeEmail}
-          />
         </>
+      )}
+
+      {rangeTool && activeEmail && !showPanel && (
+            <RangeToolPanel
+              tool={rangeTool}
+              email={activeEmail}
+              from={rangeFrom}
+              to={rangeTo}
+              onPreview={setPreviewDays}
+              onCancel={endRangeTool}
+              onDone={async (text, undo) => {
+                endRangeTool()
+                await fetchCalendar()
+                showToast(text, undo ? async () => { await undo(); await fetchCalendar() } : undefined)
+              }}
+            />
       )}
 
       {selectedEvent && (
@@ -832,65 +908,6 @@ export default function CalendarPage() {
         </>
       )}
 
-      {isAdmin && (
-        <>
-          {isMobile && toolsOpen && <div className="fixed inset-0 z-30" onClick={() => setToolsOpen(false)} aria-hidden />}
-          <div className="fixed bottom-[calc(8.5rem+env(safe-area-inset-bottom))] lg:bottom-24 right-4 lg:right-6 flex flex-col items-end gap-2 z-40">
-            {(!isMobile || toolsOpen) && (
-              <div className="flex flex-col items-stretch gap-2" id="coach-tools">
-              <button
-                onClick={() => { setToolsOpen(false); setShowSchedule(true) }}
-                className="inline-flex items-center gap-1.5 bg-accent hover:bg-accent-hover text-on-accent px-4 py-2 rounded-lg text-sm font-bold transition-all"
-                title="שיבוץ שבועי"
-              >
-                <LuCalendarPlus aria-hidden className="w-4 h-4 shrink-0" />שיבוץ שבועי
-              </button>
-              <button
-                onClick={() => { setToolsOpen(false); setShowDuplicateModal(true) }}
-                className="inline-flex items-center gap-1.5 bg-info hover:bg-info text-on-accent px-4 py-2 rounded-lg text-sm font-medium transition-all"
-                title="שכפול שבוע"
-              >
-                <LuCopy aria-hidden className="w-4 h-4 shrink-0" />שכפול שבוע
-              </button>
-              <button
-                onClick={() => { setToolsOpen(false); handleApplyDeloading() }}
-                className="inline-flex items-center gap-1.5 bg-info hover:bg-info text-on-accent px-4 py-2 rounded-lg text-sm font-medium transition-all"
-                title="החל דילודינג"
-              >
-                <LuBatteryLow aria-hidden className="w-4 h-4 shrink-0" />דילודינג
-              </button>
-              <button
-                onClick={() => { setToolsOpen(false); handleRemoveDeloading() }}
-                className="inline-flex items-center gap-1.5 bg-raised hover:bg-raised/90 text-fg px-4 py-2 rounded-lg text-sm font-medium transition-all"
-                title="הסר דילודינג"
-              >
-                <LuX aria-hidden className="w-4 h-4 shrink-0" />הסר דילודינג
-              </button>
-              <button
-                onClick={() => { setToolsOpen(false); setShowDeleteRangeModal(true) }}
-                className="inline-flex items-center gap-1.5 bg-danger hover:bg-danger/90 text-on-accent px-4 py-2 rounded-lg text-sm font-medium transition-all"
-                title="נקה טווח תאריכים"
-              >
-                <LuTrash2 aria-hidden className="w-4 h-4 shrink-0" />נקה טווח
-              </button>
-              </div>
-            )}
-            {isMobile && (
-              <button
-                type="button"
-                onClick={() => setToolsOpen(o => !o)}
-                aria-expanded={toolsOpen}
-                aria-controls="coach-tools"
-                className={`inline-flex items-center gap-1.5 h-12 px-4 rounded-full font-bold shadow-lg border ${toolsOpen ? 'bg-raised border-line-strong text-fg' : 'bg-surface border-accent text-accent'}`}
-              >
-                {toolsOpen ? <LuX aria-hidden className="w-5 h-5" /> : <LuSlidersHorizontal aria-hidden className="w-5 h-5" />}
-                כלי מאמן
-              </button>
-            )}
-          </div>
-        </>
-      )}
-
       {!isMobile && hasPendingChanges && (
         <div className="fixed top-14 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 bg-raised border border-warning/40 text-warning px-6 py-3 rounded-xl shadow-lg whitespace-nowrap">
           <span className="font-medium text-sm">יש שינויים שלא נשמרו</span>
@@ -911,7 +928,11 @@ export default function CalendarPage() {
 
       <div className={`mx-auto p-4 ${showPanel ? 'max-w-[1600px] grid grid-cols-[minmax(0,1fr)_300px] gap-4 items-start' : 'max-w-7xl'}`}>
         <div
-          className="bg-surface rounded-xl p-4 overflow-hidden"
+          className={`bg-surface rounded-xl p-4 overflow-hidden ${rangeTool ? 'range-mode' : ''}`}
+          onPointerDownCapture={onRangePointerDown}
+          onMouseDownCapture={blockInGrid}
+          onTouchStartCapture={blockInGrid}
+          onClickCapture={blockInGrid}
           onDragOver={view === 'month' && showPanel ? onMonthDragOver : undefined}
           onDragLeave={view === 'month' && showPanel ? e => { if (!e.currentTarget.contains(e.relatedTarget as Node)) markDropCell(null) } : undefined}
           onDrop={view === 'month' && showPanel ? onMonthDrop : undefined}
@@ -963,8 +984,9 @@ export default function CalendarPage() {
               selectable={true}
               onSelectSlot={handleSelectSlot}
               resizable={false}
-              draggableAccessor={() => !isSelectingDate}
-              onEventDrop={!isSelectingDate ? handleEventDrop : undefined}
+              draggableAccessor={() => !isSelectingDate && !rangeTool}
+              onEventDrop={!isSelectingDate && !rangeTool ? handleEventDrop : undefined}
+              dayPropGetter={dayPropGetter}
               components={{
                 toolbar: CalendarToolbar as any,
                 event: (props: any) => (
@@ -981,7 +1003,23 @@ export default function CalendarPage() {
           )}
         </div>
 
-        {showPanel && activeEmail && (
+        {showPanel && activeEmail && rangeTool && (
+            <RangeToolPanel
+              tool={rangeTool}
+              email={activeEmail}
+              from={rangeFrom}
+              to={rangeTo}
+              onPreview={setPreviewDays}
+              inline
+              onCancel={endRangeTool}
+              onDone={async (text, undo) => {
+                endRangeTool()
+                await fetchCalendar()
+                showToast(text, undo ? async () => { await undo(); await fetchCalendar() } : undefined)
+              }}
+            />
+        )}
+        {showPanel && activeEmail && !rangeTool && (
           <AssignedWorkoutsPanel
             email={activeEmail}
             name={activeUser?.Name}
