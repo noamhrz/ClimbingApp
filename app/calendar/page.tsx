@@ -15,6 +15,7 @@ import AddWorkoutModal from '@/components/AddWorkoutModal'
 import ScheduleSheet from '@/components/coach/ScheduleSheet'
 import EventContextMenu from '@/components/EventContextMenu'
 import EditEventModal from '@/components/EditEventModal'
+import RangeMonthGrid from '@/components/calendar/RangeMonthGrid'
 import RangeToolPanel, { RANGE_TOOLS, RangeTool } from '@/components/calendar/RangeToolPanel'
 import DayListView from '@/components/calendar/DayListView'
 import CalendarToolbar from '@/components/calendar/CalendarToolbar'
@@ -750,7 +751,7 @@ export default function CalendarPage() {
 
   return (
     <div dir="rtl" className="min-h-screen bg-surface pb-[calc(10rem+env(safe-area-inset-bottom))] lg:pb-28">
-      <div className="bg-surface border-b">
+      <div className="bg-surface border-b" hidden={isMobile && !!rangeTool}>
         <div className="max-w-7xl mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
             <h1 className="text-xl font-bold text-fg inline-flex items-center gap-2"><LuCalendarDays aria-hidden className="w-5 h-5 text-accent" />לוח אימונים</h1>
@@ -867,7 +868,7 @@ export default function CalendarPage() {
         </>
       )}
 
-      {rangeTool && activeEmail && !showPanel && (
+      {rangeTool && activeEmail && !showPanel && !isMobile && (
             <RangeToolPanel
               tool={rangeTool}
               email={activeEmail}
@@ -937,7 +938,36 @@ export default function CalendarPage() {
           onDragLeave={view === 'month' && showPanel ? e => { if (!e.currentTarget.contains(e.relatedTarget as Node)) markDropCell(null) } : undefined}
           onDrop={view === 'month' && showPanel ? onMonthDrop : undefined}
         >
-          {view === 'day' ? (
+          {isMobile && rangeTool && activeEmail ? (
+            <div className="flex flex-col gap-3">
+              <RangeMonthGrid
+                month={date}
+                onMonth={setDate}
+                events={events}
+                from={rangeFrom}
+                to={rangeTo}
+                preview={previewDays}
+                onTap={d => {
+                  if (rangeARef.current && !rangeBRef.current) setRangeB(d)
+                  else { setRangeA(d); setRangeB(null) }
+                }}
+              />
+              <RangeToolPanel
+                tool={rangeTool}
+                email={activeEmail}
+                from={rangeFrom}
+                to={rangeTo}
+                onPreview={setPreviewDays}
+                inline="flow"
+                onCancel={endRangeTool}
+                onDone={async (text, undo) => {
+                  endRangeTool()
+                  await fetchCalendar()
+                  showToast(text, undo ? async () => { await undo(); await fetchCalendar() } : undefined)
+                }}
+              />
+            </div>
+          ) : view === 'day' ? (
             <div
               onDragOver={e => { if (showPanel && dragWorkout.current) { e.preventDefault(); if (!dayDropOver) setDayDropOver(true) } }}
               onDragLeave={e => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setDayDropOver(false) }}
