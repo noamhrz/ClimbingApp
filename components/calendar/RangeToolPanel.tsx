@@ -7,7 +7,7 @@
 //  - deload / undeload: set or clear deloading on every workout in the range (undoable).
 //  - clear:    delete the workouts in the range (completed ones only when asked; not undoable).
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import moment from 'moment-timezone'
 import { LuBatteryLow, LuCopy, LuMinus, LuPlus, LuTrash2, LuX } from 'react-icons/lu'
 import { supabase } from '@/lib/supabaseClient'
@@ -55,7 +55,7 @@ interface Props {
   onDone: (text: string, undo?: () => Promise<void>) => void
   onCancel: () => void
   /** desktop: shown in the side column instead of floating at the bottom */
-  inline?: boolean
+  inline?: boolean | 'flow'
 }
 
 export default function RangeToolPanel({ tool, email, from, to, onPreview, onDone, onCancel, inline }: Props) {
@@ -69,6 +69,11 @@ export default function RangeToolPanel({ tool, email, from, to, onPreview, onDon
   const [error, setError] = useState('')
 
   const len = from && to ? daysBetween(from, to) : 0
+  const cardRef = useRef<HTMLDivElement>(null)
+  // phone (in the page flow): bring the panel into view once the range is marked
+  useEffect(() => {
+    if (inline === 'flow' && to) setTimeout(() => cardRef.current?.scrollIntoView({ block: 'nearest' }), 50)
+  }, [inline, to])
 
   // load the workouts in the marked range
   useEffect(() => {
@@ -228,7 +233,7 @@ export default function RangeToolPanel({ tool, email, from, to, onPreview, onDon
     : confirmClear ? `כן, למחוק ${toClear.length}` : 'מחק'
 
   const card = (
-      <div role="region" data-flow aria-label={title} className={`pointer-events-auto w-full bg-raised border border-line-strong rounded-2xl p-3.5 flex flex-col gap-3 ${inline ? '' : 'max-w-xl shadow-2xl'}`} dir="rtl">
+      <div ref={cardRef} role="region" data-flow aria-label={title} className={`scroll-mb-40 pointer-events-auto w-full bg-raised border border-line-strong rounded-2xl p-3.5 flex flex-col gap-3 ${inline ? '' : 'max-w-xl shadow-2xl'}`} dir="rtl">
         <div className="flex items-center gap-2">
           <Icon aria-hidden className={`w-5 h-5 ${tool === 'clear' ? 'text-danger' : 'text-accent'}`} />
           <b className="text-lg">{title}</b>
@@ -250,6 +255,7 @@ export default function RangeToolPanel({ tool, email, from, to, onPreview, onDon
   )
   // phone: the bar above the calendar guides the marking; the panel appears once a range is marked
   if (!inline && !to) return null
+  if (inline === 'flow') return card
   if (inline) return <div className="sticky" style={{ top: 'calc(var(--app-header-height, 0px) + 4.5rem)' }}>{card}</div>
   return (
     <div className="fixed inset-x-0 bottom-[calc(8.5rem+env(safe-area-inset-bottom))] lg:bottom-24 z-50 px-4 flex justify-center pointer-events-none">
