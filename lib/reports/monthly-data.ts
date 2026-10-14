@@ -1,13 +1,18 @@
 // Monthly trainee report: data assembly (server side, service-role client).
 // Used by the in-app monthly report page and, later, the monthly coach email.
 
+import { formatGradeAverage, gradeAverage, gradeScale } from '../grade-average'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { addDays, ilDate, ilDateOfTimestamp } from './dates'
 
 export type ClimbType = 'Boulder' | 'Board' | 'Lead'
 
 export interface CountBucket { label: string; planned: number; done: number; current?: boolean }
-export interface VolumeBucket { label: string; Boulder: number; Board: number; Lead: number; current?: boolean; note?: string }
+export interface VolumeBucket {
+  label: string; Boulder: number; Board: number; Lead: number; current?: boolean; note?: string
+  /** average grade of all routes in the bucket: numeric (for ▲▼) and display (V4.3 / 6b+) */
+  avg?: Partial<Record<ClimbType, { n: number; text: string }>>
+}
 export interface GoalRow { grade: string; target: number; actual: number }
 export interface RoadmapRow { name: string; level: number; max: number }
 export interface ExercisePoint { date: string; weight: number | null; reps: number | null; duration: number | null }
@@ -158,21 +163,32 @@ export async function buildMonthlyReport(db: SupabaseClient, email: string, year
   // ── climbing volume ──────────────────────────────────────────────────────
   const climbRows = climbs.map(c => ({ ...c, date: String(c.LogDateTime).slice(0, 10), vol: Number(c.VolumeScore) || 0 }))
   const emptyVol = (label: string): VolumeBucket => ({ label, Boulder: 0, Board: 0, Lead: 0 })
+  const scale = gradeScale(boulderG.data ?? [], leadG.data ?? [])
+  const withAvg = (b: VolumeBucket, rows: typeof climbRows) => {
+    b.avg = {}
+    for (const t of ['Boulder', 'Board', 'Lead'] as ClimbType[]) {
+      const n = gradeAverage(scale, t, rows.filter(r => r.ClimbType === t).map(r => r.GradeID))
+      if (n != null) b.avg[t] = { n, text: formatGradeAverage(scale, t, n) }
+    }
+    return b
+  }
   const volumeMonths: VolumeBucket[] = []
   for (let i = 5; i >= 0; i--) {
     const [yy, mm] = shiftMonth(year, month, -i)
     const b = emptyVol(HE_MONTHS_SHORT[mm - 1]); b.current = i === 0
-    for (const c of climbRows) if (c.date >= monthStart(yy, mm) && c.date <= monthEnd(yy, mm) && c.ClimbType in b) b[c.ClimbType] += c.vol
-    volumeMonths.push(b)
+    const rows = climbRows.filter(c => c.date >= monthStart(yy, mm) && c.date <= monthEnd(yy, mm))
+    for (const c of rows) if (c.ClimbType in b) b[c.ClimbType] += c.vol
+    volumeMonths.push(withAvg(b, rows))
   }
   const lastDay = Number(mEnd.slice(8))
   const weekRanges: [number, number][] = [[1, 7], [8, 14], [15, 21], [22, lastDay]]
   const volumeWeeks: VolumeBucket[] = weekRanges.map(([a, z]) => {
     const s = `${year}-${pad(month)}-${pad(a)}`, e = `${year}-${pad(month)}-${pad(z)}`
     const b = emptyVol(`${a}–${z}`)
-    for (const c of climbRows) if (c.date >= s && c.date <= e && c.ClimbType in b) b[c.ClimbType] += c.vol
+    const rows = climbRows.filter(c => c.date >= s && c.date <= e)
+    for (const c of rows) if (c.ClimbType in b) b[c.ClimbType] += c.vol
     if (inMonth.some(r => r.deload && r.date >= s && r.date <= e)) b.note = 'דילודינג'
-    return b
+    return withAvg(b, rows)
   })
   const cur = volumeMonths[5], prev = volumeMonths[4]
   const sum = (b: VolumeBucket) => b.Boulder + b.Board + b.Lead
