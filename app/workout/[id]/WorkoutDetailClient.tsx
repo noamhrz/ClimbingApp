@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo, useCallback } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
-import { insertExerciseLogs } from '@/lib/exercise-log-writes'
+import { saveExerciseLogs, withOccurrence, SET_KEYS, type SetVals } from '@/lib/exercise-log-writes'
 import { useAuth, useActiveUserEmail } from '@/context/AuthContext'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ClimbingRoute, BoulderGrade, LeadGrade, ClimbingLocation, BoardType } from '@/types/climbing'
@@ -160,7 +160,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
   const [step, setStepRaw] = useState(0)
   const [lastExStep, setLastExStep] = useState<number | null>(null)
   const [backToSummary, setBackToSummary] = useState(false) // editing one exercise from the summary
-  const [lastByExercise, setLastByExercise] = useState<Record<number, LastValues>>({})
+  const [lastByExercise, setLastByExercise] = useState<Record<string, LastValues>>({}) // key: ExerciseID:Occurrence
   const [defaultGrades, setDefaultGrades] = useState<Partial<Record<'Boulder' | 'Board' | 'Lead', number>>>({})
   const [defaultClimbType, setDefaultClimbType] = useState<'Boulder' | 'Board' | 'Lead' | undefined>(undefined)
 
@@ -175,12 +175,12 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
     const ids = pairs.map(p => p[0])
     const isDur = Object.fromEntries(pairs.map(([id, d]) => [id, d === 1]))
     ;(async () => {
-      type Row = { ExerciseID: number; HandSide: string | null; RepsDone: number | null; DurationSec: number | null; WeightKG: number | null; RPE: number | null; CalendarID: number | null; CreatedAt: string | null }
+      type Row = { ExerciseID: number; HandSide: string | null; RepsDone: number | null; DurationSec: number | null; WeightKG: number | null; RPE: number | null; CalendarID: number | null; CreatedAt: string | null; Occurrence: number | null; SetNumber: number | null }
       const rows: Row[] = []
       for (let from = 0; from < 20000; from += 1000) {
         const { data, error } = await supabase
           .from('ExerciseLogs')
-          .select('ExerciseID, HandSide, RepsDone, DurationSec, WeightKG, RPE, CalendarID, CreatedAt')
+          .select('ExerciseID, HandSide, RepsDone, DurationSec, WeightKG, RPE, CalendarID, CreatedAt, Occurrence, SetNumber')
           .eq('Email', email)
           .eq('Completed', true)
           .in('ExerciseID', ids)
@@ -192,7 +192,8 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
       }
       if (cancelled) return
 
-      const last: Record<number, LastValues> = {}
+      // last session per exercise; inside it, each appearance and set (sets 2+ in MoreSets)
+      const last: Record<string, LastValues> = {}
       const sessionOf: Record<number, number | null> = {}
       const bests: Record<number, Bests> = {}
       for (const l of rows) {
@@ -200,17 +201,22 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
         const left = l.HandSide === 'Left'
 
         // last session
-        if (!(l.ExerciseID in sessionOf)) {
-          sessionOf[l.ExerciseID] = l.CalendarID
-          last[l.ExerciseID] = { date: l.CreatedAt ? formatDate(l.CreatedAt) : null }
-        }
+        if (!(l.ExerciseID in sessionOf)) sessionOf[l.ExerciseID] = l.CalendarID
         if (sessionOf[l.ExerciseID] === l.CalendarID) {
-          const o = last[l.ExerciseID]
-          if (left && o.RepsDoneLeft == null && o.DurationSecLeft == null) {
-            Object.assign(o, { RepsDoneLeft: l.RepsDone, DurationSecLeft: l.DurationSec, WeightKGLeft: l.WeightKG, RPELeft: l.RPE })
-          } else if (!left && o.RepsDone == null && o.DurationSec == null) {
-            Object.assign(o, { RepsDone: l.RepsDone, DurationSec: l.DurationSec, WeightKG: l.WeightKG, RPE: l.RPE })
+          const key = `${l.ExerciseID}:${l.Occurrence ?? 1}`
+          const o = (last[key] ??= { date: l.CreatedAt ? formatDate(l.CreatedAt) : null, MoreSets: [] })
+          const setNo = l.SetNumber ?? 1
+          let target = o as unknown as Record<string, unknown>
+          if (setNo > 1) {
+            const more = o.MoreSets!
+            while (more.length < setNo - 1) more.push({})
+            target = more[setNo - 2] as Record<string, unknown>
           }
+          const vals = left
+            ? { RepsDoneLeft: l.RepsDone, DurationSecLeft: l.DurationSec, WeightKGLeft: l.WeightKG, RPELeft: l.RPE }
+            : { RepsDone: l.RepsDone, DurationSec: l.DurationSec, WeightKG: l.WeightKG, RPE: l.RPE }
+          const has = left ? target.RepsDoneLeft != null || target.DurationSecLeft != null : target.RepsDone != null || target.DurationSec != null
+          if (!has) Object.assign(target, vals)
         }
 
         // best ever
@@ -314,8 +320,12 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
         // If exercises are already loaded from server, merge only user-entered performance
         // data into them — never replace the exercise structure (prevents stale level from overriding)
         if (prev.length > 0) {
-          return prev.map(ex => {
-            const saved = draft.exerciseForms.find((d: any) => d.ExerciseID === ex.ExerciseID)
+          return prev.map((ex, i) => {
+            // same position first (an exercise can appear twice), else same exercise + appearance
+            const atIndex = draft.exerciseForms[i]
+            const saved = atIndex?.ExerciseID === ex.ExerciseID
+              ? atIndex
+              : draft.exerciseForms.find((d: any) => d.ExerciseID === ex.ExerciseID && (d.Occurrence ?? 1) === (ex.Occurrence ?? 1))
             if (!saved) return ex
             return {
               ...ex,
@@ -331,6 +341,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
               RPELeft: saved.RPELeft,
               NotesLeft: saved.NotesLeft,
               CompletedLeft: saved.CompletedLeft,
+              MoreSets: saved.MoreSets ?? [],
             }
           })
         }
@@ -549,6 +560,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
 
         if (!isMounted) return
 
+        mapped = withOccurrence(mapped) // 1st, 2nd ... time an exercise appears in this workout
         setExercises(mapped)
         setExerciseForms(mapped)
 
@@ -689,66 +701,17 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
         if (minErr) console.warn('ActualMinutes not saved:', minErr.message)
       }
 
-      // === תרגילים - with Single Hand & isDuration support ===
-      // Each entry of the workout gets its own log (an exercise can appear twice). When this
-      // calendar entry already has logs, they are matched to the entries in order (oldest first),
-      // the same way the saved-workout screen reads them. Updates in parallel, inserts in one request.
+      // === תרגילים ===
+      // One row per exercise + side + appearance + set (lib/exercise-log-writes.ts)
       if (workout.containExercise && exerciseForms.length > 0) {
-        type Side = 'Right' | 'Left' | 'Both'
-        const queue = new Map<string, number[]>()   // existing log IDs per exercise+side, oldest first
-        if (calendarIdNum) {
-          const { data: rows, error: exErr } = await supabase
-            .from('ExerciseLogs')
-            .select('ExerciseLogID, ExerciseID, HandSide')
-            .eq('CalendarID', activeCalendarId)
-            .order('ExerciseLogID')
-          if (exErr) throw exErr
-          for (const r of rows ?? []) {
-            const k = `${r.ExerciseID}:${r.HandSide}`
-            queue.set(k, [...(queue.get(k) ?? []), r.ExerciseLogID])
-          }
-        }
-        const filled = (v: unknown) => v !== null && v !== undefined
-        const inserts: Record<string, unknown>[] = []
-        const writes: PromiseLike<{ error: unknown }>[] = []
-        const updatedKeys = new Set<string>()
-        const put = (ex: typeof exerciseForms[number], side: Side, left: boolean) => {
-          const reps = left ? ex.RepsDoneLeft : ex.RepsDone
-          const dur = left ? ex.DurationSecLeft : ex.DurationSec
-          const kg = left ? ex.WeightKGLeft : ex.WeightKG
-          const rpe = left ? ex.RPELeft : ex.RPE
-          const notes = (left ? ex.NotesLeft : ex.Notes) as string | undefined
-          if (!(filled(reps) || filled(dur) || filled(kg) || filled(rpe) || (notes && notes.trim() !== ''))) return
-          const logId = queue.get(`${ex.ExerciseID}:${side}`)?.shift()   // this entry's log, if any (only entries that are saved take one)
-          const payload = {
-            Email: email,
-            WorkoutID: id,
-            CalendarID: activeCalendarId,
-            ExerciseID: ex.ExerciseID,
-            HandSide: side,
-            RepsDone: ex.isDuration ? null : (reps || null),
-            DurationSec: ex.isDuration ? (dur || null) : null,
-            WeightKG: kg || null,
-            RPE: rpe || null,
-            Notes: notes?.trim() || null,
-            Completed: true,
-            UpdatedAt: now,
-          }
-          if (logId) {
-            updatedKeys.add(`${ex.ExerciseID}:${side}`)
-            writes.push(supabase.from('ExerciseLogs').update(payload).eq('ExerciseLogID', logId).select('ExerciseLogID')
-              .then(r => ({ error: r.error ?? (r.data?.length ? null : new Error('עדכון תרגיל נחסם (0 שורות עודכנו)')) })))
-          } else {
-            inserts.push({ ...payload, CreatedAt: now })
-          }
-        }
-        for (const ex of exerciseForms) {
-          if (ex.IsSingleHand) { put(ex, 'Right', false); put(ex, 'Left', true) }
-          else put(ex, 'Both', false)
-        }
-        if (inserts.length) writes.push(insertExerciseLogs(inserts, updatedKeys))
-        const failed = (await Promise.all(writes)).find(r => r.error)
-        if (failed) throw failed.error
+        await saveExerciseLogs({
+          calendarId: activeCalendarId as number,
+          hasExisting: !!calendarIdNum,
+          email,
+          workoutId: id,
+          forms: exerciseForms,
+          now,
+        })
       }
 
       // === טיפוס ===
@@ -807,7 +770,10 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
   }
 
   // ── steps of the flow ───────────────────────────────────────
-  const lastCount = containsExercises ? exerciseForms.filter(ex => lastByExercise[ex.ExerciseID]).length : 0
+  // last time of this same appearance (2nd time in the workout ↔ 2nd time last time), else of the 1st
+  const lastFor = (ex: { ExerciseID: number; Occurrence?: number }) =>
+    lastByExercise[`${ex.ExerciseID}:${ex.Occurrence ?? 1}`] ?? lastByExercise[`${ex.ExerciseID}:1`]
+  const lastCount = containsExercises ? exerciseForms.filter(ex => lastFor(ex)).length : 0
   const hasIntro = !!(personalNote || workout.Description || workout.WorkoutNotes || workout.WhenToPractice || workout.VideoURL || isFutureWorkout || isPastWorkout || lastCount > 0)
   const flowExercises = containsExercises ? exerciseForms : []
   const firstEx = hasIntro ? 1 : 0
@@ -819,15 +785,20 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
   }
   // fill every exercise that has history with last time's values (empty fields only), then go to the summary
   const fillFromLast = () => {
-    const keys = ['RepsDone', 'DurationSec', 'WeightKG', 'RPE', 'RepsDoneLeft', 'DurationSecLeft', 'WeightKGLeft', 'RPELeft'] as const
     let filled = 0
     setExerciseForms(prev => prev.map(ex => {
-      const last = lastByExercise[ex.ExerciseID]
+      const last = lastFor(ex)
       if (!last) return ex
       const next = { ...ex }
       let changed = false
-      for (const k of keys) {
+      for (const k of SET_KEYS) {
         if ((next[k] == null || next[k] === '') && last[k] != null) { next[k] = last[k]; changed = true }
+      }
+      // sets 2+: only when this entry has none of its own yet
+      const lastMore = last.MoreSets ?? []
+      if (lastMore.length && !(ex.MoreSets as SetVals[] | undefined)?.length) {
+        next.MoreSets = lastMore.map(st => ({ ...st }))
+        changed = true
       }
       if (changed) filled++
       return next
@@ -866,7 +837,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
         <ExerciseStep
           exercise={ex}
           position={{ n: k + 1, of: flowExercises.length }}
-          last={lastByExercise[ex.ExerciseID]}
+          last={lastFor(ex)}
           bests={bestsByExercise[ex.ExerciseID]}
           onRest={startRest}
           onChange={data => handleExerciseChange(k, data)}
