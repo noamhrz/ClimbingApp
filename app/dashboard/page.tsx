@@ -263,6 +263,7 @@ export default function DashboardPage() {
           date: label,
           lead: b?.lead ?? 0, board: b?.board ?? 0, boulder: b?.boulder ?? 0,
           boulderAvg: bo, boardAvg: bd, leadAvg: ld,
+          boulderCount: b?.ids.Boulder.length ?? 0, boardCount: b?.ids.Board.length ?? 0, leadCount: b?.ids.Lead.length ?? 0,
           boulderAvgText: formatGradeAverage(scale, 'Boulder', bo),
           boardAvgText: formatGradeAverage(scale, 'Board', bd),
           leadAvgText: formatGradeAverage(scale, 'Lead', ld),

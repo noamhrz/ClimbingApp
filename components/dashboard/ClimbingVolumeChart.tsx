@@ -18,6 +18,9 @@ export interface ClimbingChartRow {
   boulderAvgText?: string
   boardAvgText?: string
   leadAvgText?: string
+  boulderCount?: number
+  boardCount?: number
+  leadCount?: number
 }
 
 interface Props { data: ClimbingChartRow[] }
@@ -28,10 +31,18 @@ const LINES = [
   { key: 'board', label: 'V avg בורד', dash: '7 5' },
   { key: 'lead', label: 'French avg הובלה', dash: '2 5' },
 ] as const
+const COUNTS = [
+  { key: 'boulder', label: 'מסלולים בולדר' },
+  { key: 'board', label: 'מסלולים בורד' },
+  { key: 'lead', label: 'מסלולים הובלה' },
+] as const
+type K = 'boulder' | 'board' | 'lead'
 const VOL_LABEL: Record<string, string> = { lead: 'הובלה', board: 'בורד', boulder: 'בולדר' }
 
 export default function ClimbingVolumeChart({ data }: Props) {
   const [show, setShow] = useState({ boulder: true, board: true, lead: true })
+  // route counts: off by default
+  const [showCount, setShowCount] = useState({ boulder: false, board: false, lead: false })
 
   if (!data || data.length === 0) {
     return (
@@ -54,13 +65,26 @@ export default function ClimbingVolumeChart({ data }: Props) {
     return [lo - f0 * unit, hi + (1 - f1) * unit]
   }
 
+  const hasCount = (k: K) => data.some(d => (d[`${k}Count`] ?? 0) > 0)
+  // counts share one scale (so types compare) in the lower part of the plot
+  const maxCount = Math.max(1, ...data.flatMap(d => [d.boulderCount ?? 0, d.boardCount ?? 0, d.leadCount ?? 0]))
+  const chip = (on: boolean) => `h-8 px-3 rounded-full border border-line-strong bg-raised text-[13px] font-bold inline-flex items-center gap-1.5 ${on ? 'text-fg-2' : 'opacity-45 text-fg-3'}`
+
   return (
     <div className="flex flex-col gap-2">
       <div className="flex gap-1.5 flex-wrap" role="group" aria-label="קווי ממוצע דירוג">
         {LINES.filter(l => hasAvg(l.key)).map(l => (
           <button key={l.key} type="button" aria-pressed={show[l.key]} onClick={() => setShow(s => ({ ...s, [l.key]: !s[l.key] }))}
-            className={`h-8 px-3 rounded-full border border-line-strong bg-raised text-[13px] font-bold inline-flex items-center gap-1.5 ${show[l.key] ? 'text-fg-2' : 'opacity-45 text-fg-3'}`}>
+            className={chip(show[l.key])}>
             <span className="w-2.5 h-2.5 rounded-sm" style={{ background: COLORS[l.key] }} />{l.label}
+          </button>
+        ))}
+      </div>
+      <div className="flex gap-1.5 flex-wrap" role="group" aria-label="כמות מסלולים">
+        {COUNTS.filter(c => hasCount(c.key)).map(c => (
+          <button key={c.key} type="button" aria-pressed={showCount[c.key]} onClick={() => setShowCount(s => ({ ...s, [c.key]: !s[c.key] }))}
+            className={chip(showCount[c.key])}>
+            <span className="w-2.5 h-2.5 rounded-full" style={{ background: COLORS[c.key] }} />{c.label}
           </button>
         ))}
       </div>
@@ -74,8 +98,13 @@ export default function ClimbingVolumeChart({ data }: Props) {
               {LINES.map(l => hasAvg(l.key) && (
                 <YAxis key={l.key} yAxisId={l.key} hide domain={band(l.key)} />
               ))}
+              <YAxis yAxisId="cnt" hide domain={[0, maxCount / 0.4]} />
               <Tooltip
                 formatter={(value: number, name: string, item: { payload?: ClimbingChartRow }) => {
+                  if (name.endsWith('Count')) {
+                    const k = name.replace('Count', '') as K
+                    return [value, COUNTS.find(c => c.key === k)!.label]
+                  }
                   if (name.endsWith('Avg')) {
                     const k = name.replace('Avg', '') as 'boulder' | 'board' | 'lead'
                     return [item.payload?.[`${k}AvgText`] ?? '', LINES.find(l => l.key === k)!.label]
@@ -95,11 +124,18 @@ export default function ClimbingVolumeChart({ data }: Props) {
                   <LabelList dataKey={`${l.key}AvgText`} formatter={(v: unknown) => (v ? `\u200E${v}\u200E` : '')} position="top" fill={COLORS[l.key]} fontSize={11} fontWeight={800} />
                 </Line>
               ))}
+              {COUNTS.map(c => hasCount(c.key) && showCount[c.key] && (
+                <Line key={`c-${c.key}`} yAxisId="cnt" type="monotone" dataKey={`${c.key}Count`} name={`${c.key}Count`}
+                  stroke={COLORS[c.key]} strokeWidth={1.5} strokeOpacity={0.9}
+                  dot={{ r: 3, fill: COLORS[c.key], stroke: COLORS[c.key] }} activeDot={{ r: 4.5 }} isAnimationActive={false}>
+                  <LabelList dataKey={`${c.key}Count`} formatter={(v: unknown) => (v ? String(v) : '')} position="top" fill={COLORS[c.key]} fontSize={10} fontWeight={700} />
+                </Line>
+              ))}
             </ComposedChart>
           </ResponsiveContainer>
         </div>
       </div>
-      <p className="text-xs text-muted text-center">עמודות = נפח · קווים = ממוצע דירוג של כל המסלולים</p>
+      <p className="text-xs text-muted text-center">עמודות = נפח · קווים עבים = ממוצע דירוג · קווים דקים = כמות מסלולים</p>
     </div>
   )
 }
