@@ -1,18 +1,21 @@
 'use client'
 
-// One exercise per screen: targets, last time, big steppers, RPE buttons, note.
+// One exercise per screen: targets, last time, sets, big steppers, RPE buttons, note.
 // Works on the same exercise form fields the workout page saves
 // (RepsDone / DurationSec / WeightKG / RPE / Notes, and the *Left fields for single-hand).
+// Set 1 lives in those fields, sets 2+ in MoreSets (see lib/exercise-log-writes.ts).
 
 import { useState } from 'react'
-import { LuCopy, LuImage, LuPlay, LuTimer, LuTrophy } from 'react-icons/lu'
+import { LuCopy, LuImage, LuPlay, LuPlus, LuTimer, LuTrash2, LuTrophy } from 'react-icons/lu'
 import NumberStepper from './NumberStepper'
 import Hint from './Hint'
+import { SET_KEYS, allSets, setHasValues, type SetVals } from '@/lib/exercise-log-writes'
 
 export interface LastValues {
   date: string | null
   RepsDone?: number | null; DurationSec?: number | null; WeightKG?: number | null; RPE?: number | null
   RepsDoneLeft?: number | null; DurationSecLeft?: number | null; WeightKGLeft?: number | null; RPELeft?: number | null
+  MoreSets?: SetVals[]   // sets 2+ of that time
 }
 
 /** Best ever for one side: heaviest weight, the most reps/time at that weight, and the most reps/time overall. */
@@ -43,9 +46,8 @@ export function isPR(primary: number | null, weight: number | null, best?: Best)
 export function exercisePR(o: any, bests?: Bests): boolean {
   if (!bests) return false
   const k = o.isDuration ? 'DurationSec' : 'RepsDone'
-  const r = isPR(n(o[k]), n(o.WeightKG), bests.R)
-  const l = !!o.IsSingleHand && isPR(n(o[k + 'Left']), n(o.WeightKGLeft), bests.L)
-  return r || l
+  return allSets(o).some((st: any) =>
+    isPR(n(st[k]), n(st.WeightKG), bests.R) || (!!o.IsSingleHand && isPR(n(st[k + 'Left']), n(st.WeightKGLeft), bests.L)))
 }
 
 const n = (v: unknown) => (v == null || v === '' ? null : Number(v))
@@ -58,16 +60,78 @@ export function sideSummary(o: any, left: boolean, isDuration: boolean): string 
   return (isDuration ? `${p} שנ׳` : `${p} חזרות`) + (w ? ` · ${w} ק״ג` : '') + (r ? ` · RPE ${r}` : '')
 }
 
-export function exerciseSummary(o: any): string | null {
-  if (o.IsSingleHand) {
-    const a = sideSummary(o, false, o.isDuration), b = sideSummary(o, true, o.isDuration)
-    return a || b ? `ימין ${a ?? '–'}  |  שמאל ${b ?? '–'}` : null
-  }
-  return sideSummary(o, false, o.isDuration)
+/** One side over all sets: "8 חזרות · 20 ק״ג" for one set, "3 סטים · 8/8/6 חזרות · 20 ק״ג", or "3 סטים · 8×20 · 8×20 · 6×22.5". */
+function sideSetsSummary(o: any, left: boolean, isDuration: boolean): string | null {
+  const s = left ? 'Left' : ''
+  const done = allSets(o).filter(st => n((st as any)[(isDuration ? 'DurationSec' : 'RepsDone') + s]) != null)
+  if (done.length <= 1) return done.length ? sideSummary({ ...o, ...done[0] }, left, isDuration) : null
+  const p = done.map(st => n((st as any)[(isDuration ? 'DurationSec' : 'RepsDone') + s]))
+  const w = done.map(st => n((st as any)['WeightKG' + s]))
+  const unit = isDuration ? 'שנ׳' : 'חזרות'
+  if (w.every(x => x === w[0])) return `${done.length} סטים · ${p.join('/')} ${unit}` + (w[0] ? ` · ${w[0]} ק״ג` : '')
+  return `${done.length} סטים · ` + p.map((x, i) => (w[i] ? `${x}×${w[i]}` : `${x}`)).join(' · ') + ` (${unit}×ק״ג)`
 }
 
-export default function ExerciseStep({ exercise: ex, position, last, bests, onChange, onRest }: Props) {
+export function exerciseSummary(o: any): string | null {
+  if (o.IsSingleHand) {
+    const a = sideSetsSummary(o, false, o.isDuration), b = sideSetsSummary(o, true, o.isDuration)
+    return a || b ? `ימין ${a ?? '–'}  |  שמאל ${b ?? '–'}` : null
+  }
+  return sideSetsSummary(o, false, o.isDuration)
+}
+
+export default function ExerciseStep({ exercise: ex, position, last, bests, onChange: onChangeExercise, onRest }: Props) {
   const [side, setSide] = useState<'R' | 'L'>('R')
+  const [setIdx, setSetIdx] = useState(0)
+
+  // sets: as many as the plan says, or as were logged
+  const sets = allSets(ex)
+  const planned = Math.max(1, Number(ex.Sets) || 1)
+  const setCount = Math.max(planned, sets.length)
+  const cur: any = setIdx === 0 ? ex : { ...ex, ...(sets[setIdx] ?? {}) }   // the exercise as seen on this set
+  // edits of set values go to the current set; notes and anything else stay on the exercise
+  const onChange = (data: Record<string, any>) => {
+    if (setIdx === 0) return onChangeExercise(data)
+    const more = [...((ex.MoreSets as SetVals[] | undefined) ?? [])]
+    while (more.length < setIdx) more.push({})
+    const setPart: SetVals = {}, rest: Record<string, any> = {}
+    for (const [k, v] of Object.entries(data)) {
+      if ((SET_KEYS as readonly string[]).includes(k)) (setPart as any)[k] = v
+      else rest[k] = v
+    }
+    more[setIdx - 1] = { ...more[setIdx - 1], ...setPart }
+    onChangeExercise({ ...rest, MoreSets: more })
+  }
+  const writeSets = (all: SetVals[]) => {
+    const [first, ...more] = all
+    const top: Record<string, any> = {}
+    for (const k of SET_KEYS) top[k] = first?.[k] ?? null
+    onChangeExercise({ ...top, MoreSets: more })
+  }
+  const copyPrevSet = () => {
+    const all = [...sets]; while (all.length <= setIdx) all.push({})
+    all[setIdx] = { ...all[setIdx - 1] }
+    writeSets(all)
+  }
+  const fillAllLikeFirst = () => {
+    const all = [...sets]; while (all.length < setCount) all.push({})
+    writeSets(all.map((st, i) => (i === 0 || setHasValues(st) ? st : { ...all[0] })))
+  }
+  const addSet = () => {
+    const all = [...sets]; while (all.length < setCount) all.push({})
+    all.push({})
+    writeSets(all)
+    setSetIdx(all.length - 1)
+  }
+  const removeSet = () => {
+    const all = sets.slice(0, setIdx)
+    writeSets(all.length ? all : [{}])
+    setSetIdx(Math.max(0, setIdx - 1))
+  }
+  const canRemove = setIdx > 0 && setIdx === setCount - 1 && setIdx >= planned
+  const lastSets = last ? allSets(last) : []
+  const lastSet: any = lastSets[setIdx] ?? lastSets[lastSets.length - 1]
+  const emptyLater = sets.length < setCount || sets.slice(1).some(st => !setHasValues(st))
   const [noteOpen, setNoteOpen] = useState(false)
   const [descOpen, setDescOpen] = useState(false)
   const desc = String(ex.Description ?? '')
@@ -76,6 +140,7 @@ export default function ExerciseStep({ exercise: ex, position, last, bests, onCh
   const s = single && side === 'L' ? 'Left' : ''
   const primKey = (ex.isDuration ? 'DurationSec' : 'RepsDone') + s
   const target = ex.isDuration ? n(ex.Duration) : n(ex.Reps)
+  const setKey = setCount > 1 ? `-s${setIdx + 1}` : ''
 
   const lastText = last ? exerciseSummary({ ...last, IsSingleHand: single, isDuration: ex.isDuration }) : null
   const noteKey = 'Notes' + s
@@ -87,24 +152,26 @@ export default function ExerciseStep({ exercise: ex, position, last, bests, onCh
   if (ex.Duration) targets.push(`${ex.Duration} שנ׳`)
   if (ex.Rest) targets.push(`מנוחה ${ex.Rest} שנ׳`)
 
+  // "same as last time": every set of last time
   const copyLast = () => {
     if (!last) return
-    const keys = ['RepsDone', 'DurationSec', 'WeightKG', 'RPE', 'RepsDoneLeft', 'DurationSecLeft', 'WeightKGLeft', 'RPELeft'] as const
-    const o: Record<string, number | null> = {}
-    for (const k of keys) if (last[k] != null) o[k] = last[k] as number
-    onChange(o)
+    writeSets(allSets(last).map(st => {
+      const o: SetVals = {}
+      for (const k of SET_KEYS) if (st[k] != null) o[k] = st[k]
+      return o
+    }))
   }
   const sameAsRight = () => onChange({
-    RepsDoneLeft: ex.RepsDone ?? null, DurationSecLeft: ex.DurationSec ?? null,
-    WeightKGLeft: ex.WeightKG ?? null, RPELeft: ex.RPE ?? null,
+    RepsDoneLeft: cur.RepsDone ?? null, DurationSecLeft: cur.DurationSec ?? null,
+    WeightKGLeft: cur.WeightKG ?? null, RPELeft: cur.RPE ?? null,
   })
 
   const rpeKey = 'RPE' + s
-  const pr = isPR(n(ex[primKey]), n(ex['WeightKG' + s]), s ? bests?.L : bests?.R)
+  const pr = isPR(n(cur[primKey]), n(cur['WeightKG' + s]), s ? bests?.L : bests?.R)
   const rest = n(ex.Rest)
   const restLabel = rest ? (rest >= 60 ? `${Math.floor(rest / 60)}:${String(rest % 60).padStart(2, '0')}` : `${rest} שנ׳`) : ''
-  const rightDone = !!sideSummary(ex, false, ex.isDuration)
-  const leftDone = !!sideSummary(ex, true, ex.isDuration)
+  const rightDone = !!sideSummary(cur, false, ex.isDuration)
+  const leftDone = !!sideSummary(cur, true, ex.isDuration)
 
   return (
     <div className="px-4 pt-4 pb-6 flex flex-col gap-4">
@@ -160,6 +227,52 @@ export default function ExerciseStep({ exercise: ex, position, last, bests, onCh
         <Hint id="same-again">״אותו דבר״ ממלא בלחיצה אחת את כל הערכים מהפעם הקודמת.</Hint>
       )}
 
+      {setCount > 1 ? (
+        <div className="flex flex-col gap-2">
+          <div className="flex gap-1.5 flex-wrap" role="group" aria-label="סט">
+            {Array.from({ length: setCount }, (_, i) => {
+              const done = setHasValues(sets[i])
+              return (
+                <button
+                  key={i}
+                  type="button"
+                  aria-pressed={setIdx === i}
+                  onClick={() => setSetIdx(i)}
+                  className={`h-11 min-w-[4.25rem] px-3 rounded-xl text-[15px] font-extrabold border ${setIdx === i ? 'bg-accent text-on-accent border-accent' : done ? 'bg-success/15 text-success border-success/40' : 'bg-surface text-fg-2 border-line-strong'}`}
+                >
+                  סט {i + 1}{done ? ' ✓' : ''}
+                </button>
+              )
+            })}
+            <button type="button" onClick={addSet} aria-label="הוסף סט" className="h-11 w-11 rounded-xl border border-dashed border-line-strong text-fg-3 flex items-center justify-center">
+              <LuPlus aria-hidden className="w-5 h-5" />
+            </button>
+          </div>
+          <div className="flex gap-2 flex-wrap">
+            {setIdx > 0 && setHasValues(sets[setIdx - 1]) && (
+              <button type="button" onClick={copyPrevSet} className="h-11 px-3.5 rounded-xl border border-line-strong bg-raised text-fg text-sm font-bold flex items-center gap-1.5">
+                <LuCopy aria-hidden className="w-4 h-4" />כמו סט {setIdx}
+              </button>
+            )}
+            {setIdx === 0 && setHasValues(sets[0]) && emptyLater && (
+              <button type="button" onClick={fillAllLikeFirst} className="h-11 px-3.5 rounded-xl border border-line-strong bg-raised text-fg text-sm font-bold flex items-center gap-1.5">
+                <LuCopy aria-hidden className="w-4 h-4" />כל הסטים כמו סט 1
+              </button>
+            )}
+            {canRemove && (
+              <button type="button" onClick={removeSet} className="h-11 px-3.5 rounded-xl border border-line text-fg-3 text-sm font-semibold flex items-center gap-1.5">
+                <LuTrash2 aria-hidden className="w-4 h-4" />הסר סט {setIdx + 1}
+              </button>
+            )}
+          </div>
+          <Hint id="sets">ממלאים כל סט בנפרד. ״כמו סט קודם״ מעתיק את הערכים, ואז משנים רק מה שהיה שונה.</Hint>
+        </div>
+      ) : (
+        <button type="button" onClick={addSet} className="self-start -mb-1 h-9 px-1 text-accent text-sm font-bold flex items-center gap-1">
+          <LuPlus aria-hidden className="w-4 h-4" />פירוט לפי סטים
+        </button>
+      )}
+
       {single && (
         <div className="flex gap-2 items-center">
           <div className="flex-1 grid grid-cols-2 gap-1 bg-surface border border-line rounded-2xl p-1" role="group" aria-label="יד">
@@ -185,22 +298,22 @@ export default function ExerciseStep({ exercise: ex, position, last, bests, onCh
       {single && <Hint id="sides">ממלאים כל יד בנפרד. אחרי ימין, ״כמו ימין״ מעתיק את הערכים לשמאל.</Hint>}
 
       <NumberStepper
-        key={primKey}
-        id={`ex-${position.n}-${ex.ExerciseID}-${primKey}`}
+        key={primKey + setKey}
+        id={`ex-${position.n}-${ex.ExerciseID}-${primKey}${setKey}`}
         label={ex.isDuration ? 'זמן' : 'חזרות'}
         unit={ex.isDuration ? 'שניות' : undefined}
-        value={n(ex[primKey])}
-        placeholder={n(last?.[primKey as keyof LastValues]) ?? target}
+        value={n(cur[primKey])}
+        placeholder={n(lastSet?.[primKey]) ?? target}
         step={ex.isDuration ? 5 : 1}
         onChange={v => onChange({ [primKey]: v })}
       />
       <NumberStepper
-        key={'WeightKG' + s}
-        id={`ex-${position.n}-${ex.ExerciseID}-WeightKG${s}`}
+        key={'WeightKG' + s + setKey}
+        id={`ex-${position.n}-${ex.ExerciseID}-WeightKG${s}${setKey}`}
         label="משקל"
         unit="ק״ג"
-        value={n(ex['WeightKG' + s])}
-        placeholder={n(last?.[('WeightKG' + s) as keyof LastValues])}
+        value={n(cur['WeightKG' + s])}
+        placeholder={n(lastSet?.['WeightKG' + s])}
         step={2.5}
         onChange={v => onChange({ ['WeightKG' + s]: v })}
       />
@@ -212,7 +325,7 @@ export default function ExerciseStep({ exercise: ex, position, last, bests, onCh
         <p className="text-[15px] font-bold text-fg-2">מאמץ <span className="font-normal text-muted">RPE 1–10</span></p>
         <div dir="ltr" className="grid grid-cols-5 gap-1.5">
           {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(k => {
-            const on = n(ex[rpeKey]) === k
+            const on = n(cur[rpeKey]) === k
             return (
               <button
                 key={k}
