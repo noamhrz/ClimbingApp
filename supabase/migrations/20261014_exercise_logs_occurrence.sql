@@ -1,6 +1,7 @@
 -- Each appearance of an exercise in a workout, and each set of it, gets its own log.
 --   Occurrence = 1 for the first appearance of the exercise in the workout, 2 for the second, ...
 --   SetNumber  = 1, 2, 3 ... when sets are logged one by one; 1 when one value is logged for the whole exercise.
+-- Run inside BEGIN; ... COMMIT;
 -- Safe to run before the code change: the current code writes one row per exercise and side,
 -- which becomes Occurrence = 1, SetNumber = 1.
 
@@ -16,7 +17,11 @@
 ALTER TABLE "ExerciseLogs" ADD COLUMN IF NOT EXISTS "Occurrence" smallint NOT NULL DEFAULT 1;
 
 -- 2) SetNumber (already exists, unused by the app): existing logs = set 1, never NULL from now on
+-- The trigger validate_handside_consistency rejects old rows (e.g. a log saved as 'Both' for an exercise
+-- that is single-hand today) on any UPDATE, so triggers are off for this one update only.
+ALTER TABLE "ExerciseLogs" DISABLE TRIGGER USER;
 UPDATE "ExerciseLogs" SET "SetNumber" = 1 WHERE "SetNumber" IS NULL;
+ALTER TABLE "ExerciseLogs" ENABLE TRIGGER USER;
 ALTER TABLE "ExerciseLogs" ALTER COLUMN "SetNumber" SET DEFAULT 1;
 ALTER TABLE "ExerciseLogs" ALTER COLUMN "SetNumber" SET NOT NULL;
 
