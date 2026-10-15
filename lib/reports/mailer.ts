@@ -46,7 +46,7 @@ export async function sendReportEmail(subject: string, html: string, text: strin
 }
 
 /** A message from the website (contact form) to Noam; Reply-To is the visitor. */
-export async function sendSiteContactEmail(subject: string, html: string, text: string, replyTo?: string) {
+export async function sendSiteContactEmail(subject: string, html: string, text: string, replyTo?: string, pdfBase64?: string) {
   const user = process.env.SMTP_USER
   const pass = process.env.SMTP_PASS
   if (!user || !pass) throw new Error('SMTP_USER / SMTP_PASS are not set')
@@ -57,5 +57,6 @@ export async function sendSiteContactEmail(subject: string, html: string, text: 
     subject,
     html,
     text,
+    attachments: pdfBase64 ? [{ filename: 'calculator-results.pdf', content: pdfBase64, encoding: 'base64', contentType: 'application/pdf' }] : undefined,
   })
 }
