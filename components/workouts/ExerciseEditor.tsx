@@ -288,7 +288,7 @@ export default function ExerciseEditor({ exercises, blocks, onChange }: Props) {
             </div>
             <NumberStepper id="ed-sets" label="סטים" value={editing.Sets} step={1} min={1} onChange={v => update(editing.WorkoutExerciseID, { Sets: Math.max(1, v ?? 1) })} />
             {editing.Exercise.isDuration ? (
-              <NumberStepper id="ed-dur" label="זמן" unit="(שניות)" value={editing.Duration ?? DEFAULT_WORKOUT_EXERCISE.Duration} step={5} min={1} onChange={v => update(editing.WorkoutExerciseID, { Duration: v ?? 0, Reps: 1 })} />
+              <NumberStepper id="ed-dur" label="זמן" unit={`(שניות${(editing.Duration ?? 0) >= 60 ? ` · ${fmtDur(editing.Duration ?? 0)}` : ''})`} value={editing.Duration ?? DEFAULT_WORKOUT_EXERCISE.Duration} step={5} min={1} onChange={v => update(editing.WorkoutExerciseID, { Duration: v ?? 0, Reps: 1 })} />
             ) : (
               <NumberStepper id="ed-reps" label="חזרות" value={editing.Reps} step={1} min={1} onChange={v => update(editing.WorkoutExerciseID, { Reps: v ?? 0 })} />
             )}
