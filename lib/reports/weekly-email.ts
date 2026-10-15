@@ -64,7 +64,7 @@ function concernCard(t: WeeklyTrainee): string {
     stripe: color, name: t.name,
     badge: t.concerns.length === 1 ? ITEM_LABEL[t.concerns[0].kind] : `${t.concerns.length} נושאים`, badgeColor: color,
     lines: items.map(i => i.text + (i.extra ? `<div style="padding-top:8px;">${i.extra}</div>` : '')),
-    link: { href: `${APP_URL}/athlete-stats/${encodeURIComponent(t.email)}`, label: `פתח את ${t.name}` },
+    link: { href: `${APP_URL}/dashboard?as=${encodeURIComponent(t.email)}`, label: `פתח את ${t.name}` },
   })
 }
 

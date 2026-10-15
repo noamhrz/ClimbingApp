@@ -58,7 +58,7 @@ export default function ProfilePage() {
   const isViewingSelf = selectedEmail === activeUser?.Email
 
   useEffect(() => {
-    if (!selectedEmail) return
+    if (!selectedEmail || !currentUser || !activeUser) return   // wait for auth (avoids /athlete-stats/undefined)
 
     // Redirect if user tries to view others without permission
     if (!canViewOthers && selectedEmail !== activeUser?.Email) {
@@ -71,7 +71,7 @@ export default function ProfilePage() {
     }
 
     loadMetrics()
-  }, [selectedEmail, startDate, endDate])
+  }, [selectedEmail, startDate, endDate, currentUser?.Email, activeUser?.Email])
 
   const loadUsers = async () => {
     try {
