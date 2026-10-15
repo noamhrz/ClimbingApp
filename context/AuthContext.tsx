@@ -237,6 +237,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Load available users based on role
       await loadAvailableUsers(userData)
       
+      // A link may pick the trainee to view (?as=<email>, e.g. from the coach report emails).
+      // Coaches/admins only; the param is then dropped from the address bar.
+      const params = new URLSearchParams(window.location.search)
+      const asEmail = params.get('as')?.trim()
+      if (asEmail) {
+        params.delete('as')
+        const q = params.toString()
+        window.history.replaceState(null, '', window.location.pathname + (q ? `?${q}` : '') + window.location.hash)
+        if (userData.Role !== 'user' && asEmail.toLowerCase() !== email.toLowerCase()) localStorage.setItem('activeUserEmail', asEmail)
+      }
+
       // Check if there's a stored active user
       const storedActiveEmail = localStorage.getItem('activeUserEmail')
       if (storedActiveEmail && storedActiveEmail !== email) {
