@@ -47,7 +47,9 @@ export async function POST(req: NextRequest) {
   if (limited(ip)) return no('rate', 429)
 
   const name = clip(d.name, 80), email = clip(d.email, 120), phone = clip(d.phone, 20)
-  const message = clip(d.message, 1500), results = clip(d.results, 2000)
+  const message = clip(d.message, 1500), results = clip(d.results, 4000)
+  // optional PDF of the results: base64, must look like a PDF, up to ~3 MB
+  const pdf = typeof d.pdf === 'string' && d.pdf.startsWith('JVBER') && d.pdf.length < 4_000_000 && /^[A-Za-z0-9+/=]+$/.test(d.pdf) ? d.pdf : undefined
   if (!name) return no('name')
   if (!email && !phone) return no('contact')
   if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return no('email')
@@ -59,12 +61,12 @@ export async function POST(req: NextRequest) {
     <p><b>${esc(name)}</b> שלח/ה פנייה ממחשבון הכוח באתר.</p>
     <p>${email ? `אימייל: <a href="mailto:${esc(email)}">${esc(email)}</a><br>` : ''}${phone ? `טלפון: <a href="tel:${esc(phone)}">${esc(phone)}</a>` : ''}</p>
     ${message ? `<p style="white-space:pre-wrap">${esc(message)}</p>` : ''}
-    <h3 style="margin:16px 0 4px">תוצאות המחשבון</h3>
+    <h3 style="margin:16px 0 4px">תוצאות המחשבון${pdf ? ' (PDF מצורף)' : ''}</h3>
     <pre style="white-space:pre-wrap;font-family:inherit;background:#f4f1ec;padding:12px;border-radius:8px">${esc(results)}</pre>
   </div>`
 
   try {
-    await sendSiteContactEmail(`פנייה מהאתר: ${name}`, html, text, email || undefined)
+    await sendSiteContactEmail(`פנייה מהאתר: ${name}`, html, text, email || undefined, pdf)
     return NextResponse.json({ ok: true }, { headers })
   } catch (e) {
     console.error('site-contact', e)
