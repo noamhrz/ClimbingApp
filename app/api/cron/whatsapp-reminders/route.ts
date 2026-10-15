@@ -2,6 +2,7 @@ import { isActiveUser } from '@/lib/active-users'
 import { NextRequest, NextResponse } from 'next/server'
 import twilio from 'twilio'
 import { createClient } from '@supabase/supabase-js'
+import { addDays, ilDate, ilDateOfTimestamp } from '@/lib/reports/dates'
 
 const TEMPLATES = {
   daily_summary: 'HX3b64f105081994e959eda262b7f9f5c4',
@@ -37,10 +38,12 @@ export async function GET(request: NextRequest) {
   const supabase = getSupabaseAdmin()
   const twilioClient = getTwilioClient()
 
-  // Today's date in Israel time
-  const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jerusalem' })
-  const startOfDay = `${today}T00:00:00`
-  const endOfDay = `${today}T23:59:59`
+  // Today's date in Israel time. Calendar.StartTime is stored in UTC, so an Israeli day
+  // starts at 21:00/22:00 UTC the evening before: query a wider window and keep only
+  // the entries whose Israel date is today (a workout on the 16th at 00:30 is 15th 21:30 UTC).
+  const today = ilDate()
+  const startOfDay = `${addDays(today, -1)}T00:00:00`
+  const endOfDay = `${addDays(today, 1)}T00:00:00`
 
   // Step 1: Get active WhatsApp profiles
   const { data: profiles, error: profilesError } = await supabase
@@ -70,20 +73,22 @@ export async function GET(request: NextRequest) {
   }
 
   // Step 2: Get today's incomplete calendar entries for these users
-  const { data: calendarEntries, error: calendarError } = await supabase
+  const { data: calendarRows, error: calendarError } = await supabase
     .from('Calendar')
     .select('CalendarID, Email, WorkoutID, StartTime, CoachNotes')
     .in('Email', activeEmails)
     .eq('Completed', false)
     .gte('StartTime', startOfDay)
-    .lte('StartTime', endOfDay)
+    .lt('StartTime', endOfDay)
 
   if (calendarError) {
     console.error('Error fetching calendar:', calendarError)
     return NextResponse.json({ error: calendarError.message }, { status: 500 })
   }
+  const todaysEntries = (calendarRows ?? []).filter(e => ilDateOfTimestamp(String(e.StartTime)) === today)
 
-  if (!calendarEntries || calendarEntries.length === 0) {
+  const calendarEntries = todaysEntries
+  if (calendarEntries.length === 0) {
     return NextResponse.json({ message: 'No workouts scheduled today' })
   }
 
