@@ -44,3 +44,18 @@ export async function sendReportEmail(subject: string, html: string, text: strin
     text,
   })
 }
+
+/** A message from the website (contact form) to Noam; Reply-To is the visitor. */
+export async function sendSiteContactEmail(subject: string, html: string, text: string, replyTo?: string) {
+  const user = process.env.SMTP_USER
+  const pass = process.env.SMTP_PASS
+  if (!user || !pass) throw new Error('SMTP_USER / SMTP_PASS are not set')
+  return transport(user, pass).sendMail({
+    from: { name: 'האתר – noam-herz-climbing.com', address: user },
+    to: process.env.CONTACT_TO || process.env.REPORT_TO || user,
+    replyTo: replyTo || undefined,
+    subject,
+    html,
+    text,
+  })
+}
