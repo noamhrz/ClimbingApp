@@ -33,7 +33,9 @@ function metricChart(m: WellnessMetric): string {
 function f1(n: number) { return (Math.round(n * 10) / 10).toFixed(1) }
 
 function alertBlock(t: TraineeAlerts, a: Alert): string {
-  const profile = `${APP_URL}/athlete-stats/${encodeURIComponent(t.email)}`
+  // open the trainee's dashboard (wellness, pain) or calendar (missed workouts), viewing as that trainee
+  const profile = `${APP_URL}/dashboard?as=${encodeURIComponent(t.email)}`
+  const calendar = `${APP_URL}/calendar?as=${encodeURIComponent(t.email)}`
   switch (a.kind) {
     case 'pain3':
       return card({
@@ -57,7 +59,7 @@ function alertBlock(t: TraineeAlerts, a: Alert): string {
           label: heWeekday(c.date),
           color: c.state === 'done' ? C.success : c.state === 'missed' ? C.danger : c.state === 'partial' ? C.warning : C.line,
         }))),
-        link: { href: profile, label: `פתח את ${t.name}` },
+        link: { href: calendar, label: `פתח את ${t.name}` },
       })
     case 'overload': {
       const parts: string[] = []
