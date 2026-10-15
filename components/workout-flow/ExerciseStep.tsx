@@ -52,12 +52,20 @@ export function exercisePR(o: any, bests?: Bests): boolean {
 
 const n = (v: unknown) => (v == null || v === '' ? null : Number(v))
 
+/** Long efforts (2 min and up) are shown and entered in minutes, short ones in seconds. */
+export const LONG_DURATION = 120
+export function fmtDuration(sec: number): string {
+  if (sec < LONG_DURATION) return `${sec} שנ׳`
+  const m = Math.floor(sec / 60), r = Math.round(sec % 60)
+  return r ? `${m}:${String(r).padStart(2, '0')} דק׳` : `${m} דק׳`
+}
+
 export function sideSummary(o: any, left: boolean, isDuration: boolean): string | null {
   const s = left ? 'Left' : ''
   const p = n(o[(isDuration ? 'DurationSec' : 'RepsDone') + s])
   if (p == null) return null
   const w = n(o['WeightKG' + s]), r = n(o['RPE' + s])
-  return (isDuration ? `${p} שנ׳` : `${p} חזרות`) + (w ? ` · ${w} ק״ג` : '') + (r ? ` · RPE ${r}` : '')
+  return (isDuration ? fmtDuration(p) : `${p} חזרות`) + (w ? ` · ${w} ק״ג` : '') + (r ? ` · RPE ${r}` : '')
 }
 
 /** One side over all sets: "8 חזרות · 20 ק״ג" for one set, "3 סטים · 8/8/6 חזרות · 20 ק״ג", or "3 סטים · 8×20 · 8×20 · 6×22.5". */
@@ -68,6 +76,7 @@ function sideSetsSummary(o: any, left: boolean, isDuration: boolean): string | n
   const p = done.map(st => n((st as any)[(isDuration ? 'DurationSec' : 'RepsDone') + s]))
   const w = done.map(st => n((st as any)['WeightKG' + s]))
   const unit = isDuration ? 'שנ׳' : 'חזרות'
+  if (isDuration && w.every(x => x === w[0])) return `${done.length} סטים · ${p.map(x => fmtDuration(x ?? 0)).join(' / ')}` + (w[0] ? ` · ${w[0]} ק״ג` : '')
   if (w.every(x => x === w[0])) return `${done.length} סטים · ${p.join('/')} ${unit}` + (w[0] ? ` · ${w[0]} ק״ג` : '')
   return `${done.length} סטים · ` + p.map((x, i) => (w[i] ? `${x}×${w[i]}` : `${x}`)).join(' · ') + ` (${unit}×ק״ג)`
 }
@@ -141,6 +150,9 @@ export default function ExerciseStep({ exercise: ex, position, last, bests, onCh
   const primKey = (ex.isDuration ? 'DurationSec' : 'RepsDone') + s
   const target = ex.isDuration ? n(ex.Duration) : n(ex.Reps)
   const setKey = setCount > 1 ? `-s${setIdx + 1}` : ''
+  // long efforts (target or last time 2+ minutes) are entered in minutes; stored in seconds
+  const inMinutes = !!ex.isDuration && Math.max(target ?? 0, n(lastSet?.[primKey]) ?? 0) >= LONG_DURATION
+  const toMin = (sec: number | null) => (sec == null ? null : Math.round((sec / 60) * 100) / 100)
 
   const lastText = last ? exerciseSummary({ ...last, IsSingleHand: single, isDuration: ex.isDuration }) : null
   const noteKey = 'Notes' + s
@@ -149,7 +161,7 @@ export default function ExerciseStep({ exercise: ex, position, last, bests, onCh
   const targets: string[] = []
   if (ex.Sets) targets.push(`${ex.Sets} סטים`)
   if (ex.Reps) targets.push(`${ex.Reps} חזרות`)
-  if (ex.Duration) targets.push(`${ex.Duration} שנ׳`)
+  if (ex.Duration) targets.push(fmtDuration(Number(ex.Duration)))
   if (ex.Rest) targets.push(`מנוחה ${ex.Rest} שנ׳`)
 
   // "same as last time": every set of last time
@@ -298,14 +310,14 @@ export default function ExerciseStep({ exercise: ex, position, last, bests, onCh
       {single && <Hint id="sides">ממלאים כל יד בנפרד. אחרי ימין, ״כמו ימין״ מעתיק את הערכים לשמאל.</Hint>}
 
       <NumberStepper
-        key={primKey + setKey}
+        key={primKey + setKey + (inMinutes ? 'm' : '')}
         id={`ex-${position.n}-${ex.ExerciseID}-${primKey}${setKey}`}
         label={ex.isDuration ? 'זמן' : 'חזרות'}
-        unit={ex.isDuration ? 'שניות' : undefined}
-        value={n(cur[primKey])}
-        placeholder={n(lastSet?.[primKey]) ?? target}
-        step={ex.isDuration ? 5 : 1}
-        onChange={v => onChange({ [primKey]: v })}
+        unit={ex.isDuration ? (inMinutes ? 'דקות' : 'שניות') : undefined}
+        value={inMinutes ? toMin(n(cur[primKey])) : n(cur[primKey])}
+        placeholder={inMinutes ? toMin(n(lastSet?.[primKey]) ?? target) : n(lastSet?.[primKey]) ?? target}
+        step={inMinutes ? 1 : ex.isDuration ? 5 : 1}
+        onChange={v => onChange({ [primKey]: inMinutes && v != null ? Math.round(v * 60) : v })}
       />
       <NumberStepper
         key={'WeightKG' + s + setKey}
