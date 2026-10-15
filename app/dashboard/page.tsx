@@ -8,7 +8,7 @@ import TimeRangeSelector from '@/components/dashboard/TimeRangeSelector'
 import StatsCards from '@/components/dashboard/StatsCards'
 import WellnessChart from '@/components/dashboard/WellnessChart'
 import ClimbingVolumeChart from '@/components/dashboard/ClimbingVolumeChart'
-import { formatGradeAverage, gradeAverage, gradeScale, GradeScale, GradeType } from '@/lib/grade-average'
+import { formatGradeAverage, gradeAverage, gradeScale, GradedClimb, GradeScale, GradeType } from '@/lib/grade-average'
 import ExerciseAmountChart from '@/components/dashboard/ExerciseAmountChart'
 import MotivationalQuote from '@/components/dashboard/MotivationalQuote'
 import WellnessModal from '@/components/dashboard/WellnessModal'
@@ -223,7 +223,7 @@ export default function DashboardPage() {
       const [{ data, error }, scale] = await Promise.all([
         supabase
           .from('ClimbingLog')
-          .select('LogDateTime, ClimbType, VolumeScore, GradeID')
+          .select('LogDateTime, ClimbType, VolumeScore, GradeID, Attempts')
           .eq('Email', userToShow?.Email)
           .is('DatePrecision', null)
           .gte('LogDateTime', start.toISOString())
@@ -241,7 +241,7 @@ export default function DashboardPage() {
         ? format(d, 'dd/MM')
         : format(startOfWeek(d, { weekStartsOn: WEEK_STARTS_ON }), 'yyyy-MM-dd')
 
-      type Bucket = { lead: number; board: number; boulder: number; ids: Record<GradeType, number[]> }
+      type Bucket = { lead: number; board: number; boulder: number; ids: Record<GradeType, GradedClimb[]> }
       const buckets = new Map<string, Bucket>()
       data?.forEach(log => {
         const k = keyOf(new Date(log.LogDateTime))
@@ -252,7 +252,7 @@ export default function DashboardPage() {
         if (t === 'Lead') b.lead += volume
         else if (t === 'Board') b.board += volume
         else if (t === 'Boulder') b.boulder += volume
-        if (b.ids[t] && log.GradeID != null) b.ids[t].push(log.GradeID)
+        if (b.ids[t] && log.GradeID != null) b.ids[t].push({ GradeID: log.GradeID, Attempts: log.Attempts })
       })
 
       const row = (label: string, k: string) => {
