@@ -510,11 +510,19 @@ export default function CalendarPage() {
   const handleSavePendingChanges = async () => {
     try {
       for (const [calendarId, change] of pendingChanges) {
+        // On screen, entries sit at local midnight + order (display only). Save them at their
+        // real hour in Israel time (morning when unknown or a legacy midnight entry), minute = order,
+        // so the day never slips to the evening before in UTC (reminders, reports).
+        const ev = events.find(e => e.id === calendarId)
+        const origHour = ev?.StartTime ? moment.utc(ev.StartTime).tz('Asia/Jerusalem').hour() : 9
+        const start = moment.tz(change.newDate, 'Asia/Jerusalem')
+          .hour(origHour === 0 ? 9 : origHour).minute(change.newOrder ?? 0).second(0).millisecond(0)
+        const end = start.clone().add(change.newEndTime.getTime() - change.newStartTime.getTime(), 'ms')
         const { error } = await supabase
           .from('Calendar')
           .update({
-            StartTime: change.newStartTime.toISOString(),
-            EndTime: change.newEndTime.toISOString(),
+            StartTime: start.toDate().toISOString(),
+            EndTime: end.toDate().toISOString(),
             Order: change.newOrder,
           })
           .eq('CalendarID', calendarId)
