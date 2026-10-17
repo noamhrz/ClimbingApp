@@ -70,7 +70,6 @@ export default function AddClimbingLogModal({
     setSaving(true)
 
     try {
-      const localDateTime = new Date(`${date}T${time}:00`)
 
       const logData = {
         ClimbType: climbType,
@@ -78,7 +77,7 @@ export default function AddClimbingLogModal({
         RouteName: routeName || null,
         Attempts: attempts,
         Successful: successful,
-        LogDateTime: localDateTime.toISOString(),
+        LogDateTime: `${date} ${time}:00`, // Israel local, as typed
         LocationID: locationId,
         BoardTypeID: climbType === 'Board' ? boardTypeId : null,
         Notes: notes || null,
