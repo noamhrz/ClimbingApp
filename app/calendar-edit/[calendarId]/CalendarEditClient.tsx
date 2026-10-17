@@ -16,6 +16,7 @@ import { climbSummary } from '@/components/workout-flow/climbSummary'
 import { ClimbingRoute, BoulderGrade, LeadGrade, ClimbingLocation, ClimbingLogEntry, BoardType } from '@/types/climbing'
 import { generateTempId, getGradeDisplay } from '@/lib/climbing-helpers'
 import moment from 'moment-timezone'
+import { logTimeOf, logTimeNow } from '@/lib/log-time'
 import { useFormDraft } from '@/lib/useFormDraft'
 import { LuCircleCheck, LuLightbulb, LuLoaderCircle, LuMapPin } from 'react-icons/lu'
 
@@ -390,8 +391,8 @@ export default function CalendarEditClient() {
 
       // ✅ Use calendar's StartTime for LogDateTime
       const logDateTime = calendarRow?.StartTime 
-        ? moment(calendarRow.StartTime).format('YYYY-MM-DD HH:mm:ss')
-        : moment().format('YYYY-MM-DD HH:mm:ss')
+        ? logTimeOf(calendarRow.StartTime)
+        : logTimeNow()
 
       let exerciseCount = 0
       let climbingCount = 0
