@@ -9,6 +9,7 @@ import './calendar-custom.css'
 import { supabase } from '@/lib/supabaseClient'
 import { useAuth, useActiveUserEmail } from '@/context/AuthContext'
 import moment from 'moment-timezone'
+import { logTimeOfDate } from '@/lib/log-time'
 import { useRouter } from 'next/navigation'
 import EventComponent from '@/components/EventComponent'
 import AddWorkoutModal from '@/components/AddWorkoutModal'
@@ -626,7 +627,7 @@ export default function CalendarPage() {
       const { error: climbingError } = await supabase
         .from('ClimbingLog')
         .update({ 
-          LogDateTime: moment(newDate).format('YYYY-MM-DD HH:mm:ss'),
+          LogDateTime: logTimeOfDate(newDate),
           UpdatedAt: moment().format('YYYY-MM-DD HH:mm:ss')
         })
         .eq('CalendarID', selectedEvent.id)

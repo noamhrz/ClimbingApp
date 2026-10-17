@@ -14,6 +14,8 @@ import ClimbStep from '@/components/workout-flow/ClimbStep'
 import { climbSummary } from '@/components/workout-flow/climbSummary'
 import { IntroStep, SummaryStep } from '@/components/workout-flow/IntroSummary'
 import moment from 'moment-timezone'
+import { ilDate, ilDateOfTimestamp } from '@/lib/reports/dates'
+import { logTimeOf, logTimeNow } from '@/lib/log-time'
 import { useFormDraft } from '@/lib/useFormDraft'
 import { LuCircleCheck, LuLightbulb, LuLoaderCircle, LuMapPin } from 'react-icons/lu'
 import { PageSkeleton } from '@/components/ui/Skeleton'
@@ -655,9 +657,14 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
     // DB timestamps (StartTime, CreatedAt, UpdatedAt) are stored in UTC
     const now = moment.utc().format('YYYY-MM-DD HH:mm:ss')
 
-    const logDateTime = calendarRow?.StartTime 
-      ? moment(calendarRow.StartTime).format('YYYY-MM-DD HH:mm:ss')
-      : moment().format('YYYY-MM-DD HH:mm:ss')
+    // A workout scheduled for a future day that is saved today was done today: the routes get today's
+    // date and the calendar entry moves to today. Otherwise two sessions (today's, and the one
+    // planned for tomorrow but done today) end up on the same day in the stats.
+    const doneEarly = !!calendarRow?.StartTime && ilDateOfTimestamp(calendarRow.StartTime) > ilDate()
+    // LogDateTime is Israel local time (every reader takes its date as-is); StartTime is UTC
+    const logDateTime = calendarRow?.StartTime && !doneEarly
+      ? logTimeOf(calendarRow.StartTime)
+      : logTimeNow()
 
     try {
       let activeCalendarId = calendarIdNum
@@ -686,7 +693,8 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
           .update({ 
             Completed: true, 
             Color: deloading ? 'lightgreen' : 'green',
-            ClimberNotes: climberNotes 
+            ClimberNotes: climberNotes,
+            ...(doneEarly ? { StartTime: now, EndTime: moment.utc().add(1, 'hour').format('YYYY-MM-DD HH:mm:ss') } : {}),
           })
           .eq('CalendarID', activeCalendarId)
         if (updErr) throw updErr
