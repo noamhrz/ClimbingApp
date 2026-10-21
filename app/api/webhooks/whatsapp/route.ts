@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { normalizePhone } from '@/lib/phone'
 import twilio from 'twilio'
 import { createClient } from '@supabase/supabase-js'
 import { copyPreviousWorkout } from '@/utils/copyPreviousWorkout'
@@ -106,7 +107,7 @@ export async function POST(request: NextRequest) {
 
       const msg = await twilioClient.messages.create({
         from: TWILIO_FROM,
-        to: `whatsapp:${profile.Phone}`,
+        to: `whatsapp:${normalizePhone(profile.Phone) ?? profile.Phone}`,
         contentSid: TEMPLATES.workout_completed,
         contentVariables: JSON.stringify({
           '1': (user?.Name ?? 'מתאמן').trim(),

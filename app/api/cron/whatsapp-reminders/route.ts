@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import twilio from 'twilio'
 import { createClient } from '@supabase/supabase-js'
 import { addDays, ilDate, ilDateOfTimestamp } from '@/lib/reports/dates'
+import { normalizePhone } from '@/lib/phone'
 
 const TEMPLATES = {
   daily_summary: 'HX3b64f105081994e959eda262b7f9f5c4',
@@ -151,7 +152,8 @@ export async function GET(request: NextRequest) {
     if (!profile) continue
 
     const { Name: name, Phone: phone } = profile as { Name: string; Phone: string; Email: string }
-    const cleanPhone = '+' + phone.replace(/[^\d]/g, '')
+    const cleanPhone = normalizePhone(phone)
+    if (!cleanPhone) { console.warn('Invalid phone, skipping reminder'); continue }
 
     // Sort by StartTime ascending before sending
     userWorkouts.sort((a, b) => new Date(a.StartTime).getTime() - new Date(b.StartTime).getTime())
