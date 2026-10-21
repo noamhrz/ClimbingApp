@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/context/AuthContext'
 import { supabase } from '@/lib/supabaseClient'
+import { displayPhone } from '@/lib/phone'
 import { useRouter } from 'next/navigation'
 import { LuCircle, LuCircleCheck, LuLightbulb, LuLoaderCircle, LuLock, LuLogOut, LuMail, LuMessageSquare, LuPencil, LuRefreshCw, LuSave, LuScale, LuSmartphone, LuUser } from 'react-icons/lu'
 import { PageSkeleton } from '@/components/ui/Skeleton'
@@ -64,7 +65,7 @@ export default function UserProfilePage() {
       if (data) {
         setProfileExists(true)
         setBodyWeight(data.BodyWeightKG)
-        setPhone(data.Phone || '')
+        setPhone(displayPhone(data.Phone))
         setWhatsappActive(data.WhatsAppActive ?? false)
       } else {
         setProfileExists(false)
@@ -79,7 +80,7 @@ export default function UserProfilePage() {
     }
   }
 
-  // Helper: update Profiles via service-role API route (used when impersonating to bypass RLS)
+  // Helper: update Profiles via service-role API route (own profile or coach/admin editing a trainee)
   const updateProfileViaApi = async (payload: Record<string, unknown>) => {
     const { data: { session } } = await supabase.auth.getSession()
     const token = session?.access_token
@@ -103,7 +104,11 @@ export default function UserProfilePage() {
     if (!activeUser?.Email) return
 
     // Validation
-    if (bodyWeight < 30 || bodyWeight > 200) {
+    if (whatsappActive && !phone.trim()) {
+      setMessage({ type: 'error', text: '⚠️ כדי להפעיל תזכורות WhatsApp צריך להזין מספר טלפון' })
+      return
+    }
+    if (!Number.isFinite(bodyWeight) || bodyWeight < 30 || bodyWeight > 200) {
       setMessage({ type: 'error', text: '⚠️ משקל גוף חייב להיות בין 30 ל-200 ק"ג' })
       return
     }
@@ -111,39 +116,17 @@ export default function UserProfilePage() {
     setLoading(true)
     setMessage(null)
 
-    const cleanPhone = phone.replace(/[^\d+\s-]/g, '').trim() || null
-
     try {
-      if (isImpersonating) {
-        // Bypass RLS via admin API route
-        await updateProfileViaApi({
-          bodyWeight,
-          phone: cleanPhone,
-          whatsAppActive: whatsappActive
-        })
-      } else if (profileExists) {
-        const { error } = await supabase
-          .from('Profiles')
-          .update({
-            BodyWeightKG: bodyWeight,
-            Phone: cleanPhone,
-            WhatsAppActive: whatsappActive,
-            UpdatedAt: new Date().toISOString()
-          })
-          .eq('Email', activeUser.Email)
-        if (error) throw error
-      } else {
-        const { error } = await supabase
-          .from('Profiles')
-          .insert({
-            Email: activeUser.Email,
-            BodyWeightKG: bodyWeight,
-            Phone: cleanPhone,
-            WhatsAppActive: whatsappActive
-          })
-        if (error) throw error
-        setProfileExists(true)
-      }
+      // Server route (service role): RLS can't silently drop the write, the row is created if
+      // missing, and the phone is stored as +972… so WhatsApp can reach it
+      const res = await updateProfileViaApi({
+        bodyWeight,
+        phone: phone.trim(),
+        whatsAppActive: whatsappActive
+      })
+      const saved = res?.data?.[0]
+      if (saved) setPhone(displayPhone(saved.Phone))
+      setProfileExists(true)
 
       setMessage({ type: 'success', text: '✅ הפרופיל נשמר בהצלחה!' })
       setIsEditingProfile(false)
@@ -162,26 +145,12 @@ export default function UserProfilePage() {
     const newValue = !whatsappActive
     setSavingWhatsapp(true)
     try {
-      if (isImpersonating) {
-        // Bypass RLS via admin API route
-        await updateProfileViaApi({ whatsAppActive: newValue })
-      } else if (profileExists) {
-        const { error } = await supabase
-          .from('Profiles')
-          .update({ WhatsAppActive: newValue })
-          .eq('Email', activeUser.Email)
-        if (error) throw error
-      } else {
-        const { error } = await supabase
-          .from('Profiles')
-          .insert({
-            Email: activeUser.Email,
-            BodyWeightKG: bodyWeight,
-            WhatsAppActive: newValue
-          })
-        if (error) throw error
-        setProfileExists(true)
+      if (newValue && !phone.trim()) {
+        setMessage({ type: 'error', text: '⚠️ כדי להפעיל תזכורות צריך קודם להזין מספר טלפון (ערוך)' })
+        return
       }
+      await updateProfileViaApi({ whatsAppActive: newValue })
+      setProfileExists(true)
       setWhatsappActive(newValue)
     } catch (err: any) {
       setMessage({ type: 'error', text: `❌ שגיאה: ${err.message}` })
