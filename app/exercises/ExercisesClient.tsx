@@ -109,7 +109,7 @@ export default function ExercisesClient() {
       let query = supabase
         .from('Exercises')
         .select('*')
-        .order('Name')
+        .order('ExerciseID', { ascending: false }) // newest first
 
       if (filterStatus !== 'all') {
         query = query.eq('Status', filterStatus)
