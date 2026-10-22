@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
 import Link from 'next/link'
 import Image from 'next/image'
-import { LuLoaderCircle, LuLogIn, LuSmartphone } from 'react-icons/lu'
+import { LuLoaderCircle, LuLogIn, LuShare, LuSmartphone } from 'react-icons/lu'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -19,10 +19,37 @@ export default function LoginPage() {
   // Presentational only: install hint on the login screen
   const [showInstall, setShowInstall] = useState(false)
   const [isStandalone, setIsStandalone] = useState(false)
+  // Android/desktop Chrome: the browser's own install prompt, captured so the button can open it
+  const [installPrompt, setInstallPrompt] = useState<(Event & { prompt: () => Promise<void>; userChoice: Promise<{ outcome: string }> }) | null>(null)
+  const [platform, setPlatform] = useState<'ios' | 'ios-other' | 'inapp' | 'android' | 'other'>('other')
   useEffect(() => {
     const nav = window.navigator as Navigator & { standalone?: boolean }
     setIsStandalone(window.matchMedia('(display-mode: standalone)').matches || nav.standalone === true)
+    const ua = navigator.userAgent
+    const ios = /iPhone|iPad|iPod/.test(ua) || (ua.includes('Macintosh') && navigator.maxTouchPoints > 1)
+    setPlatform(
+      /Instagram|FBAN|FBAV|WhatsApp|Line\/|; wv\)/.test(ua) ? 'inapp'
+      : ios ? (/CriOS|FxiOS|EdgiOS/.test(ua) ? 'ios-other' : 'ios')
+      : /Android/.test(ua) ? 'android' : 'other')
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {})
+    const onPrompt = (e: Event) => { e.preventDefault(); setInstallPrompt(e as typeof installPrompt) }
+    const onInstalled = () => { setInstallPrompt(null); setIsStandalone(true) }
+    window.addEventListener('beforeinstallprompt', onPrompt)
+    window.addEventListener('appinstalled', onInstalled)
+    return () => {
+      window.removeEventListener('beforeinstallprompt', onPrompt)
+      window.removeEventListener('appinstalled', onInstalled)
+    }
   }, [])
+  const handleInstall = async () => {
+    if (installPrompt) {
+      await installPrompt.prompt()
+      const { outcome } = await installPrompt.userChoice
+      if (outcome === 'accepted') setInstallPrompt(null)
+      return
+    }
+    setShowInstall(v => !v)
+  }
 
   // ✅ Redirect if already logged in
   useEffect(() => {
@@ -197,18 +224,38 @@ export default function LoginPage() {
                 </div>
                 <button
                   type="button"
-                  onClick={() => setShowInstall(v => !v)}
-                  aria-expanded={showInstall}
-                  className="min-h-11 px-2 text-accent font-bold text-sm"
+                  onClick={handleInstall}
+                  aria-expanded={installPrompt ? undefined : showInstall}
+                  className={installPrompt
+                    ? 'min-h-11 px-4 rounded-xl bg-accent text-on-accent font-bold text-sm'
+                    : 'min-h-11 px-2 text-accent font-bold text-sm'}
                 >
-                  איך?
+                  {installPrompt ? 'התקנה' : 'איך?'}
                 </button>
               </div>
               {showInstall && (
-                <ul className="mt-3 pt-3 border-t border-line text-sm text-fg-2 space-y-1.5">
-                  <li><b className="text-fg">אייפון (Safari):</b> כפתור השיתוף ← &quot;הוסף למסך הבית&quot;</li>
-                  <li><b className="text-fg">אנדרואיד (Chrome):</b> תפריט ⋮ ← &quot;התקן אפליקציה&quot;</li>
-                </ul>
+                <div className="mt-3 pt-3 border-t border-line text-sm text-fg-2 space-y-1.5">
+                  {platform === 'inapp' ? (
+                    <p>הדף נפתח בתוך אפליקציה אחרת (וואטסאפ / אינסטגרם), ומשם אי אפשר להוסיף למסך הבית. פתחו את הקישור בדפדפן: תפריט ⋮ או ··· ← &quot;פתח בדפדפן&quot;, ואז לחצו כאן שוב.</p>
+                  ) : platform === 'ios' || platform === 'ios-other' ? (
+                    <ol className="list-decimal ps-5 space-y-1.5">
+                      {platform === 'ios-other' && <li>אם לא מופיעה האפשרות, פתחו את הדף ב־<b className="text-fg">Safari</b></li>}
+                      <li>לחצו על כפתור השיתוף <LuShare aria-label="שיתוף" className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] text-accent" /> בתחתית המסך (או למעלה באייפד)</li>
+                      <li>גללו ובחרו <b className="text-fg">&quot;הוסף למסך הבית&quot;</b></li>
+                      <li>לחצו <b className="text-fg">&quot;הוסף&quot;</b></li>
+                    </ol>
+                  ) : platform === 'android' ? (
+                    <ol className="list-decimal ps-5 space-y-1.5">
+                      <li>פתחו את תפריט ⋮ של Chrome (למעלה)</li>
+                      <li>בחרו <b className="text-fg">&quot;התקנת אפליקציה&quot;</b> או <b className="text-fg">&quot;הוספה למסך הבית&quot;</b></li>
+                    </ol>
+                  ) : (
+                    <ul className="space-y-1.5">
+                      <li><b className="text-fg">אייפון (Safari):</b> כפתור השיתוף ← &quot;הוסף למסך הבית&quot;</li>
+                      <li><b className="text-fg">אנדרואיד (Chrome):</b> תפריט ⋮ ← &quot;התקנת אפליקציה&quot;</li>
+                    </ul>
+                  )}
+                </div>
               )}
             </div>
           )}
