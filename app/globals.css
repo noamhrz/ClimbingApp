@@ -29,6 +29,7 @@
   --color-warning: #E3B341;
   --color-danger:  #E06A5F;
   --color-info:    #7FB0C9;
+  --color-free:    #9B7FE6;    /* סשן חופשי */
 
   /* גופנים */
   --font-sans: var(--font-assistant), "Segoe UI", Arial, sans-serif;

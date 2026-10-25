@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useMemo, useCallback } from 'react'
+import { useEffect, useState, useMemo, useCallback, useRef } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
 import { saveExerciseLogs, withOccurrence, SET_KEYS, type SetVals } from '@/lib/exercise-log-writes'
@@ -17,8 +17,10 @@ import moment from 'moment-timezone'
 import { ilDate, ilDateOfTimestamp } from '@/lib/reports/dates'
 import { logTimeOf, logTimeNow } from '@/lib/log-time'
 import { useFormDraft } from '@/lib/useFormDraft'
-import { LuCircleCheck, LuLightbulb, LuLoaderCircle, LuMapPin } from 'react-icons/lu'
+import { LuCircleCheck, LuLightbulb, LuLoaderCircle, LuMapPin, LuPlus } from 'react-icons/lu'
 import { PageSkeleton } from '@/components/ui/Skeleton'
+import ExercisePicker, { type PickedExercise } from '@/components/workout-flow/ExercisePicker'
+import { FREE_SESSION_COLOR } from '@/lib/free-session'
 
 export default function WorkoutDetailClient({ id }: { id: number }) {
   const { activeUser, loading: authLoading } = useAuth()
@@ -31,6 +33,13 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
   const calendarIdNum = calendarId ? Number(calendarId) : null
 
   const email = emailFromQuery || activeEmail
+
+  // Free session: exercises picked by the trainee (?free=1&ex=12,5,9), not the workout template
+  const isFree = searchParams.get('free') === '1'
+  const freeExParam = searchParams.get('ex') || ''
+  const freeExIds = useMemo(() => freeExParam.split(',').map(Number).filter(n => n > 0), [freeExParam])
+  const isFreeRef = useRef(isFree)
+  const [showPicker, setShowPicker] = useState(false)
 
   const [workout, setWorkout] = useState<any>(null)
   const [loading, setLoading] = useState(true)
@@ -303,7 +312,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
   // === Draft persistence ===
   const draftKey = calendarIdNum
     ? `workout-draft-${calendarIdNum}`
-    : `workout-draft-new-${id}`
+    : isFree ? `workout-draft-free-${freeExParam}` : `workout-draft-new-${id}`
 
   const draftState = useMemo(() => ({
     exerciseForms,
@@ -317,7 +326,11 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
   }), [exerciseForms, routes, selectedLocation, selectedBoardType, climberNotes, deloading, deloadingPercentage, actualMinutes])
 
   const onDraftRestore = useCallback((draft: typeof draftState) => {
-    if (draft.exerciseForms?.length > 0) {
+    if (draft.exerciseForms?.length > 0 && isFreeRef.current) {
+      // free session: the draft is the session (including exercises added along the way)
+      setExerciseForms(draft.exerciseForms)
+      setExercises(draft.exerciseForms)
+    } else if (draft.exerciseForms?.length > 0) {
       setExerciseForms(prev => {
         // If exercises are already loaded from server, merge only user-entered performance
         // data into them — never replace the exercise structure (prevents stale level from overriding)
@@ -381,12 +394,14 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
             ? supabase.from('Calendar').select('*').eq('CalendarID', calendarIdNum).maybeSingle()
             : Promise.resolve({ data: null }),
           supabase.from('Workouts').select('*').eq('WorkoutID', id).maybeSingle(),
-          supabase
-            .from('WorkoutsExercises')
-            .select('ExerciseID, Block, Sets, Reps, Duration, Rest, Order')
-            .eq('WorkoutID', id)
-            .order('Block')
-            .order('Order'),
+          isFree
+            ? Promise.resolve({ data: freeExIds.map((ExerciseID, i) => ({ ExerciseID, Block: 1, Order: i + 1 })) as any[] })
+            : supabase
+              .from('WorkoutsExercises')
+              .select('ExerciseID, Block, Sets, Reps, Duration, Rest, Order')
+              .eq('WorkoutID', id)
+              .order('Block')
+              .order('Order'),
         ])
 
         if (calendarIdNum) {
@@ -590,6 +605,24 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
   }, [id, calendarIdNum, email])
 
   // === שינוי תרגיל ===
+  // Free session: add exercises along the way; jump to the first one added
+  const addFreeExercises = (picked: PickedExercise[]) => {
+    setShowPicker(false)
+    if (!picked.length) return
+    const entries = picked.map(x => ({
+      ExerciseID: x.ExerciseID, Name: x.Name, Description: x.Description, IsSingleHand: x.IsSingleHand,
+      isDuration: x.isDuration, ImageURL: x.ImageURL, VideoURL: x.VideoURL, is_dynamic: false, RoadmapCategoryID: null,
+      Block: 1, Sets: null, Reps: null, Duration: null, Rest: null,
+      RepsDone: null, DurationSec: null, WeightKG: null, RPE: null, Notes: '', Completed: false,
+      RepsDoneLeft: null, DurationSecLeft: null, WeightKGLeft: null, RPELeft: null, NotesLeft: '', CompletedLeft: false,
+    }))
+    const at = exerciseForms.length
+    setExerciseForms(prev => withOccurrence([...prev, ...entries]))
+    setExercises(prev => withOccurrence([...prev, ...entries]))
+    setBackToSummary(false)
+    setStep((hasIntro ? 1 : 0) + at)
+  }
+
   const handleExerciseChange = (i: number, data: any) => {
     setExerciseForms((prev) => {
       const next = [...prev]
@@ -679,7 +712,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
             TimeOfDay: 'Morning',
             Completed: true,
             Deloading: deloading,
-            Color: deloading ? 'lightgreen' : 'green',
+            Color: isFree ? FREE_SESSION_COLOR : deloading ? 'lightgreen' : 'green',
             ClimberNotes: climberNotes,
             CreatedAt: now,
           })
@@ -782,7 +815,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
   const lastFor = (ex: { ExerciseID: number; Occurrence?: number }) =>
     lastByExercise[`${ex.ExerciseID}:${ex.Occurrence ?? 1}`] ?? lastByExercise[`${ex.ExerciseID}:1`]
   const lastCount = containsExercises ? exerciseForms.filter(ex => lastFor(ex)).length : 0
-  const hasIntro = !!(personalNote || workout.Description || workout.WorkoutNotes || workout.WhenToPractice || workout.VideoURL || isFutureWorkout || isPastWorkout || lastCount > 0)
+  const hasIntro = !isFree && !!(personalNote || workout.Description || workout.WorkoutNotes || workout.WhenToPractice || workout.VideoURL || isFutureWorkout || isPastWorkout || lastCount > 0)
   const flowExercises = containsExercises ? exerciseForms : []
   const firstEx = hasIntro ? 1 : 0
   const climbIndex = firstEx + flowExercises.length
@@ -817,6 +850,15 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
     setStepRaw(Number.MAX_SAFE_INTEGER) // clamped to the summary below
     showToast(filled || lastCount ? 'מולא כמו בפעם הקודמת. לחץ על תרגיל כדי לשנות אותו' : 'אין נתונים מהפעם הקודמת', 'blue')
   }
+  const addExerciseButton = (
+    <button
+      type="button"
+      onClick={() => setShowPicker(true)}
+      className="w-full min-h-12 rounded-xl border border-dashed border-free/60 text-free font-bold inline-flex items-center justify-center gap-2 hover:bg-free/10"
+    >
+      <LuPlus aria-hidden className="w-5 h-5" />הוספת תרגיל לסשן
+    </button>
+  )
   const steps: FlowStep[] = []
   if (hasIntro) {
     steps.push({
@@ -842,14 +884,17 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
     steps.push({
       key: `ex-${ex.ExerciseID}-${k}`, label: ex.Name, state: exerciseSummary(ex) ? 'done' : 'todo',
       content: (
-        <ExerciseStep
-          exercise={ex}
-          position={{ n: k + 1, of: flowExercises.length }}
-          last={lastFor(ex)}
-          bests={bestsByExercise[ex.ExerciseID]}
-          onRest={startRest}
-          onChange={data => handleExerciseChange(k, data)}
-        />
+        <>
+          <ExerciseStep
+            exercise={ex}
+            position={{ n: k + 1, of: flowExercises.length }}
+            last={lastFor(ex)}
+            bests={bestsByExercise[ex.ExerciseID]}
+            onRest={startRest}
+            onChange={data => handleExerciseChange(k, data)}
+          />
+          {isFree && <div className="px-4 pb-6">{addExerciseButton}</div>}
+        </>
       ),
     })
   })
@@ -879,6 +924,8 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
   steps.push({
     key: 'summary', label: 'סיכום', state: 'neutral',
     content: (
+      <>
+      {isFree && <div className="px-4 pt-4">{addExerciseButton}</div>}
       <SummaryStep
         rows={flowExercises.map((ex, k) => ({
           key: `${ex.ExerciseID}-${k}`, title: ex.Name, text: exerciseSummary(ex), pr: exercisePR(ex, bestsByExercise[ex.ExerciseID]),
@@ -904,6 +951,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
           onMinutes: setActualMinutes,
         }}
       />
+      </>
     ),
   })
   const lastStep = steps.length - 1
@@ -922,6 +970,15 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
 
   return (
     <>
+      {showPicker && email && (
+        <ExercisePicker
+          email={email}
+          title="הוספת תרגיל לסשן"
+          actionLabel={n => `הוסף ${n === 1 ? 'תרגיל' : `${n} תרגילים`}`}
+          onCancel={() => setShowPicker(false)}
+          onDone={addFreeExercises}
+        />
+      )}
       <WorkoutFlow
         title={workout.Name}
         steps={steps}

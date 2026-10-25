@@ -12,6 +12,7 @@ import moment from 'moment-timezone'
 import { logTimeOfDate } from '@/lib/log-time'
 import { useRouter } from 'next/navigation'
 import EventComponent from '@/components/EventComponent'
+import { FREE_SESSION_CATEGORY } from '@/lib/free-session'
 import AddWorkoutModal from '@/components/AddWorkoutModal'
 import ScheduleSheet from '@/components/coach/ScheduleSheet'
 import EventContextMenu from '@/components/EventContextMenu'
@@ -45,6 +46,7 @@ interface CalendarEvent {
   Order?: number | null
   EstimatedTotalTime?: number | null
   CoachNote?: string
+  free?: boolean
 }
 
 interface Workout {
@@ -197,8 +199,8 @@ export default function CalendarPage() {
     const [{ data: notesData }, { data: workoutsData }] = await Promise.all([
       supabase.from('WorkoutsForUser').select('WorkoutID, Notes, CoachNote').eq('Email', activeEmail),
       ids.length
-        ? supabase.from('Workouts').select('WorkoutID, Name, EstimatedTotalTime, EstimatedClimbingTime, CalculatedExercisesTime, containClimbing, containExercise').in('WorkoutID', ids)
-        : Promise.resolve({ data: [] as { WorkoutID: number; Name: string; EstimatedTotalTime: number | null; EstimatedClimbingTime: number | null; CalculatedExercisesTime: number | null; containClimbing: boolean; containExercise: boolean }[] }),
+        ? supabase.from('Workouts').select('WorkoutID, Name, Category, EstimatedTotalTime, EstimatedClimbingTime, CalculatedExercisesTime, containClimbing, containExercise').in('WorkoutID', ids)
+        : Promise.resolve({ data: [] as { WorkoutID: number; Name: string; Category: string | null; EstimatedTotalTime: number | null; EstimatedClimbingTime: number | null; CalculatedExercisesTime: number | null; containClimbing: boolean; containExercise: boolean }[] }),
     ])
     if (seq !== fetchSeq.current) return
     const noteMap: Record<number, string> = Object.fromEntries(
@@ -255,6 +257,7 @@ export default function CalendarPage() {
         Order: item.Order ?? null,
         EstimatedTotalTime: getDisplayTime(item.WorkoutID),
         CoachNote: noteMap[item.WorkoutID] || '',
+        free: workoutDetailsMap[item.WorkoutID]?.Category === FREE_SESSION_CATEGORY,
       }
     })
 

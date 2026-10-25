@@ -4,6 +4,7 @@
 'use client'
 
 import { useRef } from 'react'
+import { FREE_SESSION_COLOR } from '@/lib/free-session'
 
 interface CalendarEvent {
   id: number
@@ -12,6 +13,7 @@ interface CalendarEvent {
   end: Date
   completed: boolean
   color: string
+  free?: boolean
   WorkoutID: number
   Deloading?: boolean
   DeloadingPercentage?: number | null
@@ -61,6 +63,7 @@ export default function EventComponent({
   }
 
   const getEventColor = () => {
+    if (event.free) return FREE_SESSION_COLOR
     if (event.Deloading) {
       return event.completed ? '#9BD3AC' : '#A9CBDC'
     }
