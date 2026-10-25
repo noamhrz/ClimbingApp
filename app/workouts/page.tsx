@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { useAuth } from '@/context/AuthContext'
 import Link from 'next/link'
-import { LuDumbbell, LuInbox, LuMessageSquare, LuSearch, LuStar } from 'react-icons/lu'
+import { LuDumbbell, LuInbox, LuMessageSquare, LuPlus, LuSearch, LuStar } from 'react-icons/lu'
 import { PageSkeleton } from '@/components/ui/Skeleton'
 
 interface Workout {
@@ -171,6 +171,19 @@ export default function WorkoutsPage() {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 py-6">
+        {/* Free session: pick any exercises, no plan */}
+        <Link
+          href="/workouts/free"
+          className="mb-6 flex items-center gap-3 rounded-xl border-2 border-free bg-free/10 p-4 hover:bg-free/15 transition-colors"
+        >
+          <span className="w-11 h-11 rounded-xl bg-free/20 text-free flex items-center justify-center shrink-0">
+            <LuPlus aria-hidden className="w-6 h-6" />
+          </span>
+          <span className="flex-1 min-w-0">
+            <span className="block font-bold text-fg">סשן חופשי</span>
+            <span className="block text-sm text-muted">בחרו תרגילים ועשו אותם בלי תוכנית</span>
+          </span>
+        </Link>
         {workouts.length === 0 ? (
           <div className="text-center py-12">
             <div className="text-6xl mb-4"><LuInbox aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></div>

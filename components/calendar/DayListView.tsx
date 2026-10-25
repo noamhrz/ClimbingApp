@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import moment from 'moment-timezone'
+import { FREE_SESSION_COLOR } from '@/lib/free-session'
 import {
   DndContext,
   closestCenter,
@@ -33,6 +34,7 @@ interface CalendarEvent {
   Order?: number | null
   EstimatedTotalTime?: number | null
   CoachNote?: string
+  free?: boolean
 }
 
 interface Props {
@@ -72,6 +74,7 @@ function fmtMinutes(m: number): string {
 }
 
 function getEventColor(event: CalendarEvent): string {
+  if (event.free) return FREE_SESSION_COLOR
   if (event.completed) return '#5FB37A'
   if (event.Deloading) return '#7FB0C9'
   if (isPastEvent(event)) return '#E06A5F'
