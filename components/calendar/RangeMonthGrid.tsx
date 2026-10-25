@@ -6,7 +6,7 @@
 import moment from 'moment-timezone'
 import { LuChevronLeft, LuChevronRight } from 'react-icons/lu'
 
-interface GridEvent { start: Date; completed?: boolean | null; Deloading?: boolean | null }
+interface GridEvent { start: Date; completed?: boolean | null; Deloading?: boolean | null; free?: boolean }
 
 interface Props {
   month: Date
@@ -77,7 +77,7 @@ export default function RangeMonthGrid({ month, onMonth, events, from, to, previ
                 <span className="flex gap-0.5 flex-wrap justify-center max-w-[90%]" aria-hidden>
                   {evs.slice(0, 4).map((e, i) => (
                     <span key={i} className={`w-1.5 h-1.5 rounded-full ${
-                      edge ? 'bg-on-accent' : e.completed ? 'bg-success' : e.Deloading ? 'bg-info' : 'bg-accent'
+                      edge ? 'bg-on-accent' : e.free ? 'bg-free' : e.completed ? 'bg-success' : e.Deloading ? 'bg-info' : 'bg-accent'
                     }`} />
                   ))}
                   {evs.length > 4 && <span className="text-[9px] leading-none font-bold">+</span>}
