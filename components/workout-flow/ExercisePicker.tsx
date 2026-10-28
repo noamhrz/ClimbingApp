@@ -130,7 +130,7 @@ export default function ExercisePicker({ email, title = 'בחירת תרגילי
 
   return (
     // full-screen layer above everything (also above the workout flow, when adding mid-session)
-    <div className="fixed inset-0 z-[80] bg-bg text-fg flex flex-col pt-[env(safe-area-inset-top)]" dir="rtl" role="dialog" aria-modal="true" aria-labelledby="picker-title">
+    <div data-flow className="fixed inset-0 z-[80] bg-bg text-fg flex flex-col pt-[env(safe-area-inset-top)]" dir="rtl" role="dialog" aria-modal="true" aria-labelledby="picker-title">
       <header className="px-4 pt-3 pb-2 flex items-center justify-between gap-2 border-b border-line">
         <h1 id="picker-title" className="text-xl font-bold text-fg">{title}</h1>
         <button type="button" onClick={onCancel} className="min-h-11 px-3 text-muted inline-flex items-center gap-1">
