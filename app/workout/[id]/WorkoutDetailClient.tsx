@@ -71,6 +71,10 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
   const [routes, setRoutes] = useState<ClimbingRoute[]>([])
   const [selectedLocation, setSelectedLocation] = useState<number | null>(null)
   const [actualMinutes, setActualMinutes] = useState<number | null>(null)   // actual workout time, optional
+  // When the workout was opened (kept in the draft, so a reload doesn't restart it) and whether
+  // actualMinutes was filled from it — then reaching the summary again keeps it up to date.
+  const [startedAt, setStartedAt] = useState<number | null>(null)
+  const [autoTime, setAutoTime] = useState(false)
   const [selectedBoardType, setSelectedBoardType] = useState<number | null>(null)
 
   const [leadGrades, setLeadGrades] = useState<LeadGrade[]>([])
@@ -268,6 +272,8 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
   // reopen at the step where the trainee stopped (stored per workout, with the draft)
   const stepKey = `${calendarIdNum ? `workout-draft-${calendarIdNum}` : `workout-draft-new-${id}`}-step`
   const [stepRestored, setStepRestored] = useState(false)
+  // the clock starts when the workout is on screen (a restored draft brings back its own start)
+  if (!loading && startedAt == null) setStartedAt(Date.now())
   if (!loading && !stepRestored) {
     setStepRestored(true)
     try {
@@ -323,7 +329,9 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
     deloading,
     deloadingPercentage,
     actualMinutes,
-  }), [exerciseForms, routes, selectedLocation, selectedBoardType, climberNotes, deloading, deloadingPercentage, actualMinutes])
+    startedAt,
+    autoTime,
+  }), [exerciseForms, routes, selectedLocation, selectedBoardType, climberNotes, deloading, deloadingPercentage, actualMinutes, startedAt, autoTime])
 
   const onDraftRestore = useCallback((draft: typeof draftState) => {
     if (draft.exerciseForms?.length > 0 && isFreeRef.current) {
@@ -371,6 +379,8 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
     if (draft.deloading !== undefined) setDeloading(draft.deloading)
     if (draft.deloadingPercentage !== undefined) setDeloadingPercentage(draft.deloadingPercentage)
     if (draft.actualMinutes !== undefined) setActualMinutes(draft.actualMinutes)
+    if (draft.startedAt) setStartedAt(draft.startedAt)
+    if (draft.autoTime !== undefined) setAutoTime(!!draft.autoTime)
   }, [])
 
   const { clearDraft } = useFormDraft(draftKey, draftState, !loading, onDraftRestore)
@@ -947,8 +957,9 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
         } : null}
         actualTime={{
           minutes: actualMinutes,
+          auto: autoTime && actualMinutes != null,
           plannedMinutes: workout.EstimatedTotalTime || null,
-          onMinutes: setActualMinutes,
+          onMinutes: v => { setActualMinutes(v); setAutoTime(false) },
         }}
       />
       </>
@@ -962,6 +973,16 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
     : cur.key === 'summary' ? 'סיכום'
     : `תרגיל ${stepIndex - (hasIntro ? 1 : 0) + 1} מתוך ${flowExercises.length}`
   const onSummary = stepIndex === lastStep
+  // Default actual time: from opening the workout to reaching the summary. Only for a session
+  // done live (5 min – 5 h); a workout logged after the fact takes a minute or two and stays empty.
+  // Never overrides a time the trainee typed.
+  if (onSummary && startedAt && (actualMinutes == null || autoTime)) {
+    const elapsed = Math.round((Date.now() - startedAt) / 60000)
+    if (elapsed >= 5 && elapsed <= 300 && elapsed !== actualMinutes) {
+      setActualMinutes(elapsed)
+      setAutoTime(true)
+    }
+  }
   const returning = backToSummary && !onSummary
   const primaryLabel = returning ? 'חזרה לסיכום ←' : onSummary
     ? (isSaving ? 'שומר…' : 'סיום ושמירה')
