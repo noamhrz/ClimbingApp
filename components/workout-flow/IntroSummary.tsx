@@ -171,7 +171,7 @@ export interface SummarySession {
 }
 
 // Actual workout time (optional). null = not reported → reports use the workout's estimated time
-export interface SummaryTime { minutes: number | null; plannedMinutes: number | null; onMinutes: (v: number | null) => void }
+export interface SummaryTime { minutes: number | null; plannedMinutes: number | null; onMinutes: (v: number | null) => void; auto?: boolean }
 
 function TimeField({ id, label, hint, t }: { id: string; label: string; hint: string; t: SummaryTime }) {
   return (
@@ -179,7 +179,9 @@ function TimeField({ id, label, hint, t }: { id: string; label: string; hint: st
       <NumberStepper id={id} label={label} unit="(דקות)" value={t.minutes} placeholder={t.plannedMinutes} step={5} min={0} onChange={t.onMinutes} />
       <p className="text-[13px] text-muted flex items-center gap-1.5">
         <LuTimer aria-hidden className="w-4 h-4 shrink-0" />
-        {t.minutes == null && t.plannedMinutes
+        {t.auto
+          ? 'נמדד מפתיחת האימון עד עכשיו. אפשר לשנות.'
+          : t.minutes == null && t.plannedMinutes
           ? `לא חובה. בלי שינוי נחשב לפי הזמן המתוכנן (${t.plannedMinutes} דק׳).`
           : t.minutes == null ? `לא חובה. ${hint}` : hint}
       </p>
