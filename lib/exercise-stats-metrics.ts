@@ -226,14 +226,15 @@ function calculateHandStats(logs: any[], isDuration: boolean = false): HandStats
   let isBodyWeight = false
 
   // Check if we have weight data
-  const hasWeight = logs.some(l => l.WeightKG && l.WeightKG > 0)
+  // weight can be negative: assistance (band / counterweight), so less negative = stronger
+  const hasWeight = logs.some(l => l.WeightKG != null && Number(l.WeightKG) !== 0)
   const hasReps = logs.some(l => l.RepsDone && l.RepsDone > 0)
   const hasDuration = logs.some(l => l.DurationSec && l.DurationSec > 0)
   
   if (hasWeight) {
     // Priority 1: Weight-based exercise (e.g., Max Strength tests, Weighted exercises)
     unit = 'KG'
-    values = logs.map(l => l.WeightKG || 0).filter(v => v > 0)
+    values = logs.filter(l => l.WeightKG != null).map(l => Number(l.WeightKG))
   } else if (isDuration) {
     // Priority 2: Duration-based exercise (e.g., Plank, Timed Hangs)
     unit = 'seconds'
@@ -279,7 +280,7 @@ function calculateHandStats(logs: any[], isDuration: boolean = false): HandStats
     const previous5 = values.slice(-10, -5)
     const avgLast5 = last5.reduce((sum, v) => sum + v, 0) / last5.length
     const avgPrev5 = previous5.reduce((sum, v) => sum + v, 0) / previous5.length
-    trend = ((avgLast5 - avgPrev5) / avgPrev5) * 100
+    trend = avgPrev5 !== 0 ? ((avgLast5 - avgPrev5) / Math.abs(avgPrev5)) * 100 : 0
   }
 
   return {
