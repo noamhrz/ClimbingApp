@@ -51,6 +51,10 @@ export function exercisePR(o: any, bests?: Bests): boolean {
 }
 
 const n = (v: unknown) => (v == null || v === '' ? null : Number(v))
+/** "20 ק״ג", or for assistance (negative weight) "עזרה 10 ק״ג" */
+const kg = (w: number) => (w < 0 ? `עזרה ${-w} ק״ג` : `${w} ק״ג`)
+/** weight inside "8×20" lists; negative kept left-to-right in Hebrew text */
+const kgShort = (w: number) => (w < 0 ? `\u200E${w}\u200E` : `${w}`)
 
 /** Long efforts (2 min and up) are shown and entered in minutes, short ones in seconds. */
 export const LONG_DURATION = 120
@@ -65,7 +69,7 @@ export function sideSummary(o: any, left: boolean, isDuration: boolean): string 
   const p = n(o[(isDuration ? 'DurationSec' : 'RepsDone') + s])
   if (p == null) return null
   const w = n(o['WeightKG' + s]), r = n(o['RPE' + s])
-  return (isDuration ? fmtDuration(p) : `${p} חזרות`) + (w ? ` · ${w} ק״ג` : '') + (r ? ` · RPE ${r}` : '')
+  return (isDuration ? fmtDuration(p) : `${p} חזרות`) + (w ? ` · ${kg(w)}` : '') + (r ? ` · RPE ${r}` : '')
 }
 
 /** One side over all sets: "8 חזרות · 20 ק״ג" for one set, "3 סטים · 8/8/6 חזרות · 20 ק״ג", or "3 סטים · 8×20 · 8×20 · 6×22.5". */
@@ -76,9 +80,9 @@ function sideSetsSummary(o: any, left: boolean, isDuration: boolean): string | n
   const p = done.map(st => n((st as any)[(isDuration ? 'DurationSec' : 'RepsDone') + s]))
   const w = done.map(st => n((st as any)['WeightKG' + s]))
   const unit = isDuration ? 'שנ׳' : 'חזרות'
-  if (isDuration && w.every(x => x === w[0])) return `${done.length} סטים · ${p.map(x => fmtDuration(x ?? 0)).join(' / ')}` + (w[0] ? ` · ${w[0]} ק״ג` : '')
-  if (w.every(x => x === w[0])) return `${done.length} סטים · ${p.join('/')} ${unit}` + (w[0] ? ` · ${w[0]} ק״ג` : '')
-  return `${done.length} סטים · ` + p.map((x, i) => (w[i] ? `${x}×${w[i]}` : `${x}`)).join(' · ') + ` (${unit}×ק״ג)`
+  if (isDuration && w.every(x => x === w[0])) return `${done.length} סטים · ${p.map(x => fmtDuration(x ?? 0)).join(' / ')}` + (w[0] ? ` · ${kg(w[0])}` : '')
+  if (w.every(x => x === w[0])) return `${done.length} סטים · ${p.join('/')} ${unit}` + (w[0] ? ` · ${kg(w[0])}` : '')
+  return `${done.length} סטים · ` + p.map((x, i) => (w[i] ? `${x}×${kgShort(w[i]!)}` : `${x}`)).join(' · ') + ` (${unit}×ק״ג)`
 }
 
 export function exerciseSummary(o: any): string | null {
@@ -327,6 +331,8 @@ export default function ExerciseStep({ exercise: ex, position, last, bests, onCh
         value={n(cur['WeightKG' + s])}
         placeholder={n(lastSet?.['WeightKG' + s])}
         step={2.5}
+        min={-100}
+        negative={{ label: '± עזרה', hint: 'משקל שלילי = עזרה (גומייה, משקל נגדי, רגל על כיסא)' }}
         onChange={v => onChange({ ['WeightKG' + s]: v })}
       />
       {position.n === 1 && (

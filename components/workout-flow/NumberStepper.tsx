@@ -14,6 +14,8 @@ interface Props {
   placeholder?: number | null   // shown greyed when empty (last time / target)
   step: number
   min?: number
+  /** allow values below zero (weight: assistance, e.g. a band on pull-ups): − goes past 0, and a ± toggle flips the sign */
+  negative?: { label: string; hint: string }
   onChange: (v: number | null) => void
 }
 
@@ -24,7 +26,7 @@ function selectAll(el: HTMLInputElement) {
 
 const fmt = (v: number | null | undefined) => (v == null ? '' : String(v))
 
-export default function NumberStepper({ id, label, unit, value, placeholder, step, min = 0, onChange }: Props) {
+export default function NumberStepper({ id, label, unit, value, placeholder, step, min = 0, negative, onChange }: Props) {
   // local text so "12." or "2," can be typed before it is a number
   const [text, setText] = useState(fmt(value))
   const [seen, setSeen] = useState(value)
@@ -43,9 +45,25 @@ export default function NumberStepper({ id, label, unit, value, placeholder, ste
 
   return (
     <div className="flex flex-col gap-1.5">
-      <label htmlFor={id} className="text-[15px] font-bold text-fg-2">
-        {label} {unit && <span className="font-normal text-muted">{unit}</span>}
-      </label>
+      <div className="flex items-center justify-between gap-2">
+        <label htmlFor={id} className="text-[15px] font-bold text-fg-2">
+          {label} {unit && <span className="font-normal text-muted">{unit}</span>}
+        </label>
+        {negative && (
+          // phone number pads have no minus key: flip the sign here
+          <button
+            type="button"
+            aria-pressed={(value ?? 0) < 0}
+            onClick={() => {
+              const v = value ?? placeholder ?? 0
+              onChange(v === 0 ? -step : -v)
+            }}
+            className={`h-8 px-3 rounded-full border text-sm font-bold ${(value ?? 0) < 0 ? 'border-info text-info bg-info/15' : 'border-line-strong text-fg-3'}`}
+          >
+            {negative.label}
+          </button>
+        )}
+      </div>
       <div dir="ltr" className="flex gap-2 h-16">
         <button
           type="button"
@@ -83,6 +101,9 @@ export default function NumberStepper({ id, label, unit, value, placeholder, ste
           <LuPlus aria-hidden className="w-6 h-6" />
         </button>
       </div>
+      {negative && (value ?? 0) < 0 && (
+        <p className="text-sm text-info">{negative.hint}</p>
+      )}
     </div>
   )
 }
