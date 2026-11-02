@@ -47,6 +47,8 @@ interface CalendarEvent {
   EstimatedTotalTime?: number | null
   CoachNote?: string
   free?: boolean
+  ActualMinutes?: number | null   // done: the time the trainee reported
+  AvgMinutes?: number | null      // not done yet: average actual time of this workout (last 5, needs 3+)
 }
 
 interface Workout {
@@ -182,7 +184,7 @@ export default function CalendarPage() {
 
     const { data, error } = await supabase
       .from('Calendar')
-      .select('CalendarID, WorkoutID, StartTime, EndTime, Completed, Deloading, DeloadingPercentage, Order')
+      .select('CalendarID, WorkoutID, StartTime, EndTime, Completed, Deloading, DeloadingPercentage, Order, ActualMinutes')
       .eq('Email', activeEmail)
       .gte('StartTime', from)
       .lte('StartTime', to)
@@ -196,12 +198,29 @@ export default function CalendarPage() {
 
     // Personal coach notes (from the assignment) + details of only the workouts on screen, in parallel
     const ids = [...new Set((data || []).map((r) => r.WorkoutID))]
-    const [{ data: notesData }, { data: workoutsData }] = await Promise.all([
+    const [{ data: notesData }, { data: workoutsData }, { data: timesData }] = await Promise.all([
       supabase.from('WorkoutsForUser').select('WorkoutID, Notes, CoachNote').eq('Email', activeEmail),
       ids.length
         ? supabase.from('Workouts').select('WorkoutID, Name, Category, EstimatedTotalTime, EstimatedClimbingTime, CalculatedExercisesTime, containClimbing, containExercise').in('WorkoutID', ids)
         : Promise.resolve({ data: [] as { WorkoutID: number; Name: string; Category: string | null; EstimatedTotalTime: number | null; EstimatedClimbingTime: number | null; CalculatedExercisesTime: number | null; containClimbing: boolean; containExercise: boolean }[] }),
+      // reported times of this trainee's past workouts, newest first (for the average)
+      ids.length
+        ? supabase.from('Calendar').select('WorkoutID, ActualMinutes').eq('Email', activeEmail).eq('Completed', true)
+            .gt('ActualMinutes', 10).in('WorkoutID', ids).order('StartTime', { ascending: false }).limit(1000)
+        : Promise.resolve({ data: [] as { WorkoutID: number; ActualMinutes: number }[] }),
     ])
+    // average actual time per workout: the last 5 reported times over 10 min, shown once there are 3
+    const avgMap: Record<number, number> = {}
+    {
+      const byWorkout: Record<number, number[]> = {}
+      for (const t of timesData || []) {
+        const arr = (byWorkout[t.WorkoutID] ??= [])
+        if (arr.length < 5) arr.push(Number(t.ActualMinutes))
+      }
+      for (const [wid, arr] of Object.entries(byWorkout)) {
+        if (arr.length >= 3) avgMap[Number(wid)] = Math.round(arr.reduce((a, b) => a + b, 0) / arr.length)
+      }
+    }
     if (seq !== fetchSeq.current) return
     const noteMap: Record<number, string> = Object.fromEntries(
       (notesData || []).map((n) => [n.WorkoutID, ((n.Notes || n.CoachNote || '') as string).trim()])
@@ -258,6 +277,8 @@ export default function CalendarPage() {
         EstimatedTotalTime: getDisplayTime(item.WorkoutID),
         CoachNote: noteMap[item.WorkoutID] || '',
         free: workoutDetailsMap[item.WorkoutID]?.Category === FREE_SESSION_CATEGORY,
+        ActualMinutes: item.Completed && item.ActualMinutes ? item.ActualMinutes : null,
+        AvgMinutes: !item.Completed ? avgMap[item.WorkoutID] ?? null : null,
       }
     })
 
