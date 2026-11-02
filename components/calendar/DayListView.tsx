@@ -35,6 +35,8 @@ interface CalendarEvent {
   EstimatedTotalTime?: number | null
   CoachNote?: string
   free?: boolean
+  ActualMinutes?: number | null
+  AvgMinutes?: number | null
 }
 
 interface Props {
@@ -66,6 +68,40 @@ function estMinutes(e: { EstimatedTotalTime?: number | null }): number | null {
   const m = Math.round(v)
   return m > 0 && m <= 600 ? m : null
 }
+// Done with a reported time → that time; otherwise the estimate
+function shownMinutes(e: { completed: boolean; ActualMinutes?: number | null; EstimatedTotalTime?: number | null }): number | null {
+  if (e.completed && e.ActualMinutes && e.ActualMinutes > 0) return Math.round(e.ActualMinutes)
+  return estMinutes(e)
+}
+
+/** Time line of a workout card: actual time when done, else the estimate (+ the average when known). */
+function TimeInfo({ event }: { event: CalendarEvent }) {
+  const actual = event.completed && event.ActualMinutes && event.ActualMinutes > 0 ? Math.round(event.ActualMinutes) : null
+  const est = estMinutes(event)
+  if (actual == null && est == null && !event.AvgMinutes) return null
+  return (
+    <div className="flex flex-col gap-1 text-sm">
+      {actual != null ? (
+        <div className="inline-flex items-center gap-2 text-success font-semibold" title="זמן אימון בפועל">
+          <LuTimer aria-hidden className="w-4 h-4 shrink-0" />
+          <span>{fmtMinutes(actual)} <span className="font-normal text-muted">בפועל</span></span>
+        </div>
+      ) : est != null && (
+        <div className="inline-flex items-center gap-2 text-fg-2 font-semibold" title="הערכת זמן">
+          <LuTimer aria-hidden className="w-4 h-4 shrink-0 text-muted" />
+          <span>כ-{fmtMinutes(est)} <span className="font-normal text-muted">מוערך</span></span>
+        </div>
+      )}
+      {actual == null && event.AvgMinutes ? (
+        <div className="inline-flex items-center gap-2 text-fg-3" title="ממוצע של הפעמים האחרונות">
+          <span className="w-4 shrink-0" aria-hidden />
+          <span>ממוצע בפועל: {fmtMinutes(event.AvgMinutes)}</span>
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
 function fmtMinutes(m: number): string {
   const h = Math.floor(m / 60)
   const r = m % 60
@@ -93,12 +129,7 @@ function EventCardBody({ event, index }: { event: CalendarEvent; index: number }
       </div>
       <div className="space-y-3 pr-4">
         <h3 className="text-xl font-bold text-fg">{event.title}</h3>
-        {estMinutes(event) != null && (
-          <div className="inline-flex items-center gap-2 text-fg-2 text-sm font-semibold" title="הערכת זמן">
-            <LuTimer aria-hidden className="w-4 h-4 shrink-0 text-muted" />
-            <span>כ-{fmtMinutes(estMinutes(event) as number)}</span>
-          </div>
-        )}
+        <TimeInfo event={event} />
         <div className="flex gap-2 flex-wrap">
           {event.completed && (
             <span className="inline-flex items-center gap-2 px-4 py-2 bg-success/15 text-success rounded-lg text-sm font-bold">
@@ -356,8 +387,8 @@ export default function DayListView({
               <LuList aria-hidden className="w-4 h-4 shrink-0" />
               <span>{sortedEvents.length} אימונים</span>
             </span>
-            {sortedEvents.some(e => estMinutes(e) != null) && (() => {
-              const totalMinutes = sortedEvents.reduce((sum, e) => sum + (estMinutes(e) ?? 0), 0)
+            {sortedEvents.some(e => shownMinutes(e) != null) && (() => {
+              const totalMinutes = sortedEvents.reduce((sum, e) => sum + (shownMinutes(e) ?? 0), 0)
               const label = `כ-${fmtMinutes(totalMinutes)}`
               return (
                 <span className="inline-flex items-center gap-2 px-4 py-2 bg-info/10 text-info rounded-full text-sm font-medium">
@@ -439,12 +470,7 @@ export default function DayListView({
                   </div>
                   <div className="space-y-3 pr-4">
                     <h3 className="text-xl font-bold text-fg">{event.title}</h3>
-                    {estMinutes(event) != null && (
-                      <div className="inline-flex items-center gap-2 text-fg-2 text-sm font-semibold" title="הערכת זמן">
-                        <LuTimer aria-hidden className="w-4 h-4 shrink-0 text-muted" />
-                        <span>כ-{fmtMinutes(estMinutes(event) as number)}</span>
-                      </div>
-                    )}
+                    <TimeInfo event={event} />
                     <div className="flex gap-2 flex-wrap">
                       {event.completed && (
                         <span className="inline-flex items-center gap-2 px-4 py-2 bg-success/15 text-success rounded-lg text-sm font-bold">
