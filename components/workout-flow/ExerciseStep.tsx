@@ -5,8 +5,8 @@
 // (RepsDone / DurationSec / WeightKG / RPE / Notes, and the *Left fields for single-hand).
 // Set 1 lives in those fields, sets 2+ in MoreSets (see lib/exercise-log-writes.ts).
 
-import { useState } from 'react'
-import { LuCopy, LuImage, LuPlay, LuPlus, LuTimer, LuTrash2, LuTrophy } from 'react-icons/lu'
+import { useEffect, useRef, useState } from 'react'
+import { LuCheck, LuCopy, LuImage, LuPlay, LuPlus, LuTimer, LuTrash2, LuTrophy } from 'react-icons/lu'
 import NumberStepper from './NumberStepper'
 import Hint from './Hint'
 import { SET_KEYS, allSets, setHasValues, type SetVals } from '@/lib/exercise-log-writes'
@@ -101,7 +101,10 @@ export default function ExerciseStep({ exercise: ex, position, last, bests, onCh
   const sets = allSets(ex)
   const planned = Math.max(1, Number(ex.Sets) || 1)
   const setCount = Math.max(planned, sets.length)
-  const cur: any = setIdx === 0 ? ex : { ...ex, ...(sets[setIdx] ?? {}) }   // the exercise as seen on this set
+  // the exercise as seen on this set: set 2+ shows only its own values (empty until entered),
+  // never set 1's numbers, so an untouched set looks untouched
+  const cur: any = setIdx === 0 ? ex
+    : { ...ex, ...Object.fromEntries(SET_KEYS.map(k => [k, sets[setIdx]?.[k] ?? null])) }
   // edits of set values go to the current set; notes and anything else stay on the exercise
   const onChange = (data: Record<string, any>) => {
     if (setIdx === 0) return onChangeExercise(data)
@@ -183,6 +186,64 @@ export default function ExerciseStep({ exercise: ex, position, last, bests, onCh
   })
 
   const rpeKey = 'RPE' + s
+  // What the greyed placeholder shows, and what "finish set" saves when a field was left empty:
+  // left hand → the right hand of this set; set 2+ → the previous set of today; else last time; else the plan
+  const prevSet: any = setIdx > 0 && setHasValues(sets[setIdx - 1]) ? sets[setIdx - 1] : null
+  const suggest = (k: 'prim' | 'w'): number | null => {
+    const key = k === 'prim' ? primKey : 'WeightKG' + s
+    const rightKey = key.replace(/Left$/, '')
+    if (s && n(cur[rightKey]) != null) return n(cur[rightKey])
+    if (prevSet && n(prevSet[key]) != null) return n(prevSet[key])
+    if (n(lastSet?.[key]) != null) return n(lastSet[key])
+    return k === 'prim' ? target : null
+  }
+  const primSuggest = suggest('prim'), wSuggest = suggest('w')
+
+  // ── finish set: confirm what's on screen (typed, or the suggestion), start the rest, move on ──
+  const multi = setCount > 1 || single
+  const [flash, setFlash] = useState<string | null>(null)
+  const rootRef = useRef<HTMLDivElement>(null)
+  // after a set, bring the set chips and the "saved" note into view (the button is lower down)
+  const toTop = () => {
+    const box = rootRef.current?.closest('[class*="overflow-y-auto"]') as HTMLElement | null
+    box?.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+  const sideDone = !!sideSummary(cur, !!s, ex.isDuration)
+  const isLastSet = setIdx === setCount - 1
+  const finishSet = () => {
+    const data: Record<string, any> = {}
+    if (n(cur[primKey]) == null) {
+      if (primSuggest == null) {
+        document.getElementById(`ex-${position.n}-${ex.ExerciseID}-${primKey}${setKey}`)?.focus()
+        setFlash(ex.isDuration ? 'מה היה הזמן?' : 'כמה חזרות?')
+        return
+      }
+      data[primKey] = primSuggest
+    }
+    if (n(cur['WeightKG' + s]) == null && wSuggest != null) data['WeightKG' + s] = wSuggest
+    if (Object.keys(data).length) onChange(data)
+    const label = `סט ${setIdx + 1}${single ? (s ? ' שמאל' : ' ימין') : ''} נשמר ✓`
+    if (single && !s) {
+      setSide('L')
+      setFlash(`${label} · עכשיו שמאל`)
+      toTop()
+      return
+    }
+    if (rest && onRest && !isLastSet) onRest(rest)
+    if (!isLastSet) {
+      setSetIdx(setIdx + 1)
+      if (single) setSide('R')
+      setFlash(`${label} · עכשיו סט ${setIdx + 2}`)
+      toTop()
+    } else {
+      setFlash(setCount > 1 ? 'כל הסטים נשמרו ✓ · אפשר לעבור לתרגיל הבא' : `${label}`)
+    }
+  }
+  useEffect(() => {
+    if (!flash) return
+    const t = setTimeout(() => setFlash(null), 2600)
+    return () => clearTimeout(t)
+  }, [flash])
   const pr = isPR(n(cur[primKey]), n(cur['WeightKG' + s]), s ? bests?.L : bests?.R)
   const rest = n(ex.Rest)
   const restLabel = rest ? (rest >= 60 ? `${Math.floor(rest / 60)}:${String(rest % 60).padStart(2, '0')}` : `${rest} שנ׳`) : ''
@@ -190,7 +251,7 @@ export default function ExerciseStep({ exercise: ex, position, last, bests, onCh
   const leftDone = !!sideSummary(cur, true, ex.isDuration)
 
   return (
-    <div className="px-4 pt-4 pb-6 flex flex-col gap-4">
+    <div ref={rootRef} className="px-4 pt-4 pb-6 flex flex-col gap-4">
       <div className="flex flex-col gap-2">
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-[13px] font-bold text-accent bg-accent/15 px-2.5 py-0.5 rounded-full">בלוק {ex.Block || 1}</span>
@@ -281,12 +342,18 @@ export default function ExerciseStep({ exercise: ex, position, last, bests, onCh
               </button>
             )}
           </div>
-          <Hint id="sets">ממלאים כל סט בנפרד. ״כמו סט קודם״ מעתיק את הערכים, ואז משנים רק מה שהיה שונה.</Hint>
+          <Hint id="sets">בסוף כל סט לוחצים ״סיום סט״ למטה: מה שמופיע אפור נשמר כמו שהוא, ועוברים לסט הבא. משנים רק מה שהיה שונה.</Hint>
         </div>
       ) : (
         <button type="button" onClick={addSet} className="self-start -mb-1 h-9 px-1 text-accent text-sm font-bold flex items-center gap-1">
           <LuPlus aria-hidden className="w-4 h-4" />פירוט לפי סטים
         </button>
+      )}
+
+      {flash && (
+        <p role="status" className="self-stretch text-center rounded-xl bg-success/15 border border-success/40 text-success font-bold py-2 px-3 animate-[pulse_0.6s_ease-in-out_1]">
+          {flash}
+        </p>
       )}
 
       {single && (
@@ -319,7 +386,7 @@ export default function ExerciseStep({ exercise: ex, position, last, bests, onCh
         label={ex.isDuration ? 'זמן' : 'חזרות'}
         unit={ex.isDuration ? (inMinutes ? 'דקות' : 'שניות') : undefined}
         value={inMinutes ? toMin(n(cur[primKey])) : n(cur[primKey])}
-        placeholder={inMinutes ? toMin(n(lastSet?.[primKey]) ?? target) : n(lastSet?.[primKey]) ?? target}
+        placeholder={inMinutes ? toMin(primSuggest) : primSuggest}
         step={inMinutes ? 1 : ex.isDuration ? 5 : 1}
         onChange={v => onChange({ [primKey]: inMinutes && v != null ? Math.round(v * 60) : v })}
       />
@@ -329,7 +396,7 @@ export default function ExerciseStep({ exercise: ex, position, last, bests, onCh
         label="משקל"
         unit="ק״ג"
         value={n(cur['WeightKG' + s])}
-        placeholder={n(lastSet?.['WeightKG' + s])}
+        placeholder={wSuggest}
         step={2.5}
         min={-100}
         negative={{ label: '± עזרה', hint: 'משקל שלילי = עזרה (גומייה, משקל נגדי, רגל על כיסא)' }}
@@ -358,6 +425,20 @@ export default function ExerciseStep({ exercise: ex, position, last, bests, onCh
           })}
         </div>
       </div>
+
+      {multi && (
+        <div className="flex flex-col gap-2">
+          <button
+            type="button"
+            onClick={finishSet}
+            className={`h-14 rounded-2xl text-[17px] font-extrabold flex items-center justify-center gap-2 ${sideDone ? 'bg-success/15 text-success border border-success/50' : 'bg-success text-on-accent'}`}
+          >
+            <LuCheck aria-hidden className="w-5 h-5" />
+            {sideDone ? `סט ${setIdx + 1}${single ? (s ? ' שמאל' : ' ימין') : ''} נשמר · ${single && !s ? 'לשמאל' : isLastSet ? 'סיום' : `לסט ${setIdx + 2}`}`
+              : `סיום סט ${setIdx + 1}${single ? (s ? ' שמאל' : ' ימין') : ''}${rest && !isLastSet && !(single && !s) ? ' · מנוחה' : ''}`}
+          </button>
+        </div>
+      )}
 
       <div className="flex gap-2 flex-wrap">
         {rest && onRest ? (
