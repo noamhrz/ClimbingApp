@@ -186,6 +186,29 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
   // and the best ever per exercise and side for "new record". Computed here, nothing stored.
   const [bestsByExercise, setBestsByExercise] = useState<Record<number, Bests>>({})
   const exerciseIdsKey = exercises.map(e => `${e.ExerciseID}:${e.isDuration ? 1 : 0}`).join(',')
+
+  // Alternative exercise of each exercise on screen (pairs, Exercises.AltExerciseID)
+  type AltInfo = { ExerciseID: number; Name: string; Description: string | null; IsSingleHand: boolean; isDuration: boolean; ImageURL: string | null; VideoURL: string | null }
+  const [altMap, setAltMap] = useState<Record<number, AltInfo>>({})
+  useEffect(() => {
+    const ids = [...new Set(exerciseIdsKey.split(',').filter(Boolean).map(p => Number(p.split(':')[0])))]
+    if (!ids.length) return
+    let cancelled = false
+    ;(async () => {
+      const { data: rows } = await supabase.from('Exercises').select('ExerciseID, AltExerciseID').in('ExerciseID', ids)
+      const pairs = (rows ?? []).filter(r => r.AltExerciseID)
+      if (!pairs.length) { if (!cancelled) setAltMap({}); return }
+      const { data: alts } = await supabase.from('Exercises')
+        .select('ExerciseID, Name, Description, IsSingleHand, isDuration, ImageURL, VideoURL')
+        .in('ExerciseID', pairs.map(r => r.AltExerciseID))
+      if (cancelled) return
+      const byId = new Map((alts ?? []).map(a => [a.ExerciseID, a as AltInfo]))
+      const m: Record<number, AltInfo> = {}
+      for (const r of pairs) { const a = byId.get(r.AltExerciseID); if (a) m[r.ExerciseID] = a }
+      setAltMap(m)
+    })()
+    return () => { cancelled = true }
+  }, [exerciseIdsKey])
   useEffect(() => {
     if (!email || !exerciseIdsKey) return
     let cancelled = false
@@ -638,6 +661,24 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
     setPendingSlot({ k: at, set: 0 })
   }
 
+  // ⇄ swap exercise k for its alternative today: same place and plan, empty values; the sets are
+  // saved under the exercise actually done, so its own history and PRs stay right
+  const swapToAlt = (k: number) => {
+    const alt = altMap[exerciseForms[k]?.ExerciseID]
+    if (!alt) return
+    const swap = (f: any) => {
+      const next: any = {
+        ...f, ExerciseID: alt.ExerciseID, Name: alt.Name, Description: alt.Description,
+        IsSingleHand: alt.IsSingleHand, isDuration: alt.isDuration, ImageURL: alt.ImageURL, VideoURL: alt.VideoURL,
+        MoreSets: [], Notes: '', NotesLeft: '',
+      }
+      for (const key of SET_KEYS) next[key] = null
+      return next
+    }
+    setExerciseForms(prev => withOccurrence(prev.map((f, i) => (i === k ? swap(f) : f))))
+    setExercises(prev => withOccurrence(prev.map((f, i) => (i === k ? swap(f) : f))))
+  }
+
   const handleExerciseChange = (i: number, data: any) => {
     setExerciseForms((prev) => {
       const next = [...prev]
@@ -984,6 +1025,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
             context={sl.ctx}
             earlier={earlierFor(ex, sl.set)}
             onSkip={() => skipExercise(k)}
+            alt={altMap[ex.ExerciseID] ? { name: altMap[ex.ExerciseID].Name, onSwap: () => swapToAlt(k) } : undefined}
           />
           {isFree && <div className="px-4 pb-6">{addExerciseButton}</div>}
         </>
