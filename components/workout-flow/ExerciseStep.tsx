@@ -30,6 +30,19 @@ interface Props {
   bests?: Bests
   onChange: (data: Record<string, any>) => void
   onRest?: (seconds: number) => void
+  /**
+   * Set-by-set flow: the workout flow shows one set per screen and owns which set it is.
+   * The flow's main button calls the function given to `register` ("finish set"):
+   * 'next' = saved, move on · 'stay' = saved the right hand, now the left on this screen ·
+   * 'blocked' = nothing to save yet.
+   */
+  setIndex?: number
+  onGoSet?: (i: number) => void
+  register?: (finish: () => 'next' | 'stay' | 'blocked') => void
+  /** e.g. "סופר־סט · סבב 2 מתוך 3" */
+  context?: string
+  /** the same exercise's values for this set from an earlier appearance in today's workout */
+  earlier?: Record<string, any> | null
 }
 
 /** Personal record: heavier than ever, or the same top weight with more reps/time; without weight, more reps/time. */
@@ -93,9 +106,12 @@ export function exerciseSummary(o: any): string | null {
   return sideSetsSummary(o, false, o.isDuration)
 }
 
-export default function ExerciseStep({ exercise: ex, position, last, bests, onChange: onChangeExercise, onRest }: Props) {
+export default function ExerciseStep({ exercise: ex, position, last, bests, onChange: onChangeExercise, onRest, setIndex, onGoSet, register, context, earlier }: Props) {
   const [side, setSide] = useState<'R' | 'L'>('R')
-  const [setIdx, setSetIdx] = useState(0)
+  const [ownSetIdx, setOwnSetIdx] = useState(0)
+  const controlled = setIndex != null
+  const setIdx = controlled ? setIndex : ownSetIdx
+  const setSetIdx = (i: number) => (controlled ? onGoSet?.(i) : setOwnSetIdx(i))
 
   // sets: as many as the plan says, or as were logged
   const sets = allSets(ex)
@@ -194,6 +210,7 @@ export default function ExerciseStep({ exercise: ex, position, last, bests, onCh
     const rightKey = key.replace(/Left$/, '')
     if (s && n(cur[rightKey]) != null) return n(cur[rightKey])
     if (prevSet && n(prevSet[key]) != null) return n(prevSet[key])
+    if (earlier && n(earlier[key]) != null) return n(earlier[key])
     if (n(lastSet?.[key]) != null) return n(lastSet[key])
     return k === 'prim' ? target : null
   }
@@ -210,13 +227,13 @@ export default function ExerciseStep({ exercise: ex, position, last, bests, onCh
   }
   const sideDone = !!sideSummary(cur, !!s, ex.isDuration)
   const isLastSet = setIdx === setCount - 1
-  const finishSet = () => {
+  const finishSet = (): 'next' | 'stay' | 'blocked' => {
     const data: Record<string, any> = {}
     if (n(cur[primKey]) == null) {
       if (primSuggest == null) {
         document.getElementById(`ex-${position.n}-${ex.ExerciseID}-${primKey}${setKey}`)?.focus()
         setFlash(ex.isDuration ? 'מה היה הזמן?' : 'כמה חזרות?')
-        return
+        return 'blocked'
       }
       data[primKey] = primSuggest
     }
@@ -227,8 +244,9 @@ export default function ExerciseStep({ exercise: ex, position, last, bests, onCh
       setSide('L')
       setFlash(`${label} · עכשיו שמאל`)
       toTop()
-      return
+      return 'stay'
     }
+    if (controlled) { if (single) setSide('R'); return 'next' }
     if (rest && onRest && !isLastSet) onRest(rest)
     if (!isLastSet) {
       setSetIdx(setIdx + 1)
@@ -238,7 +256,10 @@ export default function ExerciseStep({ exercise: ex, position, last, bests, onCh
     } else {
       setFlash(setCount > 1 ? 'כל הסטים נשמרו ✓ · אפשר לעבור לתרגיל הבא' : `${label}`)
     }
+    return 'next'
   }
+  // the flow keeps the latest finishSet (its closure sees the current values)
+  useEffect(() => { register?.(finishSet) })
   useEffect(() => {
     if (!flash) return
     const t = setTimeout(() => setFlash(null), 2600)
@@ -256,7 +277,9 @@ export default function ExerciseStep({ exercise: ex, position, last, bests, onCh
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-[13px] font-bold text-accent bg-accent/15 px-2.5 py-0.5 rounded-full">בלוק {ex.Block || 1}</span>
           {single && <span className="text-[13px] font-bold text-info bg-info/15 px-2.5 py-0.5 rounded-full">יד אחת</span>}
-          <span className="text-[13px] text-muted">תרגיל {position.n} מתוך {position.of}</span>
+          {context
+            ? <span className="text-[13px] font-bold text-free bg-free/15 px-2.5 py-0.5 rounded-full">{context}</span>
+            : <span className="text-[13px] text-muted">תרגיל {position.n} מתוך {position.of}</span>}
         </div>
         <h2 className="text-[28px] leading-tight font-extrabold text-balance">{ex.Name}</h2>
         {pr && (
@@ -426,7 +449,7 @@ export default function ExerciseStep({ exercise: ex, position, last, bests, onCh
         </div>
       </div>
 
-      {multi && (
+      {multi && !controlled && (
         <div className="flex flex-col gap-2">
           <button
             type="button"
