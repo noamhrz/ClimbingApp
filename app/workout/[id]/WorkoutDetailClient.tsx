@@ -1072,7 +1072,12 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
         title={workout.Name}
         steps={steps}
         index={stepIndex}
-        onIndexChange={i => { if (i === lastStep) setBackToSummary(false); setStep(i) }}
+        onIndexChange={i => {
+          // swiping forward from a set counts as doing it: the greyed suggestion is saved too
+          if (i > stepIndex && stepIndex >= firstEx && stepIndex < climbIndex) finishRef.current?.()
+          if (i === lastStep) setBackToSummary(false)
+          setStep(i)
+        }}
         stepLabel={stepLabel}
         primaryLabel={primaryLabel}
         onPrimary={() => {

@@ -407,6 +407,7 @@ export default function ExerciseStep({ exercise: ex, position, last, bests, onCh
         key={primKey + setKey + (inMinutes ? 'm' : '')}
         id={`ex-${position.n}-${ex.ExerciseID}-${primKey}${setKey}`}
         label={ex.isDuration ? 'זמן' : 'חזרות'}
+        suggestNote={controlled ? 'המספר באפור יישמר כך בסיום הסט' : undefined}
         unit={ex.isDuration ? (inMinutes ? 'דקות' : 'שניות') : undefined}
         value={inMinutes ? toMin(n(cur[primKey])) : n(cur[primKey])}
         placeholder={inMinutes ? toMin(primSuggest) : primSuggest}
@@ -417,6 +418,7 @@ export default function ExerciseStep({ exercise: ex, position, last, bests, onCh
         key={'WeightKG' + s + setKey}
         id={`ex-${position.n}-${ex.ExerciseID}-WeightKG${s}${setKey}`}
         label="משקל"
+        suggestNote={controlled ? 'המספר באפור יישמר כך בסיום הסט' : undefined}
         unit="ק״ג"
         value={n(cur['WeightKG' + s])}
         placeholder={wSuggest}
