@@ -224,6 +224,10 @@ export default function ExerciseStep({ exercise: ex, position, last, bests, onCh
   const multi = setCount > 1 || single
   const [flash, setFlash] = useState<string | null>(null)
   const rootRef = useRef<HTMLDivElement>(null)
+  // ⇄ swap to the alternative: the card turns like a door onto the other exercise
+  const shownId = useRef(ex.ExerciseID)
+  const [doorKey, setDoorKey] = useState(0)
+  if (shownId.current !== ex.ExerciseID) { shownId.current = ex.ExerciseID; setDoorKey(k => k + 1) }
   // after a set, bring the set chips and the "saved" note into view (the button is lower down)
   const toTop = () => {
     const box = rootRef.current?.closest('[class*="overflow-y-auto"]') as HTMLElement | null
@@ -276,7 +280,7 @@ export default function ExerciseStep({ exercise: ex, position, last, bests, onCh
   const leftDone = !!sideSummary(cur, true, ex.isDuration)
 
   return (
-    <div ref={rootRef} className="px-4 pt-4 pb-6 flex flex-col gap-4">
+    <div ref={rootRef} key={doorKey} className={`px-4 pt-4 pb-6 flex flex-col gap-4 ${doorKey ? 'door-swing' : ''}`}>
       <div className="flex flex-col gap-2">
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-[13px] font-bold text-accent bg-accent/15 px-2.5 py-0.5 rounded-full">בלוק {ex.Block || 1}</span>

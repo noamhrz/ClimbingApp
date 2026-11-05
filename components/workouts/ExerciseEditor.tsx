@@ -49,6 +49,7 @@ const spec = (e: Ex) => [
   `${e.Sets} סטים`,
   e.Exercise.isDuration ? fmtDur(e.Duration ?? DEFAULT_WORKOUT_EXERCISE.Duration) : `${e.Reps} חזרות`,
   e.Rest ? `מנוחה ${formatRestTime(e.Rest)}` : '',
+  e.AltExercise ? `⇄ ${e.AltExercise.Name}` : '',
 ].filter(Boolean)
 
 const blankRow = (exercise: Exercise): Ex => ({
@@ -199,6 +200,7 @@ export default function ExerciseEditor({ exercises, blocks, onChange }: Props) {
   const total = Math.ceil(calculateWorkoutExercisesTime(exercises) / 60)
   const tgt = model.length ? Math.min(target ?? model.length - 1, model.length - 1) : 0
   const editing = editId != null ? exercises.find(e => e.WorkoutExerciseID === editId) : undefined
+  const [altPick, setAltPick] = useState(false)
   const editBlock = editing ? locate(editing.WorkoutExerciseID)[0] : -1
 
   const mini = 'h-9 min-w-9 px-2 rounded-[10px] border border-line-strong bg-raised text-fg-2 grid place-items-center disabled:opacity-30'
@@ -308,7 +310,17 @@ export default function ExerciseEditor({ exercises, blocks, onChange }: Props) {
         </button>
       )}
 
-      {editing && createPortal(
+      {editing && altPick && createPortal(
+        <ExercisePicker
+          blockLabel={`חלופה ל־${editing.Exercise.Name}`}
+          filter={ex => !(ex as { is_dynamic?: boolean }).is_dynamic && ex.ExerciseID !== editing.ExerciseID}
+          onAdd={ex => { update(editing.WorkoutExerciseID, { AltExerciseID: ex.ExerciseID, AltExercise: ex }); setAltPick(false) }}
+          onClose={() => setAltPick(false)}
+        />,
+        document.body,
+      )}
+
+      {editing && !altPick && createPortal(
         <div className="fixed inset-0 z-[100] bg-black/55 flex items-end md:items-center justify-center" onClick={ev => { if (ev.target === ev.currentTarget) setEditId(null) }} onKeyDown={ev => { if (ev.key === 'Escape') setEditId(null) }}>
           <div role="dialog" data-flow aria-modal="true" aria-labelledby="ex-edit-title" className="w-full max-w-[520px] max-h-[92vh] overflow-y-auto overscroll-contain bg-raised border-t md:border border-line-strong rounded-t-[20px] md:rounded-[20px] px-4 pt-2.5 pb-[calc(16px+env(safe-area-inset-bottom))] flex flex-col gap-4 text-fg">
             <div className="w-10 h-1 rounded-full bg-line-strong mx-auto md:hidden" />
@@ -323,6 +335,21 @@ export default function ExerciseEditor({ exercises, blocks, onChange }: Props) {
               <NumberStepper id="ed-reps" label="חזרות" value={editing.Reps} step={1} min={1} onChange={v => update(editing.WorkoutExerciseID, { Reps: v ?? 0 })} />
             )}
             <NumberStepper id="ed-rest" label="מנוחה בין סטים" unit={`(שניות${editing.Rest >= 60 ? ` · ${formatRestTime(editing.Rest)}` : ''})`} value={editing.Rest} step={15} min={0} onChange={v => update(editing.WorkoutExerciseID, { Rest: v ?? 0 })} />
+            <div className="flex flex-col gap-1.5">
+              <span className="text-[15px] font-bold text-fg-2">⇄ תרגיל חלופי <span className="font-normal text-muted">(אופציונלי)</span></span>
+              {editing.AltExercise ? (
+                <div className="flex items-center gap-2">
+                  <span className="flex-1 min-w-0 h-11 px-3 rounded-xl border border-free/60 bg-free/10 text-free font-bold flex items-center truncate">{editing.AltExercise.Name}</span>
+                  <button type="button" onClick={() => setAltPick(true)} className="h-11 px-3 rounded-xl border border-line-strong bg-surface text-fg text-sm font-bold">שינוי</button>
+                  <button type="button" onClick={() => update(editing.WorkoutExerciseID, { AltExerciseID: null, AltExercise: null })} className="h-11 px-3 rounded-xl border border-line text-fg-3 text-sm font-bold">הסר</button>
+                </div>
+              ) : (
+                <button type="button" onClick={() => setAltPick(true)} className="h-11 rounded-xl border border-dashed border-line-strong text-fg-3 text-sm font-bold">
+                  + בחירת תרגיל שאפשר לעשות במקומו
+                </button>
+              )}
+              <p className="text-xs text-muted">באימון המתאמן יוכל להחליף לתרגיל הזה בלחיצה (למשל Back extension שתי רגליים ⇄ רגל אחת).</p>
+            </div>
             {model.length > 1 && (
               <div className="flex flex-col gap-1.5">
                 <span className="text-[15px] font-bold text-fg-2">בלוק</span>
