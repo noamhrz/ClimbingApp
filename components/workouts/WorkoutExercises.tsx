@@ -68,6 +68,7 @@ const WorkoutExercises = forwardRef<WorkoutExercisesHandle, Props>(function Work
               Block: e.Block,
               Duration: e.Duration,
               Superset: !!e.Superset,
+              AltExerciseID: e.AltExerciseID ?? null,
             }))
           )
 

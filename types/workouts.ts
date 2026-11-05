@@ -31,6 +31,8 @@ export interface WorkoutExercise {
   Block: number
   /** the exercise's block is done as a superset (same value on every exercise of the block) */
   Superset?: boolean
+  /** exercise the trainee may do instead of this one in this workout (⇄) */
+  AltExerciseID?: number | null
 }
 
 export interface Exercise {
@@ -51,6 +53,7 @@ export interface Exercise {
 // Extended type for form usage
 export interface WorkoutExerciseWithDetails extends WorkoutExercise {
   Exercise: Exercise
+  AltExercise?: Exercise | null
 }
 
 // Form data type for creating/editing workout

@@ -323,3 +323,12 @@ body {
 .animate-in {
   animation: fade-in 0.2s ease-out, zoom-in 0.2s ease-out;
 }
+
+/* Exercise swapped for its alternative (⇄): the card turns in like a door on its right hinge */
+@keyframes door-swing {
+  from { transform: perspective(900px) rotateY(-95deg); opacity: 0.2; }
+  60%  { transform: perspective(900px) rotateY(12deg); opacity: 1; }
+  to   { transform: perspective(900px) rotateY(0); opacity: 1; }
+}
+.door-swing { animation: door-swing 0.55s cubic-bezier(.2,.7,.3,1) both; transform-origin: right center; }
+@media (prefers-reduced-motion: reduce) { .door-swing { animation: none; } }
