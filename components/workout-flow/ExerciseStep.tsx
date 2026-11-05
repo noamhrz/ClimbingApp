@@ -6,7 +6,7 @@
 // Set 1 lives in those fields, sets 2+ in MoreSets (see lib/exercise-log-writes.ts).
 
 import { useEffect, useRef, useState } from 'react'
-import { LuCheck, LuX, LuCopy, LuImage, LuPlay, LuPlus, LuTimer, LuTrash2, LuTrophy } from 'react-icons/lu'
+import { LuArrowLeftRight, LuCheck, LuX, LuCopy, LuImage, LuPlay, LuPlus, LuTimer, LuTrash2, LuTrophy } from 'react-icons/lu'
 import NumberStepper from './NumberStepper'
 import Hint from './Hint'
 import { SET_KEYS, allSets, setHasValues, type SetVals } from '@/lib/exercise-log-writes'
@@ -45,6 +45,8 @@ interface Props {
   earlier?: Record<string, any> | null
   /** skip this exercise today (the flow moves on; it stays empty) */
   onSkip?: () => void
+  /** the alternative exercise (⇄): swaps it in for today */
+  alt?: { name: string; onSwap: () => void }
 }
 
 /** Personal record: heavier than ever, or the same top weight with more reps/time; without weight, more reps/time. */
@@ -108,7 +110,7 @@ export function exerciseSummary(o: any): string | null {
   return sideSetsSummary(o, false, o.isDuration)
 }
 
-export default function ExerciseStep({ exercise: ex, position, last, bests, onChange: onChangeExercise, onRest, setIndex, onGoSet, register, context, earlier, onSkip }: Props) {
+export default function ExerciseStep({ exercise: ex, position, last, bests, onChange: onChangeExercise, onRest, setIndex, onGoSet, register, context, earlier, onSkip, alt }: Props) {
   const [side, setSide] = useState<'R' | 'L'>('R')
   const [ownSetIdx, setOwnSetIdx] = useState(0)
   const controlled = setIndex != null
@@ -295,6 +297,15 @@ export default function ExerciseStep({ exercise: ex, position, last, bests, onCh
             </button>
           )}
         </div>
+        {alt && (
+          <button
+            type="button"
+            onClick={alt.onSwap}
+            className="self-start h-10 px-3 rounded-xl border border-free/60 bg-free/10 text-free text-sm font-bold inline-flex items-center gap-1.5"
+          >
+            <LuArrowLeftRight aria-hidden className="w-4 h-4" />{alt.name}
+          </button>
+        )}
         {pr && (
           <p role="status" className="self-start flex items-center gap-1.5 rounded-full bg-success/15 border border-success/50 text-success text-sm font-extrabold px-3 py-1 animate-[pulse_1.2s_ease-in-out_2]">
             <LuTrophy aria-hidden className="w-4 h-4" />שיא חדש{single ? (s ? ' ביד שמאל' : ' ביד ימין') : ''}!
