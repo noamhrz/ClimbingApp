@@ -144,6 +144,16 @@ export default function ExerciseEditor({ exercises, blocks, onChange }: Props) {
     showToast(`בלוק ${bi + 1} שוכפל`)
   }
 
+  // move a whole block up / down (with its exercises and superset setting)
+  const moveBlock = (bi: number, dir: -1 | 1) => {
+    const to = bi + dir
+    if (to < 0 || to >= model.length) return
+    const m = [...model]
+    ;[m[bi], m[to]] = [m[to], m[bi]]
+    commit(m)
+    showToast(`בלוק ${bi + 1} עבר למקום ${to + 1}`)
+  }
+
   const delBlock = (bi: number) => {
     const n = model[bi].length
     withUndo(`בלוק ${bi + 1} נמחק${n ? ` (${n} תרגילים)` : ''}`)
@@ -216,9 +226,9 @@ export default function ExerciseEditor({ exercises, blocks, onChange }: Props) {
           onDrop={ev => { ev.preventDefault(); const [b, i] = (dropAt ?? `${bi}:${items.length}`).split(':').map(Number); dropInto(b, i); endDrag() }}
           className={`rounded-2xl border bg-surface overflow-hidden ${isDesktop && bi === tgt ? 'border-accent/70 ring-2 ring-accent/30' : 'border-line'}`}
         >
-          <div className="flex items-center gap-2 px-3 py-2.5 border-b border-line">
-            <span className="text-[13px] font-extrabold text-accent bg-accent/15 rounded-full px-2.5 py-0.5">בלוק {bi + 1}</span>
-            <span className="flex-1 text-[15px] text-muted">{items.length} תרגילים</span>
+          <div className="flex flex-wrap items-center gap-2 px-3 py-2.5 border-b border-line">
+            <span className="text-[13px] font-extrabold text-accent bg-accent/15 rounded-full px-2.5 py-0.5 whitespace-nowrap">בלוק {bi + 1}</span>
+            <span className="flex-1 text-[15px] text-muted whitespace-nowrap">{items.length} תרגילים</span>
             {items.length > 1 && <button
               type="button"
               aria-pressed={isSuperset(items)}
@@ -228,8 +238,12 @@ export default function ExerciseEditor({ exercises, blocks, onChange }: Props) {
             >
               {isSuperset(items) ? '✓ סופר־סט' : 'סופר־סט'}
             </button>}
+            <div className="flex gap-1.5 ms-auto">
+            <button type="button" onClick={() => moveBlock(bi, -1)} disabled={bi === 0} aria-label={`הזז את בלוק ${bi + 1} למעלה`} title="הזז בלוק למעלה" className={mini}><LuChevronUp aria-hidden className="w-4 h-4" /></button>
+            <button type="button" onClick={() => moveBlock(bi, 1)} disabled={bi === model.length - 1} aria-label={`הזז את בלוק ${bi + 1} למטה`} title="הזז בלוק למטה" className={mini}><LuChevronDown aria-hidden className="w-4 h-4" /></button>
             <button type="button" onClick={() => dupBlock(bi)} aria-label={`שכפל בלוק ${bi + 1}`} className={mini}><LuCopy aria-hidden className="w-4 h-4" /></button>
             <button type="button" onClick={() => delBlock(bi)} aria-label={`מחק בלוק ${bi + 1}`} className={`${mini} text-danger`}><LuTrash2 aria-hidden className="w-[18px] h-[18px]" /></button>
+            </div>
           </div>
 
           {items.length === 0 && <p className={`px-3 py-3.5 text-sm text-faint ${dropAt === `${bi}:0` ? 'bg-accent/10' : ''}`}>{isDesktop ? 'אין תרגילים בבלוק. אפשר לגרור לכאן או להוסיף מהרשימה' : 'אין תרגילים בבלוק'}</p>}
