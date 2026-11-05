@@ -6,7 +6,7 @@
 // Set 1 lives in those fields, sets 2+ in MoreSets (see lib/exercise-log-writes.ts).
 
 import { useEffect, useRef, useState } from 'react'
-import { LuCheck, LuCopy, LuImage, LuPlay, LuPlus, LuTimer, LuTrash2, LuTrophy } from 'react-icons/lu'
+import { LuCheck, LuX, LuCopy, LuImage, LuPlay, LuPlus, LuTimer, LuTrash2, LuTrophy } from 'react-icons/lu'
 import NumberStepper from './NumberStepper'
 import Hint from './Hint'
 import { SET_KEYS, allSets, setHasValues, type SetVals } from '@/lib/exercise-log-writes'
@@ -43,6 +43,8 @@ interface Props {
   context?: string
   /** the same exercise's values for this set from an earlier appearance in today's workout */
   earlier?: Record<string, any> | null
+  /** skip this exercise today (the flow moves on; it stays empty) */
+  onSkip?: () => void
 }
 
 /** Personal record: heavier than ever, or the same top weight with more reps/time; without weight, more reps/time. */
@@ -106,7 +108,7 @@ export function exerciseSummary(o: any): string | null {
   return sideSetsSummary(o, false, o.isDuration)
 }
 
-export default function ExerciseStep({ exercise: ex, position, last, bests, onChange: onChangeExercise, onRest, setIndex, onGoSet, register, context, earlier }: Props) {
+export default function ExerciseStep({ exercise: ex, position, last, bests, onChange: onChangeExercise, onRest, setIndex, onGoSet, register, context, earlier, onSkip }: Props) {
   const [side, setSide] = useState<'R' | 'L'>('R')
   const [ownSetIdx, setOwnSetIdx] = useState(0)
   const controlled = setIndex != null
@@ -281,7 +283,18 @@ export default function ExerciseStep({ exercise: ex, position, last, bests, onCh
             ? <span className="text-[13px] font-bold text-free bg-free/15 px-2.5 py-0.5 rounded-full">{context}</span>
             : <span className="text-[13px] text-muted">תרגיל {position.n} מתוך {position.of}</span>}
         </div>
-        <h2 className="text-[28px] leading-tight font-extrabold text-balance">{ex.Name}</h2>
+        <div className="flex items-start justify-between gap-3">
+          <h2 className="text-[28px] leading-tight font-extrabold text-balance min-w-0">{ex.Name}</h2>
+          {onSkip && (
+            <button
+              type="button"
+              onClick={onSkip}
+              className="shrink-0 mt-1 h-10 px-3 rounded-xl border border-line-strong bg-raised text-fg-3 text-sm font-bold inline-flex items-center gap-1"
+            >
+              <LuX aria-hidden className="w-4 h-4" />דילוג
+            </button>
+          )}
+        </div>
         {pr && (
           <p role="status" className="self-start flex items-center gap-1.5 rounded-full bg-success/15 border border-success/50 text-success text-sm font-extrabold px-3 py-1 animate-[pulse_1.2s_ease-in-out_2]">
             <LuTrophy aria-hidden className="w-4 h-4" />שיא חדש{single ? (s ? ' ביד שמאל' : ' ביד ימין') : ''}!
