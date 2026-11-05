@@ -14,6 +14,8 @@ export interface Exercise {
   is_dynamic: boolean
   dynamic_exercise_id?: number | null
   RoadmapCategoryID?: number | null
+  /** the exercise done instead of this one when needed (pairs: each points at the other) */
+  AltExerciseID?: number | null
   CreatedBy?: string
   CreatedAt?: string
   UpdatedAt?: string
@@ -29,6 +31,7 @@ export interface ExerciseFormData {
   isDuration: boolean
   is_dynamic: boolean
   RoadmapCategoryID?: number | null
+  AltExerciseID?: number | null
 }
 
 export interface ExerciseLog {

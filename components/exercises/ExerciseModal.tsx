@@ -14,9 +14,11 @@ interface Props {
   onSave: (data: ExerciseFormData) => void
   onClose: () => void
   isDuplicate?: boolean
+  /** exercises that can be chosen as the alternative */
+  allExercises?: { ExerciseID: number; Name: string; Category?: string | null; is_dynamic?: boolean }[]
 }
 
-export default function ExerciseModal({ exercise, onSave, onClose, isDuplicate = false }: Props) {
+export default function ExerciseModal({ exercise, onSave, onClose, isDuplicate = false, allExercises = [] }: Props) {
   const [categories, setCategories] = useState<string[]>([])
   const [roadmapCategories, setRoadmapCategories] = useState<RoadmapCategory[]>([])
   const STORAGE_KEY = 'exercise-modal-draft'
@@ -98,6 +100,7 @@ export default function ExerciseModal({ exercise, onSave, onClose, isDuplicate =
         isDuration: exercise.isDuration || false,
         is_dynamic: exercise.is_dynamic || false,
         RoadmapCategoryID: exercise.RoadmapCategoryID ?? null,
+        AltExerciseID: isDuplicate ? null : exercise.AltExerciseID ?? null,
       })
     }
   }, [exercise, isDuplicate])
@@ -391,6 +394,28 @@ export default function ExerciseModal({ exercise, onSave, onClose, isDuplicate =
               </div>
             </label>
           </div>
+
+          {/* Alternative exercise (pairs: choosing B here also makes this one B's alternative) */}
+          {!formData.is_dynamic && (
+            <div className="bg-free/10 border border-free/50 rounded-lg p-4 flex flex-col gap-2">
+              <label htmlFor="alt-exercise" className="text-sm font-medium text-fg">⇄ תרגיל חלופי</label>
+              <select
+                id="alt-exercise"
+                value={formData.AltExerciseID ?? ''}
+                onChange={(e) => setFormData({ ...formData, AltExerciseID: e.target.value ? Number(e.target.value) : null })}
+                className="w-full px-3 py-2.5 border border-line-strong rounded-lg bg-raised text-fg"
+              >
+                <option value="">אין</option>
+                {allExercises
+                  .filter(x => !x.is_dynamic && x.ExerciseID !== exercise?.ExerciseID)
+                  .sort((a, b) => a.Name.localeCompare(b.Name, 'he'))
+                  .map(x => <option key={x.ExerciseID} value={x.ExerciseID}>{x.Name}{x.Category ? ` · ${x.Category}` : ''}</option>)}
+              </select>
+              <p className="text-xs text-fg-3">
+                באימון יופיע כפתור להחלפה לתרגיל הזה (למשל Back extension שתי רגליים ⇄ רגל אחת). הקישור הוא בשני הכיוונים.
+              </p>
+            </div>
+          )}
 
           {/* Form Actions */}
           <div className="flex gap-3 pt-4 border-t">
