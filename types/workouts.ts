@@ -29,6 +29,8 @@ export interface WorkoutExercise {
   Rest: number
   Order: number
   Block: number
+  /** the exercise's block is done as a superset (same value on every exercise of the block) */
+  Superset?: boolean
 }
 
 export interface Exercise {

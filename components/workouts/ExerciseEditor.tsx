@@ -30,9 +30,16 @@ const newId = () => --tmpId
 const toModel = (exs: Ex[], blocks: number[]): Model =>
   blocks.map(b => exs.filter(e => e.Block === b).sort((a, c) => a.Order - c.Order))
 
+// A block is a superset when most of its exercises say so (an exercise moved in takes the
+// block's value); every exercise of the block then carries the same flag.
+const isSuperset = (items: Ex[]) => items.filter(e => e.Superset).length * 2 > items.length
+
 // Renumber blocks 1..n and orders 1..k
 function fromModel(m: Model): [Ex[], number[]] {
-  const exs = m.flatMap((items, bi) => items.map((e, i) => ({ ...e, Block: bi + 1, Order: i + 1 })))
+  const exs = m.flatMap((items, bi) => {
+    const sup = isSuperset(items)
+    return items.map((e, i) => ({ ...e, Block: bi + 1, Order: i + 1, Superset: sup }))
+  })
   const empty = m.map((items, bi) => (items.length ? 0 : bi + 1)).filter(Boolean)
   return [exs, empty]
 }
@@ -212,6 +219,15 @@ export default function ExerciseEditor({ exercises, blocks, onChange }: Props) {
           <div className="flex items-center gap-2 px-3 py-2.5 border-b border-line">
             <span className="text-[13px] font-extrabold text-accent bg-accent/15 rounded-full px-2.5 py-0.5">בלוק {bi + 1}</span>
             <span className="flex-1 text-[15px] text-muted">{items.length} תרגילים</span>
+            {items.length > 1 && <button
+              type="button"
+              aria-pressed={isSuperset(items)}
+              onClick={() => commit(model.map((b, x) => (x === bi ? b.map(e => ({ ...e, Superset: !isSuperset(items) })) : b)))}
+              title="סופר־סט: עושים סט מכל תרגיל ברצף, ומנוחה רק בסוף הסבב"
+              className={`h-9 px-3 rounded-full border text-[13px] font-bold whitespace-nowrap ${isSuperset(items) ? 'border-free text-free bg-free/15' : 'border-line-strong text-fg-3'}`}
+            >
+              {isSuperset(items) ? '✓ סופר־סט' : 'סופר־סט'}
+            </button>}
             <button type="button" onClick={() => dupBlock(bi)} aria-label={`שכפל בלוק ${bi + 1}`} className={mini}><LuCopy aria-hidden className="w-4 h-4" /></button>
             <button type="button" onClick={() => delBlock(bi)} aria-label={`מחק בלוק ${bi + 1}`} className={`${mini} text-danger`}><LuTrash2 aria-hidden className="w-[18px] h-[18px]" /></button>
           </div>
