@@ -6,7 +6,7 @@ import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/context/AuthContext'
 import { supabase } from '@/lib/supabaseClient'
-import { compressVideo, type CompressHandle } from '@/lib/compress-video'
+import { compressVideo, isVideoFile, type CompressHandle } from '@/lib/compress-video'
 import MediaComments from '@/components/media/MediaComments'
 import { LuChartColumn, LuFileText, LuFolder, LuFolderOpen, LuRefreshCw, LuTrash2, LuTriangleAlert, LuVideo } from 'react-icons/lu'
 
@@ -458,7 +458,7 @@ function MediaContent() {
     const allFiles = Array.from(fileList)
 
     // size limit: big videos are fine when this browser can shrink them before upload
-    const tooBig = allFiles.find(f => f.size > (canCompress && f.type.startsWith('video/') ? MAX_INPUT_SIZE : MAX_FILE_SIZE))
+    const tooBig = allFiles.find(f => f.size > (canCompress && isVideoFile(f) ? MAX_INPUT_SIZE : MAX_FILE_SIZE))
     if (tooBig) {
       setUploadError(
         `שגיאה: הקובץ גדול מדי (מעל 300MB). כדי להעלות בהצלחה: גזרו את הקצוות המיותרים בגלריה, או השתמשו בטיפ הכיווץ דרך הוואטסאפ.`
@@ -486,10 +486,14 @@ function MediaContent() {
           setUploadPhase('compress')
           const job = compressVideo(file, pct => setUploadProgress(pct))
           compressRef.current = job
-          const small = await job.promise
+          const res = await job.promise
           compressRef.current = null
-          if (small) file = small
-          if (file.size > MAX_FILE_SIZE) throw new Error('הקובץ גדול מדי (מעל 300MB) גם אחרי כיווץ. גזרו את הקצוות המיותרים בגלריה ונסו שוב.')
+          if (res.file) file = res.file
+          if (file.size > MAX_FILE_SIZE) {
+            throw new Error(res.file
+              ? 'הקובץ גדול מדי (מעל 300MB) גם אחרי כיווץ. גזרו את הקצוות המיותרים בגלריה ונסו שוב.'
+              : `לא הצלחנו לכווץ את הסרטון (${res.reason ?? 'סיבה לא ידועה'}), והוא גדול מ־300MB. גזרו את הקצוות בגלריה, או שלחו לעצמכם בוואטסאפ ושמרו חזרה.`)
+          }
           setUploadPhase('upload')
           setUploadProgress(0)
 
