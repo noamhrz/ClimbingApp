@@ -227,7 +227,14 @@ export default function ExerciseStep({ exercise: ex, position, last, bests, onCh
   // ⇄ swap to the alternative: the card turns like a door onto the other exercise
   const shownId = useRef(ex.ExerciseID)
   const [doorKey, setDoorKey] = useState(0)
-  if (shownId.current !== ex.ExerciseID) { shownId.current = ex.ExerciseID; setDoorKey(k => k + 1) }
+  const [doorOut, setDoorOut] = useState(false)
+  if (shownId.current !== ex.ExerciseID) { shownId.current = ex.ExerciseID; setDoorKey(k => k + 1); setDoorOut(false) }
+  // the door closes on this exercise first, then opens on the other one
+  const swapDoor = () => {
+    if (!alt) return
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return alt.onSwap()
+    setDoorOut(true)
+  }
   // after a set, bring the set chips and the "saved" note into view (the button is lower down)
   const toTop = () => {
     const box = rootRef.current?.closest('[class*="overflow-y-auto"]') as HTMLElement | null
@@ -280,7 +287,13 @@ export default function ExerciseStep({ exercise: ex, position, last, bests, onCh
   const leftDone = !!sideSummary(cur, true, ex.isDuration)
 
   return (
-    <div ref={rootRef} key={doorKey} className={`px-4 pt-4 pb-6 flex flex-col gap-4 ${doorKey ? 'door-swing' : ''}`}>
+    <div className="door-frame">
+    <div
+      ref={rootRef}
+      key={doorKey}
+      onAnimationEnd={e => { if (doorOut && e.animationName === 'door-close') alt?.onSwap() }}
+      className={`px-4 pt-4 pb-6 flex flex-col gap-4 ${doorOut ? 'door-close' : doorKey ? 'door-open' : ''}`}
+    >
       <div className="flex flex-col gap-2">
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-[13px] font-bold text-accent bg-accent/15 px-2.5 py-0.5 rounded-full">בלוק {ex.Block || 1}</span>
@@ -309,7 +322,8 @@ export default function ExerciseStep({ exercise: ex, position, last, bests, onCh
         {alt && (
           <button
             type="button"
-            onClick={alt.onSwap}
+            onClick={swapDoor}
+            disabled={doorOut}
             className="self-stretch min-h-11 px-3 py-2 rounded-xl border border-dashed border-free/70 bg-free/10 text-free text-sm font-bold inline-flex items-center justify-center gap-2"
           >
             <LuArrowLeftRight aria-hidden className="w-4 h-4 shrink-0" />
@@ -535,6 +549,7 @@ export default function ExerciseStep({ exercise: ex, position, last, bests, onCh
       {position.n === 1 && position.of > 1 && (
         <Hint id="swipe">מחליקים ימינה לתרגיל הבא ושמאלה לקודם. אפשר גם ללחוץ על הפסים למעלה כדי לקפוץ לתרגיל.</Hint>
       )}
+    </div>
     </div>
   )
 }
