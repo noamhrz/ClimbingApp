@@ -86,11 +86,20 @@ export async function fetchWorkoutWithExercises(
 
   if (exercisesError) throw exercisesError
 
+  // alternative exercises (⇄), fetched separately so the embed above stays unambiguous
+  const altIds = [...new Set((workoutExercises || []).map(we => we.AltExerciseID).filter(Boolean))]
+  const altById = new Map<number, unknown>()
+  if (altIds.length) {
+    const { data: alts } = await supabase.from('Exercises').select('*').in('ExerciseID', altIds)
+    for (const a of alts || []) altById.set(a.ExerciseID, a)
+  }
+
   return {
     ...workout,
     exercises: (workoutExercises || []).map((we) => ({
       ...we,
       Exercise: we.Exercises,
+      AltExercise: we.AltExerciseID ? (altById.get(we.AltExerciseID) ?? null) : null,
     })),
   }
 }

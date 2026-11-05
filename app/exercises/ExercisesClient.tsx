@@ -6,7 +6,6 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
-import { linkAltPair } from '@/lib/exercise-alt'
 import { useAuth, useActiveUserEmail } from '@/context/AuthContext'
 import { Exercise, ExerciseFormData } from '@/types/exercises'
 import ExerciseCard from '@/components/exercises/ExerciseCard'
@@ -155,7 +154,6 @@ export default function ExercisesClient() {
         .single()
 
       if (error) throw error
-      if (created && formData.AltExerciseID) await linkAltPair(created.ExerciseID, formData.AltExerciseID, null)
 
       setShowModal(false)
       setIsDuplicating(false)
@@ -185,8 +183,6 @@ export default function ExercisesClient() {
         .eq('ExerciseID', id)
 
       if (error) throw error
-      const before = exercises.find(e => e.ExerciseID === id)
-      await linkAltPair(id, formData.AltExerciseID, before?.AltExerciseID)
 
       await loadExercises()
       await loadCategories()
@@ -392,7 +388,6 @@ export default function ExercisesClient() {
         <ExerciseModal
           exercise={editingExercise}
           isDuplicate={isDuplicating}
-          allExercises={exercises}
           onSave={(formData) => {
             if (editingExercise && !isDuplicating) {
               handleUpdate(editingExercise.ExerciseID, formData)

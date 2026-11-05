@@ -187,28 +187,22 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
   const [bestsByExercise, setBestsByExercise] = useState<Record<number, Bests>>({})
   const exerciseIdsKey = exercises.map(e => `${e.ExerciseID}:${e.isDuration ? 1 : 0}`).join(',')
 
-  // Alternative exercise of each exercise on screen (pairs, Exercises.AltExerciseID)
+  // Alternative exercises (⇄) set in the workout editor (WorkoutsExercises.AltExerciseID): details by ID
   type AltInfo = { ExerciseID: number; Name: string; Description: string | null; IsSingleHand: boolean; isDuration: boolean; ImageURL: string | null; VideoURL: string | null }
-  const [altMap, setAltMap] = useState<Record<number, AltInfo>>({})
+  const [altInfo, setAltInfo] = useState<Record<number, AltInfo>>({})
+  const altIdsKey = [...new Set(exercises.map(e => e.AltExerciseID).filter(Boolean))].sort().join(',')
   useEffect(() => {
-    const ids = [...new Set(exerciseIdsKey.split(',').filter(Boolean).map(p => Number(p.split(':')[0])))]
+    const ids = altIdsKey.split(',').filter(Boolean).map(Number).filter(id => !altInfo[id])
     if (!ids.length) return
     let cancelled = false
-    ;(async () => {
-      const { data: rows } = await supabase.from('Exercises').select('ExerciseID, AltExerciseID').in('ExerciseID', ids)
-      const pairs = (rows ?? []).filter(r => r.AltExerciseID)
-      if (!pairs.length) { if (!cancelled) setAltMap({}); return }
-      const { data: alts } = await supabase.from('Exercises')
-        .select('ExerciseID, Name, Description, IsSingleHand, isDuration, ImageURL, VideoURL')
-        .in('ExerciseID', pairs.map(r => r.AltExerciseID))
-      if (cancelled) return
-      const byId = new Map((alts ?? []).map(a => [a.ExerciseID, a as AltInfo]))
-      const m: Record<number, AltInfo> = {}
-      for (const r of pairs) { const a = byId.get(r.AltExerciseID); if (a) m[r.ExerciseID] = a }
-      setAltMap(m)
-    })()
+    supabase.from('Exercises').select('ExerciseID, Name, Description, IsSingleHand, isDuration, ImageURL, VideoURL').in('ExerciseID', ids)
+      .then(({ data }) => {
+        if (cancelled || !data) return
+        setAltInfo(prev => ({ ...prev, ...Object.fromEntries(data.map(x => [x.ExerciseID, x as AltInfo])) }))
+      })
     return () => { cancelled = true }
-  }, [exerciseIdsKey])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [altIdsKey])
   useEffect(() => {
     if (!email || !exerciseIdsKey) return
     let cancelled = false
@@ -434,7 +428,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
             ? Promise.resolve({ data: freeExIds.map((ExerciseID, i) => ({ ExerciseID, Block: 1, Order: i + 1 })) as any[] })
             : supabase
               .from('WorkoutsExercises')
-              .select('ExerciseID, Block, Sets, Reps, Duration, Rest, Order, Superset')
+              .select('ExerciseID, Block, Sets, Reps, Duration, Rest, Order, Superset, AltExerciseID')
               .eq('WorkoutID', id)
               .order('Block')
               .order('Order'),
@@ -484,6 +478,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
                 RoadmapCategoryID: x.RoadmapCategoryID || null,
                 Block: rel.Block || 1,
                 Superset: !!rel.Superset,
+                AltExerciseID: rel.AltExerciseID ?? null,
                 Sets: rel.Sets || null,
                 Reps: rel.Reps || null,
                 Duration: rel.Duration || null,
@@ -664,12 +659,19 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
   // ⇄ swap exercise k for its alternative today: same place and plan, empty values; the sets are
   // saved under the exercise actually done, so its own history and PRs stay right
   const swapToAlt = (k: number) => {
-    const alt = altMap[exerciseForms[k]?.ExerciseID]
+    const f0 = exerciseForms[k]
+    const alt = f0?.AltExerciseID ? altInfo[f0.AltExerciseID] : undefined
     if (!alt) return
+    // remember the one being left, so ⇄ swaps back
+    setAltInfo(prev => ({ ...prev, [f0.ExerciseID]: {
+      ExerciseID: f0.ExerciseID, Name: f0.Name, Description: f0.Description ?? null, IsSingleHand: !!f0.IsSingleHand,
+      isDuration: !!f0.isDuration, ImageURL: f0.ImageURL ?? null, VideoURL: f0.VideoURL ?? null,
+    } }))
     const swap = (f: any) => {
       const next: any = {
         ...f, ExerciseID: alt.ExerciseID, Name: alt.Name, Description: alt.Description,
         IsSingleHand: alt.IsSingleHand, isDuration: alt.isDuration, ImageURL: alt.ImageURL, VideoURL: alt.VideoURL,
+        AltExerciseID: f.ExerciseID,
         MoreSets: [], Notes: '', NotesLeft: '',
       }
       for (const key of SET_KEYS) next[key] = null
@@ -1007,7 +1009,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
     const k = sl.k
     const isCurrent = firstEx + si === curIdx
     steps.push({
-      key: `ex-${ex.ExerciseID}-${k}-s${sl.set}`,
+      key: `ex-${k}-s${sl.set}`, // by position, so swapping to the alternative keeps the screen (and its door turn)
       label: sl.count > 1 ? `${ex.Name} · סט ${sl.set + 1}` : ex.Name,
       state: setHasValues(allSets(ex)[sl.set]) ? 'done' : 'todo',
       content: (
@@ -1025,7 +1027,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
             context={sl.ctx}
             earlier={earlierFor(ex, sl.set)}
             onSkip={() => skipExercise(k)}
-            alt={altMap[ex.ExerciseID] ? { name: altMap[ex.ExerciseID].Name, onSwap: () => swapToAlt(k) } : undefined}
+            alt={ex.AltExerciseID && altInfo[ex.AltExerciseID] ? { name: altInfo[ex.AltExerciseID].Name, onSwap: () => swapToAlt(k) } : undefined}
           />
           {isFree && <div className="px-4 pb-6">{addExerciseButton}</div>}
         </>
