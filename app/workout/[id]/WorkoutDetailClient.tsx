@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabaseClient'
-import { saveExerciseLogs, withOccurrence, SET_KEYS, type SetVals } from '@/lib/exercise-log-writes'
+import { saveExerciseLogs, withOccurrence, allSets, setHasValues, SET_KEYS, type SetVals } from '@/lib/exercise-log-writes'
 import { useAuth, useActiveUserEmail } from '@/context/AuthContext'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ClimbingRoute, BoulderGrade, LeadGrade, ClimbingLocation, BoardType } from '@/types/climbing'
@@ -174,6 +174,9 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
   // ── workout flow ──────────────────────────────────────────
   const [step, setStepRaw] = useState(0)
   const [lastExStep, setLastExStep] = useState<number | null>(null)
+  // set-by-set flow: the current screen's "finish set", and a screen to jump to once it exists
+  const finishRef = useRef<(() => 'next' | 'stay' | 'blocked') | null>(null)
+  const [pendingSlot, setPendingSlot] = useState<{ k: number; set: number } | null>(null)
   const [backToSummary, setBackToSummary] = useState(false) // editing one exercise from the summary
   const [lastByExercise, setLastByExercise] = useState<Record<string, LastValues>>({}) // key: ExerciseID:Occurrence
   const [defaultGrades, setDefaultGrades] = useState<Partial<Record<'Boulder' | 'Board' | 'Lead', number>>>({})
@@ -408,7 +411,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
             ? Promise.resolve({ data: freeExIds.map((ExerciseID, i) => ({ ExerciseID, Block: 1, Order: i + 1 })) as any[] })
             : supabase
               .from('WorkoutsExercises')
-              .select('ExerciseID, Block, Sets, Reps, Duration, Rest, Order')
+              .select('ExerciseID, Block, Sets, Reps, Duration, Rest, Order, Superset')
               .eq('WorkoutID', id)
               .order('Block')
               .order('Order'),
@@ -457,6 +460,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
                 is_dynamic: x.is_dynamic || false,
                 RoadmapCategoryID: x.RoadmapCategoryID || null,
                 Block: rel.Block || 1,
+                Superset: !!rel.Superset,
                 Sets: rel.Sets || null,
                 Reps: rel.Reps || null,
                 Duration: rel.Duration || null,
@@ -562,6 +566,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
                   is_dynamic: false,
                   RoadmapCategoryID: null,
                   Block: m.Block,
+                  Superset: m.Superset,
                   Sets: item.Sets || null,
                   Reps: item.Reps || null,
                   Duration: item.Duration || null,
@@ -630,7 +635,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
     setExerciseForms(prev => withOccurrence([...prev, ...entries]))
     setExercises(prev => withOccurrence([...prev, ...entries]))
     setBackToSummary(false)
-    setStep((hasIntro ? 1 : 0) + at)
+    setPendingSlot({ k: at, set: 0 })
   }
 
   const handleExerciseChange = (i: number, data: any) => {
@@ -828,11 +833,77 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
   const hasIntro = !isFree && !!(personalNote || workout.Description || workout.WorkoutNotes || workout.WhenToPractice || workout.VideoURL || isFutureWorkout || isPastWorkout || lastCount > 0)
   const flowExercises = containsExercises ? exerciseForms : []
   const firstEx = hasIntro ? 1 : 0
-  const climbIndex = firstEx + flowExercises.length
+
+  // One screen per set. A block marked superset goes in rounds (1·set1 → 2·set1 → 3·set1 →
+  // 1·set2 …, rest after each round); any other block: all sets of an exercise, then the next one.
+  type Slot = { k: number; set: number; count: number; ctx?: string; lastInRound: boolean }
+  const setsOf = (ex: any) => Math.max(Number(ex.Sets) || 1, allSets(ex).length)
+  const slots: Slot[] = []
+  for (let i = 0; i < flowExercises.length;) {
+    const b = flowExercises[i].Block ?? 1
+    const group: number[] = []
+    while (i < flowExercises.length && (flowExercises[i].Block ?? 1) === b) { if (!flowExercises[i].Skipped) group.push(i); i++ }
+    if (!group.length) continue
+    if (group.length > 1 && group.some(k => flowExercises[k].Superset)) {
+      const rounds = Math.max(...group.map(k => setsOf(flowExercises[k])))
+      for (let r = 0; r < rounds; r++) {
+        const inRound = group.filter(k => setsOf(flowExercises[k]) > r)
+        inRound.forEach((k, j) => slots.push({
+          k, set: r, count: setsOf(flowExercises[k]),
+          ctx: `סופר־סט · סבב ${r + 1} מתוך ${rounds}`, lastInRound: j === inRound.length - 1,
+        }))
+      }
+    } else {
+      for (const k of group) {
+        const c = setsOf(flowExercises[k])
+        for (let r = 0; r < c; r++) slots.push({ k, set: r, count: c, lastInRound: true })
+      }
+    }
+  }
+  const slotIndex = (k: number, set: number) => {
+    const i = slots.findIndex(sl => sl.k === k && sl.set === set)
+    return firstEx + (i >= 0 ? i : Math.max(0, slots.findIndex(sl => sl.k === k)))
+  }
+  const climbIndex = firstEx + slots.length
   const setStep = (i: number) => {
     setStepRaw(i)
     try { localStorage.setItem(stepKey, String(i)) } catch { /* storage unavailable */ }
-    if (i >= firstEx && i < firstEx + flowExercises.length) setLastExStep(i) // remember where I was in the exercises
+    if (i >= firstEx && i < climbIndex) setLastExStep(i) // remember where I was in the exercises
+  }
+  // a set added on screen (or a new free-session exercise) exists from this render on: go there
+  if (pendingSlot && slots.some(sl => sl.k === pendingSlot.k && sl.set === pendingSlot.set)) {
+    setPendingSlot(null)
+    setStep(slotIndex(pendingSlot.k, pendingSlot.set))
+  }
+  const totalSteps = firstEx + slots.length + (containsClimbing ? 1 : 0) + 1
+  const curIdx = Math.min(step, totalSteps - 1)
+  const stepIndex0 = curIdx
+  // ✕ on an exercise: clear it, mark it skipped (no screens, nothing saved) and move on
+  const skipExercise = (k: number) => {
+    const here = stepIndex0 - firstEx
+    const next = slots.find((sl, i) => i > here && sl.k !== k)
+    setExerciseForms(prev => prev.map((f, i) => {
+      if (i !== k) return f
+      const cleared: Record<string, any> = { ...f, MoreSets: [], Skipped: true }
+      for (const key of SET_KEYS) cleared[key] = null
+      return cleared
+    }))
+    setBackToSummary(false)
+    if (next) setPendingSlot({ k: next.k, set: next.set })
+    else setStep(firstEx + slots.filter(sl => sl.k !== k).length) // climbing, or the summary
+  }
+  const unskipExercise = (k: number) => {
+    setExerciseForms(prev => prev.map((f, i) => (i === k ? { ...f, Skipped: false } : f)))
+    setPendingSlot({ k, set: 0 })
+  }
+  // the same exercise's values for this set from its previous appearance in this workout
+  const earlierFor = (ex: any, set: number) => {
+    if ((ex.Occurrence ?? 1) <= 1) return null
+    const prev = flowExercises.find(f => f.ExerciseID === ex.ExerciseID && (f.Occurrence ?? 1) === (ex.Occurrence ?? 1) - 1)
+    if (!prev) return null
+    const ps = allSets(prev)
+    const v = ps[set] ?? ps[ps.length - 1]
+    return v && setHasValues(v) ? v : null
   }
   // fill every exercise that has history with last time's values (empty fields only), then go to the summary
   const fillFromLast = () => {
@@ -890,9 +961,14 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
       ),
     })
   }
-  flowExercises.forEach((ex, k) => {
+  slots.forEach((sl, si) => {
+    const ex = flowExercises[sl.k]
+    const k = sl.k
+    const isCurrent = firstEx + si === curIdx
     steps.push({
-      key: `ex-${ex.ExerciseID}-${k}`, label: ex.Name, state: exerciseSummary(ex) ? 'done' : 'todo',
+      key: `ex-${ex.ExerciseID}-${k}-s${sl.set}`,
+      label: sl.count > 1 ? `${ex.Name} · סט ${sl.set + 1}` : ex.Name,
+      state: setHasValues(allSets(ex)[sl.set]) ? 'done' : 'todo',
       content: (
         <>
           <ExerciseStep
@@ -902,6 +978,12 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
             bests={bestsByExercise[ex.ExerciseID]}
             onRest={startRest}
             onChange={data => handleExerciseChange(k, data)}
+            setIndex={sl.set}
+            onGoSet={i => setPendingSlot({ k, set: i })}
+            register={isCurrent ? fn => { finishRef.current = fn } : undefined}
+            context={sl.ctx}
+            earlier={earlierFor(ex, sl.set)}
+            onSkip={() => skipExercise(k)}
           />
           {isFree && <div className="px-4 pb-6">{addExerciseButton}</div>}
         </>
@@ -938,8 +1020,9 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
       {isFree && <div className="px-4 pt-4">{addExerciseButton}</div>}
       <SummaryStep
         rows={flowExercises.map((ex, k) => ({
-          key: `${ex.ExerciseID}-${k}`, title: ex.Name, text: exerciseSummary(ex), pr: exercisePR(ex, bestsByExercise[ex.ExerciseID]),
-          onOpen: () => { setBackToSummary(true); setStep((hasIntro ? 1 : 0) + k) },
+          key: `${ex.ExerciseID}-${k}`, title: ex.Name, text: ex.Skipped ? null : exerciseSummary(ex), pr: exercisePR(ex, bestsByExercise[ex.ExerciseID]),
+          skipped: !!ex.Skipped,
+          onOpen: () => { setBackToSummary(true); if (ex.Skipped) unskipExercise(k); else setStep(slotIndex(k, 0)) },
         }))}
         climbing={containsClimbing ? {
           ...climbSummary(routes, boulderGrades, leadGrades),
@@ -971,7 +1054,13 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
   const stepLabel = cur.key === 'intro' ? 'פתיחה'
     : cur.key === 'climb' ? 'טיפוס'
     : cur.key === 'summary' ? 'סיכום'
-    : `תרגיל ${stepIndex - (hasIntro ? 1 : 0) + 1} מתוך ${flowExercises.length}`
+    : (() => {
+      const sl = slots[stepIndex - firstEx]
+      if (!sl) return ''
+      const ex = flowExercises[sl.k]
+      return sl.ctx ? `בלוק ${ex.Block ?? 1} · ${sl.ctx}`
+        : `תרגיל ${sl.k + 1} מתוך ${flowExercises.length}${sl.count > 1 ? ` · סט ${sl.set + 1} מתוך ${sl.count}` : ''}`
+    })()
   const onSummary = stepIndex === lastStep
   // Default actual time: from opening the workout to reaching the summary. Only for a session
   // done live (5 min – 5 h); a workout logged after the fact takes a minute or two and stays empty.
@@ -987,6 +1076,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
   const primaryLabel = returning ? 'חזרה לסיכום ←' : onSummary
     ? (isSaving ? 'שומר…' : 'סיום ושמירה')
     : cur.key === 'intro' ? 'התחל ←'
+    : stepIndex >= firstEx && stepIndex < climbIndex ? 'סיום סט ←'
     : stepIndex === lastStep - 1 ? 'לסיכום ←' : 'הבא ←'
 
   return (
@@ -1004,7 +1094,12 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
         title={workout.Name}
         steps={steps}
         index={stepIndex}
-        onIndexChange={i => { if (i === lastStep) setBackToSummary(false); setStep(i) }}
+        onIndexChange={i => {
+          // swiping forward from a set counts as doing it: the greyed suggestion is saved too
+          if (i > stepIndex && stepIndex >= firstEx && stepIndex < climbIndex) finishRef.current?.()
+          if (i === lastStep) setBackToSummary(false)
+          setStep(i)
+        }}
         stepLabel={stepLabel}
         primaryLabel={primaryLabel}
         onPrimary={() => {
@@ -1017,8 +1112,15 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
           }
           if (onSummary) return onComplete()
           if (returning) { setBackToSummary(false); return setStep(lastStep) }
-          const curEx = stepIndex >= firstEx && stepIndex < climbIndex ? flowExercises[stepIndex - firstEx] : null
-          if (curEx?.Rest && Number(curEx.Rest) > 0 && exerciseSummary(curEx)) startRest(Number(curEx.Rest))
+          const sl = stepIndex >= firstEx && stepIndex < climbIndex ? slots[stepIndex - firstEx] : null
+          if (sl) {
+            // save this set (typed values, or the greyed suggestion); one-hand: right, then left here
+            const r = finishRef.current?.() ?? 'next'
+            if (r !== 'next') return
+            const restSec = Number(flowExercises[sl.k].Rest) || 0
+            // rest after each set, or in a superset only after the round; not before the summary
+            if (sl.lastInRound && restSec > 0 && stepIndex + 1 < climbIndex) startRest(restSec)
+          }
           setStep(stepIndex + 1)
         }}
         primaryDisabled={onSummary && isSaving}

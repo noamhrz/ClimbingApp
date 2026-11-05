@@ -159,7 +159,7 @@ function ClimbCard({ c }: { c: ClimbDetail }) {
   )
 }
 
-export interface SummaryRow { key: string; title: string; text: string | null; pr?: boolean; onOpen: () => void }
+export interface SummaryRow { key: string; title: string; text: string | null; pr?: boolean; skipped?: boolean; onOpen: () => void }
 
 // Climbing session details on the summary: the wall
 export interface SummarySession {
@@ -220,7 +220,7 @@ export function SummaryStep({ rows, climbing, climberNotes, onClimberNotes, warn
                 {r.title}
                 {r.pr && <span className="inline-flex items-center gap-1 rounded-full bg-success/15 text-success text-xs font-extrabold px-2 py-0.5"><LuTrophy aria-hidden className="w-3.5 h-3.5" />שיא חדש</span>}
               </span>
-              <span className="text-sm text-muted">{r.text ?? 'לא מולא'}</span>
+              <span className="text-sm text-muted">{r.skipped ? 'דילגת · לחיצה מחזירה אותו' : r.text ?? 'לא מולא'}</span>
             </span>
             <span className="text-[13px] text-accent font-bold">עריכה</span>
           </button>
