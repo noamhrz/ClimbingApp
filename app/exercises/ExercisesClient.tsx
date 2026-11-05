@@ -87,13 +87,13 @@ export default function ExercisesClient() {
       const { data, error } = await supabase
         .from('Exercises')
         .select('Category')
-        .eq('Status', 'Active')
+        .range(0, 9999)
 
       if (error) throw error
 
-      const uniqueCategories = [...new Set(data?.map(ex => ex.Category) || [])]
+      const uniqueCategories = [...new Set((data?.map(ex => (ex.Category ?? '').trim()) || []))]
         .filter(Boolean)
-        .sort()
+        .sort((a, b) => a.localeCompare(b, 'he'))
 
       setCategories(uniqueCategories)
     } catch (err) {

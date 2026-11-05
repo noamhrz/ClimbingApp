@@ -107,13 +107,13 @@ export default function ExerciseModal({ exercise, onSave, onClose, isDuplicate =
       const { data, error } = await supabase
         .from('Exercises')
         .select('Category')
-        .eq('Status', 'Active')
+        .range(0, 9999)
 
       if (error) throw error
 
-      const uniqueCategories = [...new Set(data?.map(ex => ex.Category) || [])]
+      const uniqueCategories = [...new Set((data?.map(ex => (ex.Category ?? '').trim()) || []))]
         .filter(Boolean)
-        .sort()
+        .sort((a, b) => a.localeCompare(b, 'he'))
 
       setCategories(uniqueCategories)
     } catch (err) {
@@ -239,7 +239,7 @@ export default function ExerciseModal({ exercise, onSave, onClose, isDuplicate =
               list="category-suggestions"
               value={formData.Category}
               onChange={(e) => setFormData({ ...formData, Category: e.target.value })}
-              placeholder="בחר או הקלד קטגוריה..."
+              placeholder="בחרו מהרשימה למטה או הקלידו קטגוריה חדשה"
               className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-accent focus:border-accent"
               required
             />
@@ -251,8 +251,8 @@ export default function ExerciseModal({ exercise, onSave, onClose, isDuplicate =
             </datalist>
 
             {categories.length > 0 && (
-              <div className="mt-2 flex flex-wrap gap-2">
-                {categories.slice(0, 8).map((cat) => (
+              <div className="mt-2 flex flex-wrap gap-2 max-h-40 overflow-y-auto">
+                {categories.map((cat) => (
                   <button
                     key={cat}
                     type="button"
