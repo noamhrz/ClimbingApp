@@ -301,13 +301,19 @@ export default function ExerciseStep({ exercise: ex, position, last, bests, onCh
             </button>
           )}
         </div>
+        {ex.IsAlt && (
+          <p className="self-start text-[13px] font-bold text-free bg-free/15 border border-free/40 px-2.5 py-1 rounded-full">
+            תרגיל חלופי{ex.AltOfName ? ` · במקום ${ex.AltOfName}` : ''}
+          </p>
+        )}
         {alt && (
           <button
             type="button"
             onClick={alt.onSwap}
-            className="self-start h-10 px-3 rounded-xl border border-free/60 bg-free/10 text-free text-sm font-bold inline-flex items-center gap-1.5"
+            className="self-stretch min-h-11 px-3 py-2 rounded-xl border border-dashed border-free/70 bg-free/10 text-free text-sm font-bold inline-flex items-center justify-center gap-2"
           >
-            <LuArrowLeftRight aria-hidden className="w-4 h-4" />{alt.name}
+            <LuArrowLeftRight aria-hidden className="w-4 h-4 shrink-0" />
+            <span>{ex.IsAlt ? 'חזרה לתרגיל המקורי: ' : 'החלפה לתרגיל החלופי: '}{alt.name}</span>
           </button>
         )}
         {pr && (

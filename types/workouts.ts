@@ -33,6 +33,9 @@ export interface WorkoutExercise {
   Superset?: boolean
   /** exercise the trainee may do instead of this one in this workout (⇄) */
   AltExerciseID?: number | null
+  /** reps / seconds for the alternative; empty = same as the exercise */
+  AltReps?: number | null
+  AltDuration?: number | null
 }
 
 export interface Exercise {
