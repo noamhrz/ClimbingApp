@@ -428,7 +428,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
             ? Promise.resolve({ data: freeExIds.map((ExerciseID, i) => ({ ExerciseID, Block: 1, Order: i + 1 })) as any[] })
             : supabase
               .from('WorkoutsExercises')
-              .select('ExerciseID, Block, Sets, Reps, Duration, Rest, Order, Superset, AltExerciseID')
+              .select('ExerciseID, Block, Sets, Reps, Duration, Rest, Order, Superset, AltExerciseID, AltReps, AltDuration')
               .eq('WorkoutID', id)
               .order('Block')
               .order('Order'),
@@ -479,6 +479,8 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
                 Block: rel.Block || 1,
                 Superset: !!rel.Superset,
                 AltExerciseID: rel.AltExerciseID ?? null,
+                AltReps: rel.AltReps ?? null,
+                AltDuration: rel.AltDuration ?? null,
                 Sets: rel.Sets || null,
                 Reps: rel.Reps || null,
                 Duration: rel.Duration || null,
@@ -672,6 +674,10 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
         ...f, ExerciseID: alt.ExerciseID, Name: alt.Name, Description: alt.Description,
         IsSingleHand: alt.IsSingleHand, isDuration: alt.isDuration, ImageURL: alt.ImageURL, VideoURL: alt.VideoURL,
         AltExerciseID: f.ExerciseID,
+        // the plan's numbers trade places: the alternative's reps/time in, the original's kept for swapping back
+        Reps: f.AltReps ?? f.Reps, Duration: f.AltDuration ?? f.Duration,
+        AltReps: f.AltReps != null ? f.Reps : null, AltDuration: f.AltDuration != null ? f.Duration : null,
+        IsAlt: !f.IsAlt, AltOfName: f.IsAlt ? null : f.Name,
         MoreSets: [], Notes: '', NotesLeft: '',
       }
       for (const key of SET_KEYS) next[key] = null

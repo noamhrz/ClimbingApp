@@ -49,7 +49,7 @@ const spec = (e: Ex) => [
   `${e.Sets} סטים`,
   e.Exercise.isDuration ? fmtDur(e.Duration ?? DEFAULT_WORKOUT_EXERCISE.Duration) : `${e.Reps} חזרות`,
   e.Rest ? `מנוחה ${formatRestTime(e.Rest)}` : '',
-  e.AltExercise ? `⇄ ${e.AltExercise.Name}` : '',
+  e.AltExercise ? `חלופה: ${e.AltExercise.Name}${e.AltExercise.isDuration ? (e.AltDuration ? ` (${fmtDur(e.AltDuration)})` : '') : (e.AltReps ? ` (${e.AltReps} חזרות)` : '')}` : '',
 ].filter(Boolean)
 
 const blankRow = (exercise: Exercise): Ex => ({
@@ -314,7 +314,7 @@ export default function ExerciseEditor({ exercises, blocks, onChange }: Props) {
         <ExercisePicker
           blockLabel={`חלופה ל־${editing.Exercise.Name}`}
           filter={ex => !(ex as { is_dynamic?: boolean }).is_dynamic && ex.ExerciseID !== editing.ExerciseID}
-          onAdd={ex => { update(editing.WorkoutExerciseID, { AltExerciseID: ex.ExerciseID, AltExercise: ex }); setAltPick(false) }}
+          onAdd={ex => { update(editing.WorkoutExerciseID, { AltExerciseID: ex.ExerciseID, AltExercise: ex, AltReps: null, AltDuration: null }); setAltPick(false) }}
           onClose={() => setAltPick(false)}
         />,
         document.body,
@@ -341,13 +341,22 @@ export default function ExerciseEditor({ exercises, blocks, onChange }: Props) {
                 <div className="flex items-center gap-2">
                   <span className="flex-1 min-w-0 h-11 px-3 rounded-xl border border-free/60 bg-free/10 text-free font-bold flex items-center truncate">{editing.AltExercise.Name}</span>
                   <button type="button" onClick={() => setAltPick(true)} className="h-11 px-3 rounded-xl border border-line-strong bg-surface text-fg text-sm font-bold">שינוי</button>
-                  <button type="button" onClick={() => update(editing.WorkoutExerciseID, { AltExerciseID: null, AltExercise: null })} className="h-11 px-3 rounded-xl border border-line text-fg-3 text-sm font-bold">הסר</button>
+                  <button type="button" onClick={() => update(editing.WorkoutExerciseID, { AltExerciseID: null, AltExercise: null, AltReps: null, AltDuration: null })} className="h-11 px-3 rounded-xl border border-line text-fg-3 text-sm font-bold">הסר</button>
                 </div>
               ) : (
                 <button type="button" onClick={() => setAltPick(true)} className="h-11 rounded-xl border border-dashed border-line-strong text-fg-3 text-sm font-bold">
                   + בחירת תרגיל שאפשר לעשות במקומו
                 </button>
               )}
+              {editing.AltExercise && (editing.AltExercise.isDuration ? (
+                <NumberStepper id="ed-alt-dur" label="זמן בחלופה" unit="(שניות, ריק = כמו בתרגיל)" value={editing.AltDuration ?? null}
+                  placeholder={editing.Duration ?? null} step={5} min={1}
+                  onChange={v => update(editing.WorkoutExerciseID, { AltDuration: v ?? null })} />
+              ) : (
+                <NumberStepper id="ed-alt-reps" label="חזרות בחלופה" unit="(ריק = כמו בתרגיל)" value={editing.AltReps ?? null}
+                  placeholder={editing.Exercise.isDuration ? null : editing.Reps} step={1} min={1}
+                  onChange={v => update(editing.WorkoutExerciseID, { AltReps: v ?? null })} />
+              ))}
               <p className="text-xs text-muted">באימון המתאמן יוכל להחליף לתרגיל הזה בלחיצה (למשל Back extension שתי רגליים ⇄ רגל אחת).</p>
             </div>
             {model.length > 1 && (
