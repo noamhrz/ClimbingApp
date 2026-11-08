@@ -362,19 +362,21 @@ export default function DashboardPage() {
             )}
           </div>
           
-          <TimeRangeSelector 
-            selected={timeRange} 
-            onChange={setTimeRange} 
-          />
-          
-          <p className="text-sm text-fg-3 mt-2 flex items-center justify-center gap-1.5">
-            <LuCalendarDays aria-hidden className="w-4 h-4 shrink-0" />{timeRange === '10days' ? 'תצוגה לפי ימים' : 'תצוגה לפי שבועות'}
-          </p>
+          {/* today's workouts at the top; the range filter sits with the charts it controls */}
+          <TodayWorkouts email={userToShow?.Email} />
         </div>
       </div>
 
       <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
-        <TodayWorkouts email={userToShow?.Email} />
+        <div>
+          <TimeRangeSelector 
+            selected={timeRange} 
+            onChange={setTimeRange} 
+          />
+          <p className="text-sm text-fg-3 mt-2 flex items-center justify-center gap-1.5">
+            <LuCalendarDays aria-hidden className="w-4 h-4 shrink-0" />{timeRange === '10days' ? 'תצוגה לפי ימים' : 'תצוגה לפי שבועות'}
+          </p>
+        </div>
         <StatsCards stats={stats} />
 
         <div className="bg-surface rounded-xl border p-6">
