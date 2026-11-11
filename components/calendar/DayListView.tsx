@@ -260,8 +260,9 @@ export default function DayListView({
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
       if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') e.preventDefault()
-      if (e.key === 'ArrowRight') goToNextDay()
-      if (e.key === 'ArrowLeft') goToPrevDay()
+      // right-to-left: → goes back a day, ← goes to the next day
+      if (e.key === 'ArrowRight') goToPrevDay()
+      if (e.key === 'ArrowLeft') goToNextDay()
       if (e.key === 'm' || e.key === 'M') onBackToMonth()
       if (e.key === 't' || e.key === 'T') goToToday()
     }
@@ -298,16 +299,18 @@ export default function DayListView({
       {/* Floating Navigation Buttons */}
       <div className="hidden md:flex fixed bottom-48 left-6 z-40 flex-col gap-2">
         <button
-          onClick={goToNextDay}
+          onClick={goToPrevDay}
           className="w-14 h-14 bg-accent hover:bg-accent-hover text-on-accent rounded-full flex items-center justify-center text-2xl transition-all hover:scale-110 active:scale-95"
-          title="יום הבא (→)"
+          title="יום קודם (→)"
+          aria-label="יום קודם"
         >
           →
         </button>
         <button
-          onClick={goToPrevDay}
+          onClick={goToNextDay}
           className="w-14 h-14 bg-accent hover:bg-accent-hover text-on-accent rounded-full flex items-center justify-center text-2xl transition-all hover:scale-110 active:scale-95"
-          title="יום קודם (←)"
+          title="יום הבא (←)"
+          aria-label="יום הבא"
         >
           ←
         </button>
@@ -335,8 +338,8 @@ export default function DayListView({
       <div className="sticky top-0 bg-surface border-b px-6 py-4 z-10">
         <div className="flex items-center justify-between mb-4">
           <button
-            onClick={goToNextDay}
-            aria-label="יום הבא"
+            onClick={goToPrevDay}
+            aria-label="יום קודם"
             className="min-w-11 min-h-11 p-3 hover:bg-raised rounded-full transition-colors active:bg-raised"
           >
             <span className="text-3xl">→</span>
@@ -356,8 +359,8 @@ export default function DayListView({
           </div>
 
           <button
-            onClick={goToPrevDay}
-            aria-label="יום קודם"
+            onClick={goToNextDay}
+            aria-label="יום הבא"
             className="min-w-11 min-h-11 p-3 hover:bg-raised rounded-full transition-colors active:bg-raised"
           >
             <span className="text-3xl">←</span>
