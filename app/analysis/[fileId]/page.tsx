@@ -70,6 +70,9 @@ const THIRDS_LABELS = ['שליש א׳', 'שליש ב׳', 'שליש ג׳']
 
 // ── Pure helpers ───────────────────────────────────────────────────────────────
 
+/** Moves in time order (taps can come out of order after undo / jumping back). */
+const byTime = (ms: Move[]) => [...ms].sort((a, b) => a.time - b.time)
+
 function fmtSec(s: number): string {
   if (s < 60) return `${s.toFixed(1)}s`
   const m = Math.floor(s / 60)
@@ -638,6 +641,10 @@ export default function AnalysisPage() {
   const clipsRef = useRef<Clip[]>([])
   useEffect(() => { clipsRef.current = clips }, [clips])
   const startTimeRef = useRef<number>(0)
+  const endTimeRef = useRef<number>(0)
+  const [selMove, setSelMove] = useState<number | null>(null) // index into moves (tap order)
+  const [speed, setSpeed] = useState(1)
+  const [restored, setRestored] = useState(false)
   const clipStartRef = useRef<number | null>(null) // null = not clipping, number = clip in progress
   const [classifiedRests, setClassifiedRests] = useState<RestPeriod[]>([])
 
@@ -745,6 +752,32 @@ export default function AnalysisPage() {
     return () => subscription.unsubscribe()
   }, [])
 
+  // ── Editing moves: undo, retag, delete (metrics follow when the session already ended) ──
+  const applyMoves = useCallback((next: Move[]) => {
+    setMoves(next)
+    movesRef.current = next
+    if (sessionStateRef.current === 'ended' && next.length > 0) {
+      try {
+        const m = calculateMetrics(byTime(next), startTimeRef.current, endTimeRef.current, clipsRef.current)
+        setLiveMetrics(m)
+        setClassifiedRests(m.restPeriods)
+      } catch { /* not enough data */ }
+    }
+  }, [])
+  /** Undo the last tap and jump back to a second before it, to tag it again. */
+  const undoLast = useCallback(() => {
+    const cur = movesRef.current
+    if (!cur.length) return
+    const last = cur[cur.length - 1]
+    applyMoves(cur.slice(0, -1))
+    setSelMove(null)
+    if (videoRef.current) videoRef.current.currentTime = Math.max(startTimeRef.current, last.time - 1)
+  }, [applyMoves])
+  const backSeconds = useCallback((sec: number) => {
+    const v = videoRef.current
+    if (v) v.currentTime = Math.max(0, v.currentTime - sec)
+  }, [])
+
   // ── Session actions ───────────────────────────────────────────
   const recordMove = useCallback((hand: 'L' | 'R') => {
     const video = videoRef.current
@@ -773,7 +806,8 @@ export default function AnalysisPage() {
       setClips([...currentClips])
     }
     try {
-      const m = calculateMetrics(current, startTimeRef.current, video.currentTime, clipsRef.current)
+      endTimeRef.current = video.currentTime
+      const m = calculateMetrics(byTime(current), startTimeRef.current, video.currentTime, clipsRef.current)
       setLiveMetrics(m)
       setClassifiedRests(m.restPeriods)
       setSessionState('ended')
@@ -817,6 +851,9 @@ export default function AnalysisPage() {
   }, [endSession])
 
   function handleReset() {
+    clearDraft()
+    setSelMove(null)
+    setDraftNote(null)
     setMoves([])
     setClips([])
     setSessionState('idle')
@@ -832,6 +869,41 @@ export default function AnalysisPage() {
     )])
   }, [])
 
+  useEffect(() => { if (videoRef.current) videoRef.current.playbackRate = speed })
+
+  // ── Draft: the tagging in progress survives a refresh / locked phone ──
+  const draftKey = `analysis-draft-${fileId}`
+  useEffect(() => {
+    if (loading || restored) return
+    setRestored(true)
+    try {
+      const d = JSON.parse(localStorage.getItem(draftKey) || 'null')
+      if (!d || !Array.isArray(d.moves) || !d.moves.length) return
+      startTimeRef.current = d.start ?? 0
+      endTimeRef.current = d.end ?? 0
+      clipsRef.current = d.clips ?? []
+      setClips(d.clips ?? [])
+      setMoves(d.moves); movesRef.current = d.moves
+      setSessionState(d.state === 'ended' ? 'ended' : 'active')
+      sessionStateRef.current = d.state === 'ended' ? 'ended' : 'active'
+      if (d.state === 'ended') {
+        const m = calculateMetrics(byTime(d.moves), d.start ?? 0, d.end ?? 0, d.clips ?? [])
+        setLiveMetrics(m)
+        setClassifiedRests(m.restPeriods)
+      }
+      setDraftNote(`שוחזרו ${d.moves.length} תנועות שסימנת ולא נשמרו`)
+    } catch { /* storage unavailable or bad draft */ }
+  }, [loading, restored, draftKey])
+  useEffect(() => {
+    if (!restored) return
+    try {
+      if (sessionState === 'idle' || !moves.length) localStorage.removeItem(draftKey)
+      else localStorage.setItem(draftKey, JSON.stringify({ moves, clips, state: sessionState, start: startTimeRef.current, end: endTimeRef.current }))
+    } catch { /* storage unavailable */ }
+  }, [moves, clips, sessionState, restored, draftKey])
+  const [draftNote, setDraftNote] = useState<string | null>(null)
+  const clearDraft = () => { try { localStorage.removeItem(draftKey) } catch { /* ignore */ } }
+
   // ── Keyboard ──────────────────────────────────────────────────
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -841,11 +913,13 @@ export default function AnalysisPage() {
       else if (e.code === 'ArrowRight' || e.code === 'KeyR') { e.preventDefault(); recordMove('R') }
       else if (e.code === 'ArrowUp' || e.code === 'ArrowDown') { e.preventDefault(); handleSpace() }
       else if (e.code === 'KeyC') { e.preventDefault(); handleClip() }
+      else if (e.code === 'KeyZ' || e.code === 'Backspace') { e.preventDefault(); undoLast() }
+      else if (e.code === 'KeyJ') { e.preventDefault(); backSeconds(2) }
     }
     // capture:true — intercepts before the video element handles arrow keys / space
     window.addEventListener('keydown', handler, { capture: true })
     return () => window.removeEventListener('keydown', handler, { capture: true })
-  }, [canCapture, recordMove, handleSpace, handleClip])
+  }, [canCapture, recordMove, handleSpace, handleClip, undoLast, backSeconds])
 
   // ── Save ──────────────────────────────────────────────────────
   async function handleSave() {
@@ -878,7 +952,7 @@ export default function AnalysisPage() {
       AvgPaceRight: liveMetrics.AvgPaceRight,
       StallsShort: liveMetrics.StallsShort,
       StallsLong: liveMetrics.StallsLong,
-      RawLogJson: moves,
+      RawLogJson: byTime(moves),
       ThirdsByMoves: liveMetrics.ThirdsByMoves,
       ThirdsByTime: liveMetrics.ThirdsByTime,
       TotalClips: liveMetrics.TotalClips,
@@ -900,6 +974,7 @@ export default function AnalysisPage() {
     const result = await upsertAnalysis(payload)
 
     if (result) {
+      if (liveMetrics) clearDraft()
       setAnalysis(result)
       setSaved(true)
       setTimeout(() => setSaved(false), 3000)
@@ -920,6 +995,7 @@ export default function AnalysisPage() {
     if (!window.confirm('האם למחוק את הניתוח הנוכחי ולהתחיל מחדש?')) return
     setDeleting(true)
     await deleteAnalysis(analysis.AnalysisID)
+    clearDraft()
     setAnalysis(null)
     setMoves([])
     setClips([])
@@ -1043,6 +1119,14 @@ export default function AnalysisPage() {
                 dir="ltr"
               >
                 <button
+                  onPointerDown={e => { e.preventDefault(); undoLast() }}
+                  disabled={!moves.length}
+                  className="px-3 py-4 bg-raised text-fg rounded-xl font-bold text-sm select-none touch-none disabled:opacity-25"
+                  aria-label="בטל תנועה"
+                >
+                  ↶
+                </button>
+                <button
                   onPointerDown={e => { e.preventDefault(); recordMove('L') }}
                   disabled={sessionState === 'idle'}
                   className="flex-1 py-4 bg-accent hover:bg-accent/90 active:bg-accent-hover disabled:opacity-25 disabled:pointer-events-none text-on-accent rounded-xl font-bold text-sm select-none touch-none"
@@ -1155,6 +1239,83 @@ export default function AnalysisPage() {
             </div>
           )}
 
+          {/* Editing: undo, back 2 s, speed, and the moves on a timeline */}
+          {canCapture && sessionState !== 'idle' && (
+            <div className="mt-3 flex flex-col gap-2">
+              <div className="flex gap-1.5 flex-wrap items-center">
+                <button
+                  type="button"
+                  onClick={undoLast}
+                  disabled={!moves.length}
+                  className="h-10 px-3 rounded-lg border border-line-strong bg-raised text-fg text-sm font-bold disabled:opacity-30"
+                  title="מבטל את התנועה האחרונה וחוזר שנייה לפניה (Z)"
+                >
+                  ↶ בטל תנועה
+                </button>
+                <button
+                  type="button"
+                  onClick={() => backSeconds(2)}
+                  className="h-10 px-3 rounded-lg border border-line-strong bg-raised text-fg text-sm font-bold"
+                  title="2 שניות אחורה (J)"
+                >
+                  ⏪ 2 שנ׳
+                </button>
+                <div className="flex gap-1 ms-auto" role="group" aria-label="מהירות ניגון" dir="ltr">
+                  {[0.5, 0.75, 1].map(v => (
+                    <button
+                      key={v}
+                      type="button"
+                      aria-pressed={speed === v}
+                      onClick={() => setSpeed(v)}
+                      className={`h-10 min-w-11 px-2 rounded-lg border text-sm font-bold ${speed === v ? 'border-accent bg-accent/15 text-accent' : 'border-line-strong text-fg-3'}`}
+                    >
+                      {v}×
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {moves.length > 0 && (() => {
+                const t0 = startTimeRef.current
+                const t1 = Math.max(sessionState === 'ended' ? endTimeRef.current : 0, ...moves.map(m => m.time), t0 + 1)
+                const pos = (t: number) => `${((t - t0) / (t1 - t0)) * 100}%`
+                const sel = selMove != null ? moves[selMove] : null
+                return (
+                  <div className="flex flex-col gap-1.5">
+                    <div className="h-9 rounded-lg bg-surface border border-line px-3" dir="ltr">
+                    <div className="relative h-full" role="group" aria-label="תנועות על ציר הזמן">
+                      {moves.map((m, i) => (
+                        <button
+                          key={i}
+                          type="button"
+                          aria-label={`תנועה ${i + 1}, יד ${m.hand === 'L' ? 'שמאל' : 'ימין'}, ${fmtSec(m.time - t0)}`}
+                          onClick={() => { setSelMove(i); seekTo(Math.max(t0, m.time - 1)) }}
+                          className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 rounded-full border-2 ${selMove === i ? 'w-4 h-4 border-fg' : 'w-3 h-3 border-transparent'} ${m.hand === 'L' ? 'bg-accent' : 'bg-danger'}`}
+                          style={{ left: pos(m.time), top: m.hand === 'L' ? '35%' : '65%' }}
+                        />
+                      ))}
+                    </div>
+                    </div>
+                    {sel ? (
+                      <div className="flex items-center gap-2 text-sm flex-wrap">
+                        <span className="text-fg-2">
+                          תנועה {selMove! + 1} · יד {sel.hand === 'L' ? 'שמאל' : 'ימין'} · <bdi dir="ltr">{fmtSec(sel.time - t0)}</bdi>
+                        </span>
+                        <button type="button" onClick={() => applyMoves(moves.map((m, i) => (i === selMove ? { ...m, hand: m.hand === 'L' ? 'R' : 'L' } : m)))}
+                          className="h-9 px-3 rounded-lg border border-line-strong text-fg font-bold">החלף יד</button>
+                        <button type="button" onClick={() => { applyMoves(moves.filter((_, i) => i !== selMove)); setSelMove(null) }}
+                          className="h-9 px-3 rounded-lg border border-danger/60 text-danger font-bold">מחק</button>
+                        <button type="button" onClick={() => setSelMove(null)} className="h-9 px-2 text-muted">סגור</button>
+                      </div>
+                    ) : (
+                      <p className="text-[11px] text-faint">לחיצה על נקודה קופצת לתנועה בסרטון, ואז אפשר להחליף יד או למחוק</p>
+                    )}
+                  </div>
+                )
+              })()}
+              {draftNote && <p className="text-xs text-info">{draftNote}</p>}
+            </div>
+          )}
+
           {/* Reset button */}
           {canCapture && sessionState !== 'idle' && (
             <button
@@ -1168,7 +1329,7 @@ export default function AnalysisPage() {
           {/* Keyboard hint */}
           {canCapture && sessionState === 'idle' && (
             <p className="text-[11px] text-faint text-center mt-2 hidden lg:block">
-              ↑ התחל · ← יד שמאל · → יד ימין · C הקלפה · ↓ סיום
+              ↑ התחל · ← יד שמאל · → יד ימין · C הקלפה · Z בטל תנועה · J שתי שניות אחורה · ↓ סיום
             </p>
           )}
         </div>
