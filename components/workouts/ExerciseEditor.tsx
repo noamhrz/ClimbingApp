@@ -48,6 +48,7 @@ const fmtDur = (s: number) => (s >= 60 && s % 60 === 0 ? `${s / 60} דק׳` : `$
 const spec = (e: Ex) => [
   `${e.Sets} סטים`,
   e.Exercise.isDuration ? fmtDur(e.Duration ?? DEFAULT_WORKOUT_EXERCISE.Duration) : `${e.Reps} חזרות`,
+  e.IntervalWorkSec ? `טיימר ${e.IntervalWorkSec}/${e.IntervalRestSec ?? 0}` : '',
   e.Rest ? `מנוחה ${formatRestTime(e.Rest)}` : '',
   e.AltExercise ? `חלופה: ${e.AltExercise.Name}${e.AltExercise.isDuration ? (e.AltDuration ? ` (${fmtDur(e.AltDuration)})` : '') : (e.AltReps ? ` (${e.AltReps} חזרות)` : '')}` : '',
 ].filter(Boolean)
@@ -333,6 +334,28 @@ export default function ExerciseEditor({ exercises, blocks, onChange }: Props) {
               <NumberStepper id="ed-dur" label="זמן" unit={`(שניות${(editing.Duration ?? 0) >= 60 ? ` · ${fmtDur(editing.Duration ?? 0)}` : ''})`} value={editing.Duration ?? DEFAULT_WORKOUT_EXERCISE.Duration} step={5} min={1} onChange={v => update(editing.WorkoutExerciseID, { Duration: v ?? 0, Reps: 1 })} />
             ) : (
               <NumberStepper id="ed-reps" label="חזרות" value={editing.Reps} step={1} min={1} onChange={v => update(editing.WorkoutExerciseID, { Reps: v ?? 0 })} />
+            )}
+            {!editing.Exercise.isDuration && (
+              <div className="flex flex-col gap-2 rounded-xl border border-success/40 bg-success/5 p-3">
+                <span className="text-[15px] font-bold text-fg-2">⏱ טיימר אינטרוול <span className="font-normal text-muted">(ריפיטרים, אופציונלי)</span></span>
+                <div className="grid grid-cols-2 gap-3">
+                  <NumberStepper id="ed-int-work" label="עבודה" unit="(שנ׳)" value={editing.IntervalWorkSec ?? null} placeholder={null} step={1} min={1}
+                    onChange={v => update(editing.WorkoutExerciseID, { IntervalWorkSec: v || null, IntervalRestSec: v ? editing.IntervalRestSec ?? 3 : null })} />
+                  <NumberStepper id="ed-int-rest" label="מנוחה בין חזרות" unit="(שנ׳)" value={editing.IntervalWorkSec ? editing.IntervalRestSec ?? 0 : null} placeholder={null} step={1} min={0}
+                    onChange={v => update(editing.WorkoutExerciseID, { IntervalRestSec: v ?? 0, IntervalWorkSec: editing.IntervalWorkSec || 7 })} />
+                </div>
+                {editing.IntervalWorkSec ? (
+                  <button type="button" onClick={() => update(editing.WorkoutExerciseID, { IntervalWorkSec: null, IntervalRestSec: null })}
+                    className="self-start h-9 px-3 rounded-lg border border-line text-fg-3 text-sm font-bold">הסרת הטיימר</button>
+                ) : null}
+                <p className="text-xs text-muted">
+                  {editing.IntervalWorkSec
+                    ? (editing.Exercise.IsSingleHand
+                      ? `באימון: ${editing.Reps} חזרות בכל יד, ימין ושמאל לסירוגין (${editing.IntervalWorkSec}/${editing.IntervalRestSec ?? 0}), עם המנוחה בין סטים שלמטה.`
+                      : `באימון: טיימר של ${editing.Reps} חזרות × ${editing.IntervalWorkSec}/${editing.IntervalRestSec ?? 0} בכל סט, עם המנוחה בין סטים שלמטה.`)
+                    : 'ממלאים זמן עבודה (למשל 7) ומנוחה (למשל 3), והתרגיל מקבל טיימר באימון. החזרות = מספר התליות בסט.'}
+                </p>
+              </div>
             )}
             <NumberStepper id="ed-rest" label="מנוחה בין סטים" unit={`(שניות${editing.Rest >= 60 ? ` · ${formatRestTime(editing.Rest)}` : ''})`} value={editing.Rest} step={15} min={0} onChange={v => update(editing.WorkoutExerciseID, { Rest: v ?? 0 })} />
             <div className="flex flex-col gap-1.5">
