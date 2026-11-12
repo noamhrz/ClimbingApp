@@ -47,6 +47,7 @@ interface CalendarEvent {
   EstimatedTotalTime?: number | null
   CoachNote?: string
   free?: boolean
+  bonus?: boolean
   ActualMinutes?: number | null   // done: the time the trainee reported
   AvgMinutes?: number | null      // not done yet: average actual time of this workout (last 5, needs 3+)
 }
@@ -184,7 +185,7 @@ export default function CalendarPage() {
 
     const { data, error } = await supabase
       .from('Calendar')
-      .select('CalendarID, WorkoutID, StartTime, EndTime, Completed, Deloading, DeloadingPercentage, Order, ActualMinutes')
+      .select('CalendarID, WorkoutID, StartTime, EndTime, Completed, Deloading, DeloadingPercentage, Order, ActualMinutes, Bonus')
       .eq('Email', activeEmail)
       .gte('StartTime', from)
       .lte('StartTime', to)
@@ -277,6 +278,7 @@ export default function CalendarPage() {
         EstimatedTotalTime: getDisplayTime(item.WorkoutID),
         CoachNote: noteMap[item.WorkoutID] || '',
         free: workoutDetailsMap[item.WorkoutID]?.Category === FREE_SESSION_CATEGORY,
+        bonus: !!item.Bonus,
         ActualMinutes: item.Completed && item.ActualMinutes ? item.ActualMinutes : null,
         AvgMinutes: !item.Completed ? avgMap[item.WorkoutID] ?? null : null,
       }

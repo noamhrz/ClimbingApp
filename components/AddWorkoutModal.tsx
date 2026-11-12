@@ -32,6 +32,7 @@ export default function AddWorkoutModal({
   const [selectedDate, setSelectedDate] = useState<string>('')
   const [selectedWorkoutIds, setSelectedWorkoutIds] = useState<number[]>([])
   const [selectedTime, setSelectedTime] = useState<'morning' | 'afternoon' | 'evening'>('morning')
+  const [bonus, setBonus] = useState(false) // new entries are bonus (not required)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isLoadingExisting, setIsLoadingExisting] = useState(false)
   const [orderedWorkouts, setOrderedWorkouts] = useState<{id: number, name: string}[]>([])
@@ -205,6 +206,7 @@ export default function AddWorkoutModal({
             Deloading: false,
             Color: '#3b82f6',
             Order: order,
+            Bonus: bonus,
           })
         }
       })
@@ -327,6 +329,19 @@ export default function AddWorkoutModal({
                         נמצאו {existingCalendarMap.size} אימונים קיימים ביום זה
                       </div>
                     )}
+                  </div>
+
+                  {/* Bonus: a whole extra workout */}
+                  <div>
+                  <button
+                    type="button"
+                    aria-pressed={bonus}
+                    onClick={() => setBonus(v => !v)}
+                    className={`w-full min-h-12 rounded-xl border-2 font-bold ${bonus ? 'border-warning text-warning bg-warning/15' : 'border-line text-fg-3'}`}
+                  >
+                    {bonus ? '⭐ אימון בונוס (לא חובה) · לחיצה מבטלת' : '⭐ לשבץ כאימון בונוס'}
+                  </button>
+                    <p className="text-xs text-muted mt-1">יחול על אימונים חדשים. בלוח הוא בזהב, ואם לא בוצע הוא לא נספר כהחמצה.</p>
                   </div>
 
                   {/* Step 2: Time Selector */}

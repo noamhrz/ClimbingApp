@@ -35,6 +35,7 @@ interface CalendarEvent {
   EstimatedTotalTime?: number | null
   CoachNote?: string
   free?: boolean
+  bonus?: boolean
   ActualMinutes?: number | null
   AvgMinutes?: number | null
 }
@@ -111,6 +112,7 @@ function fmtMinutes(m: number): string {
 
 function getEventColor(event: CalendarEvent): string {
   if (event.free) return FREE_SESSION_COLOR
+  if (event.bonus) return '#E3B341'
   if (event.completed) return '#5FB37A'
   if (event.Deloading) return '#7FB0C9'
   if (isPastEvent(event)) return '#E06A5F'

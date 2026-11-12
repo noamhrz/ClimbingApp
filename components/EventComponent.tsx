@@ -14,6 +14,7 @@ interface CalendarEvent {
   completed: boolean
   color: string
   free?: boolean
+  bonus?: boolean
   WorkoutID: number
   Deloading?: boolean
   DeloadingPercentage?: number | null
@@ -64,6 +65,7 @@ export default function EventComponent({
 
   const getEventColor = () => {
     if (event.free) return FREE_SESSION_COLOR
+    if (event.bonus) return '#E3B341' // bonus workout: gold
     if (event.Deloading) {
       return event.completed ? '#9BD3AC' : '#A9CBDC'
     }

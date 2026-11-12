@@ -33,6 +33,7 @@ export default function ScheduleSheet({ isOpen, onClose, onSuccess, email, name,
   const [from, setFrom] = useState(() => moment.tz(TZ).format('YYYY-MM-DD'))
   const [weeks, setWeeks] = useState(4)
   const [time, setTime] = useState<keyof typeof HOURS>('morning')
+  const [bonus, setBonus] = useState(false)
   const [q, setQ] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -111,7 +112,7 @@ export default function ScheduleSheet({ isOpen, onClose, onSuccess, email, name,
         rows.push({
           Email: email, WorkoutID: p.workoutId,
           StartTime: start.toDate(), EndTime: start.clone().add(dur.get(p.workoutId) ?? 0, 'minutes').toDate(),
-          Completed: false, Deloading: false, Color: '#3b82f6', Order: order,
+          Completed: false, Deloading: false, Color: '#3b82f6', Order: order, Bonus: bonus,
         })
       }
       if (rows.length) {
@@ -168,6 +169,17 @@ export default function ScheduleSheet({ isOpen, onClose, onSuccess, email, name,
             {([['morning', 'בוקר'], ['afternoon', 'צהריים'], ['evening', 'ערב']] as const).map(([k, l]) => (
               <button key={k} type="button" aria-pressed={time === k} onClick={() => setTime(k)} className={`h-10 rounded-lg font-extrabold text-[15px] ${time === k ? 'bg-accent text-on-accent' : 'text-fg-2'}`}>{l}</button>
             ))}
+          </div>
+
+          <div>
+                  <button
+                    type="button"
+                    aria-pressed={bonus}
+                    onClick={() => setBonus(v => !v)}
+                    className={`w-full min-h-12 rounded-xl border-2 font-bold ${bonus ? 'border-warning text-warning bg-warning/15' : 'border-line text-fg-3'}`}
+                  >
+                    {bonus ? '⭐ אימון בונוס (לא חובה) · לחיצה מבטלת' : '⭐ לשבץ כאימון בונוס'}
+                  </button>
           </div>
 
           {/* which workout on which days */}
