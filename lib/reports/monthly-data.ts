@@ -113,8 +113,8 @@ export async function buildMonthlyReport(db: SupabaseClient, email: string, year
   const [user, calendar, climbs, wellness, boulderG, leadG, bGoals, boGoals, lGoals, gGoals,
     cats, levels, progress, session, logs] = await Promise.all([
     db.from('Users').select('Name').eq('Email', email).maybeSingle(),
-    fetchAll<{ StartTime: string; Completed: boolean | null; Deloading: boolean | null }>((f, t) =>
-      db.from('Calendar').select('StartTime, Completed, Deloading').eq('Email', email)
+    fetchAll<{ StartTime: string; Completed: boolean | null; Deloading: boolean | null; Bonus: boolean | null }>((f, t) =>
+      db.from('Calendar').select('StartTime, Completed, Deloading, Bonus').eq('Email', email)
         .gte('StartTime', `${addDays(calFrom, -1)}T00:00:00`).lt('StartTime', `${addDays(asOf, 1)}T23:59:59`)
         .order('StartTime').range(f, t)),
     fetchAll<{ LogDateTime: string; ClimbType: ClimbType; GradeID: number; Successful: boolean | null; VolumeScore: number | null; Attempts: number | null }>((f, t) =>
@@ -140,7 +140,8 @@ export async function buildMonthlyReport(db: SupabaseClient, email: string, year
   ])
 
   // ── completion: weekly (12 weeks) and monthly (12 months) ───────────────
-  const cal = calendar.map(c => ({ date: ilDateOfTimestamp(c.StartTime), done: !!c.Completed, deload: !!c.Deloading }))
+  // a bonus workout counts only when done; skipping it is not a miss
+  const cal = calendar.filter(c => !c.Bonus || c.Completed).map(c => ({ date: ilDateOfTimestamp(c.StartTime), done: !!c.Completed, deload: !!c.Deloading }))
     .filter(c => c.date <= asOf)
   const thisWeek = weekStart(asOf)
   const weekly: CountBucket[] = []

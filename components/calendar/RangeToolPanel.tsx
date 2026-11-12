@@ -33,6 +33,7 @@ const span = (a: string, b: string) => <bdi dir="ltr" className="tabular-nums">{
 const daysBetween = (a: string, b: string) => moment(b, 'YYYY-MM-DD').diff(moment(a, 'YYYY-MM-DD'), 'days') + 1
 
 interface Row {
+  Bonus?: boolean | null
   CalendarID: number
   WorkoutID: number
   StartTime: string
@@ -84,7 +85,7 @@ export default function RangeToolPanel({ tool, email, from, to, onPreview, onDon
     setConfirmClear(false)
     supabase
       .from('Calendar')
-      .select('CalendarID, WorkoutID, StartTime, EndTime, Completed, Deloading, DeloadingPercentage, Order, TimeOfDay, CoachNotes, Color')
+      .select('CalendarID, WorkoutID, StartTime, EndTime, Completed, Deloading, DeloadingPercentage, Order, TimeOfDay, CoachNotes, Color, Bonus')
       .eq('Email', email)
       .gte('StartTime', dayFrom(from))
       .lte('StartTime', dayTo(to))
@@ -143,7 +144,7 @@ export default function RangeToolPanel({ tool, email, from, to, onPreview, onDon
             inserts.push({
               Email: email, WorkoutID: r.WorkoutID, StartTime: s.format(DB), EndTime: e.format(DB),
               TimeOfDay: r.TimeOfDay, Order: r.Order, CoachNotes: r.CoachNotes, Color: r.Color || '#3b82f6',
-              Completed: false, Deloading: false, DeloadingPercentage: null,
+              Completed: false, Deloading: false, DeloadingPercentage: null, Bonus: !!r.Bonus,
               ClimberNotes: null, RPE: null, CreatedAt: now,
             })
           }

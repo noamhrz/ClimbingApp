@@ -35,6 +35,7 @@ interface CalendarEvent {
   EstimatedTotalTime?: number | null
   CoachNote?: string
   free?: boolean
+  bonus?: boolean
   ActualMinutes?: number | null
   AvgMinutes?: number | null
 }
@@ -109,8 +110,9 @@ function fmtMinutes(m: number): string {
   return r > 0 ? `${h} ש' ${r} דק'` : `${h} ש'`
 }
 
-function getEventColor(event: CalendarEvent): string {
+export function getEventColor(event: CalendarEvent): string {
   if (event.free) return FREE_SESSION_COLOR
+  if (event.bonus) return '#E3B341'
   if (event.completed) return '#5FB37A'
   if (event.Deloading) return '#7FB0C9'
   if (isPastEvent(event)) return '#E06A5F'
@@ -128,7 +130,7 @@ function EventCardBody({ event, index }: { event: CalendarEvent; index: number }
         {index + 1}
       </div>
       <div className="space-y-3 pr-4">
-        <h3 className="text-xl font-bold text-fg">{event.title}</h3>
+        <h3 className="text-xl font-bold text-fg">{event.bonus && <span className="text-warning">⭐ </span>}{event.title}</h3>
         <TimeInfo event={event} />
         <div className="flex gap-2 flex-wrap">
           {event.completed && (
@@ -472,7 +474,7 @@ export default function DayListView({
                     {index + 1}
                   </div>
                   <div className="space-y-3 pr-4">
-                    <h3 className="text-xl font-bold text-fg">{event.title}</h3>
+                    <h3 className="text-xl font-bold text-fg">{event.bonus && <span className="text-warning">⭐ </span>}{event.title}</h3>
                     <TimeInfo event={event} />
                     <div className="flex gap-2 flex-wrap">
                       {event.completed && (

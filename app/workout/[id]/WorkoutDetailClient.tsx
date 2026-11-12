@@ -1098,6 +1098,13 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
     content: (
       <>
       {isFree && <div className="px-4 pt-4">{addExerciseButton}</div>}
+      {calendarRow?.Bonus && (
+        <div className="px-4 pt-4">
+          <p className="rounded-2xl border border-warning/50 bg-warning/15 text-warning font-extrabold px-3.5 py-2.5">
+            ⭐ אימון בונוס. הוא לא חובה, אז כל הכבוד שעשית אותו!
+          </p>
+        </div>
+      )}
       <SummaryStep
         rows={flowExercises.map((ex, k) => ({
           key: `${ex.ExerciseID}-${k}`, title: ex.Name, text: ex.Skipped ? null : exerciseSummary(ex), pr: exercisePR(ex, bestsByExercise[ex.ExerciseID]),
