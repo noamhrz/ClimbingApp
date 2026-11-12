@@ -8,7 +8,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { LuChevronDown, LuChevronUp, LuCopy, LuGripVertical, LuTrash2 } from 'react-icons/lu'
+import { LuChevronDown, LuChevronUp, LuCopy, LuGripVertical, LuTimer, LuTrash2 } from 'react-icons/lu'
 import { Exercise, WorkoutExerciseWithDetails, DEFAULT_WORKOUT_EXERCISE } from '@/types/workouts'
 import { calculateWorkoutExercisesTime, formatRestTime } from '@/lib/workout-calculations'
 import NumberStepper from '@/components/workout-flow/NumberStepper'
@@ -44,11 +44,38 @@ function fromModel(m: Model): [Ex[], number[]] {
   return [exs, empty]
 }
 
+// A drawn interval timer for rows that have one: clock, work/rest, and one tick per hang
+// (one-hand: R/L pairs), set by set
+function IntervalBadge({ e }: { e: Ex }) {
+  if (!e.IntervalWorkSec) return null
+  const single = !!e.Exercise.IsSingleHand
+  const hangs = Math.min(12, Math.max(1, Number(e.Reps) || 1) * (single ? 2 : 1))
+  const sets = Math.min(4, Math.max(1, Number(e.Sets) || 1))
+  return (
+    <span
+      className="inline-flex items-center gap-2 rounded-xl border border-success/50 bg-success/10 px-2.5 py-1.5 text-success"
+      title={`טיימר: ${e.Reps} חזרות${single ? ' בכל יד' : ''} × ${e.IntervalWorkSec}/${e.IntervalRestSec ?? 0} שנ׳, ${e.Sets} סטים`}
+    >
+      <LuTimer aria-hidden className="w-5 h-5 shrink-0" />
+      <span className="font-extrabold tabular-nums text-[15px]" dir="ltr">{e.IntervalWorkSec}/{e.IntervalRestSec ?? 0}</span>
+      <span className="flex flex-col gap-[3px]" aria-hidden>
+        {Array.from({ length: sets }, (_, si) => (
+          <span key={si} className="flex items-center gap-[3px]">
+            {Array.from({ length: hangs }, (_, h) => (
+              <span key={h} className={`h-2 rounded-sm ${single ? (h % 2 ? 'w-1.5 bg-success/55' : 'w-1.5 bg-success') : 'w-2.5 bg-success'}`} />
+            ))}
+          </span>
+        ))}
+      </span>
+      {e.Sets > 1 && <span className="text-[12px] font-bold text-success/80">×{e.Sets}</span>}
+    </span>
+  )
+}
+
 const fmtDur = (s: number) => (s >= 60 && s % 60 === 0 ? `${s / 60} דק׳` : `${s} שנ׳`)
 const spec = (e: Ex) => [
   `${e.Sets} סטים`,
   e.Exercise.isDuration ? fmtDur(e.Duration ?? DEFAULT_WORKOUT_EXERCISE.Duration) : `${e.Reps} חזרות`,
-  e.IntervalWorkSec ? `טיימר ${e.IntervalWorkSec}/${e.IntervalRestSec ?? 0}` : '',
   e.Rest ? `מנוחה ${formatRestTime(e.Rest)}` : '',
   e.AltExercise ? `חלופה: ${e.AltExercise.Name}${e.AltExercise.isDuration ? (e.AltDuration ? ` (${fmtDur(e.AltDuration)})` : '') : (e.AltReps ? ` (${e.AltReps} חזרות)` : '')}` : '',
 ].filter(Boolean)
@@ -283,7 +310,9 @@ export default function ExerciseEditor({ exercises, blocks, onChange }: Props) {
                   {spec(e).map((s, k) => <span key={k}>{k > 0 && '· '}{s}</span>)}
                 </span>
                 <span className="hidden md:block text-[13px] text-muted mt-0.5">{e.Exercise.Category}{e.Exercise.IsSingleHand ? ' · יד אחת' : ''}</span>
+                {e.IntervalWorkSec ? <span className="md:hidden block mt-1.5"><IntervalBadge e={e} /></span> : null}
               </button>
+              {isDesktop && e.IntervalWorkSec ? <span className="shrink-0"><IntervalBadge e={e} /></span> : null}
               {isDesktop && (
                 <div className="flex items-end gap-2 shrink-0">
                   <InlineNum label="סטים" value={e.Sets} min={1} onChange={v => update(e.WorkoutExerciseID, { Sets: v })} />
