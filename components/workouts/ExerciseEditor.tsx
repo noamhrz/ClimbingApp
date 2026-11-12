@@ -324,7 +324,20 @@ export default function ExerciseEditor({ exercises, blocks, onChange }: Props) {
                 <span className="hidden md:block text-[13px] text-muted mt-0.5">{e.Exercise.Category}{e.Exercise.IsSingleHand ? ' · יד אחת' : ''}</span>
                 {e.IntervalWorkSec ? <span className="md:hidden block mt-1.5"><IntervalBadge e={e} /></span> : null}
               </button>
-              {isDesktop && e.IntervalWorkSec ? <span className="shrink-0"><IntervalBadge e={e} /></span> : null}
+              {isDesktop && !e.Exercise.isDuration && (e.IntervalWorkSec ? (
+                // the timer on this row: tap to change the numbers, ✕ to turn it off
+                <span className="shrink-0 inline-flex items-center gap-1">
+                  <button type="button" onClick={() => setEditId(e.WorkoutExerciseID)} title="עריכת הטיימר"><IntervalBadge e={e} /></button>
+                  <button type="button" onClick={() => update(e.WorkoutExerciseID, { IntervalWorkSec: null, IntervalRestSec: null })}
+                    aria-label={`הסרת הטיימר: ${e.Exercise.Name}`} title="הסרת הטיימר" className={mini}>✕</button>
+                </span>
+              ) : (
+                <button type="button" onClick={() => update(e.WorkoutExerciseID, { IntervalWorkSec: 7, IntervalRestSec: 3 })}
+                  title="הפעלת טיימר אינטרוול 7/3 (אפשר לשנות אחר כך)"
+                  className="shrink-0 h-9 px-3 rounded-xl border border-dashed border-line-strong text-fg-3 text-[13px] font-bold inline-flex items-center gap-1.5 hover:border-success hover:text-success">
+                  <LuTimer aria-hidden className="w-4 h-4" />טיימר 7/3
+                </button>
+              ))}
               {isDesktop && (
                 <div className="flex items-end gap-2 shrink-0">
                   <InlineNum label="סטים" value={e.Sets} min={1} onChange={v => update(e.WorkoutExerciseID, { Sets: v })} />
