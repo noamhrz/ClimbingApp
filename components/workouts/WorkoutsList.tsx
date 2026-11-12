@@ -31,10 +31,11 @@ export default function WorkoutsList() {
     let cancelled = false
     ;(async () => {
       const since = new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10)
-      const [{ data: cal }, { data: assigned }] = await Promise.all([
+      const [{ data: cal }, { data: assigned }, { data: users }] = await Promise.all([
         supabase.from('Calendar').select('WorkoutID, StartTime').gte('StartTime', since)
           .lte('StartTime', new Date(Date.now() + 86400000).toISOString().slice(0, 10)).range(0, 9999),
         supabase.from('WorkoutsForUser').select('WorkoutID, Email').range(0, 9999),
+        supabase.from('Users').select('Email, Status, IsActive').range(0, 9999),
       ])
       if (cancelled) return
       const lu = new Map<number, string>()
@@ -43,7 +44,12 @@ export default function WorkoutsList() {
         if (!prev || c.StartTime > prev) lu.set(c.WorkoutID, c.StartTime)
       }
       const ac = new Map<number, number>()
-      for (const a of assigned ?? []) ac.set(a.WorkoutID, (ac.get(a.WorkoutID) ?? 0) + 1)
+      // only users who are active count as "assigned"
+      const active = new Set((users ?? []).filter(u => u.Status !== 'Inactive' && u.IsActive !== false).map(u => String(u.Email).toLowerCase()))
+      for (const a of assigned ?? []) {
+        if (!active.has(String(a.Email).toLowerCase())) continue
+        ac.set(a.WorkoutID, (ac.get(a.WorkoutID) ?? 0) + 1)
+      }
       setLastUsed(lu)
       setAssignedCount(ac)
     })()
@@ -127,8 +133,8 @@ export default function WorkoutsList() {
             🕘 בשימוש לאחרונה
           </button>
           <button type="button" aria-pressed={assignedOnly} onClick={() => setAssignedOnly(v => !v)} className={chip(assignedOnly)}
-            title="אימונים ששויכו לפחות למתאמן אחד">
-            👤 משובץ למתאמן
+            title="אימונים ששויכו לפחות למתאמן פעיל אחד">
+            👤 משובץ למתאמן פעיל
           </button>
           {(recentOnly || assignedOnly) && !loading && (
             <span className="self-center text-sm text-muted">{shown.length} אימונים</span>
