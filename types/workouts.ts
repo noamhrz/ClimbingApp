@@ -36,6 +36,9 @@ export interface WorkoutExercise {
   /** reps / seconds for the alternative; empty = same as the exercise */
   AltReps?: number | null
   AltDuration?: number | null
+  /** interval timer (repeaters): seconds of work and of rest between reps; both set = timer */
+  IntervalWorkSec?: number | null
+  IntervalRestSec?: number | null
 }
 
 export interface Exercise {
