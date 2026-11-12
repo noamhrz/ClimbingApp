@@ -20,6 +20,7 @@ import { useFormDraft } from '@/lib/useFormDraft'
 import { LuCircleCheck, LuLightbulb, LuLoaderCircle, LuMapPin, LuPlus } from 'react-icons/lu'
 import { PageSkeleton } from '@/components/ui/Skeleton'
 import ExercisePicker, { type PickedExercise } from '@/components/workout-flow/ExercisePicker'
+import IntervalTimer from '@/components/workout-flow/IntervalTimer'
 import { FREE_SESSION_COLOR } from '@/lib/free-session'
 
 export default function WorkoutDetailClient({ id }: { id: number }) {
@@ -177,6 +178,9 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
   // set-by-set flow: the current screen's "finish set", and a screen to jump to once it exists
   const finishRef = useRef<(() => 'next' | 'stay' | 'blocked') | null>(null)
   const [pendingSlot, setPendingSlot] = useState<{ k: number; set: number } | null>(null)
+  // interval timer running for exercise k, from set `from`, for `count` sets
+  const [timer, setTimer] = useState<{ k: number; from: number; count: number } | null>(null)
+  const timerLastSet = useRef<number | null>(null)
   const [backToSummary, setBackToSummary] = useState(false) // editing one exercise from the summary
   const [lastByExercise, setLastByExercise] = useState<Record<string, LastValues>>({}) // key: ExerciseID:Occurrence
   const [defaultGrades, setDefaultGrades] = useState<Partial<Record<'Boulder' | 'Board' | 'Lead', number>>>({})
@@ -428,7 +432,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
             ? Promise.resolve({ data: freeExIds.map((ExerciseID, i) => ({ ExerciseID, Block: 1, Order: i + 1 })) as any[] })
             : supabase
               .from('WorkoutsExercises')
-              .select('ExerciseID, Block, Sets, Reps, Duration, Rest, Order, Superset, AltExerciseID, AltReps, AltDuration')
+              .select('ExerciseID, Block, Sets, Reps, Duration, Rest, Order, Superset, AltExerciseID, AltReps, AltDuration, IntervalWorkSec, IntervalRestSec')
               .eq('WorkoutID', id)
               .order('Block')
               .order('Order'),
@@ -481,6 +485,8 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
                 AltExerciseID: rel.AltExerciseID ?? null,
                 AltReps: rel.AltReps ?? null,
                 AltDuration: rel.AltDuration ?? null,
+                IntervalWorkSec: rel.IntervalWorkSec ?? null,
+                IntervalRestSec: rel.IntervalRestSec ?? null,
                 Sets: rel.Sets || null,
                 Reps: rel.Reps || null,
                 Duration: rel.Duration || null,
@@ -685,6 +691,22 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
     }
     setExerciseForms(prev => withOccurrence(prev.map((f, i) => (i === k ? swap(f) : f))))
     setExercises(prev => withOccurrence(prev.map((f, i) => (i === k ? swap(f) : f))))
+  }
+
+  // write one set's values (set 1 = the entry's own fields, set 2+ = MoreSets)
+  const writeSet = (k: number, idx: number, vals: Record<string, any>) => {
+    setExerciseForms(prev => prev.map((f, i) => {
+      if (i !== k) return f
+      const sets = allSets(f)
+      // weight: what is on this set, else the set before it
+      const prevW = [...sets.slice(0, idx + 1)].reverse().find(x => x?.WeightKG != null)?.WeightKG ?? null
+      const v = { ...vals, WeightKG: sets[idx]?.WeightKG ?? prevW }
+      if (idx === 0) return { ...f, ...v }
+      const more = [...((f.MoreSets as any[]) ?? [])]
+      while (more.length < idx) more.push({})
+      more[idx - 1] = { ...more[idx - 1], ...v }
+      return { ...f, MoreSets: more }
+    }))
   }
 
   const handleExerciseChange = (i: number, data: any) => {
@@ -1034,6 +1056,11 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
             earlier={earlierFor(ex, sl.set)}
             onSkip={() => skipExercise(k)}
             alt={ex.AltExerciseID && altInfo[ex.AltExerciseID] ? { name: altInfo[ex.AltExerciseID].Name, onSwap: () => swapToAlt(k) } : undefined}
+            onStartTimer={ex.IntervalWorkSec ? () => {
+              timerLastSet.current = null
+              // a superset goes one set at a time; otherwise the timer runs the remaining sets in one go
+              setTimer({ k, from: sl.set, count: sl.ctx ? 1 : Math.max(1, sl.count - sl.set) })
+            } : undefined}
           />
           {isFree && <div className="px-4 pb-6">{addExerciseButton}</div>}
         </>
@@ -1129,8 +1156,37 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
     : stepIndex >= firstEx && stepIndex < climbIndex ? 'סיום סט ←'
     : stepIndex === lastStep - 1 ? 'לסיכום ←' : 'הבא ←'
 
+  const timerEx = timer ? flowExercises[timer.k] : null
   return (
     <>
+      {timer && timerEx && (
+        <IntervalTimer
+          plan={{
+            name: timerEx.Name,
+            reps: Math.max(1, Number(timerEx.Reps) || 1),
+            work: Number(timerEx.IntervalWorkSec) || 7,
+            rest: Number(timerEx.IntervalRestSec) || 0,
+            sets: timer.count,
+            firstSet: timer.from,
+            totalSets: setsOf(timerEx),
+            setRest: Number(timerEx.Rest) || 0,
+          }}
+          onSetDone={(runSet, reps) => {
+            const idx = timer.from + runSet
+            timerLastSet.current = idx
+            writeSet(timer.k, idx, { RepsDone: reps, Completed: true })
+          }}
+          onClose={() => {
+            const k = timer.k, last = timerLastSet.current
+            setTimer(null)
+            // go on after the last set the timer saved
+            if (last != null) {
+              const i = slots.findIndex(sl => sl.k === k && sl.set === last)
+              if (i >= 0) setStep(firstEx + i + 1)
+            }
+          }}
+        />
+      )}
       {showPicker && email && (
         <ExercisePicker
           email={email}

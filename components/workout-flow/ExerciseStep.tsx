@@ -47,6 +47,8 @@ interface Props {
   onSkip?: () => void
   /** the alternative exercise (⇄): swaps it in for today */
   alt?: { name: string; onSwap: () => void }
+  /** interval timer (repeaters) for this exercise, from the set on screen */
+  onStartTimer?: () => void
 }
 
 /** Personal record: heavier than ever, or the same top weight with more reps/time; without weight, more reps/time. */
@@ -110,7 +112,7 @@ export function exerciseSummary(o: any): string | null {
   return sideSetsSummary(o, false, o.isDuration)
 }
 
-export default function ExerciseStep({ exercise: ex, position, last, bests, onChange: onChangeExercise, onRest, setIndex, onGoSet, register, context, earlier, onSkip, alt }: Props) {
+export default function ExerciseStep({ exercise: ex, position, last, bests, onChange: onChangeExercise, onRest, setIndex, onGoSet, register, context, earlier, onSkip, alt, onStartTimer }: Props) {
   const [side, setSide] = useState<'R' | 'L'>('R')
   const [ownSetIdx, setOwnSetIdx] = useState(0)
   const controlled = setIndex != null
@@ -189,6 +191,7 @@ export default function ExerciseStep({ exercise: ex, position, last, bests, onCh
   if (ex.Sets) targets.push(`${ex.Sets} סטים`)
   if (ex.Reps) targets.push(`${ex.Reps} חזרות`)
   if (ex.Duration) targets.push(fmtDuration(Number(ex.Duration)))
+  if (ex.IntervalWorkSec) targets.push(`${ex.IntervalWorkSec}/${ex.IntervalRestSec ?? 0} שנ׳`)
   if (ex.Rest) targets.push(`מנוחה ${ex.Rest} שנ׳`)
 
   // "same as last time": every set of last time
@@ -314,6 +317,16 @@ export default function ExerciseStep({ exercise: ex, position, last, bests, onCh
             </button>
           )}
         </div>
+        {onStartTimer && ex.IntervalWorkSec ? (
+          <button
+            type="button"
+            onClick={onStartTimer}
+            className="self-stretch min-h-14 rounded-2xl bg-success text-on-accent text-[17px] font-extrabold inline-flex items-center justify-center gap-2"
+          >
+            <LuTimer aria-hidden className="w-5 h-5" />
+            טיימר {ex.IntervalWorkSec}/{ex.IntervalRestSec ?? 0} · {ex.Reps || 1} חזרות
+          </button>
+        ) : null}
         {ex.IsAlt && (
           <p className="self-start text-[13px] font-bold text-free bg-free/15 border border-free/40 px-2.5 py-1 rounded-full">
             תרגיל חלופי{ex.AltOfName ? ` · במקום ${ex.AltOfName}` : ''}
