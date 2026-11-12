@@ -39,6 +39,8 @@ export interface WorkoutExercise {
   /** interval timer (repeaters): seconds of work and of rest between reps; both set = timer */
   IntervalWorkSec?: number | null
   IntervalRestSec?: number | null
+  /** extra, not required: shown in gold; the summary counts it apart */
+  Bonus?: boolean
 }
 
 export interface Exercise {

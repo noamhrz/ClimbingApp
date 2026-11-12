@@ -317,6 +317,11 @@ export default function ExerciseStep({ exercise: ex, position, last, bests, onCh
             </button>
           )}
         </div>
+        {ex.Bonus && (
+          <p className="self-start text-[13px] font-extrabold text-warning bg-warning/15 border border-warning/40 px-2.5 py-1 rounded-full">
+            ⭐ בונוס · לא חובה, אבל שווה
+          </p>
+        )}
         {onStartTimer && ex.IntervalWorkSec ? (
           <button
             type="button"
