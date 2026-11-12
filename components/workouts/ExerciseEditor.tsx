@@ -338,22 +338,30 @@ export default function ExerciseEditor({ exercises, blocks, onChange }: Props) {
             {!editing.Exercise.isDuration && (
               <div className="flex flex-col gap-2 rounded-xl border border-success/40 bg-success/5 p-3">
                 <span className="text-[15px] font-bold text-fg-2">⏱ טיימר אינטרוול <span className="font-normal text-muted">(ריפיטרים, אופציונלי)</span></span>
-                <div className="grid grid-cols-2 gap-3">
-                  <NumberStepper id="ed-int-work" label="עבודה" unit="(שנ׳)" value={editing.IntervalWorkSec ?? null} placeholder={null} step={1} min={1}
-                    onChange={v => update(editing.WorkoutExerciseID, { IntervalWorkSec: v || null, IntervalRestSec: v ? editing.IntervalRestSec ?? 3 : null })} />
-                  <NumberStepper id="ed-int-rest" label="מנוחה בין חזרות" unit="(שנ׳)" value={editing.IntervalWorkSec ? editing.IntervalRestSec ?? 0 : null} placeholder={null} step={1} min={0}
-                    onChange={v => update(editing.WorkoutExerciseID, { IntervalRestSec: v ?? 0, IntervalWorkSec: editing.IntervalWorkSec || 7 })} />
-                </div>
                 {editing.IntervalWorkSec ? (
-                  <button type="button" onClick={() => update(editing.WorkoutExerciseID, { IntervalWorkSec: null, IntervalRestSec: null })}
-                    className="self-start h-9 px-3 rounded-lg border border-line text-fg-3 text-sm font-bold">הסרת הטיימר</button>
-                ) : null}
+                  <>
+                    <div className="grid grid-cols-2 gap-3">
+                      <NumberStepper id="ed-int-work" label="עבודה" unit="(שנ׳)" value={editing.IntervalWorkSec} placeholder={7} step={1} min={1}
+                        onChange={v => update(editing.WorkoutExerciseID, { IntervalWorkSec: v || 7 })} />
+                      <NumberStepper id="ed-int-rest" label="מנוחה בין חזרות" unit="(שנ׳)" value={editing.IntervalRestSec ?? 3} placeholder={3} step={1} min={0}
+                        onChange={v => update(editing.WorkoutExerciseID, { IntervalRestSec: v ?? 0 })} />
+                    </div>
+                    <button type="button" onClick={() => update(editing.WorkoutExerciseID, { IntervalWorkSec: null, IntervalRestSec: null })}
+                      className="self-start h-9 px-3 rounded-lg border border-line text-fg-3 text-sm font-bold">הסרת הטיימר</button>
+                  </>
+                ) : (
+                  // one tap: the common 7/3; change the numbers after if needed
+                  <button type="button" onClick={() => update(editing.WorkoutExerciseID, { IntervalWorkSec: 7, IntervalRestSec: 3 })}
+                    className="h-12 rounded-xl bg-success text-on-accent font-extrabold">
+                    ⏱ הפעלת טיימר 7/3
+                  </button>
+                )}
                 <p className="text-xs text-muted">
                   {editing.IntervalWorkSec
                     ? (editing.Exercise.IsSingleHand
                       ? `באימון: ${editing.Reps} חזרות בכל יד, ימין ושמאל לסירוגין (${editing.IntervalWorkSec}/${editing.IntervalRestSec ?? 0}), עם המנוחה בין סטים שלמטה.`
                       : `באימון: טיימר של ${editing.Reps} חזרות × ${editing.IntervalWorkSec}/${editing.IntervalRestSec ?? 0} בכל סט, עם המנוחה בין סטים שלמטה.`)
-                    : 'ממלאים זמן עבודה (למשל 7) ומנוחה (למשל 3), והתרגיל מקבל טיימר באימון. החזרות = מספר התליות בסט.'}
+                    : 'לחיצה מפעילה טיימר של 7 שנ׳ עבודה ו־3 מנוחה (אפשר לשנות אחר כך). החזרות = מספר התליות בסט.'}
                 </p>
               </div>
             )}
