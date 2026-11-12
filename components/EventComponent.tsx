@@ -96,7 +96,7 @@ export default function EventComponent({
         title={event.title}
       >
         <div className="font-bold text-xs text-center leading-tight truncate">
-          {event.title}
+          {event.bonus && '⭐ '}{event.title}
         </div>
 
         {event.Deloading && event.DeloadingPercentage && (
