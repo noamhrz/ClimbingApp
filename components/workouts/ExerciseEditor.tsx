@@ -259,6 +259,15 @@ export default function ExerciseEditor({ exercises, blocks, onChange }: Props) {
           <div className="flex flex-wrap items-center gap-2 px-3 py-2.5 border-b border-line">
             <span className="text-[13px] font-extrabold text-accent bg-accent/15 rounded-full px-2.5 py-0.5 whitespace-nowrap">בלוק {bi + 1}</span>
             <span className="flex-1 text-[15px] text-muted whitespace-nowrap">{items.length} תרגילים</span>
+            <button
+              type="button"
+              aria-pressed={items.every(e => e.Bonus)}
+              onClick={() => { const on = !items.every(e => e.Bonus); commit(model.map((b, x) => (x === bi ? b.map(e => ({ ...e, Bonus: on })) : b))) }}
+              title="בונוס: לא חובה. מסומן בזהב, והסיכום סופר אותו בנפרד"
+              className={`h-9 px-3 rounded-full border text-[13px] font-bold whitespace-nowrap ${items.every(e => e.Bonus) ? 'border-warning text-warning bg-warning/15' : 'border-line-strong text-fg-3'}`}
+            >
+              ⭐ בונוס
+            </button>
             {items.length > 1 && <button
               type="button"
               aria-pressed={isSuperset(items)}
@@ -291,7 +300,7 @@ export default function ExerciseEditor({ exercises, blocks, onChange }: Props) {
                 const key = `${bi}:${ev.clientY < r.top + r.height / 2 ? i : i + 1}`
                 if (key !== dropAt) setDropAt(key)
               }}
-              className={`relative flex items-center gap-2 px-3 py-2.5 border-b border-line transition-colors duration-700 ${flash === e.WorkoutExerciseID ? 'bg-accent/20' : ''} ${dragId === e.WorkoutExerciseID ? 'opacity-40' : ''}`}
+              className={`relative flex items-center gap-2 px-3 py-2.5 border-b border-line transition-colors duration-700 ${e.Bonus ? 'bg-warning/10 border-s-4 border-s-warning' : ''} ${flash === e.WorkoutExerciseID ? 'bg-accent/20' : ''} ${dragId === e.WorkoutExerciseID ? 'opacity-40' : ''}`}
             >
               {dropAt === `${bi}:${i}` && dragId != null && <span aria-hidden className="absolute inset-x-2 -top-px h-[3px] rounded-full bg-accent" />}
               {dropAt === `${bi}:${i + 1}` && i === items.length - 1 && dragId != null && <span aria-hidden className="absolute inset-x-2 -bottom-px h-[3px] rounded-full bg-accent" />}
@@ -305,7 +314,10 @@ export default function ExerciseEditor({ exercises, blocks, onChange }: Props) {
                 </button>
               </div>
               <button type="button" onClick={() => setEditId(e.WorkoutExerciseID)} className="flex-1 min-w-0 text-right py-1">
-                <span className="block text-base font-bold leading-snug line-clamp-2 md:hover:text-accent">{e.Exercise.Name}</span>
+                <span className="block text-base font-bold leading-snug line-clamp-2 md:hover:text-accent">
+                  {e.Bonus && <span className="inline-block text-[12px] font-extrabold text-warning bg-warning/15 rounded-full px-2 py-0.5 me-1.5 align-middle">⭐ בונוס</span>}
+                  {e.Exercise.Name}
+                </span>
                 <span className="flex flex-wrap gap-x-1.5 text-sm text-muted mt-0.5 md:hidden">
                   {spec(e).map((s, k) => <span key={k}>{k > 0 && '· '}{s}</span>)}
                 </span>
@@ -364,6 +376,14 @@ export default function ExerciseEditor({ exercises, blocks, onChange }: Props) {
             ) : (
               <NumberStepper id="ed-reps" label="חזרות" value={editing.Reps} step={1} min={1} onChange={v => update(editing.WorkoutExerciseID, { Reps: v ?? 0 })} />
             )}
+            <button
+              type="button"
+              aria-pressed={!!editing.Bonus}
+              onClick={() => update(editing.WorkoutExerciseID, { Bonus: !editing.Bonus })}
+              className={`h-12 rounded-xl border font-bold ${editing.Bonus ? 'border-warning text-warning bg-warning/15' : 'border-line-strong text-fg-3'}`}
+            >
+              {editing.Bonus ? '⭐ תרגיל בונוס (לחיצה מבטלת)' : '⭐ סימון כתרגיל בונוס'}
+            </button>
             {!editing.Exercise.isDuration && (
               <div className="flex flex-col gap-2 rounded-xl border border-success/40 bg-success/5 p-3">
                 <span className="text-[15px] font-bold text-fg-2">⏱ טיימר אינטרוול <span className="font-normal text-muted">(ריפיטרים, אופציונלי)</span></span>
