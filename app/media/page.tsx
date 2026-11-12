@@ -6,6 +6,7 @@ import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/context/AuthContext'
 import { supabase } from '@/lib/supabaseClient'
+import { compressVideo, isVideoFile, type CompressHandle } from '@/lib/compress-video'
 import MediaComments from '@/components/media/MediaComments'
 import { LuChartColumn, LuFileText, LuFolder, LuFolderOpen, LuRefreshCw, LuTrash2, LuTriangleAlert, LuVideo } from 'react-icons/lu'
 
@@ -218,6 +219,9 @@ function MediaContent() {
   // ── Upload progress ───────────────────────────────────────────
   // progress -1 = idle, 0-100 = uploading
   const [uploadProgress, setUploadProgress] = useState(-1)
+  // 'compress' while the video is shrunk in the browser, then 'upload'
+  const [uploadPhase, setUploadPhase] = useState<'compress' | 'upload'>('upload')
+  const compressRef = useRef<CompressHandle | null>(null)
   const [uploadFileName, setUploadFileName] = useState('')
   const [uploadFileIndex, setUploadFileIndex] = useState(0)
   const [uploadFileTotal, setUploadFileTotal] = useState(0)
@@ -443,7 +447,9 @@ function MediaContent() {
   }
 
   // ── Upload handler ────────────────────────────────────────────
-  const MAX_FILE_SIZE = 300 * 1024 * 1024 // 300 MB hard limit
+  const MAX_FILE_SIZE = 300 * 1024 * 1024 // 300 MB limit for what is actually uploaded
+  const MAX_INPUT_SIZE = 3 * 1024 * 1024 * 1024 // a video this big is accepted when it can be compressed first
+  const canCompress = typeof window !== 'undefined' && 'VideoEncoder' in window
 
   const handleFiles = async (fileList: FileList) => {
     if (!token || !selectedEmail) return
@@ -451,8 +457,8 @@ function MediaContent() {
 
     const allFiles = Array.from(fileList)
 
-    // 300 MB hard limit check
-    const tooBig = allFiles.find(f => f.size > MAX_FILE_SIZE)
+    // size limit: big videos are fine when this browser can shrink them before upload
+    const tooBig = allFiles.find(f => f.size > (canCompress && isVideoFile(f) ? MAX_INPUT_SIZE : MAX_FILE_SIZE))
     if (tooBig) {
       setUploadError(
         `שגיאה: הקובץ גדול מדי (מעל 300MB). כדי להעלות בהצלחה: גזרו את הקצוות המיותרים בגלריה, או השתמשו בטיפ הכיווץ דרך הוואטסאפ.`
@@ -470,12 +476,27 @@ function MediaContent() {
 
     try {
       for (let i = 0; i < allFiles.length; i++) {
-        const file = allFiles[i]
+        let file = allFiles[i]
         setUploadFileIndex(i + 1)
         setUploadFileName(file.name)
         setUploadProgress(0)
 
         try {
+          // Step 0: shrink the video here first (720p), so the upload is short; original if not possible
+          setUploadPhase('compress')
+          const job = compressVideo(file, pct => setUploadProgress(pct))
+          compressRef.current = job
+          const res = await job.promise
+          compressRef.current = null
+          if (res.file) file = res.file
+          if (file.size > MAX_FILE_SIZE) {
+            throw new Error(res.file
+              ? 'הקובץ גדול מדי (מעל 300MB) גם אחרי כיווץ. גזרו את הקצוות המיותרים בגלריה ונסו שוב.'
+              : `לא הצלחנו לכווץ את הסרטון (${res.reason ?? 'סיבה לא ידועה'}), והוא גדול מ־300MB. גזרו את הקצוות בגלריה, או שלחו לעצמכם בוואטסאפ ושמרו חזרה.`)
+          }
+          setUploadPhase('upload')
+          setUploadProgress(0)
+
           const mimeType = file.type || 'application/octet-stream'
 
           // Step 1: create resumable session URL on our server
@@ -504,6 +525,7 @@ function MediaContent() {
   }
 
   const handleCancel = () => {
+    compressRef.current?.cancel()
     xhrRef.current?.abort()
   }
 
@@ -599,7 +621,7 @@ function MediaContent() {
           <li><span className="font-medium">חיתוך הסרטון (Trim):</span> מומלץ לחתוך בגלריה את תחילת וסוף הסרטון כך שיכיל רק את הטיפוס עצמו. זה יחסוך זמן העלאה ויאפשר ניתוח מדויק יותר.</li>
           <li><span className="font-medium">מגבלת זמן:</span> המערכת מותאמת לניתוח של עד 6 דקות טיפוס נטו.</li>
           <li><span className="font-medium">הגדרות מומלצות:</span> צלמו ב-1080p (30fps). הימנעו מ-4K כדי למנוע העלאות איטיות מאוד.</li>
-          <li><span className="font-medium">טיפ לכיווץ מהיר:</span> אם הסרטון גדול מדי, שלחו אותו לעצמכם בוואטסאפ ושמרו חזרה לגלריה. זה יקטין את הקובץ משמעותית וישמור על איכות מעולה.</li>
+          <li><span className="font-medium">כיווץ אוטומטי:</span> סרטון גדול מכווץ כאן לפני ההעלאה (720p), בלי שתצטרכו לעשות כלום. בטלפון ישן שלא תומך בזה, אפשר לשלוח את הסרטון לעצמכם בוואטסאפ ולשמור חזרה לגלריה.</li>
         </ul>
       </div>
 
@@ -630,7 +652,8 @@ function MediaContent() {
               />
             </div>
             <p className="text-xs text-accent mt-1.5 text-center">
-              {uploadProgress < 100 ? `מעלה לשרת... ${uploadProgress}%` : 'מעבד את הוידאו...'}
+              {uploadPhase === 'compress' ? `מכווץ את הסרטון... ${uploadProgress}%`
+                : uploadProgress < 100 ? `מעלה לשרת... ${uploadProgress}%` : 'מעבד את הוידאו...'}
             </p>
             <p className="text-xs text-accent mt-1 text-center">השאר את המסך דלוק עד סיום ההעלאה</p>
           </div>
