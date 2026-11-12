@@ -53,6 +53,7 @@ export default function AssignWorkoutsClient() {
   const [searchQuery, setSearchQuery] = useState<string>('')
   const [loading, setLoading] = useState(false)
   const [showSchedule, setShowSchedule] = useState(false)
+  const [mobileTab, setMobileTab] = useState<'assigned' | 'available'>('assigned')
 
   useEffect(() => {
     // permissions follow the signed-in coach, not the trainee being viewed
@@ -356,9 +357,27 @@ export default function AssignWorkoutsClient() {
             <p className="text-xl text-fg-3">בחר מתאמן כדי להתחיל</p>
           </div>
         ) : (
+          <>
+          {/* Mobile tabs: on small screens the two columns stack, so let the user switch */}
+          <div className="lg:hidden grid grid-cols-2 gap-1 p-1 mb-4 rounded-xl border border-line bg-surface">
+            <button
+              type="button"
+              onClick={() => setMobileTab('assigned')}
+              className={`h-10 rounded-lg text-sm font-bold transition-colors ${mobileTab === 'assigned' ? 'bg-success text-on-accent' : 'text-fg-3'}`}
+            >
+              מוקצים ({userWorkouts.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => setMobileTab('available')}
+              className={`h-10 rounded-lg text-sm font-bold transition-colors ${mobileTab === 'available' ? 'bg-accent text-on-accent' : 'text-fg-3'}`}
+            >
+              זמינים ({availableWorkouts.length})
+            </button>
+          </div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Available Workouts */}
-            <div className="bg-surface rounded-xl border border-line">
+            <div className={`bg-surface rounded-xl border border-line ${mobileTab === 'available' ? '' : 'hidden'} lg:block`}>
               <div className="p-4 border-b border-line bg-surface">
                 <h2 className="text-lg font-bold text-accent mb-3"><LuBookOpen aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />אימונים זמינים</h2>
                 
@@ -386,7 +405,7 @@ export default function AssignWorkoutsClient() {
               </div>
 
               {/* Available Workouts List */}
-              <div className="p-4 space-y-3 max-h-[600px] overflow-y-auto">
+              <div className="p-4 space-y-3 lg:max-h-[600px] lg:overflow-y-auto">
                 {availableWorkouts.length === 0 ? (
                   <div className="text-center py-8 text-muted">
                     {searchQuery || selectedCategory !== 'all' 
@@ -428,7 +447,7 @@ export default function AssignWorkoutsClient() {
             </div>
 
             {/* User's Workouts */}
-            <div className="bg-surface rounded-xl border border-line">
+            <div className={`bg-surface rounded-xl border border-line ${mobileTab === 'assigned' ? '' : 'hidden'} lg:block`}>
               <div className="p-4 border-b border-line bg-surface">
                 <h2 className="text-lg font-bold text-success">
                   <LuCircleCheck aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em] me-1.5" />אימונים של {selectedUser?.Name}
@@ -453,7 +472,7 @@ export default function AssignWorkoutsClient() {
               </div>
 
               {/* User Workouts List */}
-              <div className="p-4 space-y-3 max-h-[600px] overflow-y-auto">
+              <div className="p-4 space-y-3 lg:max-h-[600px] lg:overflow-y-auto">
                 {loading ? (
                   <div className="text-center py-8">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-success mx-auto"></div>
@@ -531,6 +550,7 @@ export default function AssignWorkoutsClient() {
               </div>
             </div>
           </div>
+          </>
         )}
       </div>
       {selectedUserEmail && (

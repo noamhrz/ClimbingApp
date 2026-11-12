@@ -37,7 +37,9 @@ export default function WorkoutForm({ initialData, onChange }: Props) {
 
   const loadCategories = async () => {
     const cats = await fetchCategories()
-    setCategories(cats)
+    // keep the workout's own category selectable even if the list didn't include it
+    const own = initialData?.Category?.trim()
+    setCategories(own && !cats.includes(own) ? [...cats, own].sort((a, b) => a.localeCompare(b)) : cats)
   }
 
   const handleChange = (field: keyof WorkoutFormData, value: any) => {
