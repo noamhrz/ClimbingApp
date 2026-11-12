@@ -324,7 +324,7 @@ export default function ExerciseStep({ exercise: ex, position, last, bests, onCh
             className="self-stretch min-h-14 rounded-2xl bg-success text-on-accent text-[17px] font-extrabold inline-flex items-center justify-center gap-2"
           >
             <LuTimer aria-hidden className="w-5 h-5" />
-            טיימר {ex.IntervalWorkSec}/{ex.IntervalRestSec ?? 0} · {ex.Reps || 1} חזרות
+            טיימר {ex.IntervalWorkSec}/{ex.IntervalRestSec ?? 0} · {ex.Reps || 1} חזרות{single ? ' בכל יד' : ''}
           </button>
         ) : null}
         {ex.IsAlt && (

@@ -700,7 +700,9 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
       const sets = allSets(f)
       // weight: what is on this set, else the set before it
       const prevW = [...sets.slice(0, idx + 1)].reverse().find(x => x?.WeightKG != null)?.WeightKG ?? null
-      const v = { ...vals, WeightKG: sets[idx]?.WeightKG ?? prevW }
+      const prevWL = [...sets.slice(0, idx + 1)].reverse().find(x => x?.WeightKGLeft != null)?.WeightKGLeft ?? null
+      const v = { ...vals, WeightKG: sets[idx]?.WeightKG ?? prevW,
+        ...('RepsDoneLeft' in vals ? { WeightKGLeft: sets[idx]?.WeightKGLeft ?? prevWL ?? sets[idx]?.WeightKG ?? prevW } : {}) }
       if (idx === 0) return { ...f, ...v }
       const more = [...((f.MoreSets as any[]) ?? [])]
       while (more.length < idx) more.push({})
@@ -1167,14 +1169,18 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
             work: Number(timerEx.IntervalWorkSec) || 7,
             rest: Number(timerEx.IntervalRestSec) || 0,
             sets: timer.count,
+            single: !!timerEx.IsSingleHand,
             firstSet: timer.from,
             totalSets: setsOf(timerEx),
             setRest: Number(timerEx.Rest) || 0,
           }}
-          onSetDone={(runSet, reps) => {
+          onSetDone={(runSet, reps, repsLeft) => {
             const idx = timer.from + runSet
             timerLastSet.current = idx
-            writeSet(timer.k, idx, { RepsDone: reps, Completed: true })
+            writeSet(timer.k, idx, {
+              RepsDone: reps, Completed: true,
+              ...(repsLeft != null ? { RepsDoneLeft: repsLeft, CompletedLeft: true } : {}),
+            })
           }}
           onClose={() => {
             const k = timer.k, last = timerLastSet.current

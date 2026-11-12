@@ -350,7 +350,9 @@ export default function ExerciseEditor({ exercises, blocks, onChange }: Props) {
                 ) : null}
                 <p className="text-xs text-muted">
                   {editing.IntervalWorkSec
-                    ? `באימון: טיימר של ${editing.Reps} חזרות × ${editing.IntervalWorkSec}/${editing.IntervalRestSec ?? 0} בכל סט, עם המנוחה בין סטים שלמטה.`
+                    ? (editing.Exercise.IsSingleHand
+                      ? `באימון: ${editing.Reps} חזרות בכל יד, ימין ושמאל לסירוגין (${editing.IntervalWorkSec}/${editing.IntervalRestSec ?? 0}), עם המנוחה בין סטים שלמטה.`
+                      : `באימון: טיימר של ${editing.Reps} חזרות × ${editing.IntervalWorkSec}/${editing.IntervalRestSec ?? 0} בכל סט, עם המנוחה בין סטים שלמטה.`)
                     : 'ממלאים זמן עבודה (למשל 7) ומנוחה (למשל 3), והתרגיל מקבל טיימר באימון. החזרות = מספר התליות בסט.'}
                 </p>
               </div>

@@ -10,7 +10,8 @@ import { createPortal } from 'react-dom'
 
 export interface IntervalPlan {
   name: string
-  reps: number          // hangs per set
+  reps: number          // hangs per set (one-hand: per hand)
+  single?: boolean      // one hand: hangs alternate right / left (2 reps = R L R L)
   work: number          // seconds
   rest: number          // seconds between hangs
   sets: number          // sets in this run
@@ -20,7 +21,9 @@ export interface IntervalPlan {
 }
 
 type StepType = 'prep' | 'work' | 'rest' | 'setrest'
-interface Step { type: StepType; dur: number; set: number; rep: number }
+/** rep = hang index within the set (one-hand: counts both hands); hand only on one-hand work */
+interface Step { type: StepType; dur: number; set: number; rep: number; hand?: 'R' | 'L' }
+const HAND = { R: 'ימין', L: 'שמאל' } as const
 
 const PREP = 5
 const NAMES: Record<StepType, string> = { prep: 'מתכוננים', work: 'תלייה', rest: 'שחרור', setrest: 'מנוחה בין סטים' }
@@ -32,22 +35,27 @@ const PHASE: Record<StepType | 'done', { fg: string; bg: string }> = {
   done: { fg: '#CFC6BA', bg: '#1C1915' },
 }
 
+const hangsPerSet = (p: IntervalPlan) => (p.single ? p.reps * 2 : p.reps)
+/** completed hangs → reps per hand (right goes first) */
+const split = (p: IntervalPlan, hangs: number) => (p.single ? { r: Math.ceil(hangs / 2), l: Math.floor(hangs / 2) } : { r: hangs, l: 0 })
+
 function buildSteps(p: IntervalPlan): Step[] {
+  const H = hangsPerSet(p)
   const s: Step[] = [{ type: 'prep', dur: PREP, set: 0, rep: 0 }]
   for (let set = 0; set < p.sets; set++) {
-    for (let r = 0; r < p.reps; r++) {
-      s.push({ type: 'work', dur: p.work, set, rep: r })
-      if (r < p.reps - 1 && p.rest > 0) s.push({ type: 'rest', dur: p.rest, set, rep: r })
+    for (let r = 0; r < H; r++) {
+      s.push({ type: 'work', dur: p.work, set, rep: r, ...(p.single ? { hand: r % 2 === 0 ? 'R' as const : 'L' as const } : {}) })
+      if (r < H - 1 && p.rest > 0) s.push({ type: 'rest', dur: p.rest, set, rep: r })
     }
-    if (set < p.sets - 1 && p.setRest > 0) s.push({ type: 'setrest', dur: p.setRest, set, rep: p.reps - 1 })
+    if (set < p.sets - 1 && p.setRest > 0) s.push({ type: 'setrest', dur: p.setRest, set, rep: H - 1 })
   }
   return s
 }
 
 export default function IntervalTimer({ plan, onSetDone, onClose }: {
   plan: IntervalPlan
-  /** a set of the run ended: its index within the run and the hangs completed */
-  onSetDone: (runSet: number, reps: number) => void
+  /** a set of the run ended: its index within the run and the reps completed (one-hand: per hand) */
+  onSetDone: (runSet: number, reps: number, repsLeft?: number) => void
   /** closed: finished = the whole run completed (or stopped by "נפלתי") */
   onClose: (finished: boolean) => void
 }) {
@@ -78,12 +86,18 @@ export default function IntervalTimer({ plan, onSetDone, onClose }: {
 
   const releaseWake = () => { try { void wake.current?.release() } catch { /* ignore */ } wake.current = null }
 
-  const report = useCallback((set: number, reps: number) => {
+  const report = useCallback((set: number, hangs: number) => {
     const s = st.current
     if (s.setsReported.has(set)) return
     s.setsReported.add(set)
-    onSetDone(set, reps)
-  }, [onSetDone])
+    const { r, l } = split(plan, hangs)
+    onSetDone(set, r, plan.single ? l : undefined)
+  }, [onSetDone, plan])
+  const H = hangsPerSet(plan)
+  const repsText = (hangs: number) => {
+    const { r, l } = split(plan, hangs)
+    return plan.single ? `ימין ${r}, שמאל ${l}` : `${r} חזרות`
+  }
 
   const finish = useCallback((msg: string) => {
     cancelAnimationFrame(raf.current)
@@ -102,12 +116,12 @@ export default function IntervalTimer({ plan, onSetDone, onClose }: {
     let elapsed = (now - s.t0) / 1000
     while (elapsed >= step.dur) {
       // a hang that ran to the end counts; the last hang of a set closes the set
-      if (step.type === 'work' && step.rep === plan.reps - 1) report(step.set, plan.reps)
+      if (step.type === 'work' && step.rep === H - 1) report(step.set, H)
       s.t0 += step.dur * 1000
       s.i++
       s.lastBeep = -1
       if (s.i >= steps.length) {
-        finish(plan.sets > 1 ? `כל ${plan.sets} הסטים נשמרו · ${plan.reps} חזרות בכל סט` : `הסט נשמר · ${plan.reps} חזרות`)
+        finish(plan.sets > 1 ? `כל ${plan.sets} הסטים נשמרו · ${repsText(H)} בכל סט` : `הסט נשמר · ${repsText(H)}`)
         return
       }
       step = steps[s.i]
@@ -118,7 +132,7 @@ export default function IntervalTimer({ plan, onSetDone, onClose }: {
     if (left >= 1 && left <= 3 && left !== s.lastBeep) { s.lastBeep = left; beep(880, 100) }
     force(x => x + 1)
     raf.current = requestAnimationFrame(loop)
-  }, [steps, plan.reps, plan.sets, report, finish, beep])
+  }, [steps, H, plan.sets, report, finish, beep, repsText])
 
   const start = async () => {
     beep(880, 60) // unlocks audio on iOS (first sound must come from a tap)
@@ -132,10 +146,10 @@ export default function IntervalTimer({ plan, onSetDone, onClose }: {
   const fail = () => {
     const s = st.current
     const step = steps[s.i]
-    const reps = step.type === 'work' ? step.rep : step.type === 'prep' ? 0 : step.rep + 1
+    const hangs = step.type === 'work' ? step.rep : step.type === 'prep' ? 0 : step.rep + 1
     if (step.type === 'setrest') { finish('הסטים שהושלמו נשמרו'); return }
-    report(step.set, reps)
-    finish(`נשמר: סט ${plan.firstSet + step.set + 1} · ${reps} חזרות מתוך ${plan.reps}`)
+    report(step.set, hangs)
+    finish(`נשמר: סט ${plan.firstSet + step.set + 1} · ${repsText(hangs)}${plan.single ? '' : ` מתוך ${plan.reps}`}`)
   }
 
   useEffect(() => () => { cancelAnimationFrame(raf.current); releaseWake(); void audio.current?.close().catch(() => {}) }, [])
@@ -154,8 +168,11 @@ export default function IntervalTimer({ plan, onSetDone, onClose }: {
   const left = Math.max(0, Math.ceil(step.dur - elapsed))
   const pct = s.running ? Math.min(100, (elapsed / step.dur) * 100) : 0
   const setLabel = `סט ${plan.firstSet + (s.running ? step.set : 0) + 1} מתוך ${plan.totalSets}`
-  const repNow = !s.running ? 0 : step.type === 'work' ? step.rep + 1 : step.type === 'prep' ? 0 : step.rep + 1
+  const hangNow = !s.running ? 0 : step.type === 'work' ? step.rep + 1 : step.type === 'prep' ? 0 : step.rep + 1
   const doneInSet = !s.running ? 0 : step.type === 'work' ? step.rep : step.type === 'prep' ? 0 : step.rep + 1
+  // one hand: the rep number of the hand on screen (R1 L1 R2 L2 …)
+  const repNow = plan.single ? Math.ceil(hangNow / 2) : hangNow
+  const phaseName = (t: Step) => (t.type === 'work' && t.hand ? `תלייה · ${HAND[t.hand]}` : NAMES[t.type])
   const next = steps[s.i + 1]
 
   return createPortal(
@@ -182,11 +199,11 @@ export default function IntervalTimer({ plan, onSetDone, onClose }: {
       {!doneMsg && <>
       <div className="flex justify-center gap-2 flex-wrap px-4 pt-3 tabular-nums">
         <span className="rounded-full bg-black/30 px-3 py-1 font-bold">{setLabel}</span>
-        <span className="rounded-full bg-black/30 px-3 py-1 font-bold">חזרה {repNow} מתוך {plan.reps}</span>
+        <span className="rounded-full bg-black/30 px-3 py-1 font-bold">חזרה {repNow} מתוך {plan.reps}{plan.single ? ' בכל יד' : ''}</span>
       </div>
       <div className="flex justify-center gap-1.5 pt-3" aria-hidden>
-        {Array.from({ length: plan.reps }, (_, i) => (
-          <i key={i} className="w-6 h-2 rounded"
+        {Array.from({ length: H }, (_, i) => (
+          <i key={i} className={`${plan.single ? 'w-4' : 'w-6'} h-2 rounded`}
             style={{ background: i < doneInSet ? colors.fg : i === repNow - 1 && step.type === 'work' && s.running ? '#fff' : 'rgba(255,255,255,.18)' }} />
         ))}
       </div>
@@ -202,15 +219,15 @@ export default function IntervalTimer({ plan, onSetDone, onClose }: {
         ) : (
           <>
             <div className="text-[32px] font-black" style={{ color: colors.fg }}>
-              {s.paused ? 'מושהה' : s.running ? NAMES[step.type] : 'מוכנים?'}
+              {s.paused ? 'מושהה' : s.running ? phaseName(step) : 'מוכנים?'}
             </div>
             <div className="font-black leading-[.95] tabular-nums text-white" style={{ fontSize: 'clamp(120px, 38vw, 220px)' }}>
               {s.running ? left : `${plan.work}/${plan.rest}`}
             </div>
             <p className="text-fg-2 min-h-6 text-center">
               {s.running
-                ? next ? `הבא: ${NAMES[next.type]}${next.type === 'work' ? ` · חזרה ${next.rep + 1}` : ''}` : 'הבא: סיום'
-                : `${plan.reps} חזרות · ${plan.work} שנ׳ תלייה · ${plan.rest} שנ׳ שחרור${plan.sets > 1 ? ` · ${plan.sets} סטים` : ''}`}
+                ? next ? `הבא: ${phaseName(next)}${next.type === 'work' ? ` · חזרה ${plan.single ? Math.floor(next.rep / 2) + 1 : next.rep + 1}` : ''}` : 'הבא: סיום'
+                : `${plan.reps} חזרות${plan.single ? ' בכל יד, ימין ושמאל לסירוגין' : ''} · ${plan.work} שנ׳ תלייה · ${plan.rest} שנ׳ שחרור${plan.sets > 1 ? ` · ${plan.sets} סטים` : ''}`}
             </p>
             <div className="w-64 max-w-[70%] h-2.5 rounded-full bg-white/10 overflow-hidden mt-2">
               <div className="h-full" style={{ width: `${pct}%`, background: colors.fg }} />
