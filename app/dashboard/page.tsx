@@ -148,6 +148,8 @@ export default function DashboardPage() {
         
         if (w.Completed === true) {
           completed.push(w)
+        } else if (w.Bonus) {
+          // a bonus workout not done is neither missed nor pending
         } else {
           // ✨ Compare day-to-day: if workout day is BEFORE today (not including today)
           if (isBefore(workoutDay, todayStart)) {

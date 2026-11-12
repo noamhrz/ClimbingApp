@@ -19,11 +19,12 @@ import EventContextMenu from '@/components/EventContextMenu'
 import EditEventModal from '@/components/EditEventModal'
 import RangeMonthGrid from '@/components/calendar/RangeMonthGrid'
 import RangeToolPanel, { RANGE_TOOLS, RangeTool } from '@/components/calendar/RangeToolPanel'
+import WeekListView from '@/components/calendar/WeekListView'
 import DayListView from '@/components/calendar/DayListView'
 import CalendarToolbar from '@/components/calendar/CalendarToolbar'
 import AssignedWorkoutsPanel, { PanelWorkout } from '@/components/calendar/AssignedWorkoutsPanel'
 import { copyPreviousWorkout } from '@/utils/copyPreviousWorkout'
-import { LuPlus, LuCalendarDays, LuList, LuCalendar, LuCopy, LuBatteryLow, LuX, LuTrash2, LuSave, LuCalendarPlus } from 'react-icons/lu'
+import { LuPlus, LuCalendarDays, LuList, LuCalendar, LuCopy, LuBatteryLow, LuX, LuTrash2, LuSave, LuCalendarPlus, LuStar, LuCalendarRange } from 'react-icons/lu'
 import { PageSkeleton } from '@/components/ui/Skeleton'
 
 moment.locale('he')
@@ -47,6 +48,7 @@ interface CalendarEvent {
   EstimatedTotalTime?: number | null
   CoachNote?: string
   free?: boolean
+  bonus?: boolean
   ActualMinutes?: number | null   // done: the time the trainee reported
   AvgMinutes?: number | null      // not done yet: average actual time of this workout (last 5, needs 3+)
 }
@@ -74,6 +76,8 @@ export default function CalendarPage() {
   const [showSchedule, setShowSchedule] = useState(false)
   // coach range tools: pick an action, then mark a range on the month calendar
   const [rangeTool, setRangeTool] = useState<RangeTool | null>(null)
+  // ⭐ bonus mode: tapping a workout in the calendar marks / unmarks it as a bonus workout
+  const [bonusMode, setBonusMode] = useState(false)
   const [rangeA, setRangeA] = useState<string | null>(null)
   const [rangeB, setRangeB] = useState<string | null>(null)
   const [previewDays, setPreviewDays] = useState<Set<string>>(new Set())
@@ -184,7 +188,7 @@ export default function CalendarPage() {
 
     const { data, error } = await supabase
       .from('Calendar')
-      .select('CalendarID, WorkoutID, StartTime, EndTime, Completed, Deloading, DeloadingPercentage, Order, ActualMinutes')
+      .select('CalendarID, WorkoutID, StartTime, EndTime, Completed, Deloading, DeloadingPercentage, Order, ActualMinutes, Bonus')
       .eq('Email', activeEmail)
       .gte('StartTime', from)
       .lte('StartTime', to)
@@ -277,6 +281,7 @@ export default function CalendarPage() {
         EstimatedTotalTime: getDisplayTime(item.WorkoutID),
         CoachNote: noteMap[item.WorkoutID] || '',
         free: workoutDetailsMap[item.WorkoutID]?.Category === FREE_SESSION_CATEGORY,
+        bonus: !!item.Bonus,
         ActualMinutes: item.Completed && item.ActualMinutes ? item.ActualMinutes : null,
         AvgMinutes: !item.Completed ? avgMap[item.WorkoutID] ?? null : null,
       }
@@ -580,11 +585,23 @@ export default function CalendarPage() {
     setOriginalSnapshot(new Map())
   }
 
+  const toggleBonus = async (event: CalendarEvent) => {
+    const id = Number(event.id)
+    const next = !event.bonus
+    setEvents(prev => prev.map(ev => (Number(ev.id) === id ? { ...ev, bonus: next } : ev)))
+    const { error } = await supabase.from('Calendar').update({ Bonus: next }).eq('CalendarID', id)
+    if (error) {
+      setEvents(prev => prev.map(ev => (Number(ev.id) === id ? { ...ev, bonus: !next } : ev)))
+      alert('שגיאה בסימון בונוס: ' + error.message)
+    }
+  }
+
   const handleSelectEvent = (event: CalendarEvent, e?: React.SyntheticEvent) => {
     if (e) {
       e.preventDefault()
       e.stopPropagation()
     }
+    if (bonusMode) { void toggleBonus(event); return }
     
     setSelectedEvent(event)
     const centerX = window.innerWidth / 2
@@ -789,10 +806,10 @@ export default function CalendarPage() {
           <div className="flex items-center justify-between">
             <h1 className="text-xl font-bold text-fg inline-flex items-center gap-2"><LuCalendarDays aria-hidden className="w-5 h-5 text-accent" />לוח אימונים</h1>
             
-            <div className="flex gap-2">
+            <div className="flex gap-1.5 sm:gap-2">
               <button
                 onClick={() => setView('day')}
-                className={`inline-flex items-center gap-1.5 min-h-11 px-4 rounded-full font-medium transition-all ${
+                className={`inline-flex items-center gap-1.5 min-h-11 px-3 sm:px-4 rounded-full font-medium transition-all ${
  view === 'day'
  ? 'bg-accent text-on-accent '
  : 'bg-surface text-fg-2 border border-line-strong hover:bg-raised'
@@ -801,8 +818,18 @@ export default function CalendarPage() {
                 <LuList aria-hidden className="w-4 h-4 shrink-0" />יום
               </button>
               <button
+                onClick={() => setView('week')}
+                className={`inline-flex items-center gap-1.5 min-h-11 px-3 sm:px-4 rounded-full font-medium transition-all ${
+ view === 'week'
+ ? 'bg-accent text-on-accent '
+ : 'bg-surface text-fg-2 border border-line-strong hover:bg-raised'
+ }`}
+              >
+                <LuCalendarRange aria-hidden className="w-4 h-4 shrink-0" />שבוע
+              </button>
+              <button
                 onClick={() => setView('month')}
-                className={`inline-flex items-center gap-1.5 min-h-11 px-4 rounded-full font-medium transition-all ${
+                className={`inline-flex items-center gap-1.5 min-h-11 px-3 sm:px-4 rounded-full font-medium transition-all ${
  view === 'month'
  ? 'bg-accent text-on-accent '
  : 'bg-surface text-fg-2 border border-line-strong hover:bg-raised'
@@ -818,7 +845,15 @@ export default function CalendarPage() {
       {isAdmin && (
         <div className="sticky top-[var(--app-header-height,0px)] z-30 bg-surface/95 backdrop-blur border-b border-line">
           <div className="max-w-7xl mx-auto px-4 py-2">
-            {rangeTool ? (
+            {bonusMode ? (
+              <div className="flex items-center gap-3 min-h-10">
+                <LuStar aria-hidden className="w-5 h-5 text-warning fill-warning shrink-0" />
+                <p className="text-sm text-fg-2 min-w-0">
+                  <b className="text-warning">אימון בונוס:</b> לחיצה על אימון בלוח מסמנת אותו כבונוס (זהב), ולחיצה נוספת מבטלת.
+                </p>
+                <button type="button" onClick={() => setBonusMode(false)} className="ms-auto shrink-0 min-h-9 px-4 rounded-full bg-warning text-on-accent text-sm font-extrabold">סיום</button>
+              </div>
+            ) : rangeTool ? (
               <div className="flex items-center gap-3 min-h-10">
                 <span className="w-2.5 h-2.5 rounded-full bg-accent animate-pulse shrink-0" aria-hidden />
                 <p className="text-sm text-fg-2 min-w-0">
@@ -842,6 +877,10 @@ export default function CalendarPage() {
                     </button>
                   )
                 })}
+                <button type="button" onClick={() => setBonusMode(true)}
+                  className="shrink-0 inline-flex items-center gap-1.5 h-10 px-3.5 rounded-full border border-warning/60 text-warning text-sm font-bold bg-surface hover:bg-warning/10">
+                  <LuStar aria-hidden className="w-4 h-4 fill-warning" />אימון בונוס
+                </button>
               </div>
             )}
           </div>
@@ -849,7 +888,7 @@ export default function CalendarPage() {
       )}
 
       <button
-        hidden={!!rangeTool}
+        hidden={!!rangeTool || bonusMode}
         onClick={handleAddButtonClick}
         className={`fixed bottom-[calc(8.5rem+env(safe-area-inset-bottom))] lg:bottom-24 left-4 lg:left-6 text-on-accent text-3xl rounded-full w-16 h-16 shadow-lg transition-all duration-200 z-40 flex items-center justify-center ${
  isSelectingDate 
@@ -1000,6 +1039,16 @@ export default function CalendarPage() {
                 }}
               />
             </div>
+          ) : view === 'week' ? (
+            <WeekListView
+              events={events}
+              date={date}
+              isDesktop={!isMobile}
+              selecting={isSelectingDate}
+              onEventClick={handleSelectEvent}
+              onNavigate={handleNavigate}
+              onDayClick={d => handleSelectSlot({ start: d })}
+            />
           ) : view === 'day' ? (
             <div
               onDragOver={e => { if (showPanel && dragWorkout.current) { e.preventDefault(); if (!dayDropOver) setDayDropOver(true) } }}
@@ -1047,8 +1096,8 @@ export default function CalendarPage() {
               selectable={true}
               onSelectSlot={handleSelectSlot}
               resizable={false}
-              draggableAccessor={() => !isSelectingDate && !rangeTool}
-              onEventDrop={!isSelectingDate && !rangeTool ? handleEventDrop : undefined}
+              draggableAccessor={() => !isSelectingDate && !rangeTool && !bonusMode}
+              onEventDrop={!isSelectingDate && !rangeTool && !bonusMode ? handleEventDrop : undefined}
               dayPropGetter={dayPropGetter}
               components={{
                 toolbar: CalendarToolbar as any,

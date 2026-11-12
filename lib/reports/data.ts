@@ -44,7 +44,7 @@ export async function loadDailyData(db: SupabaseClient, trainees: Trainee[], tod
       .in('Email', emails)
       .gte('Date', from),
     db.from('Calendar')
-      .select('Email, StartTime, Completed, Deloading')
+      .select('Email, StartTime, Completed, Deloading, Bonus')
       .in('Email', emails)
       .gte('StartTime', `${addDays(from, -1)}T00:00:00`)
       .lt('StartTime', `${to}T00:00:00`),
@@ -62,7 +62,8 @@ export async function loadDailyData(db: SupabaseClient, trainees: Trainee[], tod
 
   return trainees.map(t => {
     const calendar = (calendarRes.data ?? [])
-      .filter(c => c.Email === t.email)
+      // a bonus workout counts only when done; skipping it is not a miss
+      .filter(c => c.Email === t.email && (!c.Bonus || c.Completed))
       .map(c => ({ date: ilDateOfTimestamp(c.StartTime), completed: !!c.Completed, deloading: !!c.Deloading }))
     // older history exists: add a marker so the "new trainee" rule never fires
     if (hasHistory.has(t.email)) calendar.push({ date: addDays(from, -2), completed: true, deloading: false })
