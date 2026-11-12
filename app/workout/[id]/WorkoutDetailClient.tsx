@@ -432,7 +432,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
             ? Promise.resolve({ data: freeExIds.map((ExerciseID, i) => ({ ExerciseID, Block: 1, Order: i + 1 })) as any[] })
             : supabase
               .from('WorkoutsExercises')
-              .select('ExerciseID, Block, Sets, Reps, Duration, Rest, Order, Superset, AltExerciseID, AltReps, AltDuration, IntervalWorkSec, IntervalRestSec')
+              .select('ExerciseID, Block, Sets, Reps, Duration, Rest, Order, Superset, AltExerciseID, AltReps, AltDuration, IntervalWorkSec, IntervalRestSec, Bonus')
               .eq('WorkoutID', id)
               .order('Block')
               .order('Order'),
@@ -486,6 +486,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
                 AltReps: rel.AltReps ?? null,
                 AltDuration: rel.AltDuration ?? null,
                 IntervalWorkSec: rel.IntervalWorkSec ?? null,
+                Bonus: !!rel.Bonus,
                 IntervalRestSec: rel.IntervalRestSec ?? null,
                 Sets: rel.Sets || null,
                 Reps: rel.Reps || null,
@@ -1101,6 +1102,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
         rows={flowExercises.map((ex, k) => ({
           key: `${ex.ExerciseID}-${k}`, title: ex.Name, text: ex.Skipped ? null : exerciseSummary(ex), pr: exercisePR(ex, bestsByExercise[ex.ExerciseID]),
           skipped: !!ex.Skipped,
+          bonus: !!ex.Bonus,
           onOpen: () => { setBackToSummary(true); if (ex.Skipped) unskipExercise(k); else setStep(slotIndex(k, 0)) },
         }))}
         climbing={containsClimbing ? {
@@ -1229,6 +1231,8 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
             // save this set (typed values, or the greyed suggestion); one-hand: right, then left here
             const r = finishRef.current?.() ?? 'next'
             if (r !== 'next') return
+            // a bonus set gets a pat on the back
+            if (flowExercises[sl.k].Bonus) showToast(sl.set === sl.count - 1 ? '⭐ כל הכבוד! השלמת את הבונוס' : '⭐ סט בונוס נשמר, כל הכבוד!', 'yellow', 2200)
             const restSec = Number(flowExercises[sl.k].Rest) || 0
             // rest after each set, or in a superset only after the round; not before the summary
             if (sl.lastInRound && restSec > 0 && stepIndex + 1 < climbIndex) startRest(restSec)
@@ -1274,6 +1278,8 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
  ? 'bg-accent'
  : toast.color === 'red'
  ? 'bg-danger'
+ : toast.color === 'yellow'
+ ? 'bg-warning font-extrabold'
  : 'bg-raised'
  }`}
             >

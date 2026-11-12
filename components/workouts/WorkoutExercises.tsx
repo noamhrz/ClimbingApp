@@ -72,6 +72,7 @@ const WorkoutExercises = forwardRef<WorkoutExercisesHandle, Props>(function Work
               AltReps: e.AltExerciseID ? e.AltReps ?? null : null,
               AltDuration: e.AltExerciseID ? e.AltDuration ?? null : null,
               IntervalWorkSec: e.IntervalWorkSec || null,
+              Bonus: !!e.Bonus,
               IntervalRestSec: e.IntervalWorkSec ? e.IntervalRestSec ?? 0 : null,
             }))
           )
