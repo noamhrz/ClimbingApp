@@ -21,6 +21,7 @@ import { LuCircleCheck, LuLightbulb, LuLoaderCircle, LuMapPin, LuPlus } from 're
 import { PageSkeleton } from '@/components/ui/Skeleton'
 import ExercisePicker, { type PickedExercise } from '@/components/workout-flow/ExercisePicker'
 import IntervalTimer from '@/components/workout-flow/IntervalTimer'
+import DurationTimer from '@/components/workout-flow/DurationTimer'
 import { FREE_SESSION_COLOR } from '@/lib/free-session'
 
 export default function WorkoutDetailClient({ id }: { id: number }) {
@@ -179,7 +180,8 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
   const finishRef = useRef<(() => 'next' | 'stay' | 'blocked') | null>(null)
   const [pendingSlot, setPendingSlot] = useState<{ k: number; set: number } | null>(null)
   // interval timer running for exercise k, from set `from`, for `count` sets
-  const [timer, setTimer] = useState<{ k: number; from: number; count: number } | null>(null)
+  // kind: 'interval' (repeaters, IntervalWorkSec) or 'duration' (an exercise measured in time)
+  const [timer, setTimer] = useState<{ k: number; from: number; count: number; kind: 'interval' | 'duration' } | null>(null)
   const timerLastSet = useRef<number | null>(null)
   const [backToSummary, setBackToSummary] = useState(false) // editing one exercise from the summary
   const [lastByExercise, setLastByExercise] = useState<Record<string, LastValues>>({}) // key: ExerciseID:Occurrence
@@ -1059,10 +1061,10 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
             earlier={earlierFor(ex, sl.set)}
             onSkip={() => skipExercise(k)}
             alt={ex.AltExerciseID && altInfo[ex.AltExerciseID] ? { name: altInfo[ex.AltExerciseID].Name, onSwap: () => swapToAlt(k) } : undefined}
-            onStartTimer={ex.IntervalWorkSec ? () => {
+            onStartTimer={ex.IntervalWorkSec || ex.isDuration ? () => {
               timerLastSet.current = null
               // a superset goes one set at a time; otherwise the timer runs the remaining sets in one go
-              setTimer({ k, from: sl.set, count: sl.ctx ? 1 : Math.max(1, sl.count - sl.set) })
+              setTimer({ k, from: sl.set, count: sl.ctx ? 1 : Math.max(1, sl.count - sl.set), kind: ex.IntervalWorkSec ? 'interval' : 'duration' })
             } : undefined}
           />
           {isFree && <div className="px-4 pb-6">{addExerciseButton}</div>}
@@ -1168,9 +1170,41 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
     : stepIndex === lastStep - 1 ? 'לסיכום ←' : 'הבא ←'
 
   const timerEx = timer ? flowExercises[timer.k] : null
+  const closeTimer = () => {
+    if (!timer) return
+    const k = timer.k, last = timerLastSet.current
+    setTimer(null)
+    // go on after the last set the timer saved
+    if (last != null) {
+      const i = slots.findIndex(sl => sl.k === k && sl.set === last)
+      if (i >= 0) setStep(firstEx + i + 1)
+    }
+  }
   return (
     <>
-      {timer && timerEx && (
+      {timer && timerEx && timer.kind === 'duration' && (
+        <DurationTimer
+          plan={{
+            name: timerEx.Name,
+            target: Number(timerEx.Duration) || 0,
+            sets: timer.count,
+            single: !!timerEx.IsSingleHand,
+            firstSet: timer.from,
+            totalSets: setsOf(timerEx),
+            setRest: Number(timerEx.Rest) || 0,
+          }}
+          onSetDone={(runSet, sec, secLeft) => {
+            const idx = timer.from + runSet
+            timerLastSet.current = idx
+            writeSet(timer.k, idx, {
+              DurationSec: sec, Completed: true,
+              ...(secLeft != null ? { DurationSecLeft: secLeft, CompletedLeft: true } : {}),
+            })
+          }}
+          onClose={closeTimer}
+        />
+      )}
+      {timer && timerEx && timer.kind === 'interval' && (
         <IntervalTimer
           plan={{
             name: timerEx.Name,
@@ -1191,15 +1225,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
               ...(repsLeft != null ? { RepsDoneLeft: repsLeft, CompletedLeft: true } : {}),
             })
           }}
-          onClose={() => {
-            const k = timer.k, last = timerLastSet.current
-            setTimer(null)
-            // go on after the last set the timer saved
-            if (last != null) {
-              const i = slots.findIndex(sl => sl.k === k && sl.set === last)
-              if (i >= 0) setStep(firstEx + i + 1)
-            }
-          }}
+          onClose={closeTimer}
         />
       )}
       {showPicker && email && (

@@ -331,6 +331,15 @@ export default function ExerciseStep({ exercise: ex, position, last, bests, onCh
             <LuTimer aria-hidden className="w-5 h-5" />
             טיימר {ex.IntervalWorkSec}/{ex.IntervalRestSec ?? 0} · {ex.Reps || 1} חזרות{single ? ' בכל יד' : ''}
           </button>
+        ) : onStartTimer && ex.isDuration ? (
+          <button
+            type="button"
+            onClick={onStartTimer}
+            className="self-stretch min-h-14 rounded-2xl bg-success text-on-accent text-[17px] font-extrabold inline-flex items-center justify-center gap-2"
+          >
+            <LuTimer aria-hidden className="w-5 h-5" />
+            {n(ex.Duration) ? `טיימר · ${fmtDuration(Number(ex.Duration))}${single ? ' בכל יד' : ''}` : 'סטופר'}
+          </button>
         ) : null}
         {ex.IsAlt && (
           <p className="self-start text-[13px] font-bold text-free bg-free/15 border border-free/40 px-2.5 py-1 rounded-full">
