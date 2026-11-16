@@ -312,14 +312,17 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
   const [rest, setRest] = useState<{ endsAt: number; total: number } | null>(null)
   const startRest = (sec: number) => setRest({ endsAt: Date.now() + sec * 1000, total: sec })
 
-  // climbing: start from the type and grades this climber logged most recently
+  // climbing: start from the type and grades this climber logged most recently.
+  // The type comes from the last time THIS workout was done (a boulder session stays boulder
+  // even if the climber's last log was lead); first time → a hint in the workout's name; else the last log.
   const wantsClimbing = !!workout?.containClimbing
+  const workoutName = workout?.Name ?? ''
   useEffect(() => {
     if (!email || !wantsClimbing) return
     let cancelled = false
     supabase
       .from('ClimbingLog')
-      .select('ClimbType, GradeID, LogDateTime, LocationID, BoardTypeID')
+      .select('ClimbType, GradeID, LogDateTime, LocationID, BoardTypeID, WorkoutID')
       .eq('Email', email)
       .order('LogDateTime', { ascending: false })
       .limit(60)
@@ -331,7 +334,11 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
           if (r.GradeID && g[t] == null) g[t] = r.GradeID
         }
         setDefaultGrades(g)
-        setDefaultClimbType(data[0].ClimbType as 'Boulder' | 'Board' | 'Lead')
+        const sameWorkout = data.find(r => r.WorkoutID != null && Number(r.WorkoutID) === Number(id))
+        const byName = /הובלה|ליד|lead/i.test(workoutName) ? 'Lead'
+          : /בורד|לוח|קילטר|מונבורד|board|kilter|moon/i.test(workoutName) ? 'Board'
+          : /בולדר|boulder/i.test(workoutName) ? 'Boulder' : null
+        setDefaultClimbType((sameWorkout?.ClimbType ?? byName ?? data[0].ClimbType) as 'Boulder' | 'Board' | 'Lead')
         // start from last session's location and board (still changeable)
         const lastLoc = data.find(r => r.LocationID)?.LocationID
         if (lastLoc) setSelectedLocation(prev => prev ?? lastLoc)
@@ -339,7 +346,7 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
         if (lastBoard) setSelectedBoardType(prev => prev ?? lastBoard)
       })
     return () => { cancelled = true }
-  }, [email, wantsClimbing])
+  }, [email, wantsClimbing, id, workoutName])
 
   // === Draft persistence ===
   const draftKey = calendarIdNum
