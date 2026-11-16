@@ -43,7 +43,16 @@ export default function ClimbStep(props: Props) {
   const { routes, onRoutesChange, boulderGrades, leadGrades, boardTypes, selectedBoardType, onBoardTypeChange,
     locations, selectedLocation, onLocationChange, onAddLocation, defaultGrades } = props
 
-  const [type, setType] = useState<CType>(props.defaultType ?? 'Boulder')
+  // the type of the routes already logged in this session wins (coming back to this step keeps it);
+  // then the workout's default, which may arrive after the first render
+  const [type, setTypeRaw] = useState<CType>(routes[routes.length - 1]?.climbType ?? props.defaultType ?? 'Boulder')
+  const [touched, setTouched] = useState(routes.length > 0)
+  const setType = (t: CType) => { setTouched(true); setTypeRaw(t) }
+  const [seenDefault, setSeenDefault] = useState(props.defaultType)
+  if (props.defaultType !== seenDefault) {
+    setSeenDefault(props.defaultType)
+    if (!touched && props.defaultType) setTypeRaw(props.defaultType)
+  }
   const gradesOf = (t: CType): Grade[] => t === 'Lead'
     ? leadGrades.map(g => ({ id: g.LeadGradeID, label: g.FrenchGrade }))
     : boulderGrades.map(g => ({ id: g.BoulderGradeID, label: g.VGrade }))

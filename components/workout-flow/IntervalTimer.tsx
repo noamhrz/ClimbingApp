@@ -153,12 +153,21 @@ export default function IntervalTimer({ plan, onSetDone, onClose }: {
   }
 
   useEffect(() => () => { cancelAnimationFrame(raf.current); releaseWake(); void audio.current?.close().catch(() => {}) }, [])
-  // a hidden page can't keep time on phones: pause, and let the trainee resume
+  // the clock keeps running when the trainee switches apps or locks the phone (time comes from
+  // the clock); back on screen: catch up to where the run is now and keep the screen on again
   useEffect(() => {
-    const onVis = () => { if (document.hidden && st.current.running && !st.current.paused) pause() }
+    const onVis = () => {
+      const s = st.current
+      if (document.hidden || !s.running || s.paused || s.done) return
+      void (async () => {
+        try { wake.current = await (navigator as unknown as { wakeLock?: { request: (t: string) => Promise<{ release: () => Promise<void> }> } }).wakeLock?.request('screen') ?? null } catch { /* not granted */ }
+      })()
+      cancelAnimationFrame(raf.current)
+      loop()
+    }
     document.addEventListener('visibilitychange', onVis)
     return () => document.removeEventListener('visibilitychange', onVis)
-  }, [])
+  }, [loop])
 
   const s = st.current
   const step = steps[Math.min(s.i, steps.length - 1)]
