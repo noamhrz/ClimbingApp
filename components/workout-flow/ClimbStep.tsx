@@ -97,7 +97,7 @@ export default function ClimbStep(props: Props) {
     const next = [...routes, r]
     onRoutesChange(next)
     try { navigator.vibrate?.(10) } catch { /* not supported */ }
-    const what = !successful ? 'לא נסגר' : attempts === 1 ? 'פלאש' : attempts >= 5 ? `${attempts} ניסיונות` : `ניסיון ${attempts}`
+    const what = !successful ? (attempts > 1 ? `לא נסגר · ${attempts} ניסיונות` : 'לא נסגר') : attempts === 1 ? 'פלאש' : attempts >= 5 ? `${attempts} ניסיונות` : `ניסיון ${attempts}`
     showToast(`${gradeLabel} ${what}${routeName ? ` · ${routeName}` : ''}`, () => onRoutesChange(next.filter(x => x.id !== r.id)))
   }
 
@@ -139,14 +139,9 @@ export default function ClimbStep(props: Props) {
   const t = typeOf(type)
   const missingLocation = routes.length > 0 && !selectedLocation
 
-  const PAD: { attempts: number; sent: boolean; title: string; sub: string; cls: string }[] = [
-    { attempts: 1, sent: true, title: 'פלאש', sub: 'ניסיון ראשון', cls: 'bg-success/15 border-success text-success' },
-    { attempts: 2, sent: true, title: 'ניסיון 2', sub: 'נסגר', cls: 'bg-raised border-line-strong text-fg' },
-    { attempts: 3, sent: true, title: 'ניסיון 3', sub: 'נסגר', cls: 'bg-raised border-line-strong text-fg' },
-    { attempts: 4, sent: true, title: 'ניסיון 4', sub: 'נסגר', cls: 'bg-raised border-line-strong text-fg' },
-    { attempts: 5, sent: true, title: '5+', sub: 'נסגר', cls: 'bg-raised border-line-strong text-fg' },
-    { attempts: 1, sent: false, title: 'לא נסגר', sub: 'ניסיתי', cls: 'bg-raised border-danger/60 text-danger' },
-  ]
+  // two rows: sent on attempt 1…5+, and not sent after 1…5+ attempts (each attempt counts in the stats)
+  const ATTEMPTS = [1, 2, 3, 4, 5]
+  const attLabel = (a: number) => (a === 5 ? '5+' : String(a))
 
   return (
     <div className="px-4 pt-4 pb-6 flex flex-col gap-4">
@@ -224,18 +219,39 @@ export default function ClimbStep(props: Props) {
           <h3 className="text-xl font-extrabold">{gradeLabel} · איך היה?</h3>
           <span className="text-[13px] text-muted">כל לחיצה מוסיפה מסלול</span>
         </div>
-        <div className="grid grid-cols-3 gap-2">
-          {PAD.map(p => (
-            <button
-              key={p.title}
-              type="button"
-              onClick={() => add(p.attempts, p.sent)}
-              className={`h-[68px] rounded-2xl border flex flex-col items-center justify-center active:scale-95 ${p.cls}`}
-            >
-              <strong className="text-[19px] font-extrabold" dir={p.title === '5+' ? 'ltr' : undefined}>{p.title}</strong>
-              <small className="text-xs text-muted">{p.sub}</small>
-            </button>
-          ))}
+        <div className="flex flex-col gap-1.5">
+          <p className="text-[13px] font-bold text-success">נסגר בניסיון</p>
+          <div className="grid grid-cols-5 gap-1.5">
+            {ATTEMPTS.map(a => (
+              <button
+                key={'s' + a}
+                type="button"
+                aria-label={a === 1 ? 'פלאש: נסגר בניסיון ראשון' : `נסגר בניסיון ${attLabel(a)}`}
+                onClick={() => add(a, true)}
+                className={`h-[60px] rounded-2xl border flex flex-col items-center justify-center active:scale-95 ${a === 1 ? 'bg-success/15 border-success text-success' : 'bg-raised border-line-strong text-fg'}`}
+              >
+                {a === 1 ? <>
+                  <LuZap aria-hidden className="w-5 h-5" />
+                  <small className="text-[11px] font-bold">פלאש</small>
+                </> : <strong className="text-[20px] font-extrabold tabular-nums" dir="ltr">{attLabel(a)}</strong>}
+              </button>
+            ))}
+          </div>
+          <p className="text-[13px] font-bold text-danger mt-1.5">לא נסגר אחרי</p>
+          <div className="grid grid-cols-5 gap-1.5">
+            {ATTEMPTS.map(a => (
+              <button
+                key={'f' + a}
+                type="button"
+                aria-label={`לא נסגר אחרי ${attLabel(a)} ${a === 1 ? 'ניסיון' : 'ניסיונות'}`}
+                onClick={() => add(a, false)}
+                className="h-[60px] rounded-2xl border border-danger/60 bg-raised text-danger flex flex-col items-center justify-center active:scale-95"
+              >
+                <strong className="text-[20px] font-extrabold tabular-nums" dir="ltr">{attLabel(a)}</strong>
+                <small className="text-[11px] font-bold">{a === 1 ? 'ניסיון' : 'ניסיונות'}</small>
+              </button>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -274,7 +290,7 @@ export default function ClimbStep(props: Props) {
                           !r.successful ? 'border-danger/60 text-danger' : r.attempts === 1 ? 'border-success text-success' : 'border-line-strong text-fg'
                         }`}
                       >
-                        {!r.successful ? '✗' : r.attempts === 1 ? <LuZap aria-label="פלאש" className="w-4 h-4" /> : r.attempts}
+                        {!r.successful ? (r.attempts > 1 ? `✗${r.attempts}` : '✗') : r.attempts === 1 ? <LuZap aria-label="פלאש" className="w-4 h-4" /> : r.attempts}
                         {r.routeName && <span className="font-semibold text-fg-2 max-w-[120px] truncate">{r.routeName}</span>}
                       </button>
                     ))}
