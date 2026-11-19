@@ -29,6 +29,23 @@ export default function WellnessModal({ isOpen, onClose, currentUser, onSave }: 
     }
   }, [selectedDate, isOpen, currentUser?.Email])
 
+  /** Sleep default for a new day: the average of the last 14 days this trainee filled in (before
+   *  that date), rounded DOWN to a half hour (7.4 → 7, 7.8 → 7.5); 7 when there is no history. */
+  const sleepDefault = async (beforeDate: string): Promise<number> => {
+    const { data } = await supabase
+      .from('WellnessLog')
+      .select('SleepHours')
+      .eq('Email', currentUser?.Email)
+      .lt('Date', beforeDate)
+      .gt('SleepHours', 0)
+      .order('Date', { ascending: false })
+      .limit(14)
+    const hours = (data ?? []).map(r => Number(r.SleepHours)).filter(h => h > 0)
+    if (!hours.length) return 7
+    const avg = hours.reduce((a, b) => a + b, 0) / hours.length
+    return Math.min(10, Math.max(1, Math.floor(avg * 2) / 2))
+  }
+
   const loadExistingData = async () => {
     try {
       const { data } = await supabase
@@ -48,7 +65,7 @@ export default function WellnessModal({ isOpen, onClose, currentUser, onSave }: 
         setIsExistingEntry(true)
       } else {
         // Reset to defaults for new entry
-        setSleepHours(7)
+        setSleepHours(await sleepDefault(selectedDate))
         setEnergy(2)
         setSoreness(0)
         setPainArea('')
