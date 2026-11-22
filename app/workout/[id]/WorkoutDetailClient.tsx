@@ -874,6 +874,15 @@ export default function WorkoutDetailClient({ id }: { id: number }) {
           Successful: route.successful || false,
           Notes: route.notes?.trim() || null,
           LogDateTime: logDateTime,
+          // lead goes (columns from 20261122_climbinglog_lead_goes.sql) — only on lead rows,
+          // so boulder/board saves never depend on them
+          ...(route.climbType === 'Lead' && route.routeKey ? {
+            RouteKey: route.routeKey,
+            GoNumber: route.goNumber ?? 1,
+            ReachedTop: route.reachedTop ?? route.successful,
+            Takes: route.takes ?? (route.successful ? 0 : null),
+            HeightPct: route.heightPct ?? null,
+          } : {}),
         })))
         if (routesErr) throw routesErr
       }
