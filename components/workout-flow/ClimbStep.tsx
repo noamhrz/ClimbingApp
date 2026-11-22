@@ -88,6 +88,40 @@ export default function ClimbStep(props: Props) {
     }
   }, [type, grades.length])
 
+  // desktop: drag the grade strip with the mouse, and let the wheel scroll it sideways
+  // (touch keeps its native swipe). A drag doesn't count as a click on a grade.
+  const drag = useRef<{ x: number; left: number; moved: boolean } | null>(null)
+  const dragged = useRef(false)
+  const onStripDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.pointerType !== 'mouse' || e.button !== 0 || !strip.current) return
+    drag.current = { x: e.clientX, left: strip.current.scrollLeft, moved: false }
+    dragged.current = false
+  }
+  const onStripMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const d = drag.current, st = strip.current
+    if (!d || !st) return
+    const dx = e.clientX - d.x
+    if (!d.moved && Math.abs(dx) > 5) { d.moved = true; st.setPointerCapture(e.pointerId); st.style.cursor = 'grabbing' }
+    if (d.moved) st.scrollLeft = d.left - dx
+  }
+  const onStripUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    const d = drag.current, st = strip.current
+    drag.current = null
+    if (!d || !st) return
+    if (d.moved) { dragged.current = true; st.releasePointerCapture?.(e.pointerId); st.style.cursor = '' }
+  }
+  useEffect(() => {
+    const st = strip.current
+    if (!st) return
+    const onWheel = (e: WheelEvent) => {
+      if (Math.abs(e.deltaY) <= Math.abs(e.deltaX) || st.scrollWidth <= st.clientWidth) return
+      e.preventDefault()
+      st.scrollLeft -= e.deltaY // RTL: wheel down moves toward the harder grades (to the left)
+    }
+    st.addEventListener('wheel', onWheel, { passive: false })
+    return () => st.removeEventListener('wheel', onWheel)
+  }, [])
+
   // toast with undo
   const [toast, setToast] = useState<{ text: string; undo?: () => void } | null>(null)
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -266,7 +300,18 @@ export default function ClimbStep(props: Props) {
       )}
 
       <div className="-mx-4">
-        <div ref={strip} data-no-swipe className="flex gap-2 overflow-x-auto px-4 pt-2 pb-2 [scrollbar-width:none]" role="group" aria-label="דירוג">
+        <div
+          ref={strip}
+          data-no-swipe
+          onPointerDown={onStripDown}
+          onPointerMove={onStripMove}
+          onPointerUp={onStripUp}
+          onPointerCancel={onStripUp}
+          onClickCapture={e => { if (dragged.current) { e.stopPropagation(); e.preventDefault(); dragged.current = false } }}
+          className="flex gap-2 overflow-x-auto px-4 pt-2 pb-2 [scrollbar-width:none] md:cursor-grab select-none"
+          role="group"
+          aria-label="דירוג"
+        >
           {grades.map(g => {
             const on = g.id === grade, c = countAt(g.id)
             return (
