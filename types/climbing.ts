@@ -9,6 +9,14 @@ export interface ClimbingRoute {
   attempts: number
   successful: boolean
   notes: string
+  // Lead: one row per ascent ("go"). Goes on the same route share routeKey; goNumber counts them.
+  // successful = clean (no fall, no take); reachedTop + takes = topped with N takes/falls;
+  // not topped: heightPct = how far up (25 / 50 / 75 / 90).
+  routeKey?: string | null
+  goNumber?: number | null
+  reachedTop?: boolean | null
+  takes?: number | null
+  heightPct?: number | null
 }
 
 export interface BoulderGrade {
