@@ -14,12 +14,14 @@ create index if not exists "ClimbingLog_RouteKey_idx" on "ClimbingLog" ("RouteKe
 -- The existing volume trigger gives an unsent row half the score; this one runs after it
 -- (BEFORE triggers fire in name order, "zzz_" last) and only touches lead-go rows.
 -- Boulder / board / older lead rows keep their current calculation.
+-- Lead grade score as the existing calculation has it (checked against ClimbingLog rows):
+-- (LeadGradeID − 7) × 2.5, at least 2.5 — 6b (12) = 12.5, 6b+ (13) = 15.
 create or replace function lead_go_volume() returns trigger language plpgsql as $$
 declare s numeric;
 begin
   if new."ClimbType" = 'Lead' and new."RouteKey" is not null then
-    select "Score" into s from "LeadGrades" where "LeadGradeID" = new."GradeID";
-    new."VolumeScore" := coalesce(s, 0) *
+    s := greatest(2.5, (coalesce(new."GradeID", 8) - 7) * 2.5);
+    new."VolumeScore" := s *
       case when coalesce(new."ReachedTop", new."Successful", false) then 1
            else coalesce(new."HeightPct", 50) / 100.0 end;
   end if;
