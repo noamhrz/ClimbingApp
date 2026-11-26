@@ -3,6 +3,10 @@
 
 import { isActiveUser } from './active-users'
 import { supabase } from '@/lib/supabaseClient'
+import { addDays, ilDate } from '@/lib/reports/dates'
+
+/** a new task is due two weeks from today (Israel date) */
+export const defaultDueDate = () => addDays(ilDate(), 14)
 
 // ═══════════════════════════════════════════════════════════════
 // Types
@@ -26,6 +30,10 @@ export interface CoachTodo {
   Completed: boolean
   CompletedAt: string | null
   CreatedAt: string
+  /** deadline (YYYY-MM-DD); WhatsApp reminders 3 days before, the day before and the day after */
+  DueDate: string | null
+  /** reminders already sent: 0 none, 1 three days before, 2 the day before, 3 overdue */
+  ReminderStage: number
 }
 
 export interface AthleteTodo {
@@ -35,6 +43,10 @@ export interface AthleteTodo {
   Completed: boolean
   CompletedAt: string | null
   CreatedAt: string
+  /** deadline (YYYY-MM-DD); WhatsApp reminders 3 days before, the day before and the day after */
+  DueDate: string | null
+  /** reminders already sent: 0 none, 1 three days before, 2 the day before, 3 overdue */
+  ReminderStage: number
 }
 
 export interface AthleteHighlight {
@@ -116,10 +128,10 @@ export async function getCoachTodos(sessionId: number) {
   return data as CoachTodo[]
 }
 
-export async function addCoachTodo(sessionId: number, task: string) {
+export async function addCoachTodo(sessionId: number, task: string, dueDate: string | null = defaultDueDate()) {
   const { data, error } = await supabase
     .from('CoachTodos')
-    .insert({ SessionID: sessionId, Task: task, Completed: false })
+    .insert({ SessionID: sessionId, Task: task, Completed: false, DueDate: dueDate })
     .select()
     .single()
 
@@ -187,10 +199,10 @@ export async function getAthleteTodos(sessionId: number) {
   return data as AthleteTodo[]
 }
 
-export async function addAthleteTodo(sessionId: number, task: string) {
+export async function addAthleteTodo(sessionId: number, task: string, dueDate: string | null = defaultDueDate()) {
   const { data, error } = await supabase
     .from('AthleteTodos')
-    .insert({ SessionID: sessionId, Task: task, Completed: false })
+    .insert({ SessionID: sessionId, Task: task, Completed: false, DueDate: dueDate })
     .select()
     .single()
 
@@ -390,4 +402,22 @@ export async function getUsersForSessions(currentEmail: string, currentRole: 'ad
     : { data: [] }
   const active = new Set((statuses || []).filter(isActiveUser).map(u => u.Email))
   return (trainees || []).filter(t => active.has(t.TraineeEmail)).map(t => ({ Email: t.TraineeEmail, Name: t.TraineeName }))
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Deadlines
+// ═══════════════════════════════════════════════════════════════
+
+/** change a task's deadline; its reminders start over */
+export async function setTodoDueDate(table: 'CoachTodos' | 'AthleteTodos', todoId: number, dueDate: string | null) {
+  const { error } = await supabase
+    .from(table)
+    .update({ DueDate: dueDate, ReminderStage: 0 })
+    .eq('TodoID', todoId)
+
+  if (error) {
+    console.error('Error setting due date:', error)
+    return false
+  }
+  return true
 }

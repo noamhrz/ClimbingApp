@@ -4,6 +4,7 @@ import twilio from 'twilio'
 import { createClient } from '@supabase/supabase-js'
 import { addDays, ilDate, ilDateOfTimestamp } from '@/lib/reports/dates'
 import { normalizePhone } from '@/lib/phone'
+import { runTaskReminders } from '@/lib/task-reminders'
 
 const TEMPLATES = {
   daily_summary: 'HX3b64f105081994e959eda262b7f9f5c4',
@@ -46,6 +47,13 @@ export async function GET(request: NextRequest) {
   const startOfDay = `${addDays(today, -1)}T00:00:00`
   const endOfDay = `${addDays(today, 1)}T00:00:00`
 
+  // Deadline reminders for monthly-session tasks (independent of today's workouts)
+  let tasks: Awaited<ReturnType<typeof runTaskReminders>> | { error: string }
+  try { tasks = await runTaskReminders(supabase, twilioClient, today) } catch (e) {
+    console.error('task reminders failed:', e)
+    tasks = { error: e instanceof Error ? e.message : String(e) }
+  }
+
   // Step 1: Get active WhatsApp profiles
   const { data: profiles, error: profilesError } = await supabase
     .from('Profiles')
@@ -59,7 +67,7 @@ export async function GET(request: NextRequest) {
   }
 
   if (!profiles || profiles.length === 0) {
-    return NextResponse.json({ message: 'No active WhatsApp users' })
+    return NextResponse.json({ message: 'No active WhatsApp users', tasks })
   }
 
   // Step 2: Get names from Users — inactive users get no reminders
@@ -70,7 +78,7 @@ export async function GET(request: NextRequest) {
   const users = (allUsers || []).filter(isActiveUser)
   const activeEmails = users.map((u) => u.Email)
   if (activeEmails.length === 0) {
-    return NextResponse.json({ message: 'No active WhatsApp users' })
+    return NextResponse.json({ message: 'No active WhatsApp users', tasks })
   }
 
   // Step 2: Get today's incomplete calendar entries for these users
@@ -90,7 +98,7 @@ export async function GET(request: NextRequest) {
 
   const calendarEntries = todaysEntries
   if (calendarEntries.length === 0) {
-    return NextResponse.json({ message: 'No workouts scheduled today' })
+    return NextResponse.json({ message: 'No workouts scheduled today', tasks })
   }
 
   const workoutIds = [...new Set(calendarEntries.map((e) => e.WorkoutID))]
@@ -206,16 +214,20 @@ export async function GET(request: NextRequest) {
         (e) => e.WorkoutID === entry.WorkoutID
       )
 
+      // A template variable can't hold line breaks (WhatsApp rule), so the list stays on one
+      // line: numbered emoji, a short "sets×reps", no rests (they're in the app), at most 10.
+      const NUM = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟']
+      const shown = entryExercises.slice(0, NUM.length)
       const exerciseList =
         entryExercises.length > 0
-          ? entryExercises
-              .map((e) => {
+          ? shown
+              .map((e, i) => {
                 const ex = exerciseById[e.ExerciseID]
-                let line = `${ex?.Name ?? 'תרגיל'} - ${e.Sets} סטים x ${e.Reps} חזרות`
-                if (e.Rest) line += `, מנוחה ${e.Rest} שניות`
-                return line
+                const amount = e.Reps ? `${e.Sets || 1}×${e.Reps}` : e.Sets ? `${e.Sets} סטים` : ''
+                return `${NUM[i]} ${(ex?.Name ?? 'תרגיל').trim()}${amount ? ` ${amount}` : ''}`
               })
-              .join('  •  ')
+              .join('   ') +
+            (entryExercises.length > shown.length ? `   ועוד ${entryExercises.length - shown.length} באפליקציה` : '')
           : 'ללא תרגילים'
 
       const workoutLink = `https://app.noam-herz-climbing.com/calendar-edit/${entry.CalendarID}`
@@ -262,5 +274,5 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  return NextResponse.json({ success: true, date: today, ...results })
+  return NextResponse.json({ success: true, date: today, ...results, tasks })
 }

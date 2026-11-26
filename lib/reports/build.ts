@@ -5,6 +5,7 @@ import { loadDailyData, Trainee } from './data'
 import { dailyAlerts } from './daily-rules'
 import { renderDailyEmail } from './daily-email'
 import { weeklyReview } from './weekly-rules'
+import { loadDeadlines } from './deadlines'
 import { renderWeeklyEmail } from './weekly-email'
 import { buildMonthlyReport, MonthlyReport } from './monthly-data'
 import { renderMonthlyEmail } from './monthly-email'
@@ -25,8 +26,8 @@ export async function buildDaily(db: SupabaseClient, trainees: Trainee[], today:
 }
 
 export async function buildWeekly(db: SupabaseClient, trainees: Trainee[], today: string): Promise<ReportEmail> {
-  const data = await loadDailyData(db, trainees, today, 35)
-  return renderWeeklyEmail(today, data.map(t => weeklyReview(t, today)))
+  const [data, deadlines] = await Promise.all([loadDailyData(db, trainees, today, 35), loadDeadlines(db, trainees, today)])
+  return renderWeeklyEmail(today, data.map(t => weeklyReview(t, today)), deadlines)
 }
 
 export async function buildMonthly(db: SupabaseClient, trainees: Trainee[], year: number, month: number): Promise<ReportEmail> {

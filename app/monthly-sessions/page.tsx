@@ -8,11 +8,13 @@ import {
   getSession, createSession, updateSessionNotes,
   getCoachTodos, addCoachTodo, updateCoachTodo, toggleCoachTodo, deleteCoachTodo,
   getAthleteTodos, addAthleteTodo, updateAthleteTodo, toggleAthleteTodo, deleteAthleteTodo,
+  setTodoDueDate,
   getHighlights, addHighlight, updateHighlight, deleteHighlight,
   getAchievements, addAchievement, updateAchievement, deleteAchievement,
   getUsersForSessions,
 } from '@/lib/monthly-sessions-api'
-import { LuCircleCheck, LuNotebookPen, LuPencil, LuPin, LuStar, LuTarget, LuTrash2 } from 'react-icons/lu'
+import { LuCalendarClock, LuCircleCheck, LuNotebookPen, LuPencil, LuPin, LuStar, LuTarget, LuTrash2 } from 'react-icons/lu'
+import { ilDate } from '@/lib/reports/dates'
 
 const MONTH_NAMES = [
   'ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני',
@@ -232,6 +234,10 @@ function MonthlySessionsContent() {
     if (ok) setCoachTodos(prev => prev.filter(t => t.TodoID !== todoId))
   }
 
+  const handleCoachDue = async (todoId: number, due: string | null) => {
+    if (await setTodoDueDate('CoachTodos', todoId, due)) setCoachTodos(prev => prev.map(t => t.TodoID === todoId ? { ...t, DueDate: due, ReminderStage: 0 } : t))
+  }
+
   // ── Athlete todos ─────────────────────────────────────────────
   const handleAddAthleteTodo = async () => {
     if (!session || !newAthleteTodo.trim()) return
@@ -244,6 +250,10 @@ function MonthlySessionsContent() {
     if (ok) setAthleteTodos(prev => prev.map(t =>
       t.TodoID === todoId ? { ...t, Completed: completed, CompletedAt: completed ? new Date().toISOString() : null } : t
     ))
+  }
+
+  const handleAthleteDue = async (todoId: number, due: string | null) => {
+    if (await setTodoDueDate('AthleteTodos', todoId, due)) setAthleteTodos(prev => prev.map(t => t.TodoID === todoId ? { ...t, DueDate: due, ReminderStage: 0 } : t))
   }
 
   const handleSaveAthleteTodo = async () => {
@@ -445,6 +455,7 @@ function MonthlySessionsContent() {
                       <span className={`flex-1 text-sm ${todo.Completed ? 'line-through text-faint' : 'text-fg'}`}>
                         {todo.Task}
                       </span>
+                      <DueChip due={todo.DueDate} done={todo.Completed} editable={canEdit} onChange={d => handleCoachDue(todo.TodoID, d)} />
                       {!canEdit && (
                         <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
  todo.Completed ? 'bg-success/15 text-success' : 'bg-warning/15 text-warning'
@@ -493,6 +504,7 @@ function MonthlySessionsContent() {
                       <span className={`flex-1 text-sm ${todo.Completed ? 'line-through text-faint' : 'text-fg'}`}>
                         {todo.Task}
                       </span>
+                      <DueChip due={todo.DueDate} done={todo.Completed} editable={canEdit} onChange={d => handleAthleteDue(todo.TodoID, d)} />
                       {canEdit && (
                         <div className="opacity-0 group-hover:opacity-100 flex gap-0.5 transition-opacity">
                           <button onClick={() => setEditingAthleteTodo({ id: todo.TodoID, task: todo.Task })} className="p-1.5 text-faint hover:text-accent rounded" title="ערוך"><LuPencil aria-hidden className="inline-block w-[1.1em] h-[1.1em] align-[-0.15em]" /></button>
@@ -594,5 +606,35 @@ export default function MonthlySessionsPage() {
     }>
       <MonthlySessionsContent />
     </Suspense>
+  )
+}
+
+// ── Deadline chip: "עד 10/12"; red when overdue, amber in the last 3 days; the coach can change it ──
+function DueChip({ due, done, editable, onChange }: { due: string | null; done: boolean; editable: boolean; onChange: (d: string | null) => void }) {
+  if (!due && !editable) return null
+  const today = ilDate()
+  const days = due ? Math.round((Date.parse(due) - Date.parse(today)) / 86400000) : null
+  const tone = !due || done ? 'bg-raised text-muted border-line'
+    : days! < 0 ? 'bg-danger/15 text-danger border-danger/40'
+    : days! <= 3 ? 'bg-warning/15 text-warning border-warning/40'
+    : 'bg-raised text-fg-2 border-line'
+  const label = !due ? 'דדליין' : `${days! < 0 && !done ? 'עבר · ' : 'עד '}${Number(due.slice(8, 10))}/${Number(due.slice(5, 7))}`
+  const chip = (
+    <span className={`inline-flex items-center gap-1 h-7 px-2 rounded-full border text-xs font-semibold tabular-nums whitespace-nowrap ${tone}`}>
+      <LuCalendarClock aria-hidden className="w-3.5 h-3.5" />{label}
+    </span>
+  )
+  if (!editable) return chip
+  return (
+    <label className="relative shrink-0 cursor-pointer" title="שינוי דדליין">
+      {chip}
+      <input
+        type="date"
+        aria-label="דדליין למשימה"
+        value={due ?? ''}
+        onChange={e => onChange(e.target.value || null)}
+        className="absolute inset-0 opacity-0 cursor-pointer"
+      />
+    </label>
   )
 }

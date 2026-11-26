@@ -8,8 +8,7 @@ import { useState, useRef, useEffect, createContext, useContext } from 'react'
 import {
   LuUser, LuLogOut, LuLayoutDashboard, LuCalendarDays, LuDumbbell, LuChartLine, LuBookOpen,
   LuChartColumn, LuTrendingUp, LuMap, LuSettings, LuFileChartColumn, LuClipboardList, LuPuzzle, LuUsers,
-  LuTarget, LuFolder, LuEye, LuChevronDown, LuCalendarCheck, LuNotebookPen, LuMenu,
-} from 'react-icons/lu'
+  LuTarget, LuFolder, LuEye, LuChevronDown, LuCalendarCheck, LuNotebookPen, LuMenu, LuMegaphone } from 'react-icons/lu'
 
 const ic = 'w-4 h-4 shrink-0'
 
@@ -195,6 +194,7 @@ export default function UserHeader() {
               <DropdownItem href="/exercises"><LuDumbbell aria-hidden className={ic} />תרגילים</DropdownItem>
               <DropdownItem href="/exercises/dynamic"><LuPuzzle aria-hidden className={ic} />תרגילים דינמיים</DropdownItem>
               <DropdownItem href="/workouts-editor"><LuNotebookPen aria-hidden className={ic} />עורך אימונים</DropdownItem>
+              {isAdmin && <DropdownItem href="/admin/broadcast"><LuMegaphone aria-hidden className={ic} />הודעה לכל המתאמנים</DropdownItem>}
               {isAdmin && <DropdownItem href="/admin/roadmap-builder"><LuMap aria-hidden className={ic} />בניית Roadmap</DropdownItem>}
               {isAdmin && <DropdownItem href="/admin/roadmap-progress"><LuChartColumn aria-hidden className={ic} />עדכון התקדמות Roadmap</DropdownItem>}
             </NavDropdown>
@@ -275,6 +275,7 @@ export default function UserHeader() {
               <SheetLink href="/exercises" onClick={() => setMoreOpen(false)} icon={<LuDumbbell />}>תרגילים</SheetLink>
               <SheetLink href="/exercises/dynamic" onClick={() => setMoreOpen(false)} icon={<LuPuzzle />}>תרגילים דינמיים</SheetLink>
               <SheetLink href="/workouts-editor" onClick={() => setMoreOpen(false)} icon={<LuNotebookPen />}>עורך אימונים</SheetLink>
+              {isAdmin && <SheetLink href="/admin/broadcast" onClick={() => setMoreOpen(false)} icon={<LuMegaphone />}>הודעה לכל המתאמנים</SheetLink>}
               {isAdmin && <SheetLink href="/admin/roadmap-builder" onClick={() => setMoreOpen(false)} icon={<LuMap />}>בניית Roadmap</SheetLink>}
               {isAdmin && <SheetLink href="/admin/roadmap-progress" onClick={() => setMoreOpen(false)} icon={<LuChartColumn />}>עדכון התקדמות Roadmap</SheetLink>}
             </SheetGroup>

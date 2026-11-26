@@ -3,6 +3,7 @@
 import { C, APP_URL, card, dayStrip, esc, heading, layout, miniBars } from './email-kit'
 import { addDays, heWeekday, longHeDate, shortDate } from './dates'
 import type { WeeklyItem, WeeklyTrainee } from './weekly-rules'
+import type { DeadlineRow, Deadlines } from './deadlines'
 
 const f1 = (n: number) => (Math.round(n * 10) / 10).toFixed(1)
 const pct = (n: number) => `${Math.round(n * 100)}%`
@@ -80,7 +81,11 @@ function listBox(title: string, color: string, rows: string[], link?: { href: st
 </td></tr>`
 }
 
-export function renderWeeklyEmail(today: string, list: WeeklyTrainee[]) {
+const OWNER = { coach: 'שלך', athlete: 'מתאמן' } as const
+const deadlineLine = (r: DeadlineRow, extra = '') =>
+  `${esc(r.name)} · ${esc(r.task)} <span style="color:${C.faint}">(${OWNER[r.owner]} · עד ${shortDate(r.due)}${extra})</span>`
+
+export function renderWeeklyEmail(today: string, list: WeeklyTrainee[], deadlines: Deadlines = { met: [], missed: [], upcoming: [] }) {
   const concerns = list.filter(t => t.concerns.length).sort((a, b) => b.concerns.length - a.concerns.length)
   const empty = list.filter(t => t.noWorkoutsNextWeek)
   const positives = list.filter(t => t.positive)
@@ -88,10 +93,13 @@ export function renderWeeklyEmail(today: string, list: WeeklyTrainee[]) {
 
   const subject = concerns.length
     ? `MY WAY · סקירה שבועית · ${concerns.length === 1 ? 'מתאמן אחד' : `${concerns.length} מתאמנים`} לבדיקה`
+    : deadlines.missed.length ? `MY WAY · סקירה שבועית · ${deadlines.missed.length === 1 ? 'משימה אחת' : `${deadlines.missed.length} משימות`} לא עמדו בדדליין`
     : 'MY WAY · סקירה שבועית · אין חריגים'
 
   let body = heading(
-    concerns.length ? `${concerns.length === 1 ? 'מתאמן אחד' : `${concerns.length} מתאמנים`} לבדיקה` : 'אין חריגים השבוע',
+    concerns.length ? `${concerns.length === 1 ? 'מתאמן אחד' : `${concerns.length} מתאמנים`} לבדיקה`
+    : deadlines.missed.length ? `${deadlines.missed.length === 1 ? 'משימה אחת' : `${deadlines.missed.length} משימות`} לא עמדו בדדליין`
+    : 'אין חריגים השבוע',
     `שבוע ${weekLine} · רק מה שדורש התייחסות`,
   )
   body += concerns.map(concernCard).join('')
@@ -101,6 +109,16 @@ export function renderWeeklyEmail(today: string, list: WeeklyTrainee[]) {
       empty.map(t => esc(t.name)),
       { href: `${APP_URL}/admin/assign-workouts`, label: 'לשיבוץ אימונים' })
   }
+  // monthly-session task deadlines
+  const dl = deadlines
+  if (dl.missed.length) {
+    body += listBox(`לא עמדו בדדליין (${dl.missed.length})`, C.danger,
+      dl.missed.map(r => deadlineLine(r, r.doneOn ? ` · בוצע באיחור ${shortDate(r.doneOn)}` : ' · עוד פתוח')),
+      { href: `${APP_URL}/monthly-sessions`, label: 'לפגישות החודשיות' })
+  }
+  if (dl.met.length) body += listBox(`עמדו בדדליין (${dl.met.length})`, C.success, dl.met.map(r => deadlineLine(r)))
+  if (dl.upcoming.length) body += listBox(`דדליינים בשבוע הקרוב (${dl.upcoming.length})`, C.info, dl.upcoming.map(r => deadlineLine(r)))
+
   if (positives.length) {
     body += listBox('חיובי', C.success, positives.map(t =>
       `${esc(t.name)} · ${t.positive!.kind === 'streak'
@@ -117,7 +135,10 @@ export function renderWeeklyEmail(today: string, list: WeeklyTrainee[]) {
     ...concerns.map(t => `${t.name}: ${t.concerns.map(c => ITEM_LABEL[c.kind]).join(', ')}`),
     empty.length ? `בלי אימונים בשבוע הקרוב: ${empty.map(t => t.name).join(', ')}` : '',
     positives.length ? `חיובי: ${positives.map(t => t.name).join(', ')}` : '',
+    dl.missed.length ? `לא עמדו בדדליין: ${dl.missed.map(r => `${r.name} (${r.task})`).join(', ')}` : '',
+    dl.met.length ? `עמדו בדדליין: ${dl.met.map(r => `${r.name} (${r.task})`).join(', ')}` : '',
+    dl.upcoming.length ? `דדליינים בשבוע הקרוב: ${dl.upcoming.map(r => `${r.name} (${r.task}, ${r.due})`).join(', ')}` : '',
   ].filter(Boolean).join('\n') || 'אין חריגים השבוע'
 
-  return { subject, html, text, count: concerns.length + empty.length }
+  return { subject, html, text, count: concerns.length + empty.length + dl.missed.length + dl.met.length + dl.upcoming.length }
 }
